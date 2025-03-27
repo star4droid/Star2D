@@ -3,14 +3,22 @@ import android.os.Bundle;
 import android.view.View;
 import androidx.annotation.Nullable;
 import com.badlogic.gdx.ApplicationListener;
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.backends.android.AndroidFragmentApplication;
 import com.star4droid.star2d.Helpers.FileUtil;
 import com.star4droid.star2d.editor.TestApp;
+import com.star4droid.star2d.editor.ui.sub.ConfirmDialog;
 
 public class LibgdxFragment extends AndroidFragmentApplication implements AndroidFragmentApplication.Callbacks {
 
 	private ApplicationListener applicationListener;
-
+	private ConfirmDialog confirmDialog;
+	private boolean dialogShown = false;
+    
+    public LibgdxFragment() {
+        this.applicationListener = new com.star4droid.star2d.editor.TestApp();
+    }
+    
     public LibgdxFragment(ApplicationListener applicationListener) {
         this.applicationListener = applicationListener;
     }
@@ -34,6 +42,26 @@ public class LibgdxFragment extends AndroidFragmentApplication implements Androi
 			TestApp app = ((TestApp)applicationListener);
 			if(app.isPlaying())
 				app.play(null);
+			else {
+				Gdx.app.postRunnable(()->{
+					if(dialogShown){
+						confirmDialog.hide();
+						dialogShown = false;
+					} else {
+						if(confirmDialog == null)
+							confirmDialog = new ConfirmDialog("Exit","Do you want to exit ?",(ok)->{
+								if(ok){
+								    if(app.isProjectOpened())
+									    app.closeProject();
+									else getActivity().finish();
+								}
+								dialogShown = false;
+							});
+						confirmDialog.show(app.getUiStage());
+						dialogShown = true;
+					}
+				});
+			}
 		}
     }
 }

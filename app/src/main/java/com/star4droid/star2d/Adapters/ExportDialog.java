@@ -28,7 +28,7 @@ public class ExportDialog {
 		imgPath="";
 		final AppCompatCheckBox portrait = cv.findViewById(R.id.portrait);
 		final TextInputEditText name = cv.findViewById(R.id.name)
-		,version = cv.findViewById(R.id.version),
+		    ,version = cv.findViewById(R.id.version),
 		version_name = cv.findViewById(R.id.version_name),
 		package_name= cv.findViewById(R.id.package_name);
 		icon = cv.findViewById(R.id.icon);

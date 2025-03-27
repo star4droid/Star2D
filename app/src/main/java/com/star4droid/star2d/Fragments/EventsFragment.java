@@ -172,7 +172,7 @@ public class EventsFragment extends Fragment {
 									intent.setClass(editor.getContext(),com.star4droid.star2d.Activities.CodeEditorActivity.class);
 									context.startActivity(intent);
 								} else
-									VisualScriptingDialog.showFor(editor,_data.get(_position).get("name").toString(),_data.get(_position).get("body").toString().equals("true"),_data.get(_position).get("script").toString().equals("true"),v);
+									VisualScriptingDialog.showFor(editor,_data.get(_position).get("name").toString(),_data.get(_position).get("body").toString().equals("true"),_data.get(_position).get("script").toString().equals("true"));
 								}
 				
 			});
@@ -193,7 +193,7 @@ public class EventsFragment extends Fragment {
 								FileUtil.deleteFile(editor.getProject().getBodyScriptPath(ps.getString("name"),editor.getScene()));
 								return;
 							}
-							String path = editor.getProject().get("scripts")+list.get(_position);
+							String path = editor.getProject().get("scripts")+list.get(_position).get("name");
 							if(list.get(_position).get("script").equals("true")) {
 								FileUtil.deleteFile(path+".java");
 								FileUtil.deleteFile(path+".visual");
@@ -245,7 +245,7 @@ public class EventsFragment extends Fragment {
 							add.setOnClickListener(new View.OnClickListener(){
 								@Override
 								public void onClick(View arg0) {
-								String path = editor.getProject().get("scripts")+nam.getText().toString()+".java";
+									String path = editor.getProject().get("scripts")+nam.getText().toString()+".java";
 									if(FileUtil.isExistFile(path)) {
 										Utils.showMessage(ctx,"There is already script with this name...!");
 										return;

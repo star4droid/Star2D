@@ -65,6 +65,7 @@ public class BodiesFragment extends Fragment {
             hash.put("name", propertySet.getString("name"));
             hash.put("item", actor);
             gridViewAdapter.getArrayList().add(hash);
+			//add item childs after it...
             for (PropertySet set : getChilds(propertySet, null)) {
               HashMap<String, Object> hashMap = new HashMap<>();
               hashMap.put("name", set.getString("name"));

@@ -13,6 +13,7 @@ import com.badlogic.gdx.assets.loaders.resolvers.AbsoluteFileHandleResolver;
 public class ProjectAssetLoader extends AssetManager {
 	Project project;
 	AssetsLoadListener loadListener;
+	boolean isListenerCalled = false;
 	public ProjectAssetLoader(Project p){
 	    super(new AbsoluteFileHandleResolver());
 		project = p;
@@ -25,6 +26,7 @@ public class ProjectAssetLoader extends AssetManager {
 	}
 	
 	public ProjectAssetLoader setAssetsLoadListener(AssetsLoadListener listener){
+		isListenerCalled = false;
 		loadListener = listener;
 		//if(update()) listener.onLoad();
 		return this;
@@ -32,6 +34,16 @@ public class ProjectAssetLoader extends AssetManager {
 	
 	public void setProject(Project p){
 		project = p;
+	}
+	
+	@Override
+	public boolean update() {
+		boolean ends = super.update();
+		if(ends && loadListener!=null && !isListenerCalled){
+			loadListener.onLoad();
+			isListenerCalled = true;
+		}
+		return ends;
 	}
 	
 	@Override

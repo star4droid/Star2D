@@ -20,7 +20,7 @@ public class MissingFileDialog {
 		Utils.hideSystemUi(dialog.getWindow());
 		TextView text = cv.findViewById(R.id.text);
 		String cp_path=FileUtil.getPackageDataDir(context)+"/bin/cp.jar";
-		String template_path=FileUtil.getPackageDataDir(context)+"/apk/template.apk";
+		String template_path=FileUtil.getPackageDataDir(context)+"/apk/template.zip";
 		String str=Utils.readAssetFile("java/missing-"+context.getString(R.string.lang)+".txt",context);
 		text.setText(String.format(str,type.equals(CP)?cp_path:template_path));
 		

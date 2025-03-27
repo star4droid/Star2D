@@ -104,7 +104,7 @@ public class AddPopup {
 								ed.selectView(particleItem);
 							}
                         });
-                        activity.refreshBodies();
+                        //activity.refreshBodies();
                         return true;
                     }
                 });

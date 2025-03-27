@@ -3,6 +3,8 @@ package com.star4droid.star2d.Adapters;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,7 +24,25 @@ import com.star4droid.star2d.Views.VisualScriptingView;
 import java.util.ArrayList;
 
 public class VisualScriptingDialog {
-	public static void showFor(final Editor editor,final String event,boolean isBody,boolean isScript,final View view){
+	
+	public static void showFor(String event,boolean isBody,boolean isScript){
+		new Handler(Looper.getMainLooper()).post(()->{
+			showFor(Editor.getCurrentEditor(),event,isBody,isScript);
+		});
+	}
+	
+	public static void openCodeEditor(){
+		Editor editor = Editor.getCurrentEditor();
+		if(editor.getSelectedView()==null||(editor.getIndexer()!=null&&editor.getIndexer().isIndexing())) return;
+		PropertySet ps= PropertySet.getPropertySet(editor.getSelectedView());
+		Intent intent= new Intent();
+		intent.putExtra("path",editor.getProject().getBodyScriptPath(ps.getString("name"),editor.getScene()));
+		intent.putExtra("name",ps.getString("name")+"Script");
+		intent.setClass(editor.getContext(),com.star4droid.star2d.Activities.CodeEditorActivity.class);
+		editor.getContext().startActivity(intent);
+	}
+	
+	public static void showFor(final Editor editor,final String event,boolean isBody,boolean isScript){
 		final Context context = editor.getContext();
 		Project project = editor.getProject();
 		String body="";
@@ -84,7 +104,7 @@ public class VisualScriptingDialog {
 		//files
 		FileUtil.listDir(editor.getProject().get("files"),files);
 		for(int i=0;i<files.size();i++) {
-			files.set(x,Uri.parse(files.get(x)).getLastPathSegment());
+			files.set(i,Uri.parse(files.get(i)).getLastPathSegment());
 		}
 		if(files.size()>0) hintsList.add("- Files");
 		hintsList.addAll(files);

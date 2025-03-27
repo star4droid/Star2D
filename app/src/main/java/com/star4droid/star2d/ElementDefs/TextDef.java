@@ -11,7 +11,7 @@ public class TextDef {
 	public static final String TYPE="TEXT";
 	public String name="",Text="TextItem",Text_Color="#FFFFFF",Script="",type="UI";
 	public boolean Visible=true;
-	public float x=0,y=0,z=0,width=50,height=50,rotation=0;
+	public float x=0,y=0,z=0,width=50,height=50,rotation=0,Font_Scale=1;
 	
 	public TextDef(){
 		

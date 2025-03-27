@@ -31,6 +31,7 @@ public class Editor extends FrameLayout {
 	LinearLayout propertiesLinear;
 	private MyIndexer myIndexer;
 	EditorLink editorLink;
+	Runnable whenAppReady;
 	private static Editor currentEditor;
 	TestApp testApp;
 	/*
@@ -60,7 +61,8 @@ public class Editor extends FrameLayout {
 		removeAllViewsInLayout();
 		currentEditor = this;
 		FrameLayout frameLayout = new FrameLayout(getContext());
-		testApp = new TestApp(project);
+		testApp = new TestApp();
+		testApp.setWhenAppReady(whenAppReady);
 		frameLayout.setId(2);
 		addView(frameLayout);
 		/*
@@ -85,6 +87,12 @@ public class Editor extends FrameLayout {
 					//,2500);
 		((AppCompatActivity)getContext()).getSupportFragmentManager().beginTransaction()
 				.replace(frameLayout.getId(),new LibgdxFragment(testApp)).commit();
+	}
+	
+	public void setWhenAppReady(Runnable runnable){
+		this.whenAppReady = runnable;
+		if(testApp!=null)
+				testApp.setWhenAppReady(runnable);
 	}
 	
 	public static void disableTouch(View view){

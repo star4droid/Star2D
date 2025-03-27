@@ -187,37 +187,7 @@ public class JointsFragment extends Fragment {
 					}.setValue(FileUtil.readFile(editor.getProject().getJoints(editor.getScene())+nm));
 					return;
 				}
-				final AlertDialog dialog = new AlertDialog.Builder(getContext()).create();
-				ScrollView scrollView = new ScrollView(getContext());
-				scrollView.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,LinearLayout.LayoutParams.WRAP_CONTENT));
-				LinearLayout linear = new LinearLayout(getContext());
-				linear.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,LinearLayout.LayoutParams.WRAP_CONTENT));
-				linear.setOrientation(LinearLayout.VERTICAL);
-				for(HashMap<String,Object> hash:JointsHelper.getJointsListMap()){
-					if(hash.get("joint").toString().contains("GearJoint")) continue;
-					final MaterialButton button = new MaterialButton(getContext());
-					button.setText(hash.get("joint").toString().replace("Def",""));
-					button.setTextColor(getContext().getColor(R.color.text_color));
-					linear.addView(button);
-					button.setCornerRadius(8);
-					linear.setPadding(12,12,12,12);
-					button.setOnClickListener(new View.OnClickListener(){
-						@Override
-						public void onClick(View arg0) {
-							dialog.dismiss();
-							new JointDialog(getContext(),button.getText().toString(),"",editor){
-								public void onDone(String string,String name){
-									FileUtil.writeFile(editor.getProject().getJoints(editor.getScene())+name+"-"+button.getText().toString(),string);
-									refresh();
-								}
-							};
-						}
-					});
-				}
-				scrollView.addView(linear);
-				
-				dialog.setView(scrollView);
-				dialog.show();
+				JointDialog.showJointListDialog(getContext(),editor,()->refresh());
 			});
 		}
 		

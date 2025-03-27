@@ -80,7 +80,7 @@ public class Utils {
 		
 		public static String replaceNonstandardDigits(String input) {
 			if (input == null || input.isEmpty()) {
-				Log(error_tag,"empty string");
+				//Log(error_tag,"empty string");
 				return "0";
 			}
 			

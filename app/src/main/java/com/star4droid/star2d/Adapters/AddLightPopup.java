@@ -45,7 +45,7 @@ public class AddLightPopup {
             				editor.selectView(lightItem);
             				lightItem.update();
         				});
-        				activity.refreshBodies();
+        				//activity.refreshBodies();
                         return true;
                     }
                 });

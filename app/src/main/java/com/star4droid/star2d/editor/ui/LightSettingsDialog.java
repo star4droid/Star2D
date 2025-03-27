@@ -14,6 +14,7 @@ import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.Align;
 import com.kotcrab.vis.ui.VisUI;
 import com.kotcrab.vis.ui.widget.PopupMenu;
+import com.kotcrab.vis.ui.widget.VisLabel;
 import com.kotcrab.vis.ui.widget.color.ColorPicker;
 import com.kotcrab.vis.ui.widget.color.ColorPickerListener;
 import com.star4droid.star2d.Helpers.FileUtil;
@@ -43,7 +44,9 @@ public class LightSettingsDialog {
         TextField blurNumField = new TextField(propertySet.containsKey("blur_number") ? propertySet.getString("blur_number") : "1", skin);
         blurNumField.setMessageText("Blur Number");
         contentTable.add(new CheckBox("Enable Blur", skin)).row();
-        contentTable.add(blurNumField).row();
+        VisLabel blurNoLabel = new VisLabel("Blur Number");
+		contentTable.add(blurNoLabel).growX().row();
+		contentTable.add(blurNumField).row();
 
         // Add checkboxes for various settings
         addCheckBox(contentTable, "Use Diffuse Light", propertySet, skin);

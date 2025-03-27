@@ -1,0 +1,11 @@
+[ √ ] Tabs 📑 
+[ √ ] Improve Undo and Redo 📤📥
+[   ] Libgdx Custom Collider Editor 📐
+[   ] Built-in Keyboard ⌨️ 
+[   ] Events Record and Play ▶️
+[   ] Libgdx Animation Editor 
+[   ] Bitmap Font Generator 
+[   ] TileSet Support 
+[   ] TileMap support 
+[   ] VisUI Items
+[   ] change collider type (temporary disabled)

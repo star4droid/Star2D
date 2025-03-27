@@ -1,5 +1,5 @@
 {
-"float":",Scale X,Scale Y,Duration,Cone Degree,Softness Length,Direction,Distance,rays,Max,Progress,x,y,z,rotation,density,restitution,width,radius,height,Offset X,Offset Y,friction,tileX,tileY,ColliderX,ColliderY,Collider Width,Collider Radius,Collider Height,Gravity Scale,",
+"float":",Font Scale,Scale X,Scale Y,Duration,Cone Degree,Softness Length,Direction,Distance,rays,Max,Progress,x,y,z,rotation,density,restitution,width,radius,height,Offset X,Offset Y,friction,tileX,tileY,ColliderX,ColliderY,Collider Width,Collider Radius,Collider Height,Gravity Scale,",
 "image":",image,Pad Image,Button Image,Button Background,",
 "boolean":",Loop,lock,Active,Soft,X Ray,Static Light,Visible,Bullet,Fixed Rotation,isSensor,",
 "spinner":"type,Shape,Light Type",

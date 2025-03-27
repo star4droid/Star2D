@@ -8,8 +8,11 @@ body2
 data
 worldX
 worldY
+random(1,100)
 getZooming()
-getValue(
+getValue("key")
+getNumber("key")
+getRealNumber("key")
 - Joystick functions
 .getJoyStickX()
 .getJoyStickY()
@@ -54,6 +57,8 @@ Math.sqrt(
 Math.cos(
 Math.sin(
 Math.tan(
+toInt(
+toFloat(
 Math.toRadians(
 - Files
 read(

@@ -87,9 +87,9 @@ public class Project {
 		int x=0;
 		for(String file:getSceneList(scene)){
 			FileHandle fh = Gdx.files.absolute(file);
+			if(!fh.exists()) continue;
 			if(!fh.isDirectory())
 			    fh.copyTo(Gdx.files.absolute(arrayList.get(x)));
-			else fh.copyTo(Gdx.files.absolute(arrayList.get(x)));
 			x++;
 		}
 		
@@ -166,6 +166,14 @@ public class Project {
 		return path+"/configs/"+scene+".json";
 	}
 	
+	public String getEvents(String scene){
+		return path+"/Events/"+scene;
+	}
+	
+	public String getUndoRedo(String scene){
+		return path+"/Events/"+scene+"/UndoRedo.json";
+	}
+	
 	public String getJoints(String scene){
 		return path+"/joints/"+scene+"/";
 	}
@@ -180,6 +188,7 @@ public class Project {
 	
 	public void save(LibgdxEditor editor){
 		Gdx.files.absolute(path+"/scenes/"+editor.getScene()).writeString(editor.getSaveState(),false);
+		Gdx.files.absolute(getUndoRedo(editor.getScene())).writeString(editor.getUndoRedoJson(),false);
 	}
 	
 	public String getScenesPath(){

@@ -94,7 +94,9 @@ public interface PlayerItem {
 	default public void removeAnimation(){}
 	public ElementEvent getElementEvents();
 	default public void destroy(){
-	    getActor().remove();
-	    getBody().getWorld().destroyBody(getBody());
+	    if(getActor()!=null)
+	        getActor().remove();
+	    if(getBody()!=null)
+	        getBody().getWorld().destroyBody(getBody());
 	}
 }

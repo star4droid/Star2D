@@ -1,4 +1,6 @@
 package com.star4droid.star2d.editor.ui;
+
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.kotcrab.vis.ui.widget.VisTable;
@@ -10,16 +12,19 @@ import com.kotcrab.vis.ui.widget.VisDialog;
 public class SingleInputDialog extends VisDialog {
 	public SingleInputDialog(String title, String message, String initialText, InputListener listener) {
 		super(title);
+		setResizable(true);
 		VisTextField textField = new VisTextField(initialText);
 		VisTextButton okButton = new VisTextButton("OK");
 		VisTextButton cancelButton = new VisTextButton("Cancel");
 		
-		getContentTable().add(message).row();
-		getContentTable().add(textField).growX().row();
+		getContentTable().add(message).padBottom(8).row();
+		getContentTable().add(textField).minWidth(320).pad(5).row();
 		
 		VisTable buttons = new VisTable();
-		buttons.add(okButton).padRight(10);
-		buttons.add(cancelButton);
+		buttons.add().growX();
+		buttons.add(okButton).space(10);
+		buttons.add(cancelButton).space(10);
+		buttons.add().growX();
 		
 		getContentTable().add(buttons);
 		
@@ -38,11 +43,11 @@ public class SingleInputDialog extends VisDialog {
 			}
 		});
 		
-		setSize(300, 150);
+		setSize(Gdx.graphics.getWidth()*0.333333f, 250);
 		centerWindow();
 	}
 	
-	interface InputListener {
+	public interface InputListener {
 		void onInput(String result);
 	}
 }

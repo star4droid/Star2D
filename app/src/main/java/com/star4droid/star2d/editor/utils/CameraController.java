@@ -35,8 +35,10 @@ public class CameraController {
         // Calculate interpolated position
         float x = interpolation.apply(startPosition.x, targetPosition.x, progress);
         float y = interpolation.apply(startPosition.y, targetPosition.y, progress);
-        
+        float zoom = interpolation.apply(camera.zoom, 2f, progress);
+		
         camera.position.set(x, y, 0);
+		camera.zoom = zoom;
         camera.update();
 
         if (progress >= 1) {

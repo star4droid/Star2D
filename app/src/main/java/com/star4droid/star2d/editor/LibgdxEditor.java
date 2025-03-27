@@ -3,6 +3,7 @@ package com.star4droid.star2d.editor;
 import box2dLight.RayHandler;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputProcessor;
+import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
@@ -34,6 +35,7 @@ import com.star4droid.star2d.editor.ui.FilePicker;
 import com.star4droid.star2d.editor.ui.PointPicker;
 import com.star4droid.star2d.editor.utils.AddPopup;
 import com.star4droid.star2d.editor.utils.CameraController;
+import com.star4droid.star2d.editor.utils.EditorAction;
 import com.star4droid.star2d.editor.utils.PropertiesHolder;
 import com.star4droid.template.Utils.ProjectAssetLoader;
 import java.util.Comparator;
@@ -52,7 +54,7 @@ public class LibgdxEditor extends Stage {
 	EditorListener editorListener;
 	Matrix4 rendererMatrix;
 	PropertySet<String,Object> editorConfig;
-	boolean AUTO_SAVE = false,LANDSCAPE = true;
+	boolean AUTO_SAVE = false,LANDSCAPE = true,newUndoRedoSystem = true;
 	Project project;
 	public Color backgroundColor = Color.BLACK;
 	String scene;
@@ -65,7 +67,11 @@ public class LibgdxEditor extends Stage {
 	RayHandler rayHandler;
 	FilePicker filePicker;
 	TOUCHMODE touch_mode=TOUCHMODE.GRID;
+	Stack<String> undoList = new Stack<>(), redoList = new Stack<>();
+	Stack<EditorAction> undoNStack = new Stack<>(),redoNStack = new Stack<>();
 	ToastManager toastManager;
+	boolean lockX = false,lockY = false;
+	String[] startTransform;
 	float prevDistance = -1,startAngle=0,ratioScale =1,gridSizeX=50,logicalWidth=1600,logicalHeight=720,gridSizeY=50;
 	
 	public LibgdxEditor(Project project){
@@ -139,7 +145,13 @@ public class LibgdxEditor extends Stage {
 	}
 	
 	public void toast(String message,int duration){
+	    //if(toastManager==null) return;
+		toastManager.toFront();
 		toastManager.show(message,duration);
+	}
+	
+	public PropertiesHolder getPropertiesHolder(){
+		return propertiesHolder;
 	}
 	
 	public FilePicker getFilePicker(boolean show){
@@ -173,23 +185,52 @@ public class LibgdxEditor extends Stage {
 	
 	@Override
 	public boolean touchUp(int arg0, int arg1, int arg2, int arg3) {
-		getSaveState();
-		if(controlLayer!=null)
-			controlLayer.updateUndoRedo();
-		if(editorListener!=null)
-			editorListener.onUpdateUndoRedo();
-		if(AUTO_SAVE)
-			project.save(LibgdxEditor.this);
+		if(touch_mode!=TOUCHMODE.GRID && getSelectedActor()!=null){
+			PropertySet<String,Object> ps = PropertySet.getPropertySet(selectedActor);
+			String[] endTransform = new String[]{
+				"x",ps.getString("x"),
+				"y",ps.getString("y"),
+				"rotation",ps.getString("rotation"),
+				"radius",ps.getString("radius"),
+				"width",ps.getString("width"),
+				"height",ps.getString("height"),
+				"Collider Radius",ps.getString("Collider Radius"),
+				"Collider Width",ps.getString("Collider Width"),
+				"Collider Height",ps.getString("Collider Height")
+			};
+			EditorAction.propertiesChanged(this,getSelectedActor().getName(),touch_mode == TOUCHMODE.ROTATE ? "rotation" : (touch_mode == TOUCHMODE.SCALE ? "scale" : "position"),endTransform,startTransform).updateEditorProperties().updateItemProperties();
+			getSaveState();
+			if(controlLayer!=null)
+				controlLayer.updateUndoRedo();
+			if(editorListener!=null)
+				editorListener.onUpdateUndoRedo();
+			if(AUTO_SAVE)
+				project.save(LibgdxEditor.this);
+		}
 		return super.touchUp(arg0, arg1, arg2, arg3);
 	}
 	
 	@Override
 	public boolean touchDown(int arg0, int arg1, int arg2, int arg3) {
-		if(selectedActor!=null){
+		if(selectedActor!=null && touch_mode == TOUCHMODE.ROTATE){
 			float centerX = selectedActor.getX() + selectedActor.getWidth() / 2.0f,
 					centerY = selectedActor.getY() + selectedActor.getHeight() / 2.0f;
 			double angle = Math.atan2(Gdx.input.getY() - centerY, Gdx.input.getX() - centerX);
 			startAngle = (float)Math.toDegrees(angle) - 90;
+		}
+		if(selectedActor!=null){
+			PropertySet<String,Object> ps = PropertySet.getPropertySet(selectedActor);
+			startTransform = new String[]{
+				"x",ps.getString("x"),
+				"y",ps.getString("y"),
+				"rotation",ps.getString("rotation"),
+				"radius",ps.getString("radius"),
+				"width",ps.getString("width"),
+				"height",ps.getString("height"),
+				"Collider Radius",ps.getString("Collider Radius"),
+				"Collider Width",ps.getString("Collider Width"),
+				"Collider Height",ps.getString("Collider Height")
+			};
 		}
 		return super.touchDown(arg0, arg1, arg2, arg3);
 	}
@@ -208,6 +249,45 @@ public class LibgdxEditor extends Stage {
 	
 	public RayHandler getRayHandler(){
 		return rayHandler;
+	}
+	
+	public boolean isUsingNewUndoRedoSystem(){
+		return newUndoRedoSystem;
+	}
+	
+	public void pushUndoEvent(EditorAction editorAction){
+		if(newUndoRedoSystem){
+			undoNStack.push(editorAction);
+			redoNStack.clear();
+			//refreshUndoRedo();
+			undoRedoUpdated();
+		}
+	}
+	
+	private void refreshUndoRedo(){
+		//String list = "undo :\n";
+		for(int x = 0; x < undoNStack.size(); x++){
+			int pos = x+1;
+			if(pos < undoNStack.size()){
+				if(undoNStack.elementAt(pos).equals(undoNStack.elementAt(x))){
+					undoNStack.removeElementAt(pos);
+					//toast("undo item removed at : "+pos);
+				}
+			}
+			//list += undoNStack.elementAt(x).toString()+"\n";
+		}
+		//list += "__".repeat(5)+"\n redo : \n";
+		for(int x = 0; x < redoNStack.size(); x++){
+			int pos = x+1;
+			if(pos < redoNStack.size()){
+				if(redoNStack.elementAt(pos).equals(redoNStack.elementAt(x))){
+					redoNStack.removeElementAt(pos);
+					//toast("redo item removed at : "+pos);
+				}
+			}
+			//list += redoNStack.elementAt(x).toString()+"\n";
+		}
+		//Gdx.files.external("logs/events.txt").writeString(list,false);
 	}
 	
 	public void setAssetLoader(ProjectAssetLoader assetLoader){
@@ -229,6 +309,8 @@ public class LibgdxEditor extends Stage {
 	private void loadFromPathInternal(){
 		undoList.clear();
 		redoList.clear();
+		undoNStack.clear();
+		redoNStack.clear();
 		String string = "";
 		try {
 			com.badlogic.gdx.files.FileHandle fileHandle = Gdx.files.absolute(project.getScenesPath() + scene);
@@ -236,6 +318,10 @@ public class LibgdxEditor extends Stage {
 		} catch(Exception e){}
 		updateConfig();
 		load(string);
+	}
+	
+	public EditorListener getEditorListener(){
+		return editorListener;
 	}
 	
 	public void setEditorListener(EditorListener listener) {
@@ -265,36 +351,34 @@ public class LibgdxEditor extends Stage {
 	String lastConfig = "...";
 	public void updateConfig(){
 		try {
-			updateConfigInteral();
-		} catch(Exception e){}
-	}
-	
-	private void updateConfigInteral(){
-		String cfg = "";
-		com.badlogic.gdx.files.FileHandle file = Gdx.files.absolute(project.getConfig(scene));
-		if(file.exists())
+			String cfg = "";
+			com.badlogic.gdx.files.FileHandle file = Gdx.files.absolute(project.getConfig(scene));
+			if(file.exists())
 			cfg = file.readString();
-		if(lastConfig.equals(cfg)) return;
-		editorConfig = null;
-		if(!cfg.equals("")){
-			editorConfig = Utils.getProperty(cfg);
-			backgroundColor = editorConfig.getColor("sceneColor");
-		}
-		
-		if(editorConfig == null){
-			lastConfig="nothing...";
-			Gdx.files.absolute(project.getConfig(scene)).writeString(Gdx.files.internal("scene.json").readString(),false);
-			cfg=Gdx.files.absolute(project.getConfig(scene)).readString();
-			editorConfig = Utils.getProperty(cfg);
-			backgroundColor = editorConfig.getColor("sceneColor");
-		}
-		
-		if(editorConfig!=null && !editorConfig.containsKey("logicHeight")){
-			editorConfig.put("logicWidth",Gdx.graphics.getWidth());
-			editorConfig.put("logicHeight",Gdx.graphics.getHeight());
-			saveConfig();
-		} else if(editorConfig!=null){
-			setLogicalWH(editorConfig.getFloat("logicWidth"),editorConfig.getFloat("logicHeight"));
+			if(lastConfig.equals(cfg)) return;
+			editorConfig = null;
+			if(!cfg.equals("")){
+				editorConfig = Utils.getProperty(cfg);
+				backgroundColor = editorConfig.getColor("sceneColor");
+			}
+			
+			if(editorConfig == null){
+				lastConfig="nothing...";
+				Gdx.files.absolute(project.getConfig(scene)).writeString(Gdx.files.internal("scene.json").readString(),false);
+				cfg=Gdx.files.absolute(project.getConfig(scene)).readString();
+				editorConfig = Utils.getProperty(cfg);
+				backgroundColor = editorConfig.getColor("sceneColor");
+			}
+			
+			if(editorConfig!=null && !editorConfig.containsKey("logicHeight")){
+				editorConfig.put("logicWidth",Gdx.graphics.getWidth());
+				editorConfig.put("logicHeight",Gdx.graphics.getHeight());
+				saveConfig();
+				} else if(editorConfig!=null){
+				setLogicalWH(editorConfig.getFloat("logicWidth"),editorConfig.getFloat("logicHeight"));
+			}
+		} catch(Exception e){
+			toast("update config error : "+e.toString());
 		}
 	}
 	
@@ -338,6 +422,13 @@ public class LibgdxEditor extends Stage {
 	
 	public Array<Actor> getChildren(){
 		return getActors();
+	}
+	
+	public void undoRedoUpdated(){
+		if(editorListener!=null)
+			editorListener.onUpdateUndoRedo();
+		if(controlLayer!=null)
+			controlLayer.updateUndoRedo();
 	}
 	
 	public Actor findActor(String name){
@@ -417,7 +508,14 @@ public class LibgdxEditor extends Stage {
 	}
 	
 	public void setLandscape(boolean b){
+		if(b == this.LANDSCAPE) return;
 		this.LANDSCAPE = b;
+		getConfig().put("or",b ? "":"portrait");
+		for(Actor actor:getActors()){
+			if(actor instanceof EditorItem)
+				((EditorItem)actor).update();
+		}
+		saveConfig();
 	}
 	
 	public boolean isLandscape(){
@@ -469,7 +567,8 @@ public class LibgdxEditor extends Stage {
 	}
 	
 	public void setProperites(PropertiesHolder propertiesHolder){
-		this.propertiesHolder = propertiesHolder;
+		//disabled...
+		//this.propertiesHolder = propertiesHolder;
 	}
 	
 	public void setRatioScale(float ratio){
@@ -480,6 +579,8 @@ public class LibgdxEditor extends Stage {
 		//Gdx.files.external("logs/props.txt").writeString("\nprops : "+(propertiesHolder!=null),true);
 		if(propertiesHolder!=null)
 			propertiesHolder.updateProperties();
+		if(controlLayer!=null && controlLayer.getPropertiesItem()!=null)
+			controlLayer.getPropertiesItem().refresh();
 	}
 	
 	String currentState = "";
@@ -495,63 +596,84 @@ public class LibgdxEditor extends Stage {
 		if (getChildren().size == 0)
 			save = "";
 		//String last = (undoList.size()>0)?undoList.elementAt(undoList.size()-1):"";
-		if (!save.equals(currentState)) {
+		if (!(save.equals(currentState) || newUndoRedoSystem)) {
 			undoList.push(currentState);
 			currentState = save;
 			redoList.clear();
 			//Log.e("error_of_star2d","prev :\n"+(undoList.elementAt(undoList.size()-1)+"\n prev : \n"+save));
 		}
-		if (editorListener != null){
+		if (editorListener != null && !newUndoRedoSystem){
 			editorListener.onUpdateUndoRedo();
 		}
-		if(controlLayer!=null)
+		if(controlLayer!=null && !newUndoRedoSystem)
 			controlLayer.updateUndoRedo();
 		return save;
 	}
-	
-	Stack<String> undoList = new Stack<>(), redoList = new Stack<>();
 
 	public boolean canUndo() {
-		return (undoList.size() > 0);
+		return ((newUndoRedoSystem ? undoNStack : undoList).size() > 0);
 	}
 
 	public boolean canRedo() {
-		return (redoList.size() > 0);
+		return ((newUndoRedoSystem ? redoNStack : redoList).size() > 0);
 	}
 
 	public void undo() {
 		if (canUndo()) {
-			String currentItem = selectedActor!=null?PropertySet.getPropertySet(selectedActor).getString("name"):"";
-			String state = currentState;// getSaveState();
-			String element = undoList.pop();
-			load(element);
-			redoList.push(state);
-			if(currentItem.equals("")) return;
-			for(int x=0;x<getChildren().size;x++){
-				if(Utils.isEditorItem(getChild(x)))
-					if(PropertySet.getPropertySet(getChild(x)).getString("name").equals(currentItem)){
-						selectActor(getChild(x));
-						return;
-					}
+			if(newUndoRedoSystem){
+				EditorAction action = undoNStack.pop();
+				redoNStack.push(action.undo());
+				//remove repeated items...
+				while(undoNStack.size() > 0 && undoNStack.elementAt(undoNStack.size()-1).equals(action))
+					undoNStack.removeElementAt(undoNStack.size()-1);
+				//refreshUndoRedo();
+			} else {
+				String currentItem = selectedActor!=null?PropertySet.getPropertySet(selectedActor).getString("name"):"";
+				String state = currentState;// getSaveState();
+				String element = undoList.pop();
+				load(element);
+				redoList.push(state);
+				if(currentItem.equals("")) return;
+				selectActor(findActor(currentItem));
 			}
+			if(editorListener!=null)
+				editorListener.onUpdateUndoRedo();
+			if(controlLayer!=null)
+				controlLayer.updateUndoRedo();
 		}
 	}
 
 	public void redo() {
 		if (canRedo()) {
-			String currentItem = selectedActor!=null?PropertySet.getPropertySet(selectedActor).getString("name"):"";
-			String state = currentState;
-			String element = redoList.pop();
-			load(element);
-			undoList.push(state);
-			if(currentItem.equals("")) return;
-			for(int x=0;x<getChildren().size;x++){
-				if(Utils.isEditorItem(getChild(x)))
-					if(PropertySet.getPropertySet(getChild(x)).getString("name").equals(currentItem)){
-						selectActor(getChild(x));
-						return;
-					}
+			if(newUndoRedoSystem){
+				EditorAction action = redoNStack.pop();
+				undoNStack.push(action.redo());
+				//remove repeated items...
+				while(redoNStack.size() > 0 && redoNStack.elementAt(redoNStack.size()-1).equals(action))
+					redoNStack.removeElementAt(redoNStack.size()-1);
+				//refreshUndoRedo();
+			} else {
+				String currentItem = selectedActor!=null?PropertySet.getPropertySet(selectedActor).getString("name"):"";
+				String state = currentState;
+				String element = redoList.pop();
+				load(element);
+				undoList.push(state);
+				if(currentItem.equals("")) return;
+				selectActor(findActor(currentItem));
 			}
+			if(editorListener!=null)
+				editorListener.onUpdateUndoRedo();
+			if(controlLayer!=null)
+				controlLayer.updateUndoRedo();
+		}
+	}
+	
+	public void setUseNewUndoRedoSystem(boolean use){
+		if(use != newUndoRedoSystem){
+			undoList.clear();
+			redoList.clear();
+			undoNStack.clear();
+			redoNStack.clear();
 		}
 	}
 	
@@ -563,6 +685,11 @@ public class LibgdxEditor extends Stage {
 			world = new World(new Vector2(0,-9.8f),true);
 			if(jsonSave.equals("")) return;
 			HashMap<String,PropertySet> propsMap= new HashMap<>();
+			try {
+				loadUndoRedo();
+			} catch(Exception ex){
+				toast("loading undo redo lists error : "+ex.toString(),9);
+			}
 			ArrayList<PropertySet<String, Object>> propertySets = new Gson().fromJson(jsonSave,
 					new TypeToken<ArrayList<PropertySet<String, Object>>>() {
 					}.getType());
@@ -603,7 +730,7 @@ public class LibgdxEditor extends Stage {
 					continue;
 				}
 				propsMap.put(propertySet.getString("name"),propertySet);
-				addActor((Actor) item);
+				//addActor((Actor) item);
 				((Actor)item).setName(propertySet.getString("name"));
 				item.setProperties(propertySet);
 				//Gdx.files.external("logs/bodies.txt").writeString("add : "+propertySet.getString("name")+",json : \n"+propertySet.toString()+"\n\n",true);
@@ -639,6 +766,23 @@ public class LibgdxEditor extends Stage {
 			Gdx.files.external("logs/load.error.txt").writeString(Utils.getStackTraceString(e)+"\n",true);
 		}
 		//addActor(pointPicker);
+	}
+	
+	public void loadUndoRedo(){
+		String file = project.getUndoRedo(scene);
+		FileHandle fh = Gdx.files.absolute(file);
+		undoNStack.clear();
+		redoNStack.clear();
+		if(fh.exists() && !fh.isDirectory()){
+			String json = fh.readString();
+			PropertySet<String,Object> ps = PropertySet.getFrom(json);
+			ArrayList<String> undo = new Gson().fromJson(ps.getString("undo"),new TypeToken<ArrayList<String>>() {}.getType()),
+				redo = new Gson().fromJson(ps.getString("redo"),new TypeToken<ArrayList<String>>() {}.getType());
+			for(String str:undo)
+				undoNStack.push(EditorAction.getFrom(str,this));
+			for(String str:redo)
+				redoNStack.push(EditorAction.getFrom(str,this));
+		}
 	}
 	
 	@Override
@@ -677,6 +821,19 @@ public class LibgdxEditor extends Stage {
 		return ratioScale;
 	}
 	
+	public String getUndoRedoJson(){
+		ArrayList<String> undo = new ArrayList<>(),
+			redo = new ArrayList<>();
+		for(EditorAction action:undoNStack)
+			undo.add(action.toString());
+		for(EditorAction action:redoNStack)
+			redo.add(action.toString());
+		PropertySet<String,Object> ps = new PropertySet<>();
+		ps.put("undo",new Gson().toJson(undo));
+		ps.put("redo",new Gson().toJson(redo));
+		return ps.toString();
+	}
+	
 	@Override
 	public boolean touchDragged(int arg0, int arg1, int arg2) {
 		handleTouch();
@@ -687,8 +844,8 @@ public class LibgdxEditor extends Stage {
 		OrthographicCamera camera = (OrthographicCamera)getCamera();
 		if(Gdx.input.isTouched() && !Gdx.input.isTouched(1)){
 			PropertySet<String,Object> propertySet = (selectedActor != null && selectedActor instanceof EditorItem) ? ((EditorItem)selectedActor).getPropertySet():null;
-			float deltaX = -Gdx.input.getDeltaX() * camera.zoom * 0.5f;
-			float deltaY = Gdx.input.getDeltaY() * camera.zoom * 0.5f;
+			float deltaX = lockY ? 0 : (-Gdx.input.getDeltaX() * camera.zoom * 0.5f);
+			float deltaY = lockX ? 0 : (Gdx.input.getDeltaY() * camera.zoom * 0.5f);
 			boolean locked = propertySet != null && propertySet.getString("lock").equals("true");
 			if(touch_mode == TOUCHMODE.GRID || selectedActor == null || locked || !(selectedActor instanceof EditorItem)){
 				//movement
@@ -751,7 +908,7 @@ public class LibgdxEditor extends Stage {
         float deltaY = Gdx.input.getY(0) - Gdx.input.getY(1);
         float distance = (float) Math.sqrt(deltaX * deltaX + deltaY * deltaY);
         if (Gdx.input.isTouched(1) && prevDistance != -1) {
-            camera.zoom -= 0.0005f * (distance - prevDistance);
+            camera.zoom -= 0.001f * (distance - prevDistance);
             camera.zoom = MathUtils.clamp(camera.zoom, 0.1f, 3f);
         }
 		
@@ -906,6 +1063,8 @@ public class LibgdxEditor extends Stage {
 	}
 	
 	public boolean setTouchMode(TOUCHMODE mode) {
+		lockX = false;
+		lockY = false;
 		if(touch_mode == mode) return true;
 		if (selectedActor == null) {
 			touch_mode = TOUCHMODE.GRID;
@@ -913,6 +1072,14 @@ public class LibgdxEditor extends Stage {
 		}
 		touch_mode = mode;
 		return true;
+	}
+	
+	public void setLockX(boolean b){
+		lockX = b;
+	}
+	
+	public void setLockY(boolean b){
+		lockY = b;
 	}
 	
 	public enum TOUCHMODE {
@@ -938,8 +1105,6 @@ public class LibgdxEditor extends Stage {
 		super.dispose();
 		debugRenderer.dispose();
 		rayHandler.dispose();
-		if(VisUI.isLoaded())
-			VisUI.dispose();
 		for(Actor actor:getActors())
 			if(actor instanceof Disposable)
 				((Disposable)actor).dispose();

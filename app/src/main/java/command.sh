@@ -4,6 +4,9 @@ BRANCH="master"
 TARGET_PATH="app/src/main/java"
 LOCAL_PATH="./"
 
+# Initialize counter
+PROCESSED_COUNT=0
+
 # Iterate over files in the local folder
 for FILE in $(find $LOCAL_PATH -type f); do
   # Get the relative file path
@@ -24,7 +27,7 @@ for FILE in $(find $LOCAL_PATH -type f); do
       -F message="Update $RELATIVE_PATH" \
       -F content="$CONTENT" \
       -F sha="$API_RESPONSE" \
-      -F branch="$BRANCH"
+      -F branch="$BRANCH" > /dev/null 2>&1
   else
     gh api \
       -X PUT \
@@ -32,6 +35,15 @@ for FILE in $(find $LOCAL_PATH -type f); do
       "/repos/$REPO/contents/$TARGET_PATH/$RELATIVE_PATH" \
       -F message="Add $RELATIVE_PATH" \
       -F content="$CONTENT" \
-      -F branch="$BRANCH"
+      -F branch="$BRANCH" > /dev/null 2>&1
   fi
+
+  # Increment counter
+  ((PROCESSED_COUNT++))
+
+  # Display file name
+  echo "File: $RELATIVE_PATH"
 done
+
+# Display total processed files
+echo "Processed files: $PROCESSED_COUNT"

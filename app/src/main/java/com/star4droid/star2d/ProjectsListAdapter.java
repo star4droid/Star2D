@@ -102,7 +102,7 @@ public class ProjectsListAdapter extends BaseAdapter {
 
 		view.findViewById(R.id.export).setOnClickListener(ex->{
 			/*
-			if(!FileUtil.isExistFile(FileUtil.getPackageDataDir(context)+"/apk/template.apk")){
+			if(!FileUtil.isExistFile(FileUtil.getPackageDataDir(context)+"/apk/template.zip")){
 				MissingFileDialog.showFor(context,MissingFileDialog.TEMPLATE);
 				return;
 			}

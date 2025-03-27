@@ -137,22 +137,38 @@ public class StageImp extends ApplicationAdapter {
 		multiplexer.addProcessor(GameStage);
 		Gdx.input.setInputProcessor(multiplexer);
 		
-		if(assetLoader==null||spriteSheetLoader==null){
+		if(assetLoader==null){
 			assetLoader = new ProjectAssetLoader(project);
 			assetLoader.setAssetsLoadListener(()->{
 				spriteSheetLoader.start();
 				//loadComplete = true;
 				//onCreate();
 			});
+			if(spriteSheetLoader==null){
+				spriteSheetLoader = new SpriteSheetLoader(assetLoader,project,(errorHappend,message)->{
+					loadComplete = true;
+				});
+			}
+		} else if(spriteSheetLoader==null){
 			spriteSheetLoader = new SpriteSheetLoader(assetLoader,project,(errorHappend,message)->{
 				loadComplete = true;
 			});
-			assetLoader.finishLoading();
+			//assetLoader.finishLoading();
 		} else {
 			loadComplete = true;
 			onCreateCalled = true;
 			try {
-			    onCreate();
+				if(assetLoader.isFinished())
+			    	onCreate();
+				else {
+						onCreateCalled = false;
+						loadComplete = false;
+						assetLoader.setAssetsLoadListener(()->{
+							spriteSheetLoader.start();
+							//loadComplete = true;
+							//onCreate();
+						});
+					}
 			} catch(Exception e){
 			    throw new RuntimeException(Utils.getStackTraceString(e));
 			}
@@ -246,6 +262,30 @@ public class StageImp extends ApplicationAdapter {
 	
 	public void drawDebug(){
 	    debugRenderer.render(world, GameStage.getCamera().combined);
+	}
+	
+	public int toInt(String string){
+	    try {
+	        return Utils.getInt(string);
+	    } catch(Exception ex){
+	        return 0;
+	    }
+	}
+	
+	public float toFloat(String string){
+	    try {
+	        return Utils.getFloat(string);
+	    } catch(Exception ex){
+	        return 0;
+	    }
+	}
+	
+	public int getRealNumber(String key){
+	    return toInt(getValue(key));
+	}
+	
+	public int getNumber(String key){
+	    return toInt(getValue(key));
 	}
 	
 	public StageImp setSpriteSheetLoader(SpriteSheetLoader spriteSheetLoader){
@@ -369,6 +409,8 @@ public class StageImp extends ApplicationAdapter {
 	@Override
 	public final void render() {
 		super.render();
+		if(assetLoader!=null)
+			assetLoader.update();
 		if(needsUpdate) return;
 		if(preferences==null)
 		    preferences = Gdx.app.getPreferences("prefs");
@@ -499,7 +541,9 @@ public class StageImp extends ApplicationAdapter {
 	
 	public boolean setImage(PlayerItem playerItem,String image){
 	    String imgPath = (project.getImagesPath()+image).replace("//","/");
-		if(assetLoader.contains(imgPath)){
+		//if(!assetLoader.isFinished())
+			//assetLoader.finishLoading();
+		if(assetLoader.isLoaded(imgPath)){
 			playerItem.setImage(assetLoader.get(imgPath,Texture.class));
 			return true;
 		}
@@ -1003,6 +1047,10 @@ public class StageImp extends ApplicationAdapter {
 			UiStage = ui;
 			GameStage = game;
 		}
+	}
+	
+	public int random(int min,int max){
+		return new java.util.Random().nextInt(max - min + 1) + min;
 	}
 	
 	public class LightInfo {

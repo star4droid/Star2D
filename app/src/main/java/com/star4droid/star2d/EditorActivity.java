@@ -20,6 +20,8 @@ import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
@@ -28,6 +30,7 @@ import androidx.fragment.app.Fragment;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.backends.android.AndroidFragmentApplication;
 import com.github.anrwatchdog.ANRError;
 import com.github.anrwatchdog.ANRWatchDog;
@@ -38,6 +41,7 @@ import com.star4droid.star2d.Activities.FilesManagerActivity;
 import com.star4droid.star2d.Adapters.AddPopup;
 import com.star4droid.star2d.Adapters.AddLightPopup;
 import com.star4droid.star2d.Adapters.ColourSelector;
+import com.star4droid.star2d.Adapters.ExportDialog;
 import com.star4droid.star2d.Adapters.EditorField;
 import com.star4droid.star2d.Adapters.MissingFileDialog;
 import com.star4droid.star2d.Adapters.Properties;
@@ -60,11 +64,13 @@ import com.star4droid.star2d.Items.Editor;
 import com.star4droid.star2d.editor.LibgdxEditor;
 import com.star4droid.star2d.evo.R;
 
+import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.Executors;
 
 public class EditorActivity extends AppCompatActivity implements AndroidFragmentApplication.Callbacks {
     public String ADD_SCENE = "Add Scene";
@@ -73,12 +79,15 @@ public class EditorActivity extends AppCompatActivity implements AndroidFragment
     Spinner scenesSpinner, bodiesSpinner;
     Editor editor;
 	ActivityResultLauncher<String[]> files_picker;
+	ActivityResultLauncher saveFile;
     LinearLayout sceneLinear, propsLinear, right_linear;
     Project project;
     Properties properties;
     ArrayList<String> scenesList = new ArrayList<>();
     ViewPager2 right_viewPager;
-    String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890_";
+	Uri source;
+    String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890_",
+        filePickerAction = "",exported_project="",saveType="";
     ArrayList<String> bodiesList;
     BodiesFragment bodiesFragment;
 	android.app.AlertDialog playerDialog;
@@ -135,16 +144,44 @@ public class EditorActivity extends AppCompatActivity implements AndroidFragment
         registerForActivityResult(
             new ActivityResultContracts.OpenMultipleDocuments(),
             uriList -> {
-				String path = editor.getApp().getFileBrowser().getCurrentDir().file().getAbsolutePath();
+				String path = editor.getApp().getFileBrowser() != null ? editor.getApp().getFileBrowser().getCurrentDir().file().getAbsolutePath() : "";
 				for(Uri uri:uriList){
-					String last = Uri.fromFile(new java.io.File(FileUtil.convertUriToFilePath(EditorActivity.this,uri))).getLastPathSegment();
-					String to = path+"/"+last;
-					FileUtil.writeFile(to,"");
-					FileUtil.writeFile(getExternalFilesDir("logs")+"/file.txt","to : "+to);
-					UriUtils.copyUriToUri(EditorActivity.this,uri,Uri.fromFile(new java.io.File(to)));
+				    if(filePickerAction.equals("files")){
+    					String last = Uri.fromFile(new java.io.File(FileUtil.convertUriToFilePath(EditorActivity.this,uri))).getLastPathSegment();
+    					String to = path+"/"+last;
+    					FileUtil.writeFile(to,"");
+    					//FileUtil.writeFile(getExternalFilesDir("logs")+"/file.txt","to : "+to);
+    					UriUtils.copyUriToUri(EditorActivity.this,uri,Uri.fromFile(new java.io.File(to)));
+						editor.getApp().getFileBrowser().refreshFileList();
+    				} else if(filePickerAction.equals("restore")){
+						Gdx.app.postRunnable(()->editor.getApp().toast("Restoring..."));
+    				    try {
+							restoreProject(getContentResolver().openInputStream(uri));
+						} catch(Exception e){}
+    				}
 				}
-				editor.getApp().getFileBrowser().refreshFileList();
+				
 			});
+		
+		saveFile = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),new ActivityResultCallback<ActivityResult>(){
+			@Override
+			public void onActivityResult(ActivityResult result) {
+				if(result==null||result.getData()==null) return;
+				if(saveType.equals("export")){
+					Uri target = result.getData().getData();
+					ExportDialog.showFor(EditorActivity.this,exported_project,target);
+					return;
+				}
+				Uri uri = result.getData().getData();
+				try {
+					Utils.saveFileToPath(source,uri,EditorActivity.this);
+					FileUtil.deleteFile(source.getPath());
+					Utils.showMessage(EditorActivity.this,"Saved ...");
+					} catch (Exception ex){
+					Utils.showMessage(EditorActivity.this,"save file error : "+ex.toString());
+				}
+			}
+		});
 		/*
 		new ANRWatchDog().setANRListener(new ANRWatchDog.ANRListener() {
     		@Override
@@ -156,13 +193,13 @@ public class EditorActivity extends AppCompatActivity implements AndroidFragment
 		}).start();
 		*/
         EngineSettings.init(this);
+        com.star4droid.star2d.Adapters.UpdateChecker.checkForUpdate(this);
         JointsHelper.init(this);
         Utils.setLanguage(this);
         setContentView(R.layout.editor);
 		init();
         // Hide system UI
-        
-		Utils.hideSystemUi(getWindow());
+		//Utils.hideSystemUi(getWindow());
         HashMap<String, Object> map;
 
         try {
@@ -172,8 +209,8 @@ public class EditorActivity extends AppCompatActivity implements AndroidFragment
             Utils.showMessage(this, "spinner map init error : " + ex);
             return;
         }
-
-        project = new Project(getIntent().getStringExtra("project"));
+        
+        project = new Project(""/*getIntent().getStringExtra("project")*/);
         
         editor.setProject(project);
 		
@@ -184,7 +221,24 @@ public class EditorActivity extends AppCompatActivity implements AndroidFragment
 		editor.setEdtitorReadyAction(()->{
 			new Handler(Looper.getMainLooper()).post(()->continueInit());
 		});
+		editor.setWhenAppReady(()->{
+			initApp();
+		});
 	}
+	
+	private void restoreProject(InputStream inputStream) {
+		 new Thread(){
+			 public void run(){
+				 try {
+				 Utils.unzipf(inputStream,getFilesDir()+"/projects/","");
+				 Gdx.app.postRunnable(()->{
+					 editor.getApp().toast("project restored...");
+				 	editor.getApp().getProjectsStage().refresh();
+				 });
+				 } catch(Exception ex){}
+			 }
+		 }.start();
+    }
 	
 	private void openAnimation(String file){
 		Intent intent = new Intent();
@@ -194,414 +248,59 @@ public class EditorActivity extends AppCompatActivity implements AndroidFragment
 		startActivity(intent);
 	}
 	
+	private void initApp(){
+		editor.getApp().getProjectsStage().setExportRunnable(()->{
+			exported_project = editor.getApp().getProjectsStage().getSelectedProject().file().getAbsolutePath();
+			saveType = "export";
+			String name = editor.getApp().getProjectsStage().getSelectedProject().name();
+			Utils.saveFile(name+".apk",saveFile);
+		});
+		editor.getApp().getProjectsStage().setBackupRunnable(()->{
+			saveType = "backup";
+			String name = editor.getApp().getProjectsStage().getSelectedProject().name();
+			String exportPath = Gdx.files.external("Star2D/backups/"+name+".zip").file().getAbsolutePath();
+			String path = editor.getApp().getProjectsStage().getSelectedProject().file().getAbsolutePath();
+			editor.getApp().toast("Please wait...");
+			Executors.newSingleThreadExecutor().execute(()->{
+				try {
+					Utils.createEmptyZipFile(exportPath);
+					Utils.zipf(path,exportPath,"");
+					source = Uri.fromFile(new java.io.File(exportPath));
+					Utils.saveFile(name+".zip",saveFile);
+				} catch(Exception e){
+					
+				}
+			});
+		});
+		editor.getApp().getProjectsStage().setImportRunnable(()->{
+		    filePickerAction = "import";
+		    files_picker.launch(new String[] {"application/zip"});
+		});
+		
+	}
+	
 	private void continueInit(){
         indexFiles();
-        refreshBodies();
 		editor.getApp().getFileBrowser().setAnimationOpen(file->{
 			openAnimation(file);
 		});
-		SPNote.show(this);
+		
 		editor.getApp().getFileBrowser().setPickFilesRunnable(()->{
+		    this.filePickerAction = "files";
 			files_picker.launch(new String[] {"*/*"});
 		});
-        new Timer().schedule(new TimerTask() {
-            @Override
-            public void run() {
-                new Handler(Looper.getMainLooper()).post(new Runnable() {
-                    @Override
-                    public void run() {
-                        editor.updateChilds();
-                    }
-                });
-            }
-        }, 200);
-        setupSwitchModeButton(move, LibgdxEditor.TOUCHMODE.MOVE);
-        setupSwitchModeButton(scale, LibgdxEditor.TOUCHMODE.SCALE);
-        setupSwitchModeButton(grid, LibgdxEditor.TOUCHMODE.GRID);
-        setupSwitchModeButton(rotate, LibgdxEditor.TOUCHMODE.ROTATE);
-        updateScenes();
 		
-        findViewById(R.id.add_light).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View add_btn) {
-                AddLightPopup.showFor(EditorActivity.this, add_btn, editor);
-            }
-        });
-        addBody.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View arg0) {
-                AddPopup.showFor(EditorActivity.this, addBody, editor);
-            }
-        });
-
-        findViewById(R.id.back).setOnClickListener(b -> {
-            finish();
-        });
-
-        deleteScene.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                AlertDialog.Builder builder = new AlertDialog.Builder(EditorActivity.this);
-                builder.setTitle("Delete");
-                builder.setPositiveButton("Delete", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface arg0, int arg1) {
-                        project.deleteScene(editor.getScene());
-                        editor.setScene("scene1");
-                        editor.loadFromPath();
-                        editor.updateChilds();
-                        updateScenes();
-                        refreshBodies();
-                    }
-                });
-                builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface arg0, int arg1) {
-
-                    }
-                });
-                builder.show();
-            }
-        });
-
-        undo.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (editor.canUndo()) editor.undo();
-            }
-        });
-
-        redo.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View arg0) {
-                if (editor.canRedo()) editor.redo();
-            }
-        });
-
-        openFiles.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View arg0) {
-                Intent i = new Intent();
-                i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                i.setClass(EditorActivity.this, FilesManagerActivity.class);
-                i.putExtra("path", project.getPath());
-                startActivity(i);
-            }
-        });
-
-        scenesSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> arg0, View arg1, int position, long arg3) {
-                deleteScene.setVisibility(scenesList.get(position).equalsIgnoreCase("scene1") ? View.GONE : View.VISIBLE);
-                renameScene.setVisibility(scenesList.get(position).equalsIgnoreCase("scene1") ? View.GONE : View.VISIBLE);
-                if (!(editor.getScene().equalsIgnoreCase(scenesList.get(position)))) {
-                    if (scenesList.get(position).equals(ADD_SCENE)) {
-                        editScene("add");
-                        for (int x = 0; x < scenesList.size(); x++) {
-                            if (scenesList.get(x).equalsIgnoreCase(editor.getScene())) {
-                                scenesSpinner.setSelection(x);
-                                break;
-                            }
-                        }
-                    } else {
-                        if (!scenesList.get(position).equalsIgnoreCase(editor.getScene())) {
-                            //generate code for the current scene and save it...
-                            CodeGenerator.generateFor(editor.getLibgdxEditor(), cd -> {
-                                FileUtil.writeFile(project.getCodesPath(editor.getScene()), cd);
-                                editor.setScene(scenesList.get(position));
-                                editor.loadFromPath();
-                                //generate code for the new scene and save it
-                                CodeGenerator.generateFor(editor.getLibgdxEditor(), code -> {
-                                    FileUtil.writeFile(project.getCodesPath(editor.getScene()), code);
-                                });
-                                refreshBodies();
-                            });
-                        }
-                    }
-                }
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> arg0) {
-            }
-        });
-
-        deleteBody.setOnClickListener(v -> {
-            project.deleteBody(PropertySet.getPropertySet(editor.getSelectedView()).get("name").toString(), editor.getScene());
-            editor.removeView(editor.getSelectedView());
-            editor.selectView(null);
-            refreshBodies();
-        });
-
-        save.setOnClickListener(v -> {
-            save.setScaleX(0);
-            save.setScaleY(0);
-            save.animate().scaleX(1).scaleY(1).start();
-            project.save(editor);
-        });
-
-        sceneLinear.setOnClickListener(v -> {
-            scenesSpinner.performClick();
-        });
-
-        sceneColor.setOnClickListener(v -> {
-            ColourSelector.show(editor, "sceneColor");
-        });
-
-        copyScene.setOnClickListener(v -> {
-            editScene("copy");
-        });
-
-        renameScene.setOnClickListener(v -> {
-            editScene("rename");
-        });
+		//SPNote.show(this);
 		
-        editor.setEditorListener(new Editor.EditorListener() {
-            @Override
-            public void onUpdateUndoRedo() {
-                updateUndoRedo();
-            }
-
-            @Override
-            public void onBodySelected() {
-                refreshBodies();
-                bodiesFragment.update();
-				editor.setPropertiesIfNotSet();
-				//editor.updateProperties();
-                if (editor.getSelectedView() != null) {
-                    String isLock = PropertySet.getPropertySet(editor.getSelectedView()).getString("lock");
-                    lock.setImageDrawable(getDrawable(isLock.equals("true") ? R.drawable.lock : R.drawable.unlock));
-                }
-            }
-        });
-
-        lock.setOnClickListener(view -> {
-            if (editor.getSelectedView() != null) {
-                PropertySet<String, Object> propertySet = PropertySet.getPropertySet(editor.getSelectedView());
-                String isLock = propertySet.getString("lock").equals("true") ? "false" : "true";
-                lock.setImageDrawable(getDrawable(isLock.equals("true") ? R.drawable.lock : R.drawable.unlock));
-                propertySet.put("lock", isLock);
-            }
-        });
-
-        center_camera.setOnClickListener(view -> {
-            editor.centerCamera();
-        });
-
-        rotateScreen.setOnClickListener(view -> {
-            PropertySet<String, Object> sceneCg = editor.getConfig();
-            String changeTo = editor.getOrienation() == Editor.ORIENATION.LANDSCAPE ? "" : "landscape";
-            sceneCg.put("or", changeTo);
-            editor.setOrienation(changeTo.equals("") ? Editor.ORIENATION.PORTRAIT : Editor.ORIENATION.LANDSCAPE);
-            FileUtil.writeFile(project.getConfig(editor.getScene()), sceneCg.toString());
-        });
-
-        play.setOnClickListener(view -> {
-            compileAndRun(false);
-        });
-        
-        playFloat.setOnClickListener(v->{
-			compileAndRun(true);
-		});
-        
-        findViewById(R.id.right_swipe).setOnClickListener(view -> {
-        });
         bodiesFragment = new BodiesFragment(editor);
-        SwipeHelper.useViewToSwipe(findViewById(R.id.right_swipe), right_linear, SwipeHelper.SwipeType.RIGHT_LEFT, 1, Integer.MAX_VALUE);
         properties = new Properties(this);
-        propsLinear.addView(properties.getView());
+        //propsLinear.addView(properties.getView());
 		
         properties.getViewPager().setAdapter(new FragmentAdapter(this, editor));
         right_viewPager.setAdapter(new RightFragmentAdapter(this, editor));
         //disable viewpager touch because we don't need it currently...
         right_viewPager.requestDisallowInterceptTouchEvent(true);
         
-    }
-    
-    private void compileAndRun(boolean window){
-        if(playerDialog!=null){
-                exit();
-                return;
-            }
-            if (!FileUtil.isExistFile(FileUtil.getPackageDataDir(EditorActivity.this) + "/bin/cp.jar")) {
-                MissingFileDialog.showFor(EditorActivity.this, MissingFileDialog.CP);
-                return;
-            }
-            final AlertDialog[] dialog = {Utils.showMessage(EditorActivity.this, "generating java...")};
-            dialog[0].setCancelable(false);
-            CodeGenerator.generateFor(editor.getLibgdxEditor(), new CodeGenerator.GenerateListener() {
-                @Override
-                public void onGenerate(String code) {
-                    FileUtil.writeFile(project.getCodesPath(editor.getScene()), code);
-                    CompileThread compile = new CompileThread(project.getPath() + "/java/", false);
-                    compile.setOnChangeStatus(new CompileThread.OnStatusChanged() {
-                        @Override
-                        public void onStatus(String s) {
-                            dialog[0].dismiss();
-                            dialog[0] = Utils.updateMessage(dialog[0], s, false);
-                        }
-
-                        @Override
-                        public void onEnd(String message) {
-                            //delete the generated code ?
-                            //FileUtil.deleteFile(project.getCodesPath(editor.getScene()));
-                        }
-
-                        @Override
-                        public void onError(String error) {
-                            dialog[0].dismiss();
-                            dialog[0] = Utils.updateMessage(dialog[0], error, true);
-                        }
-
-                        @Override
-                        public void onSuccess(String message) {
-                            //dialog[0] = Utils.updateMessage(dialog[0], message, true);
-                            if(dialog[0]!=null&&dialog[0].isShowing())
-                                dialog[0].dismiss();
-                            java.io.File file = new java.io.File(project.getDex());
-                            if(file.exists())
-                                file.setWritable(true);
-                            FileUtil.writeFile(project.getDex(), "");
-                            FileUtil.moveFile(project.getPath() + "/java/classes.dex", project.getDex());
-                            editor.getApp().play(project.getPath(),editor.getScene());
-							/*if(window){
-                                playerDialog = PlayerDialog.showFor(EditorActivity.this,project.getPath(),editor.getScene());
-								playFloat.setVisibility(View.INVISIBLE);
-								//play.setVisibilty(View.INVISIBLE);
-								scenesSpinner.setEnabled(false);
-								switchFor(false,scenesSpinner,copyScene,renameScene,addBody,deleteBody,findViewById(R.id.add_light));
-								play.setImageResource(R.drawable.ic_pause_black);
-								editor.updateProperties();
-                                return;
-                            }
-                            Intent i = new Intent();
-                            if (editor.getOrienation() == Editor.ORIENATION.PORTRAIT) {
-                                i.setClass(EditorActivity.this, PortraitPlayer.class);
-                            } else i.setClass(EditorActivity.this, LandscapePlayer.class);
-                            i.putExtra("path", project.getPath());
-							i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                            i.putExtra("scene", editor.getScene());
-                            startActivity(i);
-							*/
-                            //dialog.dismiss();
-                        }
-
-                    });
-                    compile.start();
-                }
-                });
-    }
-    
-    public void updateUndoRedo() {
-        undo.setImageTintList(ColorStateList.valueOf(editor.canUndo() ? getColor(R.color.sim_yellow) : getColor(R.color.unselect_color)));
-        redo.setImageTintList(ColorStateList.valueOf(editor.canRedo() ? getColor(R.color.sim_yellow) : getColor(R.color.unselect_color)));
-    }
-
-    public void selectMode(View v) {
-        grid.setBackground(getDrawable(R.drawable.imgs_style));
-        move.setBackground(getDrawable(R.drawable.imgs_style));
-        rotate.setBackground(getDrawable(R.drawable.imgs_style));
-        scale.setBackground(getDrawable(R.drawable.imgs_style));
-        v.setBackground(getDrawable(R.drawable.select_style));
-    }
-
-    public void refreshBodies() {
-        bodiesList = editor.getBodiesList();
-        bodiesSpinner.setOnItemSelectedListener(null);
-        bodiesSpinner.setAdapter(getSpinnerAdapter(bodiesList, this, bodiesSpinner));
-        if (editor.getSelectedView() != null) {
-            bodiesSpinner.setSelection(getCurrentBody());
-        }
-        bodiesSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> _param1, View _param2, int position, long _param4) {
-                boolean found = editor.selectByName(bodiesList.get(position));
-                //if(!found) refreshBodies();//Toast.makeText(EditorActivity.this,"not found",Toast.LENGTH_SHORT).show();
-                deleteBody.setVisibility(View.VISIBLE);
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> _param1) {
-                deleteBody.setVisibility(View.INVISIBLE);
-
-            }
-        });
-        if (bodiesFragment != null) bodiesFragment.update();
-    }
-
-    public void editScene(String action) {
-        View dialog_cv = getLayoutInflater().inflate(R.layout.create_dialog, null);
-        final AlertDialog alertDialog = new AlertDialog.Builder(this).create();
-        final EditText name = dialog_cv.findViewById(R.id.name);
-        ((TextView) dialog_cv.findViewById(R.id.title)).setText(action.equals("add") ? "Add Scene" : (action.equals("copy") ? "Copy Scene" : "Rename Scene"));
-        ((TextView) dialog_cv.findViewById(R.id.add)).setText("Add");
-        name.setHint("Scene Name...");
-        if (!action.equals("add")) name.setText(editor.getScene());
-        alertDialog.setView(dialog_cv);
-        dialog_cv.findViewById(R.id.add).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View arg0) {
-                String path = project.getScenesPath() + name.getText().toString();
-                if (name.getText().toString().equals("")) return;
-                for (char c : name.getText().toString().toCharArray()) {
-                    //only possible chars...to prevent writing strange chars :|
-                    if (!(chars.contains("" + c))) {
-                        Utils.showMessage(EditorActivity.this, "Not Allowed char : " + c);
-                        return;
-                    }
-                }
-                if (FileUtil.isExistFile(path)) {
-                    Utils.showMessage(EditorActivity.this, "There is scene with the same name..!!");
-                    return;
-                }
-                FileUtil.writeFile(path, "");
-                if (action.equals("add")) {
-
-                } else if (action.equals("rename")) {
-                    project.renameScene(editor.getScene(), name.getText().toString());
-                } else if (action.equals("copy")) {
-                    project.copyScene(editor.getScene(), name.getText().toString());
-                }
-                if (FileUtil.isExistFile(path)) {
-                    editor.setScene(name.getText().toString());
-                    editor.loadFromPath();
-                    updateScenes();
-                } else {
-                    Utils.showMessage(EditorActivity.this, "Failed to create the path..");
-                    return;
-                }
-                alertDialog.dismiss();
-            }
-        });
-        alertDialog.show();
-    }
-
-    int getCurrentBody() {
-        ArrayList<String> arr = editor.getBodiesList();
-        for (int x = 0; x < arr.size(); x++) {
-            if (!PropertySet.getPropertySet(editor.getSelectedView()).containsKey("name")) continue;
-            if (PropertySet.getPropertySet(editor.getSelectedView()).get("name").toString().equals(arr.get(x))) {
-                return x;
-            }
-        }
-        return 0;
-    }
-
-    public void updateScenes() {
-        scenesList.clear();
-        ArrayList<String> temp = new ArrayList<>();
-        FileUtil.listDir(project.getScenesPath(), temp);
-        for (String s : temp) scenesList.add(Uri.parse(s).getLastPathSegment());
-        if (scenesList.size() == 0) scenesList.add("scene1");
-        scenesList.add(ADD_SCENE);
-        String prev = editor.getScene();
-        scenesSpinner.setAdapter(getSpinnerAdapter(scenesList, this, null));
-        for (int x = 0; x < scenesList.size(); x++) {
-            if (prev.equalsIgnoreCase(scenesList.get(x))) {
-                scenesSpinner.setSelection(x);
-                break;
-            }
-        }
     }
 
     public void init() {
@@ -631,59 +330,6 @@ public class EditorActivity extends AppCompatActivity implements AndroidFragment
         copyScene = findViewById(R.id.copyScene);
         right_viewPager = findViewById(R.id.right_vp);
         right_linear = findViewById(R.id.right_linear);
-    }
-
-    public void setupSwitchModeButton(View v, final LibgdxEditor.TOUCHMODE touchmode) {
-        v.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (editor.getLibgdxEditor().getActors().size > 0) {
-                    selectMode(view);
-                    editor.setTouchMode(touchmode);
-                } else {
-                    selectMode(grid);
-                    editor.setTouchMode(LibgdxEditor.TOUCHMODE.GRID);
-                }
-            }
-        });
-    }
-
-    @Override
-    public void onWindowFocusChanged(boolean hasFocus) {
-        super.onWindowFocusChanged(hasFocus);
-        if (hasFocus) {
-            Utils.hideSystemUi(getWindow().getDecorView());
-        } else {
-            try {
-                Object wmgInstance = Class.forName("android.view.WindowManagerGlobal").getMethod("getInstance").invoke(null);
-                Field viewsField = Class.forName("android.view.WindowManagerGlobal").getDeclaredField("mViews");
-
-                viewsField.setAccessible(true);
-                ArrayList<View> views = (ArrayList<View>) viewsField.get(wmgInstance);
-                for (View view : views) {
-                    Utils.hideSystemUi(view);
-                    if (Build.VERSION.SDK_INT < 30)
-                        view.setOnSystemUiVisibilityChangeListener(new View.OnSystemUiVisibilityChangeListener() {
-                            @Override
-                            public void onSystemUiVisibilityChange(int visibility) {
-                                Utils.hideSystemUi(view);
-                            }
-                        });
-                    else
-                        view.setOnApplyWindowInsetsListener(new View.OnApplyWindowInsetsListener() {
-                            @Override
-                            public WindowInsets onApplyWindowInsets(View v, WindowInsets insets) {
-                                Utils.hideSystemUi(v);
-                                return insets;
-                            }
-
-                        });
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-        }
     }
 
     public void indexFiles() {

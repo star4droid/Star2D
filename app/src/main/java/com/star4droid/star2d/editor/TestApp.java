@@ -5,6 +5,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.kotcrab.vis.ui.VisUI;
 import com.kotcrab.vis.ui.util.ToastManager;
@@ -12,7 +13,10 @@ import com.star4droid.star2d.Helpers.editor.Project;
 import com.star4droid.star2d.editor.ui.ControlLayer;
 import com.star4droid.star2d.editor.ui.FileBrowser;
 import com.star4droid.star2d.editor.ui.FilePicker;
+import com.star4droid.star2d.editor.ui.ProjectsListStage;
+import com.star4droid.star2d.editor.ui.sub.inputs.NumberInputDialog;
 import com.star4droid.template.Items.StageImp;
+import com.star4droid.template.LoadingStage;
 import com.star4droid.template.Utils.ProjectAssetLoader;
 
 public class TestApp implements ApplicationListener {
@@ -20,15 +24,20 @@ public class TestApp implements ApplicationListener {
 	Project project;
 	ToastManager toastManager;
 	boolean landscape = true;
-	Runnable whenEditorReady;
+	Runnable whenEditorReady,whenAppReady;
 	ProjectAssetLoader projectAssetLoader;
 	StageImp stageImp;
-	int width=-1,height = -1;
+	LoadingStage loadingStage;
+	int width=-1,height = -1,currentEditorPos = 0;
 	Stage UiStage;
 	FilePicker filePicker;
 	ControlLayer controlLayer;
 	InputMultiplexer multiplexer;
+	ProjectsListStage projectsListStage;
 	FileBrowser fileBrowser;
+	public Array<LibgdxEditor> editors = new Array<>();
+	
+	public TestApp(){}
 	
 	public TestApp(Project project){
 		this.project = project;
@@ -39,48 +48,153 @@ public class TestApp implements ApplicationListener {
 		//Gdx.files.external("logs/testapp.txt").writeString("test app created\n"+"_".repeat(10)+"\n",true);
 		if(!VisUI.isLoaded())
 			VisUI.load(VisUI.SkinScale.X2);
-		
-		controlLayer = new ControlLayer(this);
-		
+		loadingStage = new LoadingStage();
+		projectsListStage = new ProjectsListStage(this);
 		ScreenViewport screenViewport = new ScreenViewport();
 		UiStage = new Stage(screenViewport);
 		
-		UiStage.addActor(controlLayer);
-		
 		//screenViewport.setUnitsPerPixel(1 / 1.5f);
-		toastManager = new ToastManager(UiStage);
+		
 		filePicker = new FilePicker().setShowImageIcons(true);
 		filePicker.setVisible(false);
-		
+		Gdx.input.setInputProcessor(projectsListStage);
+		if(this.whenAppReady!=null)
+			this.whenAppReady.run();
+		//projectAssetLoader.finishLoading();
+	}
+	
+	public void openProject(Project project){
+	    this.project = project;
 		projectAssetLoader = new ProjectAssetLoader(new com.star4droid.star2d.Helpers.Project(project.getPath()));
 		projectAssetLoader.setAssetsLoadListener(()->{
-			editor = new LibgdxEditor(project,"scene1",projectAssetLoader);
-        	editor.loadFromPath();
-			editor.setToastManager(toastManager);
-			editor.setFilePicker(filePicker);
-			editor.setControlLayer(controlLayer);
-			editor.setUiStage(UiStage);
-			fileBrowser = new FileBrowser(project.getPath(),projectAssetLoader).setToastManager(toastManager);
-			fileBrowser.setVisible(false);
-			UiStage.addActor(fileBrowser);
-			try {
-				landscape = editor.getConfig().getString("or").equals("");
-			} catch(Exception e){}
-			//no need to call this method if the landscape mode doesn't change
-			if(!landscape)
-				editor.setLandscape(landscape);
-			if(whenEditorReady!=null)
-				whenEditorReady.run();
-			multiplexer = new InputMultiplexer();
-			multiplexer.addProcessor(UiStage);
+			if(!VisUI.isLoaded()) return;
+			onLoad(project);
+		});
+	}
+	
+	public ProjectsListStage getProjectsStage(){
+		return projectsListStage;
+	}
+	
+	public void setWhenAppReady(Runnable runnable){
+		this.whenAppReady = runnable;
+		if(filePicker!=null && whenAppReady!=null)
+				whenAppReady.run();
+	}
+	
+	private void onLoad(Project project){
+		editors.clear();
+		UiStage.clear();
+		toastManager = new ToastManager(UiStage);
+		editor = new LibgdxEditor(project,"scene1",projectAssetLoader);
+		editor.loadFromPath();
+		editor.setToastManager(toastManager);
+		editor.setFilePicker(filePicker);
+		if(controlLayer==null)
+	    	controlLayer = new ControlLayer(this);
+		UiStage.addActor(controlLayer);
+		editor.setControlLayer(controlLayer);
+		editor.setUiStage(UiStage);
+		fileBrowser = new FileBrowser(project.getPath(),projectAssetLoader).setToastManager(toastManager);
+		fileBrowser.setVisible(false);
+		UiStage.addActor(fileBrowser);
+		try {
+			String or = editor.getConfig().getString("or");
+			landscape = or.equals("") || or.contains("landscape");
+		} catch(Exception e){}
+		editor.setLandscape(landscape);
+		if(whenEditorReady!=null)
+		    whenEditorReady.run();
+		multiplexer = new InputMultiplexer();
+		multiplexer.addProcessor(UiStage);
+		multiplexer.addProcessor(editor);
+		Gdx.input.setInputProcessor(multiplexer);
+		editor.getFilePicker(false);
+		controlLayer.getBodiesList().update();
+		if(width != -1){
+			resize(width,height);
+		}
+		editors.add(editor);
+		controlLayer.tabsItem.refresh();
+	}
+	
+	public void openSceneInNewEditor(String scene){
+		int pos = 0;
+		for(LibgdxEditor ed:editors){
+			//if the scene already opened, switch to it...
+			if(ed.getScene().toLowerCase().equals(scene.toLowerCase())){
+				setCurrentEditor(pos);
+				return;
+			}
+			pos++;
+		}
+		LibgdxEditor editor = new LibgdxEditor(project,scene,projectAssetLoader);
+		editor.setEditorListener(this.editor.getEditorListener());
+		editor.setProperites(this.editor.getPropertiesHolder());
+		editor.loadFromPath();
+		editor.setToastManager(toastManager);
+		editor.setFilePicker(filePicker);
+		
+		editor.setControlLayer(controlLayer);
+		editor.setUiStage(UiStage);
+		
+		try {
+			landscape = editor.getConfig().getString("or").equals("");
+		} catch(Exception e){}
+		editor.setLandscape(landscape);
+		//if(whenEditorReady!=null)
+			//whenEditorReady.run();
+		
+		//editor.getFilePicker(false);
+		if(width != -1){
+			resize(width,height);
+		}
+		editors.add(editor);
+		setCurrentEditor(editors.size - 1);
+	}
+	
+	public ControlLayer getControlLayer(){
+		return controlLayer;
+	}
+	
+	public void setControlLayer(ControlLayer layer){
+		this.controlLayer = layer;
+	}
+	
+	public void setCurrentEditor(int pos){
+		//if(currentEditorPos == pos) return;
+		if(pos < editors.size){
+			multiplexer.removeProcessor(editor);
+			editor = editors.get(pos);
+			landscape = editor.isLandscape();
 			multiplexer.addProcessor(editor);
 			Gdx.input.setInputProcessor(multiplexer);
-			editor.getFilePicker(false);
-			if(width != -1){
-				resize(width,height);
-			}
-		});
-		projectAssetLoader.finishLoading();
+			currentEditorPos = pos;
+			controlLayer.tabsItem.refresh();
+			controlLayer.getBodiesList().update();
+		} else toast("Invalid Selection!\nsize : "+editors.size+",pos : "+pos);
+	}
+	
+	public boolean isProjectOpened(){
+		return editors.size > 0;
+	}
+	
+	public void closeProject(){
+		for(LibgdxEditor editor:editors)
+			editor.dispose();
+		this.editor = null;
+		if(projectAssetLoader!=null){
+			projectAssetLoader.setAssetsLoadListener(null);
+			projectAssetLoader.dispose();
+			projectAssetLoader = null;
+		}
+		
+		if(controlLayer!=null){
+			controlLayer = null;
+		}
+		
+		editors.clear();
+		Gdx.input.setInputProcessor(projectsListStage);
 	}
 	
 	public void setEdtitorReadyAction(Runnable runnable){
@@ -94,7 +208,8 @@ public class TestApp implements ApplicationListener {
 	public void resize(int width, int height) {
 		this.width = width;
 		this.height = height;
-		UiStage.getViewport().update(width,height);
+		if(UiStage!=null)
+			UiStage.getViewport().update(width,height);
 		try {
 			editor.getViewport().update(width,height);
 		} catch(Exception e){}
@@ -106,6 +221,10 @@ public class TestApp implements ApplicationListener {
 		return editor;
 	}
 	
+	public Stage getUiStage(){
+		return UiStage;
+	}
+	
 	public FileBrowser getFileBrowser(){
 		return fileBrowser;
 	}
@@ -114,8 +233,14 @@ public class TestApp implements ApplicationListener {
 		return toastManager;
 	}
 	
+	public void toast(String message,int duration){
+		//if(toastManager==null) return;
+		toastManager.toFront();
+		toastManager.show(message,duration);
+	}
+	
 	public void toast(String message){
-		//toastManager.show(message,2);
+		toast(message,2);
 	}
 	
 	public boolean isPlaying(){
@@ -123,7 +248,7 @@ public class TestApp implements ApplicationListener {
 	}
 	
 	public void play(String path,String scene){
-		//TODO : Show error if something wrong happen...
+		//TODO : Show error if something went wrong...
 		play(StageImp.getFromDex(path,scene,null,null));
 	}
 	
@@ -157,6 +282,19 @@ public class TestApp implements ApplicationListener {
 	public void render() {
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
 		Gdx.gl.glClearColor(0,0,0,0);
+		if(projectAssetLoader!=null)
+			if(!projectAssetLoader.update()){
+				loadingStage.setProgress(projectAssetLoader.getProgress()*100);
+				loadingStage.act();
+				loadingStage.draw();
+			}
+		
+		if(editors.size == 0 && projectAssetLoader == null){
+			projectsListStage.act();
+			projectsListStage.draw();
+			return;
+		}
+		
 		if(stageImp!=null){
 			try {
 				stageImp.render();
@@ -175,9 +313,6 @@ public class TestApp implements ApplicationListener {
 				UiStage.draw();
 			}
 			
-			if(!projectAssetLoader.isFinished()){
-				//TODO : Loading animation or progress
-			}
 		}
 	}
 
@@ -191,10 +326,20 @@ public class TestApp implements ApplicationListener {
 	public void dispose() {
 		if(VisUI.isLoaded())
 			VisUI.dispose();
-		fileBrowser.dispose();
-		//filePicker.dispose();
-		if(editor!=null)
-			editor.dispose();
+		if(projectAssetLoader!=null){
+			projectAssetLoader.setAssetsLoadListener(null);
+			projectAssetLoader.dispose();
+		}
+		if(fileBrowser!=null)
+			fileBrowser.dispose();
+		
+		if(stageImp!=null)
+			stageImp.dispose();
+		
+		NumberInputDialog.dispose();
+		for(LibgdxEditor editor:editors)
+			if(editor!=null)
+				editor.dispose();
 	}
 	
 }

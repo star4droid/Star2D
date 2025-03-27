@@ -26,6 +26,7 @@ public class ParticleItem extends Image implements EditorItem,Disposable {
 		setSize(75,75);
 		particleEffect = new ParticleEffect();
 		this.editor = libgdxEditor;
+		editor.addActor(this);
 		addListener(new ClickListener(){
 			@Override
 			public void clicked (InputEvent event, float x, float y) {

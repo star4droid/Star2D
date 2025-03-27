@@ -166,6 +166,8 @@ public class TextItem extends Label implements PlayerItem {
 		//setText(propertySet.get("Text").toString());
 		//Utils.showMessage(getContext(),propertySet.get("Text").toString());
 		getStyle().fontColor= new Color(propertySet.getColor("Text Color"));
+		if(propertySet.containsKey("Font Scale"))
+			setFontScale(propertySet.getFloat("Font Scale"));
 		if(getStage()==null)
 		    stage.addActor(this);
 		if(elementEvent!=null)

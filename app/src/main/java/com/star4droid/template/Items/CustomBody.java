@@ -169,7 +169,7 @@ public class CustomBody extends Image implements PlayerItem {
 					} catch(Exception e){
 					    //new RuntimeException("error points : \n+ "+Utils.getStackTraceString(e));
 					    e.printStackTrace();
-					    Gdx.files.external("/logs/custom.txt").writeString("error points : \n+ "+Utils.getStackTraceString(e),false);
+					    //Gdx.files.external("/logs/custom.txt").writeString("error points : \n+ "+Utils.getStackTraceString(e),false);
 					}
 				}
 				Vector2[] points = new Vector2[array.size()];
@@ -178,7 +178,7 @@ public class CustomBody extends Image implements PlayerItem {
 				    points[po] = vec;
 				    po++;
 				}
-				Gdx.files.external("/logs/points.txt").writeString("points: "+propertySet.getString("Points"),false);
+				//Gdx.files.external("/logs/points.txt").writeString("points: "+propertySet.getString("Points"),false);
 				shape.createChain(points);
 			}
 			FixtureDef fx = new FixtureDef();

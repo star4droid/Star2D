@@ -1,39 +1,52 @@
 package com.star4droid.template;
 
-import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.scenes.scene2d.ui.Image;
-import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.utils.Align;
-import com.badlogic.gdx.utils.viewport.FitViewport;
+import com.kotcrab.vis.ui.VisUI;
+import com.kotcrab.vis.ui.widget.VisDialog;
+import com.kotcrab.vis.ui.widget.VisImageButton;
+import com.kotcrab.vis.ui.widget.VisLabel;
+import com.kotcrab.vis.ui.widget.VisTable;
 import com.star4droid.template.Utils.Utils;
 
 public class LoadingStage extends Stage {
 	ProgressItem progressItem;
+	VisLabel label;
 	public LoadingStage(){
-		super(new FitViewport(Gdx.graphics.getWidth(),Gdx.graphics.getHeight()));
-		Image logo = new Image(Utils.getDrawable(Utils.internal("images/logo.png")));
-		float size = getViewport().getWorldWidth()*0.45f,
-		height=getViewport().getWorldHeight(),
-		width=getViewport().getWorldWidth();
-		logo.setSize(size,size);
-		addActor(logo);
-		logo.setX(width*0.5f,Align.center);
-		logo.setY(height*0.5f,Align.center);
-		BitmapFont font = new BitmapFont(Gdx.files.internal("files/default.fnt"));
-		Label.LabelStyle labelStyle = new Label.LabelStyle(font, Color.GOLD);
-		Label label = new Label("Loading...",labelStyle);
-		label.setFontScale(3);
-		addActor(label);
-		label.setX(width*0.5f-label.getWidth(),Align.center);
-		label.setY(logo.getY()-label.getHeight()-25);
+		super();
+		VisDialog dialog = new VisDialog("Please Wait...");
+		VisTable table = new VisTable(),
+			 //imgTable = new VisTable(),
+			 fillTable = new VisTable();
+		fillTable.setFillParent(true);
+		dialog.setKeepWithinStage(true);
+		//dialog.setFillParent(true);
+		table.setFillParent(true);
+		addActor(fillTable);
+		fillTable.setBackground(VisUI.getSkin().getDrawable("grey"));
 		progressItem = new ProgressItem(this);
-		addActor(progressItem);
-		progressItem.setSize(width*0.75f,100);
-		progressItem.setY(label.getY()-60,Align.top);
-		progressItem.setX(width*0.5f,Align.center);
+		VisImageButton image = new VisImageButton(Utils.getDrawable(Utils.internal("images/logo.png")));
+		//image.setScaling(Scaling.stretch);
+		image.setSize(120,120);
+		label = new VisLabel("Loading...");
+		label.setAlignment(Align.center);
+		table.center();
+		
+		//imgTable.add().growX();
+		//imgTable.add(image).padTop(10).size(90);
+		//imgTable.add().growX();
+		
+		table.add().growY().minHeight(5).row();
+		table.add(image).center().size(300,130).padBottom(10).padRight(10).row();
+		table.add(label).center().padBottom(10).padRight(10).size(300,75).row();
+		table.add(progressItem).size(300,100).padRight(10).row();
+		table.add().growY().minHeight(5);
+		
+		//dialog.add(table).pad(6).center();
+		//dialog.pack();
+		//dialog.show(this);
+		//dialog.centerWindow();
+		addActor(table);
 	}
 	
 	public boolean isLoaded(){
@@ -42,6 +55,7 @@ public class LoadingStage extends Stage {
 	
 	public void setProgress(float progress){
 		progressItem.setProgress(progress);
+		label.setText("Loading...("+((int)progress)+"%)");
 	}
 	
 	public ProgressItem getProgressItem(){

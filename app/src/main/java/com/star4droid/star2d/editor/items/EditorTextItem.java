@@ -8,6 +8,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.star4droid.star2d.Helpers.PropertySet;
 import com.star4droid.star2d.editor.LibgdxEditor;
+import java.util.ArrayList;
 
 public class EditorTextItem extends Label implements EditorItem {
 	LibgdxEditor editor;
@@ -60,11 +61,27 @@ public class EditorTextItem extends Label implements EditorItem {
 		setVisible(propertySet.getString("Visible").equals("true"));
 		setText(propertySet.get("Text").toString());
 		getStyle().fontColor= new Color(propertySet.getColor("Text Color"));
+		if(propertySet.containsKey("Font Scale"))
+			setFontScale(propertySet.getFloat("Font Scale"));
 	}
 
 	@Override
 	public void setProperties(PropertySet<String, Object> propertySet) {
 		this.propertySet = propertySet;
+		PropertySet<String,Object> temp = PropertySet.getDefualt(this,"text.json");
+		for(String s:temp.keySet()){
+			if(!propertySet.containsKey(s)){
+				propertySet.put(s,temp.get(s));
+			}
+		}
+	    ArrayList<String> toDel = new ArrayList<>();
+	   for(String key:propertySet.keySet()){
+			if(!temp.containsKey(key)){
+				toDel.add(key);
+			}
+		}
+		for(String key:toDel)
+	        propertySet.remove(key);
 		update();
 	}
 

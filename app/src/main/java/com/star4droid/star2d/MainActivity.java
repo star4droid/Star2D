@@ -22,12 +22,11 @@ public class MainActivity extends AppCompatActivity {
 		Utils.setLanguage(this);
         setContentView(R.layout.activity_main);
 		EngineSettings.init(this);
+		checkPerms(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE/*, Manifest.permission.ACCESS_MEDIA_LOCATION*/);
 		new Timer().schedule(new TimerTask(){
 			@Override
 			public void run() {
-			    if(checkPerms(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE/*, Manifest.permission.ACCESS_MEDIA_LOCATION*/)){
-				    open();
-				} 
+			    open();
 			}
 		},3000);
 		 

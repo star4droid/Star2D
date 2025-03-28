@@ -18,6 +18,7 @@
         <LinearLayout
              android:layout_height="wrap_content"
              android:layout_width="match_parent"
+             android:visibility="gone"
              android:orientation="horizontal">
 
             <HorizontalScrollView
@@ -166,6 +167,8 @@
                  android:layout_height="match_parent"
                  android:layout_width="match_parent"
                  android:gravity="center_vertical"
+                 android:layout_marginTop="70dp"
+                 android:layout_marginBottom="35dp"
                  android:translationZ="99dp"
                  android:id="@+id/propsLinear">
 
@@ -187,6 +190,7 @@
                      android:layout_height="35dp"
                      android:layout_width="35dp"
                      android:src="@drawable/package_variant"
+                     android:visibility="gone"
                      android:layout_marginRight="2dp"
                      style="@style/images_style"
                      android:id="@+id/right_swipe"
@@ -217,6 +221,7 @@
              android:layout_width="wrap_content"
              android:layout_margin="5dp"
              android:layout_marginTop="0dp"
+             android:visibility="gone"
              app:cardCornerRadius="100dp">
 
             <HorizontalScrollView
@@ -242,6 +247,7 @@
 					<ImageView
                          android:layout_height="35dp"
                          android:layout_width="35dp"
+                         android:visibility="gone"
                          android:src="@drawable/play_float"
                          style="@style/images_style"
                          android:id="@+id/play_float" />

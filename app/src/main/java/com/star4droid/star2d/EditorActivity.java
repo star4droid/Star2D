@@ -140,6 +140,11 @@ public class EditorActivity extends AppCompatActivity implements AndroidFragment
 
     public void onCreate(Bundle bundle) {
         super.onCreate(bundle);
+        try {
+            Utils.extractAssetFile(this, "cp.zip", FileUtil.getPackageDataDir(this) + "/bin/cp.jar");
+        } catch (Exception e) {
+            throw new RuntimeException("extracting cp error "+e);
+        }
 		files_picker =
         registerForActivityResult(
             new ActivityResultContracts.OpenMultipleDocuments(),

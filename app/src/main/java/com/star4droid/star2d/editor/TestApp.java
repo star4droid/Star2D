@@ -49,10 +49,13 @@ public class TestApp implements ApplicationListener {
 		//Gdx.files.external("logs/testapp.txt").writeString("test app created\n"+"_".repeat(10)+"\n",true);
 		if(!VisUI.isLoaded())
 			VisUI.load(VisUI.SkinScale.X2);
+		
 		loadingStage = new LoadingStage();
 		projectsListStage = new ProjectsListStage(this);
 		ScreenViewport screenViewport = new ScreenViewport();
 		UiStage = new Stage(screenViewport);
+		
+		toastManager = new ToastManager(UiStage);
 		
 		//screenViewport.setUnitsPerPixel(1 / 1.5f);
 		

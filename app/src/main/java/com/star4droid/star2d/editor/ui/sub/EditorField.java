@@ -15,6 +15,7 @@ import com.star4droid.star2d.editor.utils.EditorAction;
 import java.util.HashMap;
 import com.star4droid.star2d.editor.ui.sub.inputs.*;
 import com.star4droid.template.Utils.Utils;
+import dev.mutwakil.star2d.adapter.CustomColliderEditor;
 
 public class EditorField {
 	private InputField inputField;
@@ -174,9 +175,11 @@ public class EditorField {
 			((DefaultInput)inputField).value.addListener(new ClickListener() {
 				@Override
 				public void clicked(InputEvent event, float x, float y) {
-					new android.os.Handler(android.os.Looper.getMainLooper()).post(()->{
+					/*new android.os.Handler(android.os.Looper.getMainLooper()).post(()->{
 						com.star4droid.star2d.Adapters.CustomColliderEditor.show();
-					});
+					});*/
+					CustomColliderEditor cce = new CustomColliderEditor(app.getEditor());
+					cce.show(app.getUiStage());
 				}
 			});
 		} else if(type.equals("string")){
@@ -250,4 +253,4 @@ public class EditorField {
 	public void refresh(PropertySet<String,Object> propertySet){
 		setValue(propertySet.getString(getName()));
 	}
-}
+							}

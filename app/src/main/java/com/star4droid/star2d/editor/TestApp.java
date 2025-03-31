@@ -3,6 +3,7 @@ package com.star4droid.star2d.editor;
 import com.badlogic.gdx.ApplicationListener;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputMultiplexer;
+import com.badlogic.gdx.backends.android.AndroidAudio;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.Array;
@@ -262,7 +263,10 @@ public class TestApp implements ApplicationListener {
 			} else {
 			    if(this.stageImp!=null){
 			        this.stageImp.pause();
-					//TODO : Fix audio playing after game exit...
+					if(Gdx.app.getAudio() instanceof AndroidAudio)
+						((AndroidAudio)Gdx.app.getAudio()).pause();
+
+
 					this.stageImp.dispose();
 				}
 				Gdx.input.setCatchKey(4,false);

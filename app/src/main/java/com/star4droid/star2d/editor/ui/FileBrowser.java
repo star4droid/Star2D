@@ -232,7 +232,7 @@ public class FileBrowser extends VisWindow implements Disposable {
 	public Texture getTextureFor(FileHandle file){
 		boolean isImage = (!file.isDirectory()) && imageExtensions.contains(file.extension().toLowerCase());
 		if(isImage){
-			if(projectAssetLoader.contains(file.toString())){
+			if(projectAssetLoader.isLoaded(file.toString())){
 				return projectAssetLoader.get(file.toString());
 			} else {
 				projectAssetLoader.loadFile(file.toString(),Texture.class);

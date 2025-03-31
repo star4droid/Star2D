@@ -159,8 +159,10 @@ public class ProjectsListStage extends Stage {
 			public void clicked(InputEvent event, float x, float y) {
 				ConfirmDialog.confirmDeleteDialog((ok)->{
 					if(ok){
-						fileHandle.delete();
-						table.remove();
+						if(fileHandle.deleteDirectory())
+							app.toast("Deleted...!");
+						else app.toast("failed to delete..!!");
+						refresh();
 					}
 				}).show(ProjectsListStage.this);
 			}

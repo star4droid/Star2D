@@ -27,9 +27,9 @@
       android:required="true" >
    </uses-feature>
    <application
-      android:theme="@7F10000B"
+      android:theme="@7F0B0000"
       android:label="%4$s"
-      android:icon="@7F07009B"
+      android:icon="@7F040005"
       android:name="com.star4droid.template.Star2dApp"
       android:allowBackup="true"
       android:supportsRtl="true"

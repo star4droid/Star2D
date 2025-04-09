@@ -1,0 +1,11 @@
+# V16
+- Audio Playing after exiting the game fixed...
+- Fix body selection error
+- Fix Body that has parent isn't shown on bodies list.
+- Fix screen orientation 
+- Enable Auto Completion on the code editor 
+- Lock X/Y on scaling or moving items by double click on the icon.
+- Fix Text Item Color on the game.
+- Themes coming soon...
+    Soon you can try our awesome themes and even create your own themes!
+- Bitmap Font Editor

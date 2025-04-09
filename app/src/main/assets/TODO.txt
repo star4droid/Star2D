@@ -1,5 +1,6 @@
 [ √ ] Tabs 📑 
 [ √ ] Improve Undo and Redo 📤📥
+[   ] Fix Point Light on The Editor
 [   ] Libgdx Custom Collider Editor 📐
 [   ] Built-in Keyboard ⌨️ 
 [   ] Events Record and Play ▶️
@@ -9,3 +10,12 @@
 [   ] TileMap support 
 [   ] VisUI Items
 [   ] change collider type (temporary disabled)
+[   ] Files Change Detector for compiler (jackson core + databind) - ignore when there's no change on java files 
+[   ] import and use jar libraries...
+[   ] UI Editor with Libgdx and VisUI components and ability to use skins.
+[   ] change engine skin.
+[ √ ] Enable Auto Completion (temporary disabled)
+[   ] Engine Settings. [ logical width/height and code completion and...etc]
+[   ] Fix Editor Orientation
+[   ] update engine using jar
+[   ] Apk Signing V3 [update apk signer library]

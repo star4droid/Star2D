@@ -4,9 +4,9 @@
 "boolean":",Loop,lock,Active,Soft,X Ray,Static Light,Visible,Bullet,Fixed Rotation,isSensor,",
 "spinner":"type,Shape,Light Type",
 "string":",name,Text",
-"File":"file",
-"static":",TYPE,",
+"File":"file,font",
+"static":"TYPE",
 "color":",Text Color,Progress Color,color,Background Color,",
 "body":",Collision,Script,attach To,parent",
-"points":",Points,"
+"points":"Points"
 }

@@ -17,8 +17,8 @@ android {
         applicationId "com.star4droid.star2d.evo"
         minSdk 21
         targetSdk 34
-        versionCode 15
-        versionName "0.1.5Beta"
+        versionCode 16
+        versionName "0.1.6Beta"
         
         vectorDrawables { 
             useSupportLibrary true
@@ -53,7 +53,7 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.aar']);
     implementation 'com.github.bumptech.glide:glide:4.16.0'
     implementation 'com.google.code.gson:gson:2.10.1'
-    implementation 'com.google.guava:guava:32.0.1-android'
+    implementation 'com.google.guava:guava:guava-33.4.0-jre'
     implementation 'com.android.tools:r8:8.1.56'
     implementation platform("io.github.Rosemoe.sora-editor:bom:0.22.1")
     implementation "io.github.Rosemoe.sora-editor:editor"

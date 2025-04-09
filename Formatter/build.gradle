@@ -1,10 +1,20 @@
 apply plugin: 'com.android.library'
 
-java {
-    sourceCompatibility = JavaVersion.VERSION_1_17
-    targetCompatibility = JavaVersion.VERSION_1_17
+android {
+    namespace 'com.example.formatter' // <-- change this to your package name
+    compileSdk 34
+
+    defaultConfig {
+        minSdk 21
+        targetSdk 34 // not strictly required, but HIGHLY recommended
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
 }
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
 }

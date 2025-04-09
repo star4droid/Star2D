@@ -54,6 +54,7 @@ dependencies {
     implementation 'com.github.bumptech.glide:glide:4.16.0'
     implementation 'com.google.code.gson:gson:2.10.1'
     implementation 'com.google.guava:guava:33.4.7-android'
+    implementation 'com.google.guava:guava:guava-33.4.0-jre'
     implementation 'com.android.tools:r8:8.1.56'
     implementation platform("io.github.Rosemoe.sora-editor:bom:0.22.1")
     implementation "io.github.Rosemoe.sora-editor:editor"

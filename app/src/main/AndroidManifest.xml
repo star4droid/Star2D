@@ -27,7 +27,7 @@
         <activity
             android:name="com.star4droid.star2d.MainActivity"
 			android:theme="@style/AppTheme.FullScreen"
-			android:screenOrientation="landscape"
+			android:screenOrientation="portrait"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -45,7 +45,7 @@
 		android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout"
 		android:hardwareAccelerated="true"
 		android:supportsPictureInPicture="true"
-		android:screenOrientation="landscape"
+		android:screenOrientation="portrait"
 		android:theme="@style/AppTheme.FullScreen"
 		android:exported="true">
 		</activity>

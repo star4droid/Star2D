@@ -15,7 +15,7 @@ android {
 }
     defaultConfig {
         applicationId "com.star4droid.star2d.evo"
-        minSdk 21
+        minSdk 26
         targetSdk 34
         versionCode 16
         versionName "0.1.6Beta"

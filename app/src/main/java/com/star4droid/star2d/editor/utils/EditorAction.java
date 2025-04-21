@@ -49,9 +49,15 @@ public class EditorAction {
 					if(propertySet.getString("Script").equals(propertySet.getString("name"))&&!propertySet.getString("name").equals(get("old"))){
 						propertySet.put("Script",get("old"));
 						try {
-							Gdx.files.absolute(editor.getProject().getBodyScriptPath(propertySet.getString("name"),editor.getScene())).moveTo(
+							/*.moveTo(
 								Gdx.files.absolute(editor.getProject().getBodyScriptPath(get("old"),editor.getScene()))
 							);
+							*/
+							String name = propertySet.getString("name");
+							String code = Gdx.files.absolute(editor.getProject().getBodyScriptPath(name,editor.getScene())).readString();
+							Gdx.files.absolute(editor.getProject().getBodyScriptPath(name,editor.getScene())).delete();
+							// replace class name by the old class name...
+							Gdx.files.absolute(editor.getProject().getBodyScriptPath(get("old"),editor.getScene()).writeString(code.replace(name+"Script",get("old")+"Script"),false);
 						} catch(Exception ex){}
 					}
 					propertySet.put("name",get("old"));
@@ -143,9 +149,11 @@ public class EditorAction {
 					if(propertySet.getString("Script").equals(propertySet.getString("name"))&&!propertySet.getString("name").equals(get("new"))){
 						propertySet.put("Script",get("new"));
 						try {
-							Gdx.files.absolute(editor.getProject().getBodyScriptPath(propertySet.getString("name"),editor.getScene())).moveTo(
-								Gdx.files.absolute(editor.getProject().getBodyScriptPath(get("new"),editor.getScene()))
-							);
+							String name = propertySet.getString("name");
+							String code = Gdx.files.absolute(editor.getProject().getBodyScriptPath(name,editor.getScene())).readString();
+							Gdx.files.absolute(editor.getProject().getBodyScriptPath(name,editor.getScene())).delete();
+							//replace the class name with the new name...
+							Gdx.files.absolute(editor.getProject().getBodyScriptPath(get("new"),editor.getScene())).writeString(code.replace(name+"Script",get("new")+"Script"),false);
 						} catch(Exception ex){}
 					}
 					propertySet.put("name",get("new"));
@@ -287,11 +295,14 @@ public class EditorAction {
 			ps.put(values[x],values[x+1]);
 			oldP.put(old[x],old[x+1]);
 		}
-		if(ps.isEmpty()) return null;//no changes...
+		if(ps.isEmpty()) {
+		    return null;//no changes...
+		}
 		action.put("message",message);
 		action.put("name",name);
 		action.put("new",ps.toString());
 		action.put("old",oldP.toString());
+		//editor.toast("Undo Redo Pushed!");
 		editor.pushUndoEvent(action);
 		return action;
 	}

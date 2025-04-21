@@ -133,6 +133,7 @@ public class TestApp implements ApplicationListener {
 		//Long time = System.currentTimeMillis();
 		projectAssetLoader = new ProjectAssetLoader(new com.star4droid.star2d.Helpers.Project(project.getPath()));
 		projectAssetLoader.setAssetsLoadListener(()->{
+			projectAssetLoader.setAssetsLoadListener(null);
 			if(!VisUI.isLoaded()) return;
 			if(!landscape)
 				onLoad(project);
@@ -162,6 +163,7 @@ public class TestApp implements ApplicationListener {
 		UiStage.clear();
 		toastManager = new ToastManager(UiStage);
 		editor = new LibgdxEditor(project,"scene1",projectAssetLoader);
+		editor.enableAutoSave(preferences.getBoolean("AutoSave",true));
 		editor.loadFromPath();
 		//editor.setOrienationChangeListener(orienationChangeListener);
 		editor.setToastManager(toastManager);
@@ -209,7 +211,7 @@ public class TestApp implements ApplicationListener {
 			pos++;
 		}
 		LibgdxEditor editor = new LibgdxEditor(project,scene,projectAssetLoader);
-		
+		editor.enableAutoSave(preferences.getBoolean("AutoSave",true));
 		editor.setEditorListener(editor.getEditorListener());
 		//editor.setOrienationChangeListener(orienationChangeListener);
 		editor.setProperites(this.editor.getPropertiesHolder());
@@ -272,6 +274,7 @@ public class TestApp implements ApplicationListener {
 		if(pos < editors.size){
 			multiplexer.removeProcessor(editor);
 			editor = editors.get(pos);
+			editor.enableAutoSave(preferences.getBoolean("AutoSave",true));
 			editor.setLandscape(landscape);
 			multiplexer.addProcessor(editor);
 			Gdx.input.setInputProcessor(multiplexer);

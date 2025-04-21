@@ -62,7 +62,7 @@ public class star2dApp extends Application {
 				mApplicationContext.startActivity(intent);
 				//System.exit(1);
 				//Logger.initialize(this);
-				star2dApp.this.uncaughtExceptionHandler.uncaughtException(thread, throwable);
+				//star2dApp.this.uncaughtExceptionHandler.uncaughtException(thread, throwable);
 			}
 		});
         

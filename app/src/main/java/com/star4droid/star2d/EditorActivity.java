@@ -225,7 +225,7 @@ public class EditorActivity extends AppCompatActivity implements AndroidFragment
 	}
 	
 	private void initApp(){
-	    com.star4droid.star2d.Adapters.UpdateChecker.checkForUpdate(this);
+	    com.star4droid.star2d.Adapters.UpdateChecker.checkForUpdate(editor.getApp());
 		editor.getApp().setOrienationChanger(landscape->{
 			boolean isCurrentLandscape = getResources().getConfiguration().orientation==Configuration.ORIENTATION_LANDSCAPE;
 			if(isCurrentLandscape == landscape) return;

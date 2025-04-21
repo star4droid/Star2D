@@ -129,11 +129,7 @@ public class StageImp extends ApplicationAdapter {
 		    project = new Project(Gdx.files.getExternalStoragePath());
 		initDone = true;
 		if(spriteSheetLoader!=null&&assetLoader!=null&&!isMain()){
-		    try {
-			    onCreate();
-			} catch(Exception e){
-			    throw new RuntimeException(e.toString());
-			}
+			onCreate();
 		    onCreateCalled = true;
 		}
 		
@@ -148,11 +144,6 @@ public class StageImp extends ApplicationAdapter {
 		
 		if(assetLoader==null){
 			assetLoader = new ProjectAssetLoader(project);
-			assetLoader.setAssetsLoadListener(()->{
-				spriteSheetLoader.start();
-				//loadComplete = true;
-				//onCreate();
-			});
 			if(spriteSheetLoader==null){
 				spriteSheetLoader = new SpriteSheetLoader(assetLoader,project,(errorHappend,message)->{
 					loadComplete = true;
@@ -162,26 +153,19 @@ public class StageImp extends ApplicationAdapter {
 			spriteSheetLoader = new SpriteSheetLoader(assetLoader,project,(errorHappend,message)->{
 				loadComplete = true;
 			});
-			//assetLoader.finishLoading();
 		} else {
 			loadComplete = true;
 			onCreateCalled = true;
-			try {
-				if(assetLoader.isFinished())
-			    	onCreate();
-				else {
-						onCreateCalled = false;
-						loadComplete = false;
-						assetLoader.setAssetsLoadListener(()->{
-							spriteSheetLoader.start();
-							//loadComplete = true;
-							//onCreate();
-						});
-					}
-			} catch(Exception e){
-			    throw new RuntimeException(e.toString());
+			if(assetLoader.isFinished())
+		    	onCreate();
+			else {
+				onCreateCalled = false;
+				loadComplete = false;
 			}
 		}
+		assetLoader.setAssetsLoadListener(()->{
+			spriteSheetLoader.start();
+		});
 		this.viewport = viewport;
 		updateViewport();
 	}
@@ -285,20 +269,28 @@ public class StageImp extends ApplicationAdapter {
 	    debugRenderer.render(world, GameStage.getCamera().combined);
 	}
 	
-	public int toInt(String string){
-	    try {
+	public int toInt(String string,int onError) {
+	     try {
 	        return Utils.getInt(string);
-	    } catch(Exception ex){
-	        return 0;
-	    }
+	     } catch(Exception ex){
+	        return onError;
+	     }
 	}
 	
-	public float toFloat(String string){
+	public float toFloat(String string,float onError) {
 	    try {
 	        return Utils.getFloat(string);
 	    } catch(Exception ex){
-	        return 0;
+	        return onError;
 	    }
+	}
+	
+	public int toInt(String string) {
+	     return toInt(string,0);
+	}
+	
+	public float toFloat(String string) {
+	    return toFloat(string,0);
 	}
 	
 	public int getRealNumber(String key){
@@ -445,11 +437,7 @@ public class StageImp extends ApplicationAdapter {
 		Gdx.gl.glClearColor(bg.r,bg.g,bg.b,bg.a);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 		if(loadComplete&&(!onCreateCalled)){
-		    try {
-			    onCreate();
-			} catch(Exception e){
-			    throw new RuntimeException("\nonCreate Error : "+Utils.getStackTraceString(e)+"\n");
-			}
+			onCreate();
 			onCreateCalled = true;
 		}
 		
@@ -470,11 +458,7 @@ public class StageImp extends ApplicationAdapter {
 			currentStage.draw();
 			//if(!currentStage.draw())
 			    //throw new RuntimeException("game not drawn for unknown reason...");
-			try {
-			    currentStage.onDraw();
-			} catch(Exception ex){
-			    ex.printStackTrace();
-			}
+			currentStage.onDraw();
 		}
 		
 	}
@@ -853,6 +837,11 @@ public class StageImp extends ApplicationAdapter {
 		*/
 	}
 	
+	public Vector2 getTouch(){
+	    Vector2 touchPoint = new Vector2(Gdx.input.getX(),Gdx.input.getY());
+        return GameStage.screenToStageCoordinates(touchPoint);
+	}
+	
 	public void debug(String string){
 	    debug(string,true);
 	}
@@ -1024,6 +1013,7 @@ public class StageImp extends ApplicationAdapter {
 	
 	public void dispose(){
 	    try {
+	        com.kotcrab.vis.ui.VisUI.dispose();
 		    UiStage.dispose();
 		    GameStage.dispose();
 		} catch(Exception e){}

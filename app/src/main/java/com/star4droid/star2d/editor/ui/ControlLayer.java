@@ -30,10 +30,12 @@ import com.kotcrab.vis.ui.widget.color.ColorPicker;
 import com.kotcrab.vis.ui.widget.color.ColorPickerListener;
 import com.star4droid.star2d.Helpers.CodeGenerator;
 import com.star4droid.star2d.Helpers.CompileThread;
+import com.star4droid.star2d.Helpers.FilesChangeDetector;
 import com.star4droid.star2d.Helpers.Project;
 import com.star4droid.star2d.Helpers.PropertySet;
 import com.star4droid.star2d.editor.TestApp;
 import com.star4droid.star2d.editor.items.*;
+import com.star4droid.star2d.editor.ui.custom.CustomColliderEditor;
 import com.star4droid.star2d.editor.ui.sub.ConfirmDialog;
 import com.star4droid.star2d.editor.ui.sub.EventsItem;
 import com.star4droid.star2d.editor.ui.sub.JointsList;
@@ -41,6 +43,7 @@ import com.star4droid.star2d.editor.ui.sub.PropertiesItem;
 import com.star4droid.star2d.editor.ui.sub.TabsItem;
 import com.star4droid.star2d.editor.ui.sub.TextShow;
 import com.star4droid.star2d.editor.utils.EditorAction;
+import java.util.concurrent.Executors;
 
 public class ControlLayer extends Table {
     private Table topContainer;
@@ -65,6 +68,7 @@ public class ControlLayer extends Table {
 	JointsList jointsList;
 	FileHandle fileBroweserDir;
 	ControlType controlType;
+	CustomColliderEditor customColliderEditor;
 	public TabsItem tabsItem;
 	VisImageButton gridBtn,backBtn,sceneActionsBtn,moveBtn,rotateBtn,lockBtn,scaleBtn,undoBtn,redoBtn;
 
@@ -89,6 +93,7 @@ public class ControlLayer extends Table {
     }
 	
     private void createLayout() {
+		customColliderEditor = new CustomColliderEditor(app);
         // Top section
         topContainer = new Table();
         topScrollPane = new VisScrollPane(topContainer);
@@ -451,6 +456,11 @@ public class ControlLayer extends Table {
 		//bottom buttons
 		addIconToBottom("play",drawable("play.png"),(btn)->{
 			btn.setDisabled(true);
+			String path = app.getEditor().getProject().getPath();
+			// get project name...
+			final String projectName = path.contains("/") ? path.substring(path.lastIndexOf("/"),path.length()) : path;
+			final FileHandle errorLog = Gdx.files.external("logs/"+projectName+"/compile error.txt");
+			
 			/*
 			cancelBtn.setDisabled(true);
 			copyBtn.setDisabled(true);
@@ -464,42 +474,29 @@ public class ControlLayer extends Table {
 			//disable all inputs...
 			Gdx.input.setInputProcessor(null);
 			CodeGenerator.generateFor(app.getEditor(),(code)->{
-				Gdx.files.absolute(app.getEditor().getProject().getCodesPath(app.getEditor().getScene())).writeString(code,false);
+				FileHandle sceneFile = Gdx.files.absolute(app.getEditor().getProject().getCodesPath(app.getEditor().getScene()));
 				CompileThread compileThread = new CompileThread(app.getEditor().getProject().get("java"),false);
 				compileThread.setOnChangeStatus(new CompileThread.OnStatusChanged(){
 					@Override
 					public void onStatus(String s) {
 						textShow.setText(s);
-						/*
-						compileLabel.setText(s);
-						scrollPane.pack();
-						*/
 					}
 
 					@Override
 					public void onEnd(String message) {
 						Gdx.input.setInputProcessor(inputProcessor);
 						textShow.setEnabled(true);
-						/*
-						cancelBtn.setDisabled(false);
-						copyBtn.setDisabled(false);
-						*/
 					}
 
 					@Override
 					public void onError(String error) {
 						textShow.setText(error);
-						Gdx.files.external("logs/compile error.txt").writeString(error,false);
-						/*
-						compileLabel.setText(error);
-						scrollPane.pack();
-						*/
+						errorLog.writeString(error,false);
 					}
 
 					@Override
 					public void onSuccess(String message) {
-						//compileDialog.hide();
-						//textShow.hide();
+						if(errorLog.exists()) errorLog.delete();
 						textShow.remove();
 						FileHandle fileHandle = new FileHandle(app.getEditor().getProject().getDex());
 						
@@ -512,7 +509,31 @@ public class ControlLayer extends Table {
 					}
 					
 				});
-				compileThread.start();
+				
+				if((sceneFile.exists() &&!sceneFile.readString().equals(code))||!sceneFile.exists()){
+				    compileThread.start();
+					sceneFile.writeString(code,false);
+				} else {
+					textShow.setText("Check Java Files Changes...");
+					Executors.newSingleThreadExecutor().execute(()->{
+						try {
+							boolean filesChanged = FilesChangeDetector.detect(Gdx.files.absolute(app.getEditor().getProject().get("java")).file().toPath(),Gdx.files.absolute(app.getEditor().getProject().getChangesJson()).file().toPath());
+							if(!filesChanged){
+							    textShow.remove();
+								Gdx.app.postRunnable(()->{
+									if(errorLog.exists())
+										textShow.setText(errorLog.readString());
+									else
+										app.play(app.getEditor().getProject().getPath(),app.getEditor().getScene());
+								});
+								
+							} else compileThread.start();
+						} catch(Exception e){
+							compileThread.start();
+						}
+					});
+				}
+				
 			});
 		});
 		
@@ -619,6 +640,10 @@ public class ControlLayer extends Table {
 	
 	public void setIndexing(boolean b){
 		indexingLabel.setVisible(b);
+	}
+	
+	public CustomColliderEditor getCustomColliderEditor(){
+		return customColliderEditor;
 	}
 	
 	public void editScene(String name,SceneAction sceneAction){

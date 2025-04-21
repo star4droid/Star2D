@@ -20,6 +20,7 @@ import com.star4droid.template.Utils.Utils;
 
 public class BodyInput extends VisTable implements InputField {
 	public VisTextButton name,value;
+	String valueString = "";
 	public boolean isSingle = false,mustSelect = false;
 	public Array<String> ignoredBodies = new Array<>();
 	Runnable onChange;
@@ -49,7 +50,7 @@ public class BodyInput extends VisTable implements InputField {
 				for(String body:app.getEditor().getBodiesList()){
 					if(ignoredBodies.contains(body,false))
 						continue;
-					VisCheckBox checkBox = new VisCheckBox(body,value.getText().toString().equals(body));
+					VisCheckBox checkBox = new VisCheckBox(body,valueString.equals(body));
 					checkBoxes.add(checkBox);
 					table.add(checkBox).growX().row();
 					if(isSingle)
@@ -143,13 +144,13 @@ public class BodyInput extends VisTable implements InputField {
 	}
 
 	@Override
-	public void setValue(String vl) {
-		value.setText(vl);
+	public void setValue(String value) {
+		valueString = value;
 	}
 
 	@Override
 	public String getValue() {
-	    return value.getText().toString();
+	    return valueString;
 	}
 
 	@Override

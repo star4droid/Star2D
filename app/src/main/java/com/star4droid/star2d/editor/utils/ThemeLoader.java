@@ -3,9 +3,12 @@ package com.star4droid.star2d.editor.utils;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.NinePatch;
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import com.kotcrab.vis.ui.VisUI;
+import com.star4droid.star2d.Helpers.rtl.RtlController;
+import com.star4droid.star2d.Helpers.rtl.RtlFreeTypeFontGenerator;
 import com.star4droid.template.Utils.Utils;
 
 public class ThemeLoader {
@@ -14,6 +17,14 @@ public class ThemeLoader {
 			VisUI.load(VisUI.SkinScale.X2);
 		//load all images from assets...
 		loadTheme(Gdx.files.internal("images"),"");
+		/*
+		RtlFreeTypeFontGenerator generator = new RtlFreeTypeFontGenerator(Utils.internal("files/VisOpenSans.ttf"));
+		RtlFreeTypeFontGenerator.FreeTypeFontParameter parameter = new RtlFreeTypeFontGenerator.FreeTypeFontParameter();
+		parameter.size = 18;
+		parameter.characters += RtlController.getInstance().getAllRtlChars();
+		BitmapFont font = generator.generateRtlFont(parameter);
+		VisUI.getSkin().add("default-font",font,BitmapFont.class);
+		*/
 		
 		/*
 		FileHandle orange = Gdx.files.internal("files/skins/orange");
@@ -92,6 +103,10 @@ public class ThemeLoader {
 		for(FileHandle fh:fileHandle.list()){
 			if(fh.isDirectory()){
 				loadTheme(fh,dir+fh.name()+"/");
+				continue;
+			}
+			if(!fh.name().contains(".")){
+				Gdx.files.external("logs/drawable.txt").writeString("not contains \".\" name : "+fh.name()+"\n"+"__".repeat(10)+"\n",true);
 				continue;
 			}
 			String name = fh.name().substring(0,fh.name().indexOf("."));

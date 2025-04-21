@@ -171,6 +171,10 @@ public class Project {
 		return path+"/Events/"+scene;
 	}
 	
+	public String getChangesJson(){
+		return path+"/Events/JavaChanges.json";
+	}
+	
 	public String getUndoRedo(String scene){
 		return path+"/Events/"+scene+"/UndoRedo.json";
 	}

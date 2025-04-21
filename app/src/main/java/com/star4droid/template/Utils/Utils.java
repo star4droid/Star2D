@@ -8,8 +8,8 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import com.star4droid.star2d.Helpers.rtl.RtlFreeTypeFontGenerator;
+import com.star4droid.star2d.Helpers.rtl.RtlController;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
-import com.star4droid.star2d.evo.star2dApp;
 import java.io.FileReader;
 import java.lang.reflect.Field;
 import java.text.ParseException;
@@ -142,7 +142,7 @@ public class Utils {
 			while(Gdx.files.external("Logs"+n+".txt").exists()) n++;
 			Gdx.files.external("Logs"+n+".txt").writeString(error+"\n"+string,false);
 			*/
-			com.star4droid.star2d.Utils.log(error+"\n"+string,star2dApp.getContext());
+			//com.star4droid.star2d.Utils.log(error+"\n"+string,star2dApp.getContext());
 		}
 		
 		public static String getStackTraceString(Throwable throwable){
@@ -199,8 +199,11 @@ public class Utils {
 			Gdx.files.external("logs/font.txt").writeString("not procced : "+fontHandle.path()+"\n",true);
 			return new BitmapFont(Gdx.files.internal("files/default.fnt"));
 		}
-		FreeTypeFontGenerator generator = new FreeTypeFontGenerator(fontHandle);
-		FreeTypeFontGenerator.FreeTypeFontParameter parameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
+		boolean isRtl = propertySet.getString("rtl").equals("true");
+		FreeTypeFontGenerator generator = isRtl ? new RtlFreeTypeFontGenerator(fontHandle) : new FreeTypeFontGenerator(fontHandle);
+		FreeTypeFontGenerator.FreeTypeFontParameter parameter = isRtl ? new RtlFreeTypeFontGenerator.FreeTypeFontParameter() : new FreeTypeFontGenerator.FreeTypeFontParameter();
+		if(isRtl)
+		    parameter.characters += RtlController.getInstance().getAllRtlChars();
 		for(Field field:parameter.getClass().getFields()){
 			if(propertySet.containsKey(field.getName()))
 				try {
@@ -222,7 +225,7 @@ public class Utils {
 					Gdx.files.external("logs/font.txt").writeString("error on field: "+field.getName()+", value : "+propertySet.get(field.getName())+"\n",true);
 				}
 		}
-		BitmapFont font = generator.generateFont(parameter);
+		BitmapFont font = isRtl ? ((RtlFreeTypeFontGenerator)generator).generateRtlFont(parameter): generator.generateFont(parameter);
 		generator.dispose();
 		return font;
 	}

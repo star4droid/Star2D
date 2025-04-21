@@ -9,3 +9,23 @@
 - Themes coming soon...
     Soon you can try our awesome themes and even create your own themes!
 - Bitmap Font Editor
+
+#17
+- Right To Left Text Support on the TextItem
+- fix freeze When you open Files Browser and open folder contains images other than "images" folder...
+- V3 Apk Signing .
+- Exported Game Fixed.
+- Now The App Doesn't Compile The project again when there's no change on java files ...
+- New methods: getTouch(), setActorX/Y to get touch position as Vector2, example:
+```
+Vector2 touch = getTouch();
+player.setActorX(touch.x);
+player.setActorY(touch.y);
+```
+Note: this methods works only on :
+setActorX/Y : PlayerItem
+getTouch : StageImp 
+you can use getTouch from the scripts by :
+```
+Vector2 touch = getStage().getTouch();
+```

@@ -13,7 +13,17 @@ public class SignUtil {
 		InputStream mInput1 = context.getAssets().open("keys/testkey.pk8"),
 		mInput2 = context.getAssets().open("keys/testkey.x509.pem");
 		//com.googlecode.dex2jar.tools.ApkSign.main(new String[]{"-f","-o",out,in});
-		new com.android.apksig.ApkSigner.Builder(ImmutableList.of(new com.android.apksig.ApkSigner.SignerConfig.Builder("test",readPrivateKey(mInput1),List.of(readPublicKey(mInput2))).build())).setCreatedBy("Star2D Evo").setMinSdkVersion(21).setOutputApk(new File(out)).setInputApk(new File(in)).setV1SigningEnabled(true).setV2SigningEnabled(true).build().sign();
+		new com.android.apksig.ApkSigner.Builder(ImmutableList.of(new com.android.apksig.ApkSigner.SignerConfig.Builder("test",readPrivateKey(mInput1),List.of(readPublicKey(mInput2)))
+		.build()))
+		.setCreatedBy("Star2D Evo")
+		.setMinSdkVersion(21)
+		.setOutputApk(new File(out))
+		.setInputApk(new File(in))
+		.setV1SigningEnabled(true)
+		.setV2SigningEnabled(true)
+		.setV3SigningEnabled(true)
+		//.setV4SigningEnabled(true) //disabled
+		.build().sign();
 		
 	}
 	private static java.security.PrivateKey readPrivateKey(java.io.InputStream input)throws java.io.IOException, java.security.GeneralSecurityException{

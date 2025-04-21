@@ -113,6 +113,11 @@ public class CustomItem extends Image implements EditorItem {
     }
 
     private void updatePhysicsBody() {
+        //the else part disabled...
+        if(body!=null){
+            body.getWorld().destroyBody(body);
+            body = null;
+        }
         if (body == null) {
             BodyDef def = new BodyDef();
             def.type = BodyDef.BodyType.StaticBody;

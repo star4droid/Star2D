@@ -17,13 +17,13 @@ public class CheckInput extends VisTable implements InputField{
 		super();
 		setBackground(VisUI.getSkin().getDrawable("window-bg"));
 		name = new VisTextButton("Name");
-		checkBox = new VisCheckBox("Value");
+		checkBox = new VisCheckBox("");
 		name.setBackground(VisUI.getSkin().getDrawable("separator"));
 		checkBox.setBackground(VisUI.getSkin().getDrawable("separator"));
 		add().width(8);
 		add(name).minWidth(100).growX();
 		add().width(8);
-		add(checkBox).minWidth(100).growX();
+		add(checkBox).minWidth(80).padRight(8);
 		changeListener = new ChangeListener() {
 			@Override
 			public void changed (ChangeEvent event, Actor actor) {
@@ -40,7 +40,7 @@ public class CheckInput extends VisTable implements InputField{
 	@Override
 	public void setNameText(String nm) {
 		name.setText(nm);
-		checkBox.setText(nm);
+		//checkBox.setText(nm);
 	}
 	
 	@Override

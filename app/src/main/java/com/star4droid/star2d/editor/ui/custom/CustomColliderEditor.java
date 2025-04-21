@@ -57,7 +57,7 @@ public class CustomColliderEditor extends VisDialog {
     // to remove it
     reset();
 	// item image ...
-	colliderImage = new CustomColliderImage();
+	colliderImage = new VisImage();
 	debugLabel = new VisLabel("Debug Text");
 	// the text go to the next line when the line is full...
 	debugLabel.setWrap(true);

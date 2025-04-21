@@ -391,7 +391,7 @@ public class CodeGenerator {
      * @return The formatted Java code
      */
     private static String formatWithPalantir(String code) {
-        return code;
+        if(true) return code;
         // there's bug :
         // Runtime.version() isn't available method 
         // check :

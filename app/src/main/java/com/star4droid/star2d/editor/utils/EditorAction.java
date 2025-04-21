@@ -57,7 +57,7 @@ public class EditorAction {
 							String code = Gdx.files.absolute(editor.getProject().getBodyScriptPath(name,editor.getScene())).readString();
 							Gdx.files.absolute(editor.getProject().getBodyScriptPath(name,editor.getScene())).delete();
 							// replace class name by the old class name...
-							Gdx.files.absolute(editor.getProject().getBodyScriptPath(get("old"),editor.getScene()).writeString(code.replace(name+"Script",get("old")+"Script"),false);
+							Gdx.files.absolute(editor.getProject().getBodyScriptPath(get("old"),editor.getScene())).writeString(code.replace(name+"Script",get("old")+"Script"),false);
 						} catch(Exception ex){}
 					}
 					propertySet.put("name",get("old"));

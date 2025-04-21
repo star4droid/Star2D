@@ -23,7 +23,7 @@ public class EditorField {
 	TestApp app;
 	private static String dragControlFields,disableOnPlayFields;
 	private static HashMap<String,Object> spinnerMap;
-	private boolean isFile;
+	private boolean isFile, acceptValue = true;
 	public EditorField(TestApp app,String name,String type){
 		this.app = app;
 		this.isFile = name.toLowerCase().equals("file");
@@ -39,6 +39,8 @@ public class EditorField {
 			disableOnPlayFields = Gdx.files.internal("playOffProps.txt").readString();
 		if(type.equals("body")){
 			inputField = new BodyInput(app).setIsSingle(!name.equals("Collision")).setMustSelect(name.equals("Script"));
+			inputField.setValue("[Choose]");
+			//acceptValue = false;
 			inputField.setOnChange(()->{
 				try {
 					PropertySet<String,Object> ps = PropertySet.getPropertySet(app.getEditor().getSelectedActor());
@@ -50,6 +52,8 @@ public class EditorField {
 			});
 		} else if(type.toLowerCase().equals("file")){
 			inputField = new DefaultInput();
+			acceptValue = false;
+			inputField.setValue("[Choose]");
 			((DefaultInput)inputField).value.addListener(new ClickListener() {
 				@Override
 				public void clicked(InputEvent event, float x, float y) {
@@ -129,7 +133,14 @@ public class EditorField {
 						newValues.add("Collider Height");
 						newValues.add(String.valueOf(f));
 					}
-					EditorAction action = EditorAction.propertiesChanged(editor,editor.getSelectedActor().getName(),getName(),newValues.toArray(),oldValues.toArray());
+					String[] oldArray = new String[oldValues.size],
+					        newArray = new String[newValues.size];
+					for(int i = 0; i < oldValues.size; i++){
+					    oldArray[i] = oldValues.get(i);
+					    newArray[i] = newValues.get(i);
+					}
+					//Gdx.files.external("floatUndo.txt").writeString("size old : "+oldValues.size+", new : "+newValues.size+"\n"+"_".repeat(15)+"\n",true);
+					EditorAction action = EditorAction.propertiesChanged(editor,editor.getSelectedActor().getName(),getName(),newArray,oldArray);
 					editor.updateProperties();
 					editor.getSaveState();
 					
@@ -142,10 +153,14 @@ public class EditorField {
 						action.updateItemProperties();
 					}
 					editor.getSaveState();
-				} catch(Exception ex){}
+				} catch(Exception ex){
+				    Gdx.files.external("floatUndo.txt").writeString("error : "+Utils.getStackTraceString(ex)+"\n"+"_".repeat(15)+"\n",true);
+				}
 			});
 		} else if(type.equals("image")){
 			inputField = new DefaultInput();
+			acceptValue = false;
+			inputField.setValue("[Choose]");
 			((DefaultInput)inputField).value.addListener(new ClickListener() {
 				@Override
 				public void clicked(InputEvent event, float x, float y) {
@@ -189,12 +204,12 @@ public class EditorField {
 			});
 		} else if(type.equals("points")){
 			inputField = new DefaultInput();
+			acceptValue = false;
+			inputField.setValue("[Choose]");
 			((DefaultInput)inputField).value.addListener(new ClickListener() {
 				@Override
 				public void clicked(InputEvent event, float x, float y) {
-					new android.os.Handler(android.os.Looper.getMainLooper()).post(()->{
-						com.star4droid.star2d.Adapters.CustomColliderEditor.show();
-					});
+					app.getControlLayer().getCustomColliderEditor().show(app.getUiStage());
 				}
 			});
 		} else if(type.equals("string")){
@@ -232,7 +247,7 @@ public class EditorField {
 				editor.getSaveState();
 				if(getName().equals("name"))
 					EditorAction.itemRenamed(editor,old,inputField.getValue()).updateEditorProperties();
-				else EditorAction.propertiesChanged(editor,editor.getSelectedActor().getName(),getName(),new String[]{getName(),inputField.getValue()},new String[]{getName(),old});
+				else EditorAction.propertiesChanged(editor,editor.getSelectedActor().getName(),getName(),new String[]{getName(),inputField.getValue()},new String[]{getName(),old}).updateItemProperties();
 			});
 		}
 		if(inputField!=null)
@@ -250,7 +265,9 @@ public class EditorField {
 	}
 	
 	public void setValue(String value){
-		inputField.setValue(isFile ? value.replace(Utils.seperator,"/") : value);
+	    if(acceptValue)
+		    inputField.setValue(isFile ? value.replace(Utils.seperator,"/") : value);
+		else setValue("[Choose]");
 	}
 	
 	public void setFieldName(String name){

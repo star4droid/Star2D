@@ -40,8 +40,8 @@ public class LoadingStage extends Stage {
 		
 		table.add().growY().minHeight(5).row();
 		table.add(image).center().size(300,130).padBottom(10).padRight(10).row();
-		table.add(label).center().padBottom(10).padRight(10).size(300,75).row();
-		table.add(progressItem).size(300,100).padRight(10).row();
+		table.add(label).center().padBottom(10).padRight(10).size(300,40).row();
+		table.add(progressItem).size(300,60).padRight(10).row();
 		table.add().growY().minHeight(5);
 		
 		//dialog.add(table).pad(6).center();

@@ -57,6 +57,7 @@ public class BodiesList extends Group {
     listView.getMainTable().setFillParent(true);
 	addActor(listView.getMainTable());
 	listView.getScrollPane().setFlickScroll(true);
+	listView.getScrollPane().setOverscroll(false,false);
   }
   
   @Override

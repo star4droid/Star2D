@@ -4,25 +4,18 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Batch;
-import com.badlogic.gdx.scenes.scene2d.Actor;
-import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.scenes.scene2d.Group;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
-import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
-import com.star4droid.template.Utils.ChildsHolder;
-import com.star4droid.template.Utils.PlayerItem;
-import com.star4droid.template.Utils.PropertySet;
-import com.star4droid.star2d.ElementDefs.ElementEvent;
 
-public class ProgressItem extends Group implements PlayerItem {
+public class ProgressItem extends Group {
 	Stage stage;
 	float max=100,progress=0,progressY=0;
-	Image backgroundImg,progressImg;
-	ElementEvent elementEvent;
-	PropertySet<String,Object> propertySet;
+	float PADDING = 5;
+	Image backgroundImg,progressImg,borderImg;
+	
 	/*
 	    It's the same progress item in template, but it's modified to work in a stage instead of StageImp
 	*/
@@ -32,71 +25,23 @@ public class ProgressItem extends Group implements PlayerItem {
 		//progress main
 		Texture texture = new Texture(Gdx.files.internal("images/white.png"));
 		backgroundImg = new Image(texture);
-		backgroundImg.setColor(Color.SKY);
+		backgroundImg.setPosition(PADDING, PADDING);
+		backgroundImg.setColor(Color.GRAY);
+		borderImg = new Image(texture);
+		borderImg.setColor(Color.valueOf("#1CD3EB"));
 		progressImg = new Image(texture);
-		progressImg.setColor(Color.BLUE);
+		progressImg.setColor(Color.valueOf("#1CD3EB"));
+		progressImg.setPosition(PADDING * 2,PADDING * 2);
+		addActor(borderImg);
 		addActor(backgroundImg);
 		addActor(progressImg);
-		backgroundImg.setZIndex(0);
-		progressImg.setZIndex(1);
+		borderImg.setZIndex(0);
+		backgroundImg.setZIndex(1);
+		progressImg.setZIndex(2);
 		setY(0);
 		setSize(500,120);
-		addListener(new InputListener(){
-			@Override
-			public void touchUp (InputEvent event, float x, float y, int pointer, int button) {
-				if(getScript()!=null)
-					getScript().touchEnd(event);
-				else if(elementEvent!=null) elementEvent.onTouchEnd(ProgressItem.this,event);
-			}
-			@Override
-			public boolean touchDown (InputEvent event, float x, float y, int pointer, int button) {
-				if(getScript()!=null)
-					getScript().touchStart(event);
-				else if(elementEvent!=null) elementEvent.onTouchStart(ProgressItem.this,event);
-				return true;
-			}
-		});
-		addListener(new ClickListener(){
-			@Override
-			public void clicked (InputEvent event, float x, float y) {
-				if(getScript()!=null)
-					getScript().click();
-				else if(elementEvent!=null) elementEvent.onClick(ProgressItem.this);
-			}
-		});
 	}
 	
-	private void setup(){
-		float width = propertySet.getFloat("width"),
-		height = propertySet.getFloat("height"),
-		x = propertySet.getFloat("x"),
-		y = propertySet.getFloat("y");
-		setZIndex(propertySet.getInt("z"));
-		setVisible(propertySet.getString("Visible").equals("true"));
-		setSize(width,height);
-		setPosition(x,stage.getViewport().getWorldHeight()-getHeight()-y);
-		setRotation(-propertySet.getFloat("rotation"));
-		setBackColor(propertySet.getString("Background Color"));
-		setProgressColor(propertySet.getString("Progress Color"));
-		setMax(propertySet.getInt("Max"));
-		setProgress(propertySet.getInt("Progress"));
-		setName(propertySet.getString("name"));
-		if(getStage()==null)
-		    stage.addActor(this);
-	}
-	
-	public ProgressItem setElementEvent(ElementEvent event){
-		elementEvent = event;
-		return this;
-	}
-	
-	public ProgressItem setPropertySet(PropertySet<String,Object> set){
-		propertySet = set;
-		setup();
-		return this;
-	}
-	
-	@Override
 	public void setProgress(int prog){
 	    progress = prog;
 		updateProgress();
@@ -142,8 +87,8 @@ public class ProgressItem extends Group implements PlayerItem {
 	
 	public void updateProgress(){
 		if(progress>max) progress = max;
-		float progressWidth = ((progress / max) * getWidth());
-		progressImg.setSize(progressWidth,getHeight());
+		float progressWidth = ((progress / max) * (getWidth() - PADDING * 4));
+		progressImg.setSize(progressWidth,getHeight() - PADDING * 4);
 	}
 	
 	public ProgressItem setBackColor(String hex){
@@ -177,77 +122,20 @@ public class ProgressItem extends Group implements PlayerItem {
 	}
 	
 	@Override
-	public void setY(float y) {
-		if(stage!=null) super.setY(y);//stage.getViewport().getWorldHeight()-getHeight()-y);
-		progressY = y;
-	}
-
-	@Override
-	public void setPosition(float x, float y) {
-		super.setX(x);
-		setY(y);
-	}
-	
-	@Override
 	protected void sizeChanged() {
 		super.sizeChanged();
 		//if(getStage()!=null) setY(progressY);
 		//setOrigin(getWidth()*0.5f,getHeight()*0.5f);
 		if(backgroundImg.getWidth()!=getWidth()||backgroundImg.getHeight()!=getHeight()){
-			backgroundImg.setSize(getWidth(),getHeight());
+			backgroundImg.setSize(getWidth() - PADDING * 2,getHeight() - PADDING * 2);
+			borderImg.setSize(getWidth(),getHeight());
 			updateProgress();
 		}
 	}
 	
 	@Override
-	public void update() {
-	    if(propertySet!=null&&propertySet.getString("do update").equals("true")){
-		    setPropertySet(propertySet);
-		    propertySet.remove("do update");
-		}
-		if(getScript()!=null)
-			getScript().bodyUpdate();
-		else if(elementEvent!=null) elementEvent.onBodyUpdate(this);
-	}
-
-	@Override
-	public Body getBody() {
-	    return null;
-	}
-	
-	ChildsHolder childsHolder = new ChildsHolder(this);
-	@Override
-	public ChildsHolder getChildsHolder() {
-	    if(childsHolder!=null)
-		return childsHolder;
-		else {
-			childsHolder = new ChildsHolder(this);
-			return childsHolder;
-		}
-	}
-
-	@Override
-	public PropertySet<String, Object> getProperties() {
-	    return propertySet;
-	}
-
-	@Override
-	public Actor getClone(String newName) {
-		PropertySet<String,Object> set = new PropertySet<>();
-		set.putAll(propertySet);
-		set.put("old",getParentName());
-		set.put("name",newName);
-	    return new ProgressItem(stage).setElementEvent(elementEvent).setPropertySet(set);
-	}
-	
-	@Override
 	public void draw(Batch batch, float parentAlpha) {
 		super.draw(batch, parentAlpha);
-		update();
 	}
 	
-	@Override
-	public ElementEvent getElementEvents() {
-		return elementEvent;
-	}
 }

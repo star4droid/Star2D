@@ -18,15 +18,18 @@ import com.star4droid.star2d.editor.ui.sub.inputs.*;
 import java.lang.reflect.Field;
 
 public class BitmapFontEditor extends VisDialog {
-	public static Class cls = FreeTypeFontGenerator.FreeTypeFontParameter.class;
-	public static FreeTypeFontGenerator.FreeTypeFontParameter instance = new FreeTypeFontGenerator.FreeTypeFontParameter();
+	private static Class cls = FreeTypeFontGenerator.FreeTypeFontParameter.class;
+	private static FreeTypeFontGenerator.FreeTypeFontParameter instance = new FreeTypeFontGenerator.FreeTypeFontParameter();
 	Array<InputField> inputFields = new Array<>();
 	PropertySet<String,Object> propertySet = null;
-	public StringInput name;
+	private StringInput name;
+	private CheckInput isRtl;
 	public DefaultInput fontInput;
 	OnSave onSave;
-	// dir = directory to save the file (no need for it if the filehandle exists)
-	// filehandle = full filepath (null means the user should enter file name)
+	/*
+    	* dir = directory to save the file (no need for it if the filehandle exists)
+    	* filehandle = full filepath (null means the user should enter file name)
+	*/
 	public BitmapFontEditor(TestApp app,FileHandle dir,FileHandle fileHandle){
 		super("Bitmap Font Editor");
 		FileHandle defaultFont = Gdx.files.absolute(app.getEditor().getProject().getPath()+"/DroidSans.ttf");
@@ -61,8 +64,12 @@ public class BitmapFontEditor extends VisDialog {
 				});
 			}
 		});
+		isRtl = new CheckInput();
+		isRtl.setNameText("Support RTL");
+		isRtl.setValue(propertySet!=null ? propertySet.getString("rtl") : "false");
 		table.add(name).row();
 		table.add(fontInput).row();
+		table.add(isRtl).row();
 		for(Field field:cls.getFields()){
 			try {
 				boolean isEnum = false;
@@ -121,6 +128,7 @@ public class BitmapFontEditor extends VisDialog {
 				if(propertySet==null)
 					propertySet = new PropertySet<>();
 				propertySet.put("name",name.getValue());
+				propertySet.put("rtl",isRtl.getValue());
 				propertySet.put("font",fontInput.getValue());
 				for(InputField field:inputFields){
 					propertySet.put(field.getFieldName(),field.getValue());

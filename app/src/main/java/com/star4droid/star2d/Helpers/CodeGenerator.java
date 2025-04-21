@@ -392,18 +392,19 @@ public class CodeGenerator {
      */
     private static String formatWithPalantir(String code) {
         return code;
-        // disabled because bug :
+        // there's bug :
         // Runtime.version() isn't available method 
         // check :
         //https://www.google.com/url?sa=t&source=web&rct=j&opi=89978449&url=https://github.com/apache/lucene/issues/13078&ved=2ahUKEwiN5ZSW98iMAxU-G9AFHX0iGR8Qjjh6BAgrEAE&usg=AOvVaw1Rl2I5YdQvlP6gj3QblZ6h
-        /*try {
+        try {
             Formatter formatter = Formatter.createFormatter(JavaFormatterOptions.defaultOptions());
             return formatter.formatSource(code);
-        } catch (Exception e) {
+        } catch (RuntimeException | Exception e) {
             System.err.println("Error formatting code: " + e.getMessage());
+            Gdx.files.external("logs/code format.txt").writeString(com.star4droid.template.Utils.Utils.getStackTraceString(e),false);
             // Return original code if formatting fails
             return code;
-        }*/
+        }
     }
     
     /**

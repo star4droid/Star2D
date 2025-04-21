@@ -70,6 +70,7 @@ public class TextShow extends VisTable {
 	public TextShow setText(String text){
 		textArea.setText("\n\n"+text);
 		textArea.pack();
+		scrollPane.layout();
 		return this;
 	}
 	

@@ -67,6 +67,12 @@ public interface PlayerItem {
 	default public float getActorY(){
 	    return ((Actor)this).getY();
 	}
+	default public void setActorX(float x){
+	    getActor().setX(x);
+	}
+	default public void setActorY(float y){
+	    getActor().setX(y);
+	}
 	default public float distTo(PlayerItem item){
 		return this.distToPoint(item.getBody().getPosition().x,item.getBody().getPosition().y);
 	}

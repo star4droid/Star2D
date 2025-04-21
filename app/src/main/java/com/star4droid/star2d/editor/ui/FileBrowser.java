@@ -34,7 +34,7 @@ public class FileBrowser extends VisWindow implements Disposable {
     private Runnable pickFilesRunnable;
 	private FileOpen javaOpen;
     private float uiScale = 1f;
-    private boolean gridMode = false,hideWhenNoBack=true,isJavaFolder = false;
+    private boolean gridMode = false,hideWhenNoBack=true,isJavaFolder = false,isImagesFolder=false;
     private VisScrollPane scrollPane;
     private VisTable contentTable;
     private Texture folderIcon;
@@ -244,6 +244,9 @@ public class FileBrowser extends VisWindow implements Disposable {
 	public Texture getTextureFor(FileHandle file){
 		boolean isImage = (!file.isDirectory()) && imageExtensions.contains(file.extension().toLowerCase());
 		if(isImage){
+		    if(!isImagesFolder){
+		        return fileIcon;
+		    }
 			if(projectAssetLoader.isLoaded(file.toString())){
 				return projectAssetLoader.get(file.toString());
 			} else {
@@ -266,7 +269,7 @@ public class FileBrowser extends VisWindow implements Disposable {
     }
 	
 	private Texture getAsset(FileHandle asset){
-		return (projectAssetLoader!=null&&projectAssetLoader.contains(asset.toString()))?projectAssetLoader.get(asset.toString()):new Texture(asset);
+		return (projectAssetLoader!=null && projectAssetLoader.contains(asset.toString())) ? projectAssetLoader.get(asset.toString() ): new Texture(asset);
 	}
 	
 	/*private void centerOnScreen(){
@@ -403,8 +406,10 @@ public class FileBrowser extends VisWindow implements Disposable {
 
     public void setCurrentDirectory(FileHandle dir) {
         currentDir = dir;
-		if(depth==1)
+		if(depth==1){
 			isJavaFolder = dir.name().toLowerCase().equals("java");
+			isImagesFolder = dir.name().toLowerCase().equals("images");
+	    }
         refreshFileList();
         addAction(Actions.sequence(
                 Actions.alpha(0.7f),

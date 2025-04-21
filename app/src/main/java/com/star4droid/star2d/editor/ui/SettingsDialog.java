@@ -29,6 +29,11 @@ public class SettingsDialog extends VisDialog {
 		codeCompletion.setValue(String.valueOf(preferences.getBoolean("Auto Completion",true)));
 		table.add(codeCompletion).padTop(10).row();
 		
+		CheckInput autoSave = new CheckInput();
+		autoSave.setNameText("Auto Save");
+		autoSave.setValue(String.valueOf(preferences.getBoolean("AutoSave",true)));
+		table.add(autoSave).padTop(10).row();
+		
 		SpinnerInput compiler = new SpinnerInput();
 		compiler.setNameText("Compiler");
 		compiler.setData("javac","ecj");
@@ -59,11 +64,13 @@ public class SettingsDialog extends VisDialog {
 			public void clicked (InputEvent event, float x, float y) {
 				preferences.putBoolean("Auto Completion",codeCompletion.getValue().equals("true"))
 					.putBoolean("SaveUndoRedo",saveUndoRedo.getValue().equals("true"))
+					.putBoolean("AutoSave",autoSave.getValue().equals("true"))
 					.putString("Control Position",layoutType.getValue())
 					.putString("compiler",compiler.getValue()).flush();
 				if(app.getEditor()!=null){
 					try {
 						app.getEditor().setLogicalWH(Utils.getFloat(logicWidth.getValue()),Utils.getFloat(logicHeight.getValue()));
+						app.getEditor().enableAutoSave(saveUndoRedo.getValue().equals("true"));
 						app.getEditor().saveConfig();
 					} catch(Exception e){
 						app.toast("logic change error : \n"+e.toString());

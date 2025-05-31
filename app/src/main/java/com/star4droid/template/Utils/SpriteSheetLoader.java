@@ -16,6 +16,7 @@ public class SpriteSheetLoader extends Thread {
 	String path;
 	LoadListener loadListener;
 	ProjectAssetLoader assetLoader;
+	boolean loaded = false;
 	Project project;
 	public SpriteSheetLoader(ProjectAssetLoader assetLoader,Project project,LoadListener loadListener){
 		super();
@@ -56,8 +57,14 @@ public class SpriteSheetLoader extends Thread {
 		}
 		if(loadListener!=null)
 			loadListener.onLoadComplete(false,null);
+		loaded = true;
 	}
-	
+	@Override
+	public void start() {
+		if(!loaded)
+			super.start();
+		else loadListener.onLoadComplete(false,null);
+	}
 	public Animation getAnimation(String anim){
 		Animation an = animations.containsKey(anim)?animations.get(anim):null;
 		return an;

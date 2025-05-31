@@ -30,6 +30,7 @@ public class FilePicker extends VisWindow implements Disposable {
     private boolean showImageIcons = true;
     private FileHandle rootDir;
     private FileHandle currentDir;
+	private Texture folderIcon,fileIcon;
     private BiConsumer<FileHandle, String> onPick;
     private Runnable onCancel;
     private java.util.Stack<FileHandle> history = new java.util.Stack<>();
@@ -51,6 +52,8 @@ public class FilePicker extends VisWindow implements Disposable {
         setCenterOnAdd(true);
         padTop(42);
         defaults().pad(5);
+		folderIcon = new Texture(Gdx.files.internal("images/folder-white.png"));
+		fileIcon = new Texture(Gdx.files.internal("images/file-white.png"));
     }
 
     private void buildUI() {
@@ -208,8 +211,8 @@ public class FilePicker extends VisWindow implements Disposable {
     }
 
     private Texture getFileIcon(FileHandle file) {
-        if (file.isDirectory()) return new Texture(Gdx.files.internal("images/folder.png"));
-        if (!showImageIcons) return new Texture(Gdx.files.internal("images/file.png"));
+        if (file.isDirectory()) return folderIcon;
+        if (!showImageIcons) return fileIcon;
         
         if (isParticleFile(file)) {
             FileHandle imageFile = file.parent().child("images").child(file.nameWithoutExtension() + ".png");
@@ -222,7 +225,7 @@ public class FilePicker extends VisWindow implements Disposable {
             }
         }
 		String ext = file.extension().toLowerCase();
-		if(ext.contains("png") || ext.contains("jpg"))
+		if(ext.contains("png") || ext.contains("jpeg") || ext.contains("jpg"))
 			return new Texture(file);
         return new Texture(Gdx.files.internal("images/file.png"));
     }

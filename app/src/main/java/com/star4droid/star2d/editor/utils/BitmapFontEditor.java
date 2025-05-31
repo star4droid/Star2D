@@ -24,25 +24,36 @@ public class BitmapFontEditor extends VisDialog {
 	PropertySet<String,Object> propertySet = null;
 	private StringInput name;
 	private CheckInput isRtl;
+	private TestApp app;
 	public DefaultInput fontInput;
 	OnSave onSave;
+	VisTable table;
+	VisTextButton save,cancel;
 	/*
     	* dir = directory to save the file (no need for it if the filehandle exists)
     	* filehandle = full filepath (null means the user should enter file name)
 	*/
-	public BitmapFontEditor(TestApp app,FileHandle dir,FileHandle fileHandle){
+	public BitmapFontEditor(TestApp app){
 		super("Bitmap Font Editor");
+		this.app = app;
+	}
+	
+	public BitmapFontEditor setData(FileHandle dir,FileHandle fileHandle){
+		boolean first = true;
 		FileHandle defaultFont = Gdx.files.absolute(app.getEditor().getProject().getPath()+"/DroidSans.ttf");
 		if(!defaultFont.exists()){
 			Gdx.files.internal("files/DroidSans.ttf").copyTo(defaultFont);
 		}
-		VisTable table = new VisTable();
+		if(table==null)
+			table = new VisTable();
+		else first = false;
 		try {
 			if(fileHandle!=null && fileHandle.exists())
 				propertySet = PropertySet.getFrom(fileHandle.readString());
 		} catch(Exception e){}
 		// the name of saved font
-		name = new StringInput();
+		if(name == null)
+			name = new StringInput();
 		name.setNameText("File Name");
 		String newName = "font";
 		int n = 1;
@@ -53,23 +64,28 @@ public class BitmapFontEditor extends VisDialog {
 		// disable when editing file is available
 		name.setDisabled(fileHandle!=null);
 		// field to select ttf font...
-		fontInput = new DefaultInput();
+		if(fontInput==null)
+			fontInput = new DefaultInput();
 		fontInput.setNameText("TTF");
 		fontInput.setValue(propertySet != null ? propertySet.getString("font") : "");
+		final String root = dir != null ? dir.file().getAbsolutePath() : (fileHandle != null ? fileHandle.parent().file().getAbsolutePath() : app.getEditor().getProject().getPath());
 		fontInput.value.addListener(new ClickListener() {
 			@Override
 			public void clicked(InputEvent event, float x, float y) {
-				app.getEditor().getFilePicker(true).setRoot(app.getEditor().getProject().getPath()).setExtensions("ttf").setOnPick((fhandle,path)->{
+				app.getEditor().getFilePicker(true).setRoot(root).setExtensions("ttf","otf").setOnPick((fhandle,path)->{
 					fontInput.setValue(path);
 				});
 			}
 		});
-		isRtl = new CheckInput();
+		if(isRtl==null)
+			isRtl = new CheckInput();
 		isRtl.setNameText("Support RTL");
 		isRtl.setValue(propertySet!=null ? propertySet.getString("rtl") : "false");
-		table.add(name).row();
-		table.add(fontInput).row();
-		table.add(isRtl).row();
+		if(first){
+			table.add(name).row();
+			table.add(fontInput).row();
+			table.add(isRtl).row();
+		}
 		for(Field field:cls.getFields()){
 			try {
 				boolean isEnum = false;
@@ -78,7 +94,12 @@ public class BitmapFontEditor extends VisDialog {
 				} catch(Exception ignored){}
 				InputField input = null;
 				String type = field.getType().getName().toLowerCase();
-				if(type.contains("float")){
+				if(!first){
+					for(InputField inputField:inputFields){
+						if(inputField.getFieldName().equals(field.getName()))
+							input = inputField;
+					}
+				} else if(type.contains("float")){
 					input = new FloatInput();
 				} else if(type.equals("int") || type.contains("integer")){
 					input = new IntInput();
@@ -103,44 +124,40 @@ public class BitmapFontEditor extends VisDialog {
 					//((Actor)input).setUserObject(field);
 					if(!isEnum)
 						input.setValue(propertySet == null ? field.get(instance).toString() : propertySet.getString(field.getName()));
-					inputFields.add(input);
-					table.add((Actor)input).growX().padTop(8).row();
+					if(first){
+						inputFields.add(input);
+						table.add((Actor)input).growX().padTop(8).row();
+					}
 				}// else if(!type.contains("string")) Gdx.files.external("logs/fields.txt").writeString("unknown : type : "+field.getType()+",name : "+field.getName()+",enum : "+field.getClass().isEnum()+"\n",true);
 			} catch(Exception ex){
 				Gdx.files.external("logs/fields.txt").writeString("Error : "+ex.toString()+",field : "+field.getName()+"\n",true);
 			}
 		}
-		VisTextButton save = new VisTextButton("Save"),
-			cancel = new VisTextButton("Cancel");
-		cancel.addListener(new ClickListener() {
-			@Override
-			public void clicked(InputEvent event, float x, float y) {
-				hide();
-			}
-		});
-		save.addListener(new ClickListener() {
-			@Override
-			public void clicked(InputEvent event, float x, float y) {
-				if(name.getValue().equals("") || fontInput.getValue().equals("")){
-					app.toast("Name and Font can\'t be empty!!");
-					return;
-				}
-				if(propertySet==null)
+		if(save==null){
+			save = new VisTextButton("Save");
+			save.addListener(new ClickListener() {
+				@Override
+				public void clicked(InputEvent event, float x, float y) {
+					if(name.getValue().equals("") || fontInput.getValue().equals("")){
+						app.toast("Name and Font can\'t be empty!!");
+						return;
+					}
+					if(propertySet==null)
 					propertySet = new PropertySet<>();
-				propertySet.put("name",name.getValue());
-				propertySet.put("rtl",isRtl.getValue());
-				propertySet.put("font",fontInput.getValue());
-				for(InputField field:inputFields){
-					propertySet.put(field.getFieldName(),field.getValue());
-				}
-				if(fileHandle!=null){
-					fileHandle.writeString(propertySet.toString(),false);
-					app.updateFont(fileHandle.path());
-					app.toast("saved to :\n"+fileHandle.name());
-					app.getEditor().updateChilds();
-					if(onSave!=null)
+					propertySet.put("name",name.getValue());
+					propertySet.put("rtl",isRtl.getValue());
+					propertySet.put("font",fontInput.getValue());
+					for(InputField field:inputFields){
+						propertySet.put(field.getFieldName(),field.getValue());
+					}
+					if(fileHandle!=null){
+						fileHandle.writeString(propertySet.toString(),false);
+						app.updateFont(fileHandle.path());
+						app.toast("saved to :\n"+fileHandle.name());
+						app.getEditor().updateChilds();
+						if(onSave!=null)
 						onSave.save(fileHandle.name(),propertySet);
-				} else try {
+						} else try {
 						FileHandle path = dir.child(name.getValue()+".s2df");
 						if(path.exists()){
 							app.toast("There\'s file with the same name!!");
@@ -151,24 +168,39 @@ public class BitmapFontEditor extends VisDialog {
 						app.toast("saved to :\n"+path.name());
 						app.getFileBrowser().refreshFileList();
 						if(onSave!=null)
-							onSave.save(name.getValue()+".s2df",propertySet);
-					} catch(Exception e){
+						onSave.save(name.getValue()+".s2df",propertySet);
+						} catch(Exception e){
 						app.toast("Error : "+e.toString());
 						return;
 					}
-				hide();
-			}
-		});
-		table.add(save).growX().padTop(8).row();
-		table.add(cancel).growX().padTop(8);
-		VisScrollPane scrollPane = new VisScrollPane(table);
-		add(scrollPane);
+					hide();
+				}
+			});
+		}
+		if(cancel==null){
+			cancel = new VisTextButton("Cancel");
+			cancel.addListener(new ClickListener() {
+				@Override
+				public void clicked(InputEvent event, float x, float y) {
+					hide();
+				}
+			});
+		}
+		if(first){
+			table.add(save).growX().padTop(8).row();
+			table.add(cancel).growX().padTop(8);
+			VisScrollPane scrollPane = new VisScrollPane(table);
+			add(scrollPane);
+		}
+		return this;
 	}
 	
 	@Override
 	public VisDialog show(Stage stage) {
 		super.show(stage);
+		setHeight(Gdx.graphics.getHeight()*0.75f);
 		toFront();
+		centerWindow();
 		return this;
 	}
 	

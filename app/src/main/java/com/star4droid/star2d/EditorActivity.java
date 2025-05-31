@@ -265,9 +265,11 @@ public class EditorActivity extends AppCompatActivity implements AndroidFragment
 	
 	private void continueInit(){
         indexFiles();
+		/*
 		editor.getApp().getFileBrowser().setAnimationOpen(file->{
 			openAnimation(file);
 		});
+		*/
 		
 		editor.getApp().getFileBrowser().setOpenJavaRunnable(file->{
 			openJava(file);
@@ -286,8 +288,11 @@ public class EditorActivity extends AppCompatActivity implements AndroidFragment
     }
     private static int id = 0;
     public void indexFiles() {
-        if (!editor.getApp().preferences.getBoolean("Auto Completion", true)) return;
-         id++;
+        if (!editor.getApp().preferences.getBoolean("Auto Completion", true)) {
+            editor.getApp().getControlLayer().setIndexing(false);
+            return;
+        }
+        id++;
         int currentID = id;
         new Thread() {
             public void run() {

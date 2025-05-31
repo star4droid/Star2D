@@ -13,6 +13,7 @@ import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.star4droid.template.Utils.ChildsHolder;
+import com.star4droid.template.Utils.ItemScript;
 import com.star4droid.template.Utils.PlayerItem;
 import com.star4droid.template.Utils.PropertySet;
 import com.star4droid.star2d.ElementDefs.ElementEvent;
@@ -240,12 +241,20 @@ public class ProgressItem extends Group implements PlayerItem {
 	}
 
 	@Override
-	public Actor getClone(String newName) {
+	public PlayerItem getClone(String newName) {
 		PropertySet<String,Object> set = new PropertySet<>();
 		set.putAll(propertySet);
 		set.put("old",getParentName());
 		set.put("name",newName);
-	    return new ProgressItem(stage).setElementEvent(elementEvent).setPropertySet(set);
+	    ProgressItem item = new ProgressItem(stage).setElementEvent(elementEvent).setPropertySet(set);
+		if(set.getScript()!=null){
+			try {
+				ItemScript script = (ItemScript)(set.getScript().getClass().getConstructor(PlayerItem.class).newInstance(item));
+				script.setItem(item).setStage(stage);
+				item.setScript(script);
+			} catch(Exception ex){}
+		}
+		return item;
 	}
 	
 	@Override

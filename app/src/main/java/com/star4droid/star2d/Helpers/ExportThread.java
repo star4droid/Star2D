@@ -38,7 +38,18 @@ public class ExportThread extends Thread {
 		dataDir = FileUtil.getPackageDataDir(context);
 		export_temp = dataDir+"/exportTemp/";
 		manifest_values = manifestV;
-		img = imgPath;
+		try {
+			java.io.File[] files = new java.io.File(project+"/icon/").listFiles();
+			if(files != null && files.length > 0)
+				for(java.io.File file:files){
+					String name = file.getName().toLowerCase();
+					if(name.endsWith(".png") || name.endsWith(".jpg") || name.endsWith(".jpeg")){
+						img = file.getAbsolutePath();
+						break;
+					}
+				}
+		} catch(Exception ex){}
+		//img = imgPath;
 	}
 	
 	@Override

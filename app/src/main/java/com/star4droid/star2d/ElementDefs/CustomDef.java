@@ -10,7 +10,7 @@ public class CustomDef {
 	public ElementEvent elementEvents;
 	PropertySet<String,Object> propertySet= new PropertySet<>();
 	public static final String TYPE="CUSTOM";
-	public String image="",type="DYNAMIC",name="", Collision="",Points = "0,0-1,0,1,1-0,1",Script="";
+	public String image="",Tint="",type="DYNAMIC",name="", Collision="",Points = "0,0-1,0,1,1-0,1",Script="";
 	public boolean Active=true,Bullet=false,isSensor=false,Fixed_Rotation=false,Visible=true;
 	public float x=0,y=0,z=0,rotation=0,Gravity_Scale=1,
 	density=1,friction=0,restitution=0.5f,

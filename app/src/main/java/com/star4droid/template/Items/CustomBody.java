@@ -3,7 +3,6 @@ package com.star4droid.template.Items;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.Batch;
-import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef;
@@ -17,6 +16,7 @@ import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import com.star4droid.star2d.ElementDefs.ElementEvent;
 import com.star4droid.template.Utils.ChildsHolder;
+import com.star4droid.template.Utils.ItemScript;
 import com.star4droid.template.Utils.PlayerItem;
 import java.util.ArrayList;
 import com.star4droid.template.Utils.PropertySet;
@@ -30,6 +30,7 @@ public class CustomBody extends Image implements PlayerItem {
 	float boxY=0,animationTime=0;
 	int tileX=1,tileY=1;
 	ElementEvent elementEvent;
+	String tint = "#FFFFFF";
 	PropertySet<String,Object> propertySet;
 	float[] offset=new float[]{0,0};
 	Body body;
@@ -128,6 +129,10 @@ public class CustomBody extends Image implements PlayerItem {
 		//Utils.setImageFromFile(this,player.project.getImagesPath()+propertySet.getString("image"),new Point(rx,ry),null,null);
 		setName(propertySet.getString("name"));
 		setPosition(x,y);
+		if(!propertySet.getString("Tint").equals(tint)){
+		    setColor(propertySet.getColor("Tint"));
+		    tint = propertySet.getString("Tint");
+		}
 		setZIndex(propertySet.getInt("z"));
 		setRotation(-propertySet.getFloat("rotation"));
 		setVisible(propertySet.getString("Visible").equals("true"));
@@ -198,6 +203,21 @@ public class CustomBody extends Image implements PlayerItem {
 		if(getStage()==null)
 		    stage.addActor(this);
 	}
+	
+	/*@Override
+	public void setImage(Texture texture) {
+		if(propertySet!=null){
+			int tx = Math.max(1,propertySet.getInt("tileX")),
+				ty = Math.max(1,propertySet.getInt("tileY"));
+			if(tx != 1 || ty != 1){
+				texture.setWrap(Texture.TextureWrap.MirroredRepeat, Texture.TextureWrap.MirroredRepeat);
+				TextureRegion textureRegion = new TextureRegion(texture);
+				textureRegion.setRegion(0,0,texture.getWidth()*tx,texture.getHeight()*ty);
+				setDrawable(new TextureRegionDrawable(textureRegion));
+			} else setDrawable(Utils.getDrawable(texture));
+		}
+	}*/
+	
 	@Override
 	public void update() {
 		//body_x = offset + x + (width/2)
@@ -214,6 +234,10 @@ public class CustomBody extends Image implements PlayerItem {
 			setPosition(x - offset[0] - getWidth()*0.5f,
 					y - offset[1] - getHeight()*0.5f);
 			setRotation((float)Math.toDegrees(body.getAngle()));
+		}
+		if(!propertySet.getString("Tint").equals(tint)){
+		    setColor(propertySet.getColor("Tint"));
+		    tint = propertySet.getString("Tint");
 		}
 		if(getScript()!=null)
 			getScript().bodyUpdate();
@@ -252,12 +276,20 @@ public class CustomBody extends Image implements PlayerItem {
 	}
 
 	@Override
-	public Actor getClone(String newName) {
+	public PlayerItem getClone(String newName) {
 	    PropertySet<String,Object> set = new PropertySet<>();
 		set.putAll(propertySet);
 		set.put("old",getParentName());
 		set.put("name",newName);
-		return new CustomBody(stage,null).setPropertySet(set).setElementEvent(elementEvent);
+		CustomBody body = new CustomBody(stage,null).setElementEvent(elementEvent).setPropertySet(set);
+		if(set.getScript()!=null){
+			try {
+				ItemScript script = (ItemScript)(set.getScript().getClass().getConstructor(PlayerItem.class).newInstance(body));
+				script.setItem(body).setStage(stage);
+				body.setScript(script);
+			} catch(Exception ex){}
+		}
+		return body;
 	}
 	
 	@Override

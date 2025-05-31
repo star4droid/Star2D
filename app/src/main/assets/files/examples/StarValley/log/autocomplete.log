@@ -1,0 +1,74 @@
+May 30, 2025 9:29:51 AM com.tyron.javacompletion.project.Project loadJdkModule
+INFO: Loading JDK module
+May 30, 2025 9:29:51 AM com.tyron.javacompletion.project.Project loadJdkModule
+WARNING: Unable to load JDK module
+java.lang.NullPointerException
+	at java.io.Reader.<init>(Reader.java:78)
+	at java.io.InputStreamReader.<init>(InputStreamReader.java:113)
+	at com.tyron.javacompletion.project.Project.loadJdkModule(Project.java:87)
+	at com.tyron.javacompletion.JavaCompletions.lambda$initialize$0(JavaCompletions.java:58)
+	at com.tyron.javacompletion.JavaCompletions.$r8$lambda$Mw9L73jmJN2HfBcWCmDlV2vRcXg(Unknown Source:0)
+	at com.tyron.javacompletion.JavaCompletions$$ExternalSyntheticLambda0.run(D8$$SyntheticClass:0)
+	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:458)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.processTask(ThreadPoolExecutor.java:1187)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1152)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:641)
+	at java.lang.Thread.run(Thread.java:784)
+
+May 30, 2025 9:31:01 AM com.tyron.javacompletion.JavaCompletions initialize
+INFO: Initializing project: file:///data/user/0/com.star4droid.star2d.evo/files/projects/Tanks/java/
+May 30, 2025 9:31:01 AM com.tyron.javacompletion.JavaCompletions initialize
+INFO: Options:
+  logPath: /data/user/0/com.star4droid.star2d.evo/files/projects/Tanks/log//autocomplete.log
+  logLevel: ALL
+  ignorePaths: []
+  typeIndexFiles: []
+May 30, 2025 9:31:01 AM java.util.logging.LogManager$RootLogger log
+WARNING: Log file has already been set.
+May 30, 2025 9:31:02 AM com.tyron.javacompletion.project.Project loadJdkModule
+INFO: Loading JDK module
+May 30, 2025 9:31:02 AM com.tyron.javacompletion.project.Project loadJdkModule
+WARNING: Unable to load JDK module
+java.lang.NullPointerException
+	at java.io.Reader.<init>(Reader.java:78)
+	at java.io.InputStreamReader.<init>(InputStreamReader.java:113)
+	at com.tyron.javacompletion.project.Project.loadJdkModule(Project.java:87)
+	at com.tyron.javacompletion.JavaCompletions.lambda$initialize$0(JavaCompletions.java:58)
+	at com.tyron.javacompletion.JavaCompletions.$r8$lambda$Mw9L73jmJN2HfBcWCmDlV2vRcXg(Unknown Source:0)
+	at com.tyron.javacompletion.JavaCompletions$$ExternalSyntheticLambda0.run(D8$$SyntheticClass:0)
+	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:458)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.processTask(ThreadPoolExecutor.java:1187)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1152)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:641)
+	at java.lang.Thread.run(Thread.java:784)
+
+May 30, 2025 9:39:08 AM com.tyron.javacompletion.JavaCompletions initialize
+INFO: Initializing project: file:///data/user/0/com.star4droid.star2d.evo/files/projects/Starda/java/
+May 30, 2025 9:39:08 AM com.tyron.javacompletion.JavaCompletions initialize
+INFO: Options:
+  logPath: /data/user/0/com.star4droid.star2d.evo/files/projects/Starda/log//autocomplete.log
+  logLevel: ALL
+  ignorePaths: []
+  typeIndexFiles: []
+May 30, 2025 9:39:08 AM java.util.logging.LogManager$RootLogger log
+WARNING: Log file has already been set.
+May 30, 2025 9:39:08 AM com.tyron.javacompletion.project.Project loadJdkModule
+INFO: Loading JDK module
+May 30, 2025 9:39:08 AM com.tyron.javacompletion.project.Project loadJdkModule
+WARNING: Unable to load JDK module
+java.lang.NullPointerException
+	at java.io.Reader.<init>(Reader.java:78)
+	at java.io.InputStreamReader.<init>(InputStreamReader.java:113)
+	at com.tyron.javacompletion.project.Project.loadJdkModule(Project.java:87)
+	at com.tyron.javacompletion.JavaCompletions.lambda$initialize$0(JavaCompletions.java:58)
+	at com.tyron.javacompletion.JavaCompletions.$r8$lambda$Mw9L73jmJN2HfBcWCmDlV2vRcXg(Unknown Source:0)
+	at com.tyron.javacompletion.JavaCompletions$$ExternalSyntheticLambda0.run(D8$$SyntheticClass:0)
+	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:458)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.processTask(ThreadPoolExecutor.java:1187)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1152)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:641)
+	at java.lang.Thread.run(Thread.java:784)
+

@@ -17,6 +17,7 @@ import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import com.star4droid.star2d.ElementDefs.ElementEvent;
 import com.star4droid.template.Utils.ChildsHolder;
+import com.star4droid.template.Utils.ItemScript;
 import com.star4droid.template.Utils.PlayerItem;
 import com.star4droid.template.Utils.PropertySet;
 import com.star4droid.template.Utils.Utils;
@@ -28,6 +29,7 @@ public class BoxBody extends Image implements PlayerItem {
 	StageImp stage;
 	float boxY=0,animationTime=0;
 	int tileX=1,tileY=1;
+	String tint = "#FFFFFF";
 	ElementEvent elementEvent;
 	PropertySet<String,Object> propertySet;
 	float[] offset=new float[]{0,0};
@@ -121,12 +123,18 @@ public class BoxBody extends Image implements PlayerItem {
 		    TextureRegion textureRegion = new TextureRegion(texture);
 		    textureRegion.setRegion(0,0,texture.getWidth()*tileX,texture.getHeight()*tileY);
 		    setDrawable(new TextureRegionDrawable(textureRegion));
-		    } catch(Exception ex){}
+		    //com.badlogic.gdx.Gdx.files.external("logs/box.txt").writeString("\nsetting repeated texture done"+"\n",true);
+		    } catch(Exception ex){
+		        //com.badlogic.gdx.Gdx.files.external("logs/box.txt").writeString("\nsetting repeated texture error : "+ex.toString()+"\n",true);
+		    }
 		}
 		
-		//Utils.setImageFromFile(this,player.project.getImagesPath()+propertySet.getString("image"),new Point(rx,ry),null,null);
 		setName(propertySet.getString("name"));
 		setPosition(x,y);
+		if(!propertySet.getString("Tint").equals(tint)){
+		    setColor(propertySet.getColor("Tint"));
+		    tint = propertySet.getString("Tint");
+		}
 		setZIndex(propertySet.getInt("z"));
 		setRotation(-propertySet.getFloat("rotation"));
 		setVisible(propertySet.getString("Visible").equals("true"));
@@ -163,11 +171,25 @@ public class BoxBody extends Image implements PlayerItem {
 			body.setBullet(propertySet.getString("Bullet").equals("true"));
 			body.setGravityScale(propertySet.getFloat("Gravity Scale"));
 			body.setTransform(new Vector2((offset[0]+x+(getWidth()*0.5f)),(offset[1]+y+(getHeight()*0.5f))),(float)Math.toRadians(-propertySet.getFloat("rotation")));
-			
 		}
 		if(getStage()==null)
 		    stage.addActor(this);
 	}
+	
+	/*@Override
+	public void setImage(Texture texture) {
+		if(propertySet!=null){
+			int tx = Math.max(1,propertySet.getInt("tileX")),
+				ty = Math.max(1,propertySet.getInt("tileY"));
+			if(tx != 1 || ty != 1){
+				texture.setWrap(Texture.TextureWrap.MirroredRepeat, Texture.TextureWrap.MirroredRepeat);
+				TextureRegion textureRegion = new TextureRegion(texture);
+				textureRegion.setRegion(0,0,texture.getWidth()*tx,texture.getHeight()*ty);
+				setDrawable(new TextureRegionDrawable(textureRegion));
+			} else setDrawable(Utils.getDrawable(texture));
+		}
+	}*/
+	
 	@Override
 	public void update() {
 		//body_x = offset + x + (width/2)
@@ -184,6 +206,10 @@ public class BoxBody extends Image implements PlayerItem {
 			setPosition(x - offset[0] - getWidth()*0.5f,
 					y - offset[1] - getHeight()*0.5f);
 			setRotation((float)Math.toDegrees(body.getAngle()));
+		}
+		if(!propertySet.getString("Tint").equals(tint)){
+		    setColor(propertySet.getColor("Tint"));
+		    tint = propertySet.getString("Tint");
 		}
 		if(getScript()!=null)
 			getScript().bodyUpdate();
@@ -213,12 +239,20 @@ public class BoxBody extends Image implements PlayerItem {
 	}
 
 	@Override
-	public Actor getClone(String newName) {
+	public PlayerItem getClone(String newName) {
 	    PropertySet<String,Object> set = new PropertySet<>();
 		set.putAll(propertySet);
 		set.put("old",getParentName());
 		set.put("name",newName);
-		return new BoxBody(stage,null).setPropertySet(set).setElementEvent(elementEvent);
+		BoxBody body = new BoxBody(stage,null).setElementEvent(elementEvent).setPropertySet(set);
+		if(set.getScript()!=null){
+			try {
+				ItemScript script = (ItemScript)(set.getScript().getClass().getConstructor(PlayerItem.class).newInstance(body));
+				script.setItem(body).setStage(stage);
+				body.setScript(script);
+			} catch(Exception ex){}
+		}
+		return body;
 	}
 	
 	@Override

@@ -30,8 +30,8 @@ public class JoyStickDef {
 				
 			}
 		}
-		
-		return Joystick.create(stageImp,Button_Image,Pad_Image)
+		String imgsPath = stageImp.getProject().getImagesPath();
+		return Joystick.create(stageImp,Button_Image.equals("")? "" : (imgsPath + Button_Image),Pad_Image.equals("") ? "" : (imgsPath + Pad_Image))
 				.setElementEvent(elementEvents)
 				.setPropertySet(propertySet);
 	}

@@ -10,6 +10,10 @@ import com.kotcrab.vis.ui.widget.VisTextButton;
 import com.star4droid.star2d.editor.LibgdxEditor;
 
 public class PointPicker extends Table {
+
+/*
+    TODO : Fix this ..
+*/
 	LibgdxEditor.OnPickListener pickListener;
 	public PointPicker(){
 		super();
@@ -22,7 +26,7 @@ public class PointPicker extends Table {
 			@Override
             public void clicked(InputEvent event, float x, float y) {
                 if(pickListener!=null)
-					pickListener.onPick(getX(),getY());
+					pickListener.onPick(getX() - getWidth()*0.75f - 25,getY() + getHeight()*0.5f + 50);
 				remove();
             }
 		});

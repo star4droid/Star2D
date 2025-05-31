@@ -7,6 +7,7 @@ import com.google.gson.reflect.TypeToken;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map;
 /*
 	property for the editor elements and player...
 */
@@ -49,8 +50,7 @@ public class PropertySet<K, V> extends HashMap<String,Object> {
 	public ItemScript getScript(){
 		return script;
 	}
-	
-	
+
 	public boolean setParent(PropertySet propertySet){
 		if(propertySet==parent) return true;
 		if(propertySet==null){

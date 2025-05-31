@@ -107,9 +107,12 @@ public class CodeGenerator {
                 // Initialize code building variables - preserved from original implementation
                 String itemsCode = "";
                 String fixZ = "";
+                String addChilds = "";
                 String vars = "";
                 String lightsVar = "";
                 String jointVars = "";
+				final ArrayList<String> neededScenes = new ArrayList<>();
+				neededScenes.add(scene);
                 final StringBuilder scriptBuilder = new StringBuilder("");
                 boolean thereIsScript = false;
                 
@@ -191,11 +194,17 @@ public class CodeGenerator {
                         String initCode = "";
                         String name = propertySet.getString("name");
                         String script = propertySet.getString("Script");
-                        
+						String[] scriptSceneList = script.contains("/") ? script.split("/") : null;
+                        String scriptScene = scriptSceneList == null ? scene : scriptSceneList[0];
+						if(scriptSceneList!=null && !neededScenes.contains(scriptScene))
+							neededScenes.add(scriptScene);
+						if(scriptSceneList!=null)
+							script = scriptSceneList[1];//.substring(0,scriptSceneList[1].lastIndexOf("Script"));
+						//Gdx.files.external("logs/script.txt").writeString(String.format("script : %1$s, scene : %2$s, path : %3$s",script,scriptScene,project.getBodyScriptPath(script,scriptScene))+"\n",true);
                         // Load event handlers for non-light objects
                         if (!isLight) {
                             for (int ev = 0; ev < eventsList.length - 1; ev++) {
-                                eventsList[ev] = project.readEvent(scene, eventsList[ev], script);
+                                eventsList[ev] = project.readEvent(scriptScene, eventsList[ev], script);
                             }
                         }
                         
@@ -245,13 +254,14 @@ public class CodeGenerator {
                             }
                             
                             // Format property initialization based on type
-                            String qu1 = fieldType.equals("String") ? "\"" : "";
-                            String qu2 = fieldType.equals("String") ? "\"" : (fieldType.equals("float") ? "f" : "");
+                            //String qu1 = fieldType.equals("String") ? "\"" : "";
+                            String qu2 = fieldType.equals("float") ? "f" : "";
                             
                             // Add property initialization code
+                            // replace (") from string by (\")
                             initCode = (initCode.equals("") ? "" : (initCode + "\n")) + 
                                       "\t\t\t" + name + "_def." + propertyKey.replace(" ", "_") + 
-                                      "=" + qu1 + entry.getValue().toString() + qu2 + ";";
+                                      "=" + (fieldType.equals("String") ? new Gson().toJson(entry.getValue().toString()) : entry.getValue().toString()) + qu2 + ";";
                         }
                         
                         // Generate item code using appropriate template
@@ -271,16 +281,17 @@ public class CodeGenerator {
                         
                         // Handle parent-child relationships
                         if ((!isLight) && propertySet.getParent() != null) {
-                            itemsCode += propertySet.getParent().getString("name") + 
+                            addChilds += propertySet.getParent().getString("name") + 
                                         ".addChild(" + name + ");\n";
                         }
                         
                         // Add script attachment if needed
-                        if (!FileUtil.readFile(project.getBodyScriptPath(script, scene)).equals("")) {
+                        if (!FileUtil.readFile(project.getBodyScriptPath(script, scriptScene)).equals("")) {
                             itemsCode += String.format(
-                                "\n%2$s.setScript(new %1$sScript().setItem(%2$s).setStage(this));\n",
+                                "\n%2$s.setScript(new com.star4droid.Game.Scripts.%3$s.%1$sScript().setItem(%2$s).setStage(this));\n",
                                 script,
-                                name
+                                name,
+								scriptScene.toLowerCase()
                             );
                             thereIsScript = true;
                         }
@@ -313,7 +324,7 @@ public class CodeGenerator {
                 }
                 
                 // Finalize item code
-                itemsCode += "\n" + fixZ + joint.toString() + project.readEvent(scene, "OnCreate");
+                itemsCode += "\n" + fixZ + (addChilds.equals("")?"":("\n"+addChilds)) + joint.toString() + project.readEvent(scene, "OnCreate");
                 
                 // Finalize variable declarations
                 if (!vars.equals("")) {
@@ -322,9 +333,9 @@ public class CodeGenerator {
                 if (!lightsVar.equals("")) {
                     lightsVar += ";";
                 }
-                
+                String sceneScript = FileUtil.isExistFile(project.getSceneScript(scene)) ? ("\nsetScript(new com.star4droid.game.SceneScript."+scene.toLowerCase()+"Script().setStage(this));") : "";
                 // Prepare final code and variables
-                final String code = itemsCode;
+                final String code = itemsCode + sceneScript;
                 final String variables = vars + "\n" + jointVars + "\n" + lightsVar;
                 final boolean replaceImportOfTheScript = (!thereIsScript);
                 
@@ -336,11 +347,13 @@ public class CodeGenerator {
                         try {
                             
                             // Replace script import placeholder if needed
-                            playerCode = playerCode.replace(
+                            /*
+							playerCode = playerCode.replace(
                                 script_import,
                                 replaceImportOfTheScript ? "" : 
                                 String.format("import com.star4droid.Game.Scripts.%1$s.*;", scene.toLowerCase())
                             );
+							*/
                             
                             // Format final code with all components
                             String codeResult = String.format(
@@ -391,7 +404,7 @@ public class CodeGenerator {
      * @return The formatted Java code
      */
     private static String formatWithPalantir(String code) {
-        if(true) return code;
+        //return code;
         // there's bug :
         // Runtime.version() isn't available method 
         // check :
@@ -399,7 +412,7 @@ public class CodeGenerator {
         try {
             Formatter formatter = Formatter.createFormatter(JavaFormatterOptions.defaultOptions());
             return formatter.formatSource(code);
-        } catch (Exception e) {
+        } catch (NoSuchMethodError | Exception e) {
             System.err.println("Error formatting code: " + e.getMessage());
             Gdx.files.external("logs/code format.txt").writeString(com.star4droid.template.Utils.Utils.getStackTraceString(e),false);
             // Return original code if formatting fails

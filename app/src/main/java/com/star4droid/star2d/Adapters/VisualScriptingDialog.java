@@ -31,6 +31,14 @@ public class VisualScriptingDialog {
 		});
 	}
 	
+	public static void openSceneScript(String scene,String path){
+		Intent intent = new Intent();
+		intent.putExtra("scene",scene.toLowerCase());
+		intent.putExtra("path",path);
+		intent.setClass(Editor.getCurrentEditor().getContext(),com.star4droid.star2d.Activities.CodeEditorActivity.class);
+		Editor.getCurrentEditor().getContext().startActivity(intent);
+	}
+	
 	public static void openCodeEditor(){
 		Editor editor = Editor.getCurrentEditor();
 		if(editor.getSelectedView()==null||(editor.getIndexer()!=null&&editor.getIndexer().isIndexing())) return;
@@ -46,25 +54,30 @@ public class VisualScriptingDialog {
 	public static void showFor(final Editor editor,final String event,boolean isBody,boolean isScript){
 		final Context context = editor.getContext();
 		Project project = editor.getProject();
-		String body="";
+		String body="",scene = editor.getScene();
 		if(isBody){
 			if(editor.getSelectedView()==null) return;
 			PropertySet ps = PropertySet.getPropertySet(editor.getSelectedView());
 			body = ps.getString(ps.containsKey("Script")?"Script":"name");
+			if(body.contains("/")) {
+				String[] values = body.split("/");
+				scene = values[0];
+				body = values[1];
+			}
 		}
 		
-		final String cp = isScript?project.getScriptsPath(editor.getScene())+event:project.getEventPath(editor.getScene(),body,event);
+		final String codePath = isScript?project.getScriptsPath(scene)+event:project.getEventPath(scene,body,event);
 		/*PopupMenu popupMenu = new PopupMenu(context,view);
 		popupMenu.getMenuInflater().inflate(R.menu.coding_choices_menu,popupMenu.getMenu());
 		popupMenu.setOnMenuItemClickListener(item->{
 			if(item.getTitle().toString().toLowerCase().contains("visual")){
-				visual(editor,event,cp);
+				visual(editor,event,codePath);
 			} else {
 				Intent i= new Intent();
 				editor.setToCurrentEditor();
 				i.setClass(context,CodeEditorActivity.class);
 				//i.putExtra("list",editor.getBodiesList());
-				i.putExtra("path",cp+".code");
+				i.putExtra("path",codePath+".code");
 				context.startActivity(i);
 			}
 			popupMenu.dismiss();
@@ -73,13 +86,18 @@ public class VisualScriptingDialog {
 		
 		popupMenu.show();
 		*/
-		visual(editor,event,cp);
+		visual(editor,event,codePath,!scene.equals(editor.getScene()));
 	}
-	public static void visual(Editor editor,String event,String cp){
+	public static void visual(Editor editor,String event,String codePath){
+		visual(editor,event,codePath,false);
+	}
+	public static void visual(Editor editor,String event,String codePath,boolean fromOther){
 		Context context= editor.getContext();
 		ArrayList<String> hintsList= new ArrayList<>();
-		hintsList.addAll(editor.getBodiesList());
-		if(hintsList.size()>0) hintsList.add(0,"- Items");
+		if(!fromOther)
+			hintsList.addAll(editor.getBodiesList());
+		if(hintsList.size() > 0 && !fromOther)
+			hintsList.add(0,"- Items");
 		ArrayList<String> files = new ArrayList<>();
 		FileUtil.listDir(editor.getProject().getImagesPath(),files);
 		int x=0;
@@ -128,8 +146,9 @@ public class VisualScriptingDialog {
 		
 		final AlertDialog dl = Utils.showMessage(context,"please wait...");
 		
-		VisualScriptingView vs = new VisualScriptingView(context,cp+".java",cp+".visual",new Gson().toJson(hintsList),editor.getProject().getPath()){
+		VisualScriptingView vs = new VisualScriptingView(context,codePath+".java",codePath+".visual",new Gson().toJson(hintsList),editor.getProject().getPath()){
 			public void onDone(final VisualScriptingView vs){
+				vs.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.MATCH_PARENT));
 				dl.dismiss();
 				//init done , add view's and show dialog
 				View view = LayoutInflater.from(context).inflate(R.layout.visual_dialog,null);

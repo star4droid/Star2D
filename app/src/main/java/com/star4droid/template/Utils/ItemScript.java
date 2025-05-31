@@ -80,34 +80,41 @@ public class ItemScript {
 	}
 	
 	public final void click(){
-		playerItem.getElementEvents().onClick(playerItem);
+		if(playerItem.getElementEvents()!=null)
+		    playerItem.getElementEvents().onClick(playerItem);
 		onClick();
 	}
 	
 	public final void touchStart(InputEvent inputEvent){
-		playerItem.getElementEvents().onTouchStart(playerItem,inputEvent);
+		if(playerItem.getElementEvents()!=null)
+		    playerItem.getElementEvents().onTouchStart(playerItem,inputEvent);
 		onTouchStart(inputEvent);
 	}
 	
 	public final void touchEnd(InputEvent inputEvent){
-		playerItem.getElementEvents().onTouchEnd(playerItem,inputEvent);
+		if(playerItem.getElementEvents()!=null)
+		    playerItem.getElementEvents().onTouchEnd(playerItem,inputEvent);
 		onTouchEnd(inputEvent);
 	}
 	
 	public void bodyCreated(){
 	    onBodyCreated();
-		playerItem.getElementEvents().onBodyCreated(playerItem);
+		if(playerItem.getElementEvents()!=null)
+		    playerItem.getElementEvents().onBodyCreated(playerItem);
 	}
 	public final void bodyUpdate(){
 	    onBodyUpdate();
-		playerItem.getElementEvents().onBodyUpdate(playerItem);
+		if(playerItem.getElementEvents()!=null)
+		    playerItem.getElementEvents().onBodyUpdate(playerItem);
 	}
 	public final void collisionBegin(PlayerItem other){
 	    onCollisionBegin(other);
-		playerItem.getElementEvents().onCollisionBegin(playerItem,other);
+		if(playerItem.getElementEvents()!=null)
+		    playerItem.getElementEvents().onCollisionBegin(playerItem,other);
 	}
 	public final void collisionEnd(PlayerItem other){
 	    onCollisionEnd(other);
-		playerItem.getElementEvents().onCollisionEnd(playerItem,other);
+		if(playerItem.getElementEvents()!=null)
+		    playerItem.getElementEvents().onCollisionEnd(playerItem,other);
 	}
 }

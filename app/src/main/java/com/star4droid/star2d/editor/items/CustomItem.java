@@ -23,6 +23,7 @@ public class CustomItem extends Image implements EditorItem {
     PropertySet<String, Object> propertySet;
     LibgdxEditor editor;
     Body body;
+    String tint = "#FFFFFF";
     ShapeRenderer shapeRenderer;
 	float[] offset=new float[]{0,0};
     ArrayList<Vector2> points = new ArrayList<>();
@@ -110,6 +111,10 @@ public class CustomItem extends Image implements EditorItem {
         // Update physics body
         updatePhysicsBody();
 		body.setTransform(new Vector2((offset[0]+x+(getWidth()*0.5f)),(offset[1]+y+(getHeight()*0.5f))),(float)Math.toRadians(-propertySet.getFloat("rotation")));
+		if(!propertySet.getString("Tint").equals(tint)){
+		    setColor(propertySet.getColor("Tint"));
+		    tint = propertySet.getString("Tint");
+		}
     }
 
     private void updatePhysicsBody() {

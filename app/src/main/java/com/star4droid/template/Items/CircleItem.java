@@ -15,6 +15,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import com.star4droid.star2d.ElementDefs.ElementEvent;
 import com.star4droid.template.Utils.ChildsHolder;
+import com.star4droid.template.Utils.ItemScript;
 import com.star4droid.template.Utils.PropertySet;
 import com.star4droid.template.Utils.PlayerItem;
 import com.star4droid.template.Utils.Utils;
@@ -25,6 +26,7 @@ public class CircleItem extends Image implements PlayerItem {
 	float circleY=0;
 	float[] offset = new float[]{0,0};
 	Body body;
+	String tint = "#FFFFFF";
 	PropertySet<String,Object> propertySet;
 	public CircleItem(StageImp stageImp,Drawable drawable){
 		super(drawable);
@@ -79,12 +81,15 @@ public class CircleItem extends Image implements PlayerItem {
 		y = propertySet.getFloat("y");
 		y = stage.getViewport().getWorldHeight()-getHeight()-y;
 		String imgPath=propertySet.getString("image");
-		//setDrawable(Utils.getDrawable(imgPath.equals("")?Gdx.files.internal("images/logo.png"):Utils.absolute(imgPath)));
-		//Utils.setImageFromFile(this,.project.getImagesPath()+propertySet.getString("image"),new Point(rx,ry),null,null);
+		
 		setDrawable(Utils.getDrawable(Utils.internal("images/logo.png")));
 		stage.setImage(this,propertySet.getString("image"));
 		setSize(width,height);
 		setPosition(x,y);
+		if(!propertySet.getString("Tint").equals(tint)){
+		    setColor(propertySet.getColor("Tint"));
+		    tint = propertySet.getString("Tint");
+		}
 		setZIndex(propertySet.getInt("z"));
 		setRotation(-propertySet.getFloat("rotation"));
 		setVisible(propertySet.getString("Visible").equals("true"));
@@ -165,6 +170,10 @@ public class CircleItem extends Image implements PlayerItem {
 						y - offset[1] - getHeight()*0.5f);
 			setRotation((float)Math.toDegrees(body.getAngle()));
 		}
+		if(!propertySet.getString("Tint").equals(tint)){
+		    setColor(propertySet.getColor("Tint"));
+		    tint = propertySet.getString("Tint");
+		}
 		if(getScript()!=null)
 			getScript().bodyUpdate();
 		else if(elementEvent!=null) elementEvent.onBodyUpdate(this);
@@ -187,12 +196,20 @@ public class CircleItem extends Image implements PlayerItem {
 	}
 
 	@Override
-	public Actor getClone(String newName) {
+	public PlayerItem getClone(String newName) {
 		PropertySet<String,Object> set = new PropertySet<>();
 		set.putAll(propertySet);
 		set.put("old",getParentName());
 		set.put("name",newName);
-	    return new CircleItem(stage,null).setPropertySet(set).setElementEvent(elementEvent);
+	    CircleItem item = new CircleItem(stage,null).setElementEvent(elementEvent).setPropertySet(set);
+		if(set.getScript()!=null){
+			try {
+				ItemScript script = (ItemScript)(set.getScript().getClass().getConstructor(PlayerItem.class).newInstance(item));
+				script.setItem(item).setStage(stage);
+				item.setScript(script);
+			} catch(Exception ex){}
+		}
+		return item;
 	}
 	
 	@Override

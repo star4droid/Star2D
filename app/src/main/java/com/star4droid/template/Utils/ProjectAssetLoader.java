@@ -16,7 +16,11 @@ public class ProjectAssetLoader extends AssetManager {
 	boolean isListenerCalled = false;
 	public ProjectAssetLoader(Project p){
 	    super(new AbsoluteFileHandleResolver());
-		project = p;
+		load(p);
+	}
+	
+	public void load(Project p){
+		this.project = p;
 		setErrorListener((descriptor,error)->{
 			Utils.Log("assets load error : \nfile : "+descriptor.fileName,Utils.getStackTraceString(error));
 		});

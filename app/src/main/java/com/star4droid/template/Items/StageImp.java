@@ -44,6 +44,7 @@ public class StageImp extends ApplicationAdapter {
 	public Stage UiStage,GameStage;
 	int steps=6,backgroundColor=0xFFFFFF;
     public Box2DDebugRenderer debugRenderer;
+	SceneScript sceneScript;
 	Color backgroundColorGdx= Color.WHITE;
 	public Project project;
 	public PropertySet<String,Object> propertySet;
@@ -88,7 +89,7 @@ public class StageImp extends ApplicationAdapter {
 	boolean needsUpdate = true;
 	public void init(Viewport viewport){
 	    if(propertySet==null || Gdx.app==null || Gdx.files == null) {
-	        Gdx.files.external("null.error.txt").writeString(String.format("property: %1$s, app : %2$s, files : %3$s\n\n",propertySet!=null,Gdx.app!=null,Gdx.files != null),true);
+	        //Gdx.files.external("init.null.error.txt").writeString(String.format("property: %1$s, app : %2$s, files : %3$s\n\n",propertySet!=null,Gdx.app!=null,Gdx.files != null),true);
 	        return;
 	    }
 		boolean landscape = propertySet.getString("or").equals("") || propertySet.getString("or").equals("landscape");
@@ -130,6 +131,8 @@ public class StageImp extends ApplicationAdapter {
 		initDone = true;
 		if(spriteSheetLoader!=null&&assetLoader!=null&&!isMain()){
 			onCreate();
+			if(sceneScript!=null)
+				sceneScript.onCreate();
 		    onCreateCalled = true;
 		}
 		
@@ -156,9 +159,11 @@ public class StageImp extends ApplicationAdapter {
 		} else {
 			loadComplete = true;
 			onCreateCalled = true;
-			if(assetLoader.isFinished())
+			if(assetLoader.isFinished()){
 		    	onCreate();
-			else {
+				if(sceneScript!=null)
+					sceneScript.onCreate();
+			} else {
 				onCreateCalled = false;
 				loadComplete = false;
 			}
@@ -183,6 +188,11 @@ public class StageImp extends ApplicationAdapter {
 	    viewportHeight = height;
 	    updateViewport();
 	    return this;
+	}
+	
+	public StageImp setScript(SceneScript sceneScript){
+		this.sceneScript = sceneScript;
+		return this;
 	}
 	
 	public BitmapFont getFont(String path){
@@ -265,8 +275,14 @@ public class StageImp extends ApplicationAdapter {
 		return null;
 	}
 	
+	public Project getProject(){
+		return project;
+	}
+	
 	public void drawDebug(){
-	    debugRenderer.render(world, GameStage.getCamera().combined);
+	    try {
+	        debugRenderer.render(world, GameStage.getCamera().combined);
+	    } catch(Exception ex){}
 	}
 	
 	public int toInt(String string,int onError) {
@@ -349,12 +365,12 @@ public class StageImp extends ApplicationAdapter {
 	public final void create() {
 		super.create();
 		debugRenderer = new Box2DDebugRenderer();
-		try {
+		//try {
 		    init(viewport);
-		} catch(Exception ex){
-		    throw new RuntimeException("error : " + ex.toString()+"\n full:\n"
-		        +Utils.getStackTraceString(ex));
-		}
+		// } catch(Exception ex){
+		    // throw new RuntimeException("error : " + ex.toString()+"\n full:\n"
+		        // +Utils.getStackTraceString(ex));
+		// }
 	}
 	
 	@Override
@@ -392,18 +408,22 @@ public class StageImp extends ApplicationAdapter {
 	public final void resume() {
 		super.resume();
 		if(!loadComplete) return;
-		if(currentStage==null)
+		if(currentStage==null){
 			onResume();
-		else currentStage.onResume();
+			if(sceneScript!=null)
+				sceneScript.onResume();
+		} else currentStage.onResume();
 	}
 
 	@Override
 	public final void pause() {
 		super.pause();
 		if(!loadComplete) return;
-		if(currentStage==null)
+		if(currentStage==null){
 			onPause();
-				else currentStage.onPause();
+			if(sceneScript!=null)
+				sceneScript.onPause();
+		} else currentStage.onPause();
 	}
 	
 	public void Pause(){
@@ -438,6 +458,8 @@ public class StageImp extends ApplicationAdapter {
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 		if(loadComplete&&(!onCreateCalled)){
 			onCreate();
+			if(sceneScript!=null)
+				sceneScript.onCreate();
 			onCreateCalled = true;
 		}
 		
@@ -450,7 +472,6 @@ public class StageImp extends ApplicationAdapter {
 		} else if(currentStage==null){
 			act();
 			draw();
-			onDraw();
 		} else {
 		    if(!currentStage.initComplete())
 		        currentStage.init(null);
@@ -458,7 +479,6 @@ public class StageImp extends ApplicationAdapter {
 			currentStage.draw();
 			//if(!currentStage.draw())
 			    //throw new RuntimeException("game not drawn for unknown reason...");
-			currentStage.onDraw();
 		}
 		
 	}
@@ -585,10 +605,8 @@ public class StageImp extends ApplicationAdapter {
 			if(viewport!=null) viewport.setWorldSize(width,height);
 		    //background.setSize(width,height);
 		    setupLight();
-		    if(needsUpdate){
-		        try {
+		    if(needsUpdate && Gdx.app != null){
 		            init(null);
-		        } catch(Exception ex){}
 		    }
 		}
 		return this;
@@ -651,63 +669,55 @@ public class StageImp extends ApplicationAdapter {
 			@Override
 			public void beginContact(Contact contact) {
 			    if(finished) return;
+			    PlayerItem body1 = null, body2 = null;
 				try {
-					PlayerItem body1 = (PlayerItem)contact.getFixtureA().getUserData();
-					PlayerItem body2 = (PlayerItem)contact.getFixtureB().getUserData();
+					body1 = (PlayerItem)contact.getFixtureA().getUserData();
+					body2 = (PlayerItem)contact.getFixtureB().getUserData();
 					collisionMap.put(body1.getName()+","+body2.getName(),"true");
 					collisionMap.put(body2.getName()+","+body1.getName(),"true");
-					
-					if(body1.getScript()!=null) body1.getScript().collisionBegin(body2);
+				} catch(Exception ex){
+					//Utils.showMessage(getContext(),ex.toString());
+					//Utils.Log("star2dXXX",ex.toString());
+				}
+				if(body1!=null && body2!=null){
+				    if(body1.getScript()!=null) body1.getScript().collisionBegin(body2);
 						else body1.getElementEvents().onCollisionBegin(body1,body2);
 					
 					if(body2.getScript()!=null) body2.getScript().collisionBegin(body1);
 						else body1.getElementEvents().onCollisionBegin(body2,body1);
-					
-					onCollisionBegin(body1,body2);
-					
-				} catch(Exception ex){
-					//Utils.showMessage(getContext(),ex.toString());
-					//Utils.Log("star2dXXX",ex.toString());
+				    onCollisionBegin(body1,body2);
 				}
 			}
 
 			@Override
 			public void endContact(Contact contact) {
+				PlayerItem body1=null, body2 = null;
 				try {
-					PlayerItem body1 = (PlayerItem)contact.getFixtureA().getUserData();
-					PlayerItem body2 = (PlayerItem)contact.getFixtureB().getUserData();
+					body1 = (PlayerItem)contact.getFixtureA().getUserData();
+					body2 = (PlayerItem)contact.getFixtureB().getUserData();
 					collisionMap.remove(body1.getName()+","+body2.getName());
 					collisionMap.remove(body2.getName()+","+body1.getName());
-					
-					if(body1.getScript()!=null) body1.getScript().collisionBegin(body2);
-						else body1.getElementEvents().onCollisionEnd(body1,body2);
-					
-					if(body2.getScript()!=null) body2.getScript().collisionBegin(body1);
-						else body1.getElementEvents().onCollisionEnd(body2,body1);
-					
-					onCollisionEnd(body1,body2);
 				} catch(Exception ex){
 					//Utils.Log("star2dXXX",ex.toString());
 				}
+				if(body1!=null && body2!=null){
+				    if(body1.getScript()!=null) body1.getScript().collisionEnd(body2);
+						else body1.getElementEvents().onCollisionEnd(body1,body2);
+					
+					if(body2.getScript()!=null) body2.getScript().collisionEnd(body1);
+						else body1.getElementEvents().onCollisionEnd(body2,body1);
+				    onCollisionEnd(body1,body2);
+				}
 			}
-
 			@Override
-			public void postSolve(Contact arg0, ContactImpulse arg1) {
-			}
-
+			public void postSolve(Contact arg0, ContactImpulse arg1) {}
 			@Override
-			public void preSolve(Contact arg0, Manifold arg1) {
-			}
+			public void preSolve(Contact arg0, Manifold arg1) {}
 		});
 	}
 	
-	public void onCollisionBegin(PlayerItem body1,PlayerItem body2){
-		
-	}
-	
-	public void onCollisionEnd(PlayerItem body1,PlayerItem body2){
-		
-	}
+	public void onCollisionBegin(PlayerItem body1,PlayerItem body2){}
+	public void onCollisionEnd(PlayerItem body1,PlayerItem body2){}
 	
 	public static StageImp getFromDex(String path,String scene,ProjectAssetLoader projectAssetLoader,SpriteSheetLoader spriteSheetLoader){
 		try {
@@ -958,6 +968,9 @@ public class StageImp extends ApplicationAdapter {
 						world.step(getDelta(),8,3);
 		rayHandler.setCombinedMatrix(GameStage.getViewport().getCamera().combined,0,0,1,1);
 		rayHandler.updateAndRender();
+		onDraw();
+		if(sceneScript!=null)
+			sceneScript.onDraw();
 		return true;
 	}
 	
@@ -1060,7 +1073,7 @@ public class StageImp extends ApplicationAdapter {
 		}
 	}
 	
-	public int random(int min,int max){
+	public final int random(int min,int max){
 		return new java.util.Random().nextInt(max - min + 1) + min;
 	}
 	

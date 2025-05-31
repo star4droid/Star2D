@@ -16,6 +16,8 @@ import com.kotcrab.vis.ui.widget.VisTable;
 import com.star4droid.star2d.Helpers.editor.Project;
 import com.star4droid.star2d.editor.TestApp;
 import com.star4droid.star2d.editor.ui.sub.ConfirmDialog;
+import com.star4droid.star2d.editor.ui.sub.EditorField;
+import com.star4droid.star2d.editor.ui.sub.ExamplesDialog;
 import com.star4droid.template.Utils.Utils;
 
 public class ProjectsListStage extends Stage {
@@ -25,10 +27,12 @@ public class ProjectsListStage extends Stage {
 	Drawable background;
 	FileHandle selectedProject;
 	public final SettingsDialog settingsDialog;
+	ExamplesDialog examplesDialog;
 	public ProjectsListStage(TestApp app){
 		super();
 		this.app = app;
 		settingsDialog = new SettingsDialog(this,app);
+		examplesDialog = new ExamplesDialog(app);
 		background = drawable("background.png");
 		VisTable backTable = new VisTable();
 		backTable.setBackground(VisUI.getSkin().getDrawable("window-bg"));
@@ -44,7 +48,8 @@ public class ProjectsListStage extends Stage {
 		VisLabel projectLabel = new VisLabel(dash+" Project "+dash);
 		VisImageTextButton add = new VisImageTextButton("New Project",drawable("add.png")),
 				importBtn = new VisImageTextButton("Import Project",drawable("download.png")),
-				settings = new VisImageTextButton("Settings",drawable("events/properties.png"));
+				settings = new VisImageTextButton("Settings",drawable("events/properties.png")),
+				examples = new VisImageTextButton("Examples",drawable("menu.png"));
 		label.setAlignment(Align.center);
 		projectLabel.setAlignment(Align.center);
 		linearTable.add(label).growX().padBottom(10).row();
@@ -59,6 +64,7 @@ public class ProjectsListStage extends Stage {
 		openNewTable.add(importBtn).center().padLeft(8);
 		linearTable.add(openNewTable).width(350).center().row();
 		linearTable.add(settings).padTop(8).width(350).center().row();
+		linearTable.add(examples).padTop(8).width(350).center().row();
 		linearTable.add().growY();
 		linearTable.setFillParent(true);
 		addActor(backTable);
@@ -68,6 +74,12 @@ public class ProjectsListStage extends Stage {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 new SingleInputDialog("Create New Project","Name : ","Project",name->{
+					for(char c:name.toCharArray()){
+						if(!EditorField.allowedChars.contains(c+"")){
+							app.toast("the name contains not allowed char!\nuse A-Z a-z or _ only");
+							return;
+						}
+					}
 					FileHandle fileHandle = Gdx.files.local("projects/"+name);
 					if(fileHandle.exists()){
 						app.toast("there\'s project with the same name!");
@@ -94,10 +106,16 @@ public class ProjectsListStage extends Stage {
                 settingsDialog.show(ProjectsListStage.this);
             }
         });
+		examples.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+				examplesDialog.show(ProjectsListStage.this);
+			}
+		});
 	}
 	
 	private void createDefaultPaths(FileHandle fileHandle){
-		String[] paths = {"sounds","anims","images","files"};
+		String[] paths = {"sounds","anims","images","files","icon"};
 		for(String path:paths){
 			FileHandle child = fileHandle.child(path);
 			if(!child.exists())
@@ -110,12 +128,16 @@ public class ProjectsListStage extends Stage {
 		projectsTable.center();
 		FileHandle[] files = Gdx.files.local("projects").list();
 		for(FileHandle fileHandle:files){
-			projectsTable.add(projectTable(fileHandle)).pad(6);
+			if(fileHandle.name().contains(" ")){
+				FileHandle newHandle = fileHandle.parent().child(fileHandle.name().replace(" ","_"));
+				fileHandle.moveTo(newHandle);
+				projectsTable.add(projectTable(newHandle)).pad(6);
+			} else projectsTable.add(projectTable(fileHandle)).pad(6);
 		}
 		if(files.length == 0){
 		    projectsTable.add().height(10).row();
-		    VisLabel label = new VisLabel("There\'s no projects\n Create New Project by clicking on the button below");
-		    projectsTable.add(label).row();
+		    VisLabel label = new VisLabel("There\'s no projects\n Create New Project by clicking the button below");
+		    projectsTable.add(label).padBottom(15).row();
 		    projectsTable.add().height(10);
 		}
 		return projectsTable;

@@ -5,18 +5,20 @@ import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.NinePatch;
+import com.badlogic.gdx.graphics.g2d.TextureAtlas;
+import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import com.kotcrab.vis.ui.VisUI;
 import com.star4droid.star2d.Helpers.rtl.RtlController;
 import com.star4droid.star2d.Helpers.rtl.RtlFreeTypeFontGenerator;
 import com.star4droid.template.Utils.Utils;
+import java.util.HashMap;
 
 public class ThemeLoader {
 	public static void loadTheme(){
-		if(!VisUI.isLoaded())
-			VisUI.load(VisUI.SkinScale.X2);
-		//load all images from assets...
-		loadTheme(Gdx.files.internal("images"),"");
+		if(VisUI.isLoaded())
+			return;
+		
 		/*
 		RtlFreeTypeFontGenerator generator = new RtlFreeTypeFontGenerator(Utils.internal("files/VisOpenSans.ttf"));
 		RtlFreeTypeFontGenerator.FreeTypeFontParameter parameter = new RtlFreeTypeFontGenerator.FreeTypeFontParameter();
@@ -27,18 +29,36 @@ public class ThemeLoader {
 		*/
 		
 		/*
+		HashMap<String,int[]> splitsMap = new HashMap<>();
 		FileHandle orange = Gdx.files.internal("files/skins/orange");
-		
+		Skin skin = new Skin(),
+			vis = new Skin();
+		loadMain(vis);
+		String splits = orange.child("splits.json").readString();
+		for(String str:splits.split("\n")){
+			int[] v = new int[4];
+			String name = str.split(":")[0];
+			String[] values = str.split(":")[1].replace(" ","").split(",");
+			try {
+				for(int i = 0; i < 4; i++)
+					v[i] = Utils.getInt(values[i]);
+			} catch(Exception ex){}
+			splitsMap.put(name,v);
+		}
 		// if there's Vis Resource with the same name then replace it
 		log("replace","",false);
-		log("remove","",false)
+		log("remove","",false);
 		for(FileHandle fh:orange.list()){
 			String nameWithoutExt = fh.nameWithoutExtension().replace(".9","");
 			if(fh.name().endsWith(".png") || fh.name().endsWith(".jpg"))
-				if(VisUI.getSkin().has(nameWithoutExt,Drawable.class) || VisUI.getSkin().has(nameWithoutExt,NinePatch.class)){
+				if(vis.has(nameWithoutExt,Drawable.class) || vis.has(nameWithoutExt,NinePatch.class)){
 					boolean nine = fh.name().endsWith(".9.png");
-					remove(nameWithoutExt);
-					VisUI.getSkin().add(nameWithoutExt,nine ? ninePatch(fh):drawable(fh),nine ? NinePatch.class : Drawable.class);
+					//remove(nameWithoutExt);
+					int[] sps = nine ? splitsMap.get(nameWithoutExt) : null;
+					if(nine && sps == null)
+						log("replace","not found patch : "+nameWithoutExt,true);
+					else log("replace","patch found : "+nameWithoutExt,true);
+					skin.add(nameWithoutExt,nine ? ninePatch(fh,sps):drawable(fh),nine ? NinePatch.class : Drawable.class);
 					log("replace","replace : "+fh.name()+",name : "+nameWithoutExt,true);
 				} else log("replace","keep : "+fh.name(),true);
 		}
@@ -57,20 +77,21 @@ public class ThemeLoader {
 				int start = value.contains("/") ? value.lastIndexOf("/") : 0;
 				String valuePure = start == 0 ? value.substring(0,value.indexOf(".")):value.substring(start+1,value.indexOf(".",start));
 				
-				boolean drawable = VisUI.getSkin().has(valuePure,Drawable.class);
-				boolean patch = VisUI.getSkin().has(valuePure,NinePatch.class);
+				boolean drawable = vis.has(valuePure,Drawable.class);
+				boolean patch = vis.has(valuePure,NinePatch.class);
 				if(drawable || patch){
-					remove(name);
-					VisUI.getSkin().add(name,drawable ? VisUI.getSkin().getDrawable(valuePure) : (patch ? VisUI.getSkin().getPatch(valuePure) : null),drawable ? Drawable.class : NinePatch.class);
+					//remove(name);
+					skin.add(name,drawable ? vis.getDrawable(valuePure) : (patch ? vis.getPatch(valuePure) : null),drawable ? Drawable.class : NinePatch.class);
 					log("json","add : "+name+", assets value : "+value,true);
 				} else {
 					FileHandle child = orange.child(value);
 					boolean isNinePatch =  value.endsWith(".9.png");
 					if(child.exists()){
-						Object object = isNinePatch ? ninePatch(child) : drawable(child);
-						remove(name);
-						VisUI.getSkin().add(valuePure,object,isNinePatch ? NinePatch.class : Drawable.class);
-						VisUI.getSkin().add(name,object, isNinePatch ? NinePatch.class : Drawable.class);
+						int[] sps = isNinePatch ? splitsMap.get(name) : null;
+						Object object = isNinePatch ? ninePatch(child,sps) : drawable(child);
+						//remove(name);
+						skin.add(valuePure,object,isNinePatch ? NinePatch.class : Drawable.class);
+						skin.add(name,object, isNinePatch ? NinePatch.class : Drawable.class);
 						log("json","add from assets : "+name+", asset : "+value,true);
 					} else log("json","not found : "+name+", value : "+value,true);
 				}
@@ -78,9 +99,23 @@ public class ThemeLoader {
 				log("json","error : "+e.toString()+"\nline : "+line,true);
 			}
 		}
-		// reload skin to apply changes.. 
-		//VisUI.getSkin().load(VisUI.SkinScale.X2.getSkinFile());
-		*/
+		
+		loadMain(skin);
+		VisUI.load(skin);*/
+		
+		VisUI.load(VisUI.SkinScale.X2);
+		//load all images from assets...
+		loadTheme(Gdx.files.internal("images"),"",null);
+	}
+	
+	private static void loadMain(Skin skin){
+		FileHandle skinFile = VisUI.SkinScale.X2.getSkinFile();
+		FileHandle atlasFile = skinFile.sibling(skinFile.nameWithoutExtension() + ".atlas");
+		if (atlasFile.exists()) {
+			skin.addRegions(new TextureAtlas(atlasFile));
+		}
+
+		skin.load(skinFile);
 	}
 	
 	public static void remove(String name){
@@ -99,10 +134,10 @@ public class ThemeLoader {
 			log("remove","not found : "+name,true);
 	}
 	
-	private static void loadTheme(FileHandle fileHandle,String dir){
+	private static void loadTheme(FileHandle fileHandle,String dir,HashMap<String,int[]> splitsMap){
 		for(FileHandle fh:fileHandle.list()){
 			if(fh.isDirectory()){
-				loadTheme(fh,dir+fh.name()+"/");
+				loadTheme(fh,dir+fh.name()+"/",splitsMap);
 				continue;
 			}
 			if(!fh.name().contains(".")){
@@ -113,8 +148,9 @@ public class ThemeLoader {
 			String nameL = fh.name().toLowerCase();
 			if(nameL.endsWith(".png") || nameL.endsWith(".jpg")){
 				boolean nine = nameL.endsWith(".9.png");
+				int[] sps = (nine && splitsMap != null &&splitsMap.containsKey("name")) ? splitsMap.get(name) : null;
 				//if(!VisUI.getSkin().has(name,nine?NinePatch.class:Drawable.class)){
-					VisUI.getSkin().add(name,nine?ninePatch(fh):drawable(fh),nine?NinePatch.class:Drawable.class);
+					VisUI.getSkin().add(name,nine?ninePatch(fh,sps):drawable(fh),nine?NinePatch.class:Drawable.class);
 					//Gdx.files.external("logs/drawable.txt").writeString("add name : "+name+"\n"+"__".repeat(10)+"\n",true);
 				//}
 			}
@@ -125,8 +161,8 @@ public class ThemeLoader {
 		Gdx.files.external("logs/"+tag+".txt").writeString(log+"\n",append);
 	}
 	
-	private static NinePatch ninePatch(FileHandle fileHandle){
-		return new NinePatch(new Texture(fileHandle));
+	private static NinePatch ninePatch(FileHandle fileHandle,int[] splits){
+		return new NinePatch(new Texture(fileHandle),splits[0],splits[1],splits[2],splits[3]);
 	}
 	
 	private static Drawable drawable(FileHandle fileHandle){

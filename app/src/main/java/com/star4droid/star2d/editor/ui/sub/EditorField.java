@@ -1,6 +1,8 @@
 package com.star4droid.star2d.editor.ui.sub;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.files.FileHandle;
+import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.utils.Array;
@@ -37,16 +39,72 @@ public class EditorField {
 			dragControlFields = Gdx.files.internal("dragControl.json").readString();
 		if(disableOnPlayFields==null)
 			disableOnPlayFields = Gdx.files.internal("playOffProps.txt").readString();
-		if(type.equals("body")){
+		if(type.equals("script")){
+			inputField = new DefaultInput(){
+				{
+					super.setValue("[Choose]");
+				}
+				@Override
+				public void setValue(String value){}
+			};
+			
+			((DefaultInput)inputField).value.addListener(new ClickListener() {
+				@Override
+				public void clicked(InputEvent event, float x, float y) {
+					/*
+					app.getEditor().getFilePicker(true).setRoot(app.getEditor().getProject().getPath()+"/java/com/star4droid/Game/Scripts/").setExtensions("java").setOnPick((fHandle,path)->{
+						
+					});
+					*/
+					app.getBodyScriptSelector().refresh(app.getEditor().getScene()).setOnSelect((script)->{
+						try {
+							if(script.startsWith("/") && script.length() > 1)
+								script = script.substring(1,script.length());
+							/*
+							if(!(script.contains("/") && script.contains("Script") && script.split("/").length == 2)){
+								app.toast("Wrong Value!!");
+								app.getEditor().getFilePicker(true);
+							}
+							*/
+							PropertySet<String,Object> ps = PropertySet.getPropertySet(app.getEditor().getSelectedActor());
+							String old = ps.getString(getName());
+							ps.put(getName(),script);
+							app.getEditor().getSaveState();
+							EditorAction.propertiesChanged(app.getEditor(),app.getEditor().getSelectedActor().getName(),getName(),new String[]{getName(),script},new String[]{getName(),old});
+						} catch(Exception e){}
+					}).setCheckedItem(PropertySet.getPropertySet(app.getEditor().getSelectedActor()).getString(getName())).show(app.getUiStage()).toFront();
+				}
+			});
+		} else if(type.equals("body")){
 			inputField = new BodyInput(app).setIsSingle(!name.equals("Collision")).setMustSelect(name.equals("Script"));
-			inputField.setValue("[Choose]");
+			//inputField.setValue("[Choose]");
 			//acceptValue = false;
 			inputField.setOnChange(()->{
 				try {
+					if(getName().equals("parent")){
+						String result = inputField.getValue();
+						if(result.equals(""))
+							PropertySet.getPropertySet(app.getEditor().getSelectedActor()).setParent(null);
+						if(!result.equals(""))
+						for(Actor actor : app.getEditor().getActors()){
+							if(actor instanceof EditorItem){
+								if(actor.getName().equals(result)){
+									PropertySet set=PropertySet.getPropertySet(actor);
+									if(!PropertySet.getPropertySet(app.getEditor().getSelectedActor()).setParent(set)){
+										app.toast("Can\'t set as parent!");
+										return;
+									}
+									break;
+								}
+							}
+						}
+					}
 					PropertySet<String,Object> ps = PropertySet.getPropertySet(app.getEditor().getSelectedActor());
 					String old = ps.getString(getName());
 					ps.put(getName(),inputField.getValue());
 					app.getEditor().getSaveState();
+					if(getName().equals("parent"))
+						app.getControlLayer().getBodiesList().update(true);
 					EditorAction.propertiesChanged(app.getEditor(),app.getEditor().getSelectedActor().getName(),getName(),new String[]{getName(),inputField.getValue()},new String[]{getName(),old});
 				} catch(Exception e){}
 			});
@@ -64,7 +122,7 @@ public class EditorField {
 						String old = propertySet.getString(getName());
 						if(getName().equals("font") && (path.toLowerCase().endsWith(".ttf") || path.toLowerCase().endsWith(".otf") )){
 							new ConfirmDialog("TTF/OTF Font","ttf/otf fonts isn\'t supported directly\ndo you want to create s2df font using this ?",ok->{
-								new BitmapFontEditor(app,fhandle.parent(),null).setOnSave((name,ps)->{
+								app.getFileBrowser().getBitmapFontEditor().setData(fhandle.parent(),null).setOnSave((name,ps)->{
 									if(!ok) return;
 									name = (path.contains("/") ? path.substring(0,path.lastIndexOf("/")):"") + "/" + name;
 									while(name.contains("//")) name = name.replace("//","/");
@@ -233,21 +291,27 @@ public class EditorField {
 				}
 				PropertySet<String,Object> ps = getPropertySet();
 				//change the script when name changed...
-				if(getName().equals("name") && ps.getString("Script").equals(ps.getString("name"))&&!ps.getString("name").equals(inputField.getValue())){
+				String scr = ps.getString("Script");
+				if((scr.contains("/") && scr.split("/")[0].equals(editor.getScene()) && scr.split("/")[1].equals(ps.getString("name"))) || (getName().equals("name") && scr.equals(ps.getString("name"))&&!ps.getString("name").equals(inputField.getValue()))){
 					ps.put("Script",inputField.getValue());
-					try {
-						Gdx.files.absolute(editor.getProject().getBodyScriptPath(ps.getString("name"),editor.getScene())).moveTo(
-							Gdx.files.absolute(editor.getProject().getBodyScriptPath(inputField.getValue(),editor.getScene()))
-						);
-					} catch(Exception ex){}
 				}
 				String old = ps.getString(getName());
+				try {
+					if(getName().equals("name")){
+						FileHandle newHandle = Gdx.files.absolute(editor.getProject().getBodyScriptPath(inputField.getValue(),editor.getScene()));
+						Gdx.files.absolute(editor.getProject().getBodyScriptPath(ps.getString("name"),editor.getScene())).moveTo(
+							newHandle
+						);
+						newHandle.writeString(newHandle.readString().replace(old+"Script",inputField.getValue()+"Script"),false);
+					}
+				} catch(Exception ex){}
 				ps.put(getName(),inputField.getValue());
 				((EditorItem)editor.getSelectedActor()).update();
 				editor.getSaveState();
-				if(getName().equals("name"))
+				if(getName().equals("name")){
+					editor.getSelectedActor().setName(inputField.getValue());
 					EditorAction.itemRenamed(editor,old,inputField.getValue()).updateEditorProperties();
-				else EditorAction.propertiesChanged(editor,editor.getSelectedActor().getName(),getName(),new String[]{getName(),inputField.getValue()},new String[]{getName(),old}).updateItemProperties();
+				} else EditorAction.propertiesChanged(editor,editor.getSelectedActor().getName(),getName(),new String[]{getName(),inputField.getValue()},new String[]{getName(),old}).updateItemProperties();
 			});
 		}
 		if(inputField!=null)
@@ -267,7 +331,9 @@ public class EditorField {
 	public void setValue(String value){
 	    if(acceptValue)
 		    inputField.setValue(isFile ? value.replace(Utils.seperator,"/") : value);
-		else setValue("[Choose]");
+		else inputField.setValue("[Choose]");
+		if(getName().equals("parent") || getName().equals("Collision"))
+			((BodyInput)inputField).ignoreBodies(true,app.getEditor().getSelectedActor().getName());
 	}
 	
 	public void setFieldName(String name){
@@ -284,5 +350,29 @@ public class EditorField {
 	
 	public void refresh(PropertySet<String,Object> propertySet){
 		setValue(propertySet.getString(getName()));
+	}
+	
+	private void fixParents(){
+		HashMap<String,PropertySet> propsMap= new HashMap<>();
+		for(Actor actor : app.getEditor().getActors()){
+			if(actor instanceof EditorItem){
+				PropertySet<String,Object> propertySet = PropertySet.getPropertySet(actor);
+				propsMap.put(propertySet.getString("name"),propertySet);
+			}
+		}
+		
+		for(Actor actor : app.getEditor().getActors()){
+			if(actor instanceof EditorItem){
+				PropertySet set1= PropertySet.getPropertySet(actor);
+				if(!set1.getString("parent").equals("")){
+					if(propsMap.containsKey(set1.getString("parent"))){
+						set1.setParent(propsMap.get(set1.getString("parent")));
+					} else {
+						Gdx.files.external("logs/parent.error.txt").writeString("parent not found for : "+set1.getString("name")+", parent name : "+set1.getString("parent")+"\n",true);
+						set1.put("parent","");
+					}
+				}
+			}
+		}
 	}
 }

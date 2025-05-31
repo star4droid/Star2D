@@ -1,6 +1,7 @@
 package com.star4droid.star2d.editor.ui;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
@@ -27,6 +28,7 @@ import com.star4droid.star2d.editor.TestApp;
 import com.star4droid.star2d.editor.Utils;
 import com.star4droid.star2d.editor.items.EditorItem;
 import com.star4droid.star2d.editor.ui.sub.ConfirmDialog;
+import com.star4droid.star2d.editor.ui.sub.EditorField;
 import com.star4droid.star2d.editor.utils.EditorAction;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
@@ -36,6 +38,7 @@ public class BodiesList extends Group {
   ListView<HashMap<String, Object>> listView;
   private final Vector2 tempCoords = new Vector2();
   LAdapter adapter;
+  Drawable whiteDrawable;
   /*InputListener stageListener = new InputListener() {
 		@Override
 		public boolean touchDown (InputEvent event, float x, float y, int pointer, int button) {
@@ -50,6 +53,7 @@ public class BodiesList extends Group {
 
   public BodiesList(TestApp testApp) {
     super();
+	whiteDrawable = VisUI.getSkin().getDrawable("white");
     this.app = testApp;
     adapter = new LAdapter(testApp,new Array<>());
     listView = new ListView<HashMap<String, Object>>(adapter);
@@ -58,6 +62,7 @@ public class BodiesList extends Group {
 	addActor(listView.getMainTable());
 	listView.getScrollPane().setFlickScroll(true);
 	listView.getScrollPane().setOverscroll(false,false);
+	listView.getScrollPane().setScrollingDisabled(false,false);
   }
   
   @Override
@@ -91,8 +96,12 @@ public class BodiesList extends Group {
 	}
     return new TextureRegionDrawable(new Texture(Gdx.files.internal("images/" + name)));
   }
+  
+  public void update(){
+	  update(false);
+  }
 
-  public void update() {
+  public void update(boolean refresh) {
     int beforeSize = adapter.arrayList.size;
 	try {
       adapter.arrayList.clear();
@@ -102,24 +111,25 @@ public class BodiesList extends Group {
         PropertySet<String, Object> propertySet = PropertySet.getPropertySet(actor);
         if (propertySet == null) continue;
         if (!propertySet.containsKey("name")) continue;
-        //if (!propertySet.getString("parent").equals("")) continue;
+		//Gdx.files.external("logs/bodies.txt").writeString("\nname : "+propertySet.getString("name")+", parent : ->"+propertySet.getString("parent")+"<-",true);
+        if (!propertySet.getString("parent").equals("")) continue;
         hash.put("name", propertySet.getString("name"));
         hash.put("item", actor);
         adapter.arrayList.add(hash);
         // add item childs after it...
-        /*for (PropertySet set : getChilds(propertySet, null)) {
+        for (PropertySet set : getChilds(propertySet, null)) {
           HashMap<String, Object> hashMap = new HashMap<>();
           hashMap.put("name", set.getString("name"));
 		  Actor actorByName = app.getEditor().findActor(set.getString("name"));
           hashMap.put("item", actorByName != null ? actorByName : set);
           adapter.arrayList.add(hashMap);
-        }*/
+        }
       }
     } catch (Exception exc) {
 		app.toast("update error : "+exc.toString());
 	}
 	int selected = 0;
-	if(adapter.arrayList.size == beforeSize)
+	if(adapter.arrayList.size == beforeSize && !refresh)
 		adapter.itemsDataChanged();
 	else adapter.itemsChanged();
   }
@@ -173,7 +183,24 @@ public class BodiesList extends Group {
     protected VisTable createView(final HashMap<String, Object> hashMap) {
       int padding = 0;
       PropertySet pst = getPropertyObj(hashMap.get("item"));
-      while (pst.getParent() != null) {
+      /*if((!pst.getString("parent").equals(""))&&pst.getParent()==null){
+		  Gdx.files.external("logs/parent.txt").writeString("\n\nfixing : "+pst.getString("name")+", parent : "+pst.getString("parent"),true);
+		  boolean fixed = false;
+		  String parents = "";
+		  for(Actor actor : app.getEditor().getActors()){
+			  if(actor instanceof EditorItem){
+				  if(actor.getName().equals(pst.getString("parent"))){
+				  	PropertySet<String,Object> prop = PropertySet.getPropertySet(actor);
+					  pst.setParent(prop);
+					  fixed = true;
+					  break;
+				  } else parents += actor.getName()+"\n";
+			  }
+		  }
+		  Gdx.files.external("logs/parent.txt").writeString(((fixed)? "" : "not ")+"fixed : "+pst.getString("name")+", parents : "+parents,true); 
+		  
+	  }*/
+	  while (pst.getParent() != null) {
         pst = pst.getParent();
         padding++;
       }
@@ -183,8 +210,16 @@ public class BodiesList extends Group {
 	  	iconImg = new Image(icon),
 		  lockImg = new Image(getPropertyObj(hashMap.get("item")).getString("lock").equals("true")?lock:unlock), 
 	  	visImg = new Image(getPropertyObj(hashMap.get("item")).getString("Visible").equals("true")?visDrawable:invisDrawable);
-	  table.add(iconImg).pad(3).size(42,42);
-	  table.add(label).padLeft(10 + 2*padding).minHeight(60).growX();
+	  if(true){
+		  Image line = new Image(whiteDrawable);
+		  Image line2 = new Image(whiteDrawable);
+		  line.setName("line");
+		  line2.setName("line2");
+		  table.add(line2).padLeft(padding > 0 ? (22.5f + 45 * (padding - 1)) : 0).size(padding > 0 ? 5 : 1,padding > 0 ? 60 : 1);
+		  table.add(line).size(padding > 0 ? 22.5f : 1,padding > 0 ? 6 : 1).padTop(10);
+	  }
+	  table.add(iconImg).padLeft(3).padTop(6).size(42,42);
+	  table.add(label).padLeft(10).minHeight(60).growX();
       table.add(visImg).size(45, 45).pad(2).space(2);
       table.add(lockImg).size(45, 45).pad(2).space(2);
       table.add(dotsImg).size(45, 45).pad(2);
@@ -261,6 +296,42 @@ public class BodiesList extends Group {
 				  }
 			  });
 			  actionMenu.addItem(copyItem);
+			  actionMenu.addItem(new MenuItem("Rename",drawable("edit.png"),new ChangeListener() {
+				  @Override
+				  public void changed (ChangeEvent event, Actor actor) {
+					  new SingleInputDialog("Input Value","Name : ",app.getEditor().getSelectedActor().getName(),(vl)->{
+						  for(char c: vl.toCharArray()){
+							  if(!EditorField.allowedChars.contains(String.valueOf(c))){
+								  app.toast("use A-Z a-z or _ , Not Allowed Char : "+c);
+								  return;
+							  }
+						  }
+						  for(Actor act: app.getEditor().getActors())
+							if(act instanceof EditorItem){
+								if(act.getName().equals(vl)){
+									app.toast("There\'s item with the same name!");
+									return;
+								}
+							}
+						  PropertySet<String,Object> ps = PropertySet.getPropertySet(app.getEditor().getSelectedActor());
+						  String old = ps.getString("name");
+						  try {
+        						FileHandle newHandle = Gdx.files.absolute(app.getEditor().getProject().getBodyScriptPath(ps.getString("name"),app.getEditor().getScene()));
+								newHandle.moveTo(
+        							Gdx.files.absolute(app.getEditor().getProject().getBodyScriptPath(vl,app.getEditor().getScene()))
+        						);
+								newHandle.writeString(newHandle.readString().replace(old+"Script",vl+"Script"),false);
+        					} catch(Exception ex){}
+						  ps.put("name",vl);
+						  String scr = ps.getString("Script");
+        				if((scr.contains("/") && scr.split("/")[0].equals(app.getEditor().getScene()) && scr.split("/")[1].equals(ps.getString("name"))) || (scr.equals(ps.getString("name"))&&!ps.getString("name").equals(ps.getString("name")))){
+        					ps.put("Script",vl);
+        				}
+						  app.getEditor().getSelectedActor().setName(vl);
+						  EditorAction.itemRenamed(app.getEditor(),old,vl).updateEditorProperties();
+					  }).show(getStage());
+				  }
+			  }));
 			  actionMenu.showMenu(app.getUiStage(),dotsImg);
 			  
 		  }
@@ -320,14 +391,27 @@ public class BodiesList extends Group {
     @Override
     protected void updateView(VisTable view, HashMap<String, Object> hashMap) {
       super.updateView(view, hashMap);
+	  int padding = 0;
+      PropertySet pst = getPropertyObj(hashMap.get("item"));
+	  while (pst.getParent() != null) {
+        pst = pst.getParent();
+        padding++;
+      }
+	  
 	  Actor lockActor = view.findActor("lock"),
 	  	  visActor = view.findActor("vis"),
-			iconActor = view.findActor("icon");
+			iconActor = view.findActor("icon"),
+			line = view.findActor("line"),
+			line2 = view.findActor("line2");
+	  if(line != null && line2 != null){
+		  view.getCell(line2).padLeft(padding > 0 ? (22.5f + 45 * (padding - 1)) : 0).size(padding > 0 ? 5 : 1,padding > 0 ? 60 : 1);
+		  view.getCell(line).size(padding > 0 ? 22.5f : 1,padding > 0 ? 6 : 1).padTop(10);
+	  }
 	  if(lockActor!=null){
-		  ((Image)lockActor).setDrawable(getPropertyObj(hashMap.get("item")).getString("lock").equals("true")?lock:unlock);
+		  ((Image)lockActor).setDrawable(pst.getString("lock").equals("true")?lock:unlock);
 	  }
 	  if(visActor!=null){
-		  ((Image)visActor).setDrawable(getPropertyObj(hashMap.get("item")).getString("Visible").equals("true")?visDrawable:invisDrawable);
+		  ((Image)visActor).setDrawable(pst.getString("Visible").equals("true")?visDrawable:invisDrawable);
 	  }
 	  if(iconActor!=null)
 		((Image)iconActor).setDrawable(getBodyIcon(hashMap,icon));
@@ -335,8 +419,10 @@ public class BodiesList extends Group {
     }
 	
 	private void setSelection(VisTable view,HashMap<String,Object> hashMap){
-	    if(app.getEditor()!=null)
-		    view.setBackground((app.getEditor().getSelectedActor()!=null&app.getEditor().getSelectedActor().getName().equals(hashMap.get("name").toString()))?selection:bg);
+	    try {
+			if(app.getEditor()!=null)
+		    	view.setBackground((app.getEditor().getSelectedActor()!=null&app.getEditor().getSelectedActor().getName().equals(hashMap.get("name").toString()))?selection:bg);
+		} catch(Exception ex){}
 	}
 
     @Override

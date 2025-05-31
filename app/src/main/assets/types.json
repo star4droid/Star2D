@@ -6,7 +6,8 @@
 "string":",name,Text",
 "File":"file,font",
 "static":"TYPE",
-"color":",Text Color,Progress Color,color,Background Color,",
-"body":",Collision,Script,attach To,parent",
-"points":"Points"
+"color":",Text Color,Tint,Progress Color,color,Background Color,",
+"body":",Collision,attach To,parent",
+"points":"Points",
+"script":"Script"
 }

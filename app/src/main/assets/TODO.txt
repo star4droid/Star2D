@@ -1,31 +1,34 @@
-[ √ ] Tabs 📑 
-[ √ ] Improve Undo and Redo 📤📥
+[ ✓ ] Tabs 📑 
+[ ✓ ] Improve Undo and Redo 📤📥
 [   ] Fix Point Light on The Editor
-[ √ ] Libgdx Custom Collider Editor 📐
+[ ✓ ] Libgdx Custom Collider Editor 📐
 [   ] Built-in Keyboard ⌨️ 
 [   ] Events Record and Play ▶️
-[   ] Libgdx Animation Editor 
-[ √ ] Bitmap Font Generator 
+[ ✓ ] Libgdx Animation Editor 
+[ ✓ ] Bitmap Font Generator 
 [   ] TileSet Support 
 [   ] TileMap support 
 [   ] VisUI Items
 [   ] change collider type (temporary disabled)
-[ √ ] Files Change Detector for compiler (jackson core + databind) - ignore when there's no change on java files 
+[ ✓ ] Files Change Detector for compiler (jackson core + databind) - ignore when there's no change on java files 
 [   ] import and use jar libraries...
 [   ] UI Editor with Libgdx and VisUI components and ability to use skins.
 [   ] change engine skin.
-[ √ ] Enable Auto Completion (temporary disabled)
-[ √ ] Engine Settings. [ logical width/height and code completion and...etc]
-[ √ ] Fix Editor Orientation
+[ ✓ ] Enable Auto Completion (temporary disabled)
+[ ✓ ] Engine Settings. [ logical width/height and code completion and...etc]
+[ ✓ ] Fix Editor Orientation
 [   ] update engine using jar
-[ √ ] Apk Signing V3 [update apk signer library]
-[ √ ] rtl font
+[ ✓ ] Apk Signing V3 [update apk signer library]
+[ ✓ ] rtl font
 [   ] ability to disable showing images on the file browser 
 [   ] Apk Signing V4
 [   ] Full Auto Save
 [   ] Languages Support 
 [   ] Close Windows by click outside 
 [   ] use tween to support animations
-[   ] Fix RuntimeException on Play ▶️ [ Debugger ]
-[   ] Scene Script
-
+[ ✓ ] Fix RuntimeException on Play ▶️ [ Debugger ]
+[ ✓ ] Scene Script 
+[   ] On Animation Ends Script
+[   ] Frames Pivot Point
+[ ✓ ] Exported Apk Icon
+[ ✓ ] Single BitmapFontEditor 

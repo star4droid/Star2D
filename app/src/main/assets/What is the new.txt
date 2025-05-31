@@ -29,3 +29,15 @@ you can use getTouch from the scripts by :
 ```
 Vector2 touch = getStage().getTouch();
 ```
+
+#18
+- Now The Game Player doesn't crash when error happened , instead of that error shown
+- Script doesn't change Error fixed.
+- Scene doesn't open in the game error fixed.
+- code format fixed 
+- new Enhanced Animation Editor 🎉 
+- Now you can choose script for your items from anthor scene, for example, you have to program the player once, then copy it to anthor scene, and if you change scripts for it, linked scripts will take effect ⭐.
+- New Property 🎉: Tint 
+    to apply tint color to your items (Box/Circle/Custom), useful if you want to create damage effects or something like that ..
+- Added Examples to start (Platformer Game and Anthor Simple Game)
+- Many Many and too many bugs fixed!

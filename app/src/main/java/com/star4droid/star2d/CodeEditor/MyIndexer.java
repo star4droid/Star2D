@@ -48,10 +48,16 @@ public class MyIndexer extends Indexer {
 	private JavaCompletions javaCompletions;
 	public String editorProjectPath;
 	public static MyIndexer lastIndexer;
-	
 	public MyIndexer(){
 		editor = Editor.getCurrentEditor();
-		javaCompletions = new JavaCompletions();
+		javaCompletions = new JavaCompletions(){
+			@Override
+			public synchronized void updateFileContent(Path path,String str){
+				try {
+					super.updateFileContent(path,str);
+				} catch(IllegalStateException ex){}
+			}
+		};
 		editorProjectPath = editor.getProject().getPath();
 		if(lastIndexer!=null)
 			lastIndexer.shutdown();
@@ -103,7 +109,7 @@ public class MyIndexer extends Indexer {
 			jars.clear();
 		}*/
 		
-		if((!FileUtil.isExistFile(idx2))||new java.io.File(idx2).length()==0||!EngineSettings.get().getString("JAR_FILE_VERSION","").equals("1.6")){
+		if((!FileUtil.isExistFile(idx2))||new java.io.File(idx2).length()==0||!EngineSettings.get().getString("JAR_FILE_VERSION","").equals("1.7")){
     		FileUtil.writeFile(idx2,"");
     		Utils.extractAssetFile(editor.getContext(),"java/game.zip",data+"/bin/addition.jar");
     		Utils.unzipf(data+"/bin/addition.jar",data+"/bin/add/","");
@@ -111,7 +117,7 @@ public class MyIndexer extends Indexer {
     		run(jars,idx2,Collections.emptyList(),Collections.emptyList(),data+"/bin/add/");
     		FileUtil.deleteFile(data+"/bin/add/");
     		jars.clear();
-    		EngineSettings.set("JAR_FILE_VERSION","1.6");
+    		EngineSettings.set("JAR_FILE_VERSION","1.7");
 		}
 	    
 	    /*

@@ -1,6 +1,7 @@
 package com.star4droid.template.Items;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
@@ -15,6 +16,7 @@ import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.star4droid.star2d.ElementDefs.ElementEvent;
 import com.star4droid.template.Utils.ChildsHolder;
+import com.star4droid.template.Utils.ItemScript;
 import com.star4droid.template.Utils.PlayerItem;
 import com.star4droid.template.Utils.PropertySet;
 import com.star4droid.template.Utils.Utils;
@@ -58,10 +60,11 @@ public class Joystick extends Touchpad implements PlayerItem {
 	private void setup(){
 		if(propertySet==null) return;
 		float width = propertySet.getFloat("width"),
-		height = propertySet.getFloat("height"),
+			height = propertySet.getFloat("height"),
 		x = propertySet.getFloat("x"),
 		y = propertySet.getFloat("y");
-		setPosition(x,stage.getViewport().getWorldHeight()-getHeight()-y);
+		y = stage.getViewport().getWorldHeight()-height-y;
+		setPosition(x,y);
 		setZIndex(propertySet.getInt("z"));
 		//setRotation(propertySet.getFloat("rotation"));
 		setVisible(propertySet.getString("Visible").equals("true"));
@@ -86,8 +89,13 @@ public class Joystick extends Touchpad implements PlayerItem {
 	}
 	
 	public static Joystick create(StageImp stageImp,String btn,String background){
-		return create(stageImp,stageImp.getAssets().contains(btn)?stageImp.getAssets().get(btn):Utils.getDrawable(Utils.internal("images/joybtn.png")),
-								stageImp.getAssets().contains(btn)?stageImp.getAssets().get(btn):Utils.getDrawable(Utils.internal("images/joyback.png")));
+		while(btn.contains("//")) btn = btn.replace("//","/");
+		while(background.contains("//")) background = background.replace("//","/");
+		FileHandle btnHandle = Gdx.files.absolute(btn),
+			bgHandle = Gdx.files.absolute(background);
+		//stageImp.debug("\nbtn : "+btn+"\nbg : "+background+"\n");
+		return create(stageImp,stageImp.getAssets().contains(btn)?stageImp.getAssets().get(btn) : Utils.getDrawable((btnHandle.exists() && !btnHandle.isDirectory()) ? btnHandle : Utils.internal("images/joybtn.png")),
+								stageImp.getAssets().contains(btn)?stageImp.getAssets().get(background): Utils.getDrawable((bgHandle.exists() && !bgHandle.isDirectory()) ? bgHandle : Utils.internal("images/joyback.png")));
 	}
 	
 	@Override
@@ -166,14 +174,22 @@ public class Joystick extends Touchpad implements PlayerItem {
 	}
 
 	@Override
-	public Actor getClone(String newName) {
+	public PlayerItem getClone(String newName) {
 	    PropertySet<String,Object> set = new PropertySet<>();
 		set.putAll(propertySet);
 		set.put("old",getParentName());
 		set.put("name",newName);
-		return Joystick.create(stage,propertySet.getString("Button Image"),propertySet.getString("Pad Image"))
+		Joystick joystick = Joystick.create(stage,propertySet.getString("Button Image"),propertySet.getString("Pad Image"))
 				.setElementEvent(elementEvent)
 				.setPropertySet(set);
+		if(set.getScript()!=null){
+			try {
+				ItemScript script = (ItemScript)(set.getScript().getClass().getConstructor(PlayerItem.class).newInstance(joystick));
+				script.setItem(joystick).setStage(stage);
+				joystick.setScript(script);
+			} catch(Exception ex){}
+		}
+		return joystick;
 	}
 	
 	@Override

@@ -115,10 +115,8 @@ public class Utils {
 		}
 		
 		public static String getStackTraceString(Throwable throwable){
-		String full=throwable.toString();
-			String space="";
-			for(int x =0;x<12;x++)
-				space+="_";
+		String full=throwable.toString()+"\n";
+			String space="_".repeat(12);
 			for(StackTraceElement element:throwable.getStackTrace()){
 				full+="class name : "+element.getClassName()+"\n file : "+element.getFileName()+
 				"\n line number : "+element.getLineNumber()+"\n method : "+element.getMethodName()+"\n"+space+"\n";
@@ -131,24 +129,21 @@ public class Utils {
 	}
 	
 	public static void setImageFromFile(Image image,String path,float rx,float ry){
-		Gdx.app.postRunnable(()->{
-			ProjectAssetLoader loader = (Editor.getCurrentEditor()!=null && Editor.getCurrentEditor().getLibgdxEditor()!=null)?Editor.getCurrentEditor().getLibgdxEditor().getAssetLoader():null;
-			Texture editorTexture = (loader!=null&&loader.contains(path))?loader.get(path):null;
-			FileHandle fileHandle = Gdx.files.absolute(path);
-			TextureRegionDrawable drawable = new TextureRegionDrawable(editorTexture!=null?editorTexture:new Texture(fileHandle.exists()?fileHandle:Gdx.files.internal("images/logo.png")));
-			if(rx > 1|| ry > 1){
-				try {
-		   	 	Texture texture = drawable.getRegion().getTexture();
-		    		texture.setWrap(Texture.TextureWrap.MirroredRepeat, Texture.TextureWrap.MirroredRepeat);
-		    		TextureRegion textureRegion = new TextureRegion(texture);
-		    		textureRegion.setRegion(0,0,texture.getWidth()*rx,texture.getHeight()*ry);
-		    		
-					image.setDrawable(new TextureRegionDrawable(textureRegion));
-		    	} catch(Exception ex){}
-			} else {
-				image.setDrawable(drawable);
-			}
-		});
+		ProjectAssetLoader loader = (Editor.getCurrentEditor()!=null && Editor.getCurrentEditor().getLibgdxEditor()!=null)?Editor.getCurrentEditor().getLibgdxEditor().getAssetLoader():null;
+		Texture editorTexture = (loader!=null&&loader.contains(path))?loader.get(path):null;
+		FileHandle fileHandle = Gdx.files.absolute(path);
+		Texture texture = (editorTexture!=null?editorTexture:new Texture(fileHandle.exists()?fileHandle:Gdx.files.internal("images/logo.png")));
+		if(rx > 1|| ry > 1){
+			try {
+	   	 	//Texture texture = drawable.getRegion().getTexture();
+	    		texture.setWrap(Texture.TextureWrap.MirroredRepeat, Texture.TextureWrap.MirroredRepeat);
+	    		TextureRegion textureRegion = new TextureRegion(texture);
+	    		textureRegion.setRegion(0,0,texture.getWidth()*rx,texture.getHeight()*ry);
+				image.setDrawable(new TextureRegionDrawable(textureRegion));
+	    	} catch(Exception ex){}
+		} else {
+			image.setDrawable(new TextureRegionDrawable(texture));
+		}
 	}
 	
 }

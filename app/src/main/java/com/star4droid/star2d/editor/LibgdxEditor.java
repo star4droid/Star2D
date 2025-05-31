@@ -201,7 +201,9 @@ public class LibgdxEditor extends Stage {
 				"Collider Width",ps.getString("Collider Width"),
 				"Collider Height",ps.getString("Collider Height")
 			};
-			EditorAction.propertiesChanged(this,getSelectedActor().getName(),touch_mode == TOUCHMODE.ROTATE ? "rotation" : (touch_mode == TOUCHMODE.SCALE ? "scale" : "position"),endTransform,startTransform).updateEditorProperties().updateItemProperties();
+			try {
+			    EditorAction.propertiesChanged(this,getSelectedActor().getName(),touch_mode == TOUCHMODE.ROTATE ? "rotation" : (touch_mode == TOUCHMODE.SCALE ? "scale" : "position"),endTransform,startTransform).updateEditorProperties().updateItemProperties();
+			} catch(Exception ex){}
 			getSaveState();
 			if(controlLayer!=null)
 				controlLayer.updateUndoRedo();
@@ -916,7 +918,7 @@ public class LibgdxEditor extends Stage {
 				shapeRenderer.end();
 				
 				float currentAngle = propertySet.containsKey("rotation") ? propertySet.getFloat("rotation") : 0;
-				double deltaRotation = angle + startAngle; 
+				double deltaRotation = startAngle - angle;
 				startAngle = (float)angle;
 				angle = currentAngle + deltaRotation;
 				while (angle > 360)

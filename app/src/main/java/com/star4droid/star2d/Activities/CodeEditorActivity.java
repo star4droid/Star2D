@@ -107,7 +107,6 @@ public class CodeEditorActivity extends AppCompatActivity {
 					break;
 					default :
 						editor.insertText(""+c,1);
-				//editor.moveSelectionRight();
 				}
 			});
 			symbolsLinear.addView(text);
@@ -115,8 +114,11 @@ public class CodeEditorActivity extends AppCompatActivity {
 		
 		try {
 		File file = new File(path);
-		if(FileUtil.readFile(path).equals("") && getIntent().getBooleanExtra("body",false)){
-			FileUtil.writeFile(path,String.format(Utils.readAssetFile("java/script.java",this),getIntent().getStringExtra("name"),Editor.getCurrentEditor().getScene()));
+		if(FileUtil.readFile(path).equals("")){
+			if(getIntent().getBooleanExtra("body",false))
+				FileUtil.writeFile(path,String.format(Utils.readAssetFile("java/script.java",this),getIntent().getStringExtra("name"),Editor.getCurrentEditor().getScene()));
+			if(getIntent().hasExtra("scene") && !getIntent().getStringExtra("scene").equals(""))
+				FileUtil.writeFile(path,String.format(Utils.readAssetFile("java/SceneScript.java",this),getIntent().getStringExtra("scene")));
 		}
 		if(file.exists()){
 			FileInputStream fis=new FileInputStream(file);

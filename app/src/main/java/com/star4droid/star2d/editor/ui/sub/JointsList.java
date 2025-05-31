@@ -47,6 +47,10 @@ public class JointsList extends VisTable {
 		adapter.refresh();
 	}
 	
+	public void refresh(){
+		adapter.refresh();
+	}
+	
 	private class LAdapter extends ArrayAdapter<HashMap<String, Object>, VisTable> {
     	private final Drawable bg = VisUI.getSkin().getDrawable("window-bg");
 		Array<HashMap<String,Object>> array;

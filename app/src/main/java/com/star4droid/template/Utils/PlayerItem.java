@@ -3,6 +3,7 @@ package com.star4droid.template.Utils;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.ParticleEffect;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.scenes.scene2d.Actor;
@@ -18,6 +19,18 @@ public interface PlayerItem {
 	default public String getName(){
 		return getProperties().getString("name");
 	};
+	default public void setTint(Color color){
+	    if(getProperties().containsKey("Tint")){
+	        getProperties().put("Tint",color.toString().toUpperCase());
+	        update();
+	    }
+	}
+	default public void setTint(String hexColor){
+	    if(getProperties().containsKey("Tint")){
+	        getProperties().put("Tint",hexColor);
+	        update();
+	    }
+	}
 	default public String getParentName(){
 		return getProperties().containsKey("Script")?getProperties().getString("Script"):(getProperties().containsKey("old")?getProperties().getString("old"):getName());
 	}
@@ -41,7 +54,7 @@ public interface PlayerItem {
 		getChildsHolder().addChild(item);
 	}
 	public PropertySet<String,Object> getProperties();
-	public Actor getClone(String newName);
+	public PlayerItem getClone(String newName);
 	default public void setItemText(String text){};
 	default public void setProgress(int progress){
 		if(this instanceof ProgressItem)
@@ -67,11 +80,35 @@ public interface PlayerItem {
 	default public float getActorY(){
 	    return ((Actor)this).getY();
 	}
+	default public float getActorHeight(){
+	    return ((Actor)this).getHeight();
+	}
+	default public float getActorWidth(){
+	    return ((Actor)this).getWidth();
+	}
 	default public void setActorX(float x){
 	    getActor().setX(x);
 	}
 	default public void setActorY(float y){
 	    getActor().setX(y);
+	}
+	default public float angleToPoint(float x,float y){
+	    float cx1 = getBodyX() + getActor().getWidth()*0.5f;
+	    float cy1 = getBodyY() + getActor().getHeight()*0.5f;
+	    return (float)Math.atan2(cy1 - y, cx1 - x);
+	}
+	default public float angleToPointDegrees(float x,float y){
+	    return (float)Math.toDegrees(angleToPoint(x,y));
+	}
+	default public float angleTo(PlayerItem item){
+	    float cx1 = getBodyX() + getActor().getWidth()*0.5f;
+	    float cx2 = item.getBodyX() + item.getActor().getWidth()*0.5f;
+	    float cy1 = getBodyY() + getActor().getHeight()*0.5f;
+	    float cy2 = item.getBodyY() + item.getActor().getHeight()*0.5f;
+	    return (float)Math.atan2(cy1 - cy2, cx1 - cx2);
+	}
+	default public float angleDegreesTo(PlayerItem item){
+	    return (float)Math.toDegrees(angleTo(item));
 	}
 	default public float distTo(PlayerItem item){
 		return this.distToPoint(item.getBody().getPosition().x,item.getBody().getPosition().y);

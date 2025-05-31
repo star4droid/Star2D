@@ -113,11 +113,13 @@ public class EventsItem extends Table {
 			table.addListener(new ClickListener(){
 				@Override
 				public void clicked (InputEvent event, float x, float y) {
+					boolean sceneScript = hashMap.get("name").toString().equals("Scene Script") && hashMap.get("icon").toString().equals("scene.png");
+					if(sceneScript){
+						String scene = app.getEditor().getScene();
+						VisualScriptingDialog.openSceneScript(scene,app.getEditor().getProject().getSceneScript(scene));
+						return;
+					}
 					boolean bodyScript = hashMap.get("name").toString().equals("Body Script");
-					/*if(bodyScript){
-						VisualScriptingDialog.openCodeEditor();
-					} else
-					*/
 					if(hashMap.get("icon").toString().equals("code.png") || bodyScript){
 						PopupMenu popupMenu = new PopupMenu();
 						popupMenu.addItem(new MenuItem("Open",new ChangeListener() {
@@ -191,6 +193,7 @@ public class EventsItem extends Table {
 	}
 	
 	private void pushEvents(){
+		push("Scene Script","scene",false,false);
 		push("OnCreate","properties",false,false);
 		push("OnStep","step_icon",false,false);
 		push("OnPause","pause",false,false);

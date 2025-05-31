@@ -21,6 +21,7 @@ import java.util.ArrayList;
 public class BoxItem extends Image implements EditorItem {
 	PropertySet<String,Object> propertySet;
 	float[] offset=new float[]{0,0};
+	String tint = "#FFFFFF";
 	Body body;
 	LibgdxEditor editor;
 	public BoxItem(final LibgdxEditor libgdxEditor){
@@ -76,6 +77,10 @@ public class BoxItem extends Image implements EditorItem {
 		}
 		body.setTransform(new Vector2((offset[0]+x+(getWidth()*0.5f)),(offset[1]+y+(getHeight()*0.5f))),(float)Math.toRadians(-propertySet.getFloat("rotation")));
 		//setDrawable(new TextureRegionDrawable(new Texture(Gdx.files.internal("images/logo.png"))));
+		if(!propertySet.getString("Tint").equals(tint)){
+		    setColor(propertySet.getColor("Tint"));
+		    tint = propertySet.getString("Tint");
+		}
 	}
 	
 	@Override

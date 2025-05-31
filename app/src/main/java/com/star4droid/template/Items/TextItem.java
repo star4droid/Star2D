@@ -12,6 +12,7 @@ import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.star4droid.star2d.ElementDefs.ElementEvent;
 import com.star4droid.template.Utils.ChildsHolder;
+import com.star4droid.template.Utils.ItemScript;
 import com.star4droid.template.Utils.PlayerItem;
 import com.star4droid.template.Utils.PropertySet;
 
@@ -57,7 +58,7 @@ public class TextItem extends Label implements PlayerItem {
 	public static TextItem create(StageImp stageImp,PropertySet<String,Object> propertySet,ElementEvent elementEvent){
 		BitmapFont font = new BitmapFont(Gdx.files.internal("files/default.fnt"));
 		LabelStyle labelStyle = new LabelStyle(font, Color.GOLD);
-		return new TextItem(propertySet.getString("Text"),labelStyle,stageImp).setPropertySet(propertySet).setElementEvent(elementEvent);
+		return new TextItem(propertySet.getString("Text"),labelStyle,stageImp).setElementEvent(elementEvent).setPropertySet(propertySet);
 	}
 	@Override
 	public void update() {
@@ -108,12 +109,20 @@ public class TextItem extends Label implements PlayerItem {
 	}
 
 	@Override
-	public Actor getClone(String newName) {
+	public PlayerItem getClone(String newName) {
 		PropertySet<String,Object> set = new PropertySet<>();
 		set.putAll(propertySet);
 		set.put("old",getParentName());
 		set.put("name",newName);
-	    return create(stage,set,elementEvent);
+	    PlayerItem item = create(stage,set,elementEvent);
+		if(set.getScript()!=null){
+			try {
+				ItemScript script = (ItemScript)(set.getScript().getClass().getConstructor(PlayerItem.class).newInstance(item));
+				script.setItem(item).setStage(stage);
+				item.setScript(script);
+			} catch(Exception ex){}
+		}
+		return item;
 	}
 	
 	public TextItem setElementEvent(ElementEvent event){

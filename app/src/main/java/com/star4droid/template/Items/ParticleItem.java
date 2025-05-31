@@ -11,6 +11,7 @@ import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.star4droid.template.Utils.ChildsHolder;
+import com.star4droid.template.Utils.ItemScript;
 import com.star4droid.template.Utils.PlayerItem;
 import com.star4droid.template.Utils.Utils;
 import com.star4droid.template.Utils.PropertySet;
@@ -155,12 +156,20 @@ public class ParticleItem extends Image implements PlayerItem {
 	}
 
 	@Override
-	public Actor getClone(String newName) {
+	public PlayerItem getClone(String newName) {
 	    PropertySet<String,Object> set = new PropertySet<>();
 		set.putAll(propertySet);
 		set.put("old",getParentName());
 		set.put("name",newName);
-		return new ParticleItem(stageImp).setPropertySet(set).setElementEvent(elementEvent);
+		ParticleItem item = new ParticleItem(stageImp).setElementEvent(elementEvent).setPropertySet(set);
+		if(set.getScript()!=null){
+			try {
+				ItemScript script = (ItemScript)(set.getScript().getClass().getConstructor(PlayerItem.class).newInstance(item));
+				script.setItem(item).setStage(stageImp);
+				item.setScript(script);
+			} catch(Exception ex){}
+		}
+		return item;
 	}
 	
 	private void loadDefault(){

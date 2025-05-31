@@ -83,6 +83,10 @@ public class Project {
 		return path+"/scripts/"+scene+"/";
 	}
 	
+	public String getSceneScript(String scene){
+		return path+"/java/com/star4droid/Game/SceneScript/"+scene.toLowerCase()+"Script.java";
+	}
+	
 	public void copyScene(String scene,String newScene){
 		ArrayList<String> arrayList = getSceneList(newScene);
 		int x=0;
@@ -124,6 +128,7 @@ public class Project {
 		arrayList.add(getJoints(scene));
 		arrayList.add(getCodesPath(scene));
 		arrayList.add(getScriptsPath(scene));
+		arrayList.add(getSceneScript(scene));
 		arrayList.add(getBodiesScripts(scene));
 		return arrayList;
 	}

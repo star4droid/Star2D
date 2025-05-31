@@ -28,7 +28,7 @@ public class BodyInput extends VisTable implements InputField {
 		super();
 		setBackground(VisUI.getSkin().getDrawable("window-bg"));
 		name = new VisTextButton("Name");
-		value = new VisTextButton("0");
+		value = new VisTextButton("[Choose]");
 		name.setBackground(VisUI.getSkin().getDrawable("separator"));
 		value.setBackground(VisUI.getSkin().getDrawable("separator"));
 		add().width(8);
@@ -50,7 +50,7 @@ public class BodyInput extends VisTable implements InputField {
 				for(String body:app.getEditor().getBodiesList()){
 					if(ignoredBodies.contains(body,false))
 						continue;
-					VisCheckBox checkBox = new VisCheckBox(body,valueString.equals(body));
+					VisCheckBox checkBox = new VisCheckBox(body,valueString.equals(body) || valueString.contains("("+body+")"));
 					checkBoxes.add(checkBox);
 					table.add(checkBox).growX().row();
 					if(isSingle)
@@ -84,7 +84,10 @@ public class BodyInput extends VisTable implements InputField {
 							app.toast("Select At least One Item!");
 							return;
 						}
-						value.setText(isSingle ? result.replace("(","").replace(")","") : result);
+						valueString = (isSingle ? result.replace("(","").replace(")","") : result);
+						if(isSingle)
+		                    value.setText(valueString);
+						//Gdx.files.external("logs/bodyInput.txt").writeString("set : "+isSingle+", name : "+name.getText().toString()+", value : "+valueString,true);
 						dialog.hide();
 						if(onChange!=null)
 							onChange.run();
@@ -125,8 +128,9 @@ public class BodyInput extends VisTable implements InputField {
 	public BodyInput ignoreBodies(boolean clear,String... bodies){
 		if(clear)
 			ignoredBodies.clear();
-		for(String body:bodies)
-			ignoredBodies.add(body);
+		if(bodies!=null)
+		    for(String body:bodies)
+			    ignoredBodies.add(body);
 		return this;
 	}
 	
@@ -146,6 +150,9 @@ public class BodyInput extends VisTable implements InputField {
 	@Override
 	public void setValue(String value) {
 		valueString = value;
+		if(!(value.contains("(") || value.equals("")))
+		    this.value.setText(value);
+		//Gdx.files.external("logs/bodyInput.txt").writeString("\n value : "+value+", set : "+(!value.contains("("))+", name : "+name.getText().toString(),true);
 	}
 
 	@Override

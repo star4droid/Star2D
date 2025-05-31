@@ -39,11 +39,13 @@ public class FileBrowser extends VisWindow implements Disposable {
     private VisTable contentTable;
     private Texture folderIcon;
     private Texture fileIcon;
+	private AnimationEditor animationEditor;
 	private int depth = 0;
 	private TextShow textShow;
     private HashSet<String> imageExtensions = new HashSet<>();
 	private ProjectAssetLoader projectAssetLoader;
 	private ToastManager toastManager;
+	private BitmapFontEditor bitmapFontEditor;
 
     public FileBrowser(String rootAbsoulutePath,ProjectAssetLoader assetLoader) {
         super("File Browser");
@@ -66,8 +68,8 @@ public class FileBrowser extends VisWindow implements Disposable {
 	}
 
     private void setupIcons() {
-        folderIcon = new Texture("images/folder.png");
-        fileIcon = new Texture("images/file.png");
+        folderIcon = new Texture("images/folder-white.png");
+        fileIcon = new Texture("images/file-white.png");
         imageExtensions.add("png");
         imageExtensions.add("jpg");
         imageExtensions.add("jpeg");
@@ -76,6 +78,8 @@ public class FileBrowser extends VisWindow implements Disposable {
 
     private void setupUI(String path) {
 		textShow = new TextShow("Text Viewer");
+		animationEditor = new AnimationEditor();
+		bitmapFontEditor = new BitmapFontEditor(TestApp.getCurrentApp());
         // Header
         VisImageTextButton importBtn = new VisImageTextButton("Import",new TextureRegionDrawable(new Texture("images/download.png")));
         VisImageTextButton modeToggle = new VisImageTextButton("Switch View",new TextureRegionDrawable(new Texture("images/grid-icon.png")));
@@ -97,7 +101,7 @@ public class FileBrowser extends VisWindow implements Disposable {
 		MenuItem bitmapFontItem = new MenuItem("Bitmap Font",new ChangeListener(){
 			@Override
 			public void changed(ChangeEvent arg0, Actor arg1) {
-				new BitmapFontEditor(TestApp.getCurrentApp(),currentDir,null)
+				bitmapFontEditor.setData(currentDir,null)
 					.show(getStage()).toFront();
 			}
 		});
@@ -156,7 +160,7 @@ public class FileBrowser extends VisWindow implements Disposable {
 		scrollPane.setOverscroll(false,false);
 		scrollPane.setScrollingDisabled(false,false);
         add(scrollPane).grow().row();
-		pack();
+		//pack();
 		setHeight(Gdx.graphics.getHeight()*0.75f);
         setCurrentDirectory(path); // Get root directory
     }
@@ -184,6 +188,10 @@ public class FileBrowser extends VisWindow implements Disposable {
 			toastManager.toFront();
 			toastManager.show(message,2);
 		}
+	}
+	
+	public BitmapFontEditor getBitmapFontEditor(){
+		return bitmapFontEditor;
 	}
 	
 	public FileHandle getCurrentDir(){
@@ -250,8 +258,10 @@ public class FileBrowser extends VisWindow implements Disposable {
 			if(projectAssetLoader.isLoaded(file.toString())){
 				return projectAssetLoader.get(file.toString());
 			} else {
-				projectAssetLoader.loadFile(file.toString(),Texture.class);
-				projectAssetLoader.finishLoading();
+			    if(!projectAssetLoader.contains(file.toString(), Texture.class))
+				    projectAssetLoader.loadFile(file.toString(),Texture.class);
+				//projectAssetLoader.finishLoading();
+				return fileIcon;
 			}
 		}
 		return file.isDirectory() ? folderIcon : 
@@ -266,6 +276,10 @@ public class FileBrowser extends VisWindow implements Disposable {
                 null,
                 null
         );
+    }
+    
+    public void setAssetLoader(ProjectAssetLoader loader){
+        this.projectAssetLoader = loader;
     }
 	
 	private Texture getAsset(FileHandle asset){
@@ -319,11 +333,12 @@ public class FileBrowser extends VisWindow implements Disposable {
                         setCurrentDirectory(file);
                     } else {
                         // Handle file open
-						showContextMenu(file,item);
 						if(depth == 1 && file.parent().name().toLowerCase().equals("anims")){
-							if(animationOpen!=null)
-								animationOpen.open(file.path());
-						}
+							//if(animationOpen!=null)
+								//animationOpen.open(file.path());
+							animationEditor.setAssetLoader(projectAssetLoader).setPaths(currentDir.sibling("images").path(),file.path())
+									.refresh().show(getStage());
+						} else showContextMenu(file,item);
                     }
                 }
             }
@@ -368,7 +383,7 @@ public class FileBrowser extends VisWindow implements Disposable {
 	}
 	
 	private void editFont(FileHandle s2df){
-		new BitmapFontEditor(TestApp.getCurrentApp(),currentDir,s2df)
+		bitmapFontEditor.setData(currentDir,s2df)
 			.show(getStage()).toFront();
 	}
 	
@@ -380,10 +395,15 @@ public class FileBrowser extends VisWindow implements Disposable {
 		if(fileIsLarge(fileHandle))
 			toast("File Is Large!!");
 		else {
-			textShow.setText(fileHandle.readString());
-			textShow.toFront();
-			textShow.show(getStage());
+			showText(fileHandle.readString());
 		}
+	}
+	
+	public void showText(String text){
+		textShow.setText(text);
+		textShow.show(getStage());
+		textShow.layout();
+		textShow.toFront();
 	}
 
     private void deleteFile(FileHandle file) {
@@ -416,6 +436,15 @@ public class FileBrowser extends VisWindow implements Disposable {
                 Actions.fadeIn(0.3f, Interpolation.pow3)
         ));
     }
+	
+	@Override
+	public void setVisible(boolean visibility) {
+		super.setVisible(visibility);
+		if(visibility){
+			setHeight(Gdx.graphics.getHeight()*0.75f);
+			centerWindow();
+		}
+	}
 	
 	public void setCurrentDirectory(String absoultePath){
 		setCurrentDirectory(Gdx.files.absolute(absoultePath));

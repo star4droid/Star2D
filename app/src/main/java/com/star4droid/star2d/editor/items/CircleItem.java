@@ -22,6 +22,7 @@ public class CircleItem extends Image implements EditorItem {
     PropertySet<String, Object> propertySet;
     float[] offset = new float[]{0, 0};
     Body body;
+    String tint = "#FFFFFF";
     LibgdxEditor editor;
 
     public CircleItem(final LibgdxEditor libgdxEditor) {
@@ -90,6 +91,10 @@ public class CircleItem extends Image implements EditorItem {
             offset[1] + y + radius
         );
         body.setTransform(position, (float) Math.toRadians(-propertySet.getFloat("rotation")));
+		if(!propertySet.getString("Tint").equals(tint)){
+		    setColor(propertySet.getColor("Tint"));
+		    tint = propertySet.getString("Tint");
+		}
     }
 
     public LibgdxEditor getEditor() {

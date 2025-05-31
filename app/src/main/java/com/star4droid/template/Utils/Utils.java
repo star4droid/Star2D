@@ -147,9 +147,7 @@ public class Utils {
 		
 		public static String getStackTraceString(Throwable throwable){
 			String full=throwable.toString()+"\n";
-			String space="";
-			for(int x =0;x<12;x++)
-				space+="_";
+			String space="_".repeat(12);
 			for(StackTraceElement element:throwable.getStackTrace()){
 				full+="class name : "+element.getClassName()+"\n file : "+element.getFileName()+
 				"\n line number : "+element.getLineNumber()+"\n method : "+element.getMethodName()+"\n"+space+"\n";
@@ -192,11 +190,11 @@ public class Utils {
 	}
 	
 	public static BitmapFont generateFontFrom(FileHandle dir,String json){
-		Gdx.files.external("logs/font.txt").writeString("start : "+dir+",json : \n"+json+"\n\n",false);
+		//Gdx.files.external("logs/font.txt").writeString("start : "+dir+",json : \n"+json+"\n\n",false);
 		PropertySet<String,Object> propertySet = json != null ? PropertySet.getFrom(json) : null;
 		FileHandle fontHandle = dir!=null?dir.child(propertySet.getString("font")):null;
 		if(dir == null || json == null || json.isEmpty() || fontHandle.isDirectory() || !fontHandle.exists()){
-			Gdx.files.external("logs/font.txt").writeString("not procced : "+fontHandle.path()+"\n",true);
+			//Gdx.files.external("logs/font.txt").writeString("not procced : "+fontHandle.path()+"\n",true);
 			return new BitmapFont(Gdx.files.internal("files/default.fnt"));
 		}
 		boolean isRtl = propertySet.getString("rtl").equals("true");
@@ -220,9 +218,9 @@ public class Utils {
 					} else if(type.equals("boolean")){
 						field.set(parameter,field.getBoolean(field.getName()));
 					}
-					Gdx.files.external("logs/font.txt").writeString("set field: "+field.getName()+", value : "+propertySet.get(field.getName())+"\n",true);
+					//Gdx.files.external("logs/font.txt").writeString("set field: "+field.getName()+", value : "+propertySet.get(field.getName())+"\n",true);
 				} catch(Exception ex){
-					Gdx.files.external("logs/font.txt").writeString("error on field: "+field.getName()+", value : "+propertySet.get(field.getName())+"\n",true);
+					//Gdx.files.external("logs/font.txt").writeString("error on field: "+field.getName()+", value : "+propertySet.get(field.getName())+"\n",true);
 				}
 		}
 		BitmapFont font = isRtl ? ((RtlFreeTypeFontGenerator)generator).generateRtlFont(parameter): generator.generateFont(parameter);

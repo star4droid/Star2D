@@ -7,13 +7,18 @@ import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.star4droid.star2d.ElementDefs.ElementEvent;
 import com.badlogic.gdx.graphics.g2d.ParticleEffect;
+import com.badlogic.gdx.graphics.Color;
 
 public interface PlayerItem {
 	public void update();
 	public Body getBody();
 	public void scaleEffect(float sx,float sy);
+	public void setTint(Color color);
+	public void setTint(String hexColor);
 	public ParticleEffect getParticleEffect();
 	public String getName();
+	public void setActorX(float x);
+	public void setActorY(float y);
 	public String getParentName();
 	public PlayerItem getChild(String child);
 	public void setScript(ItemScript script);
@@ -22,7 +27,7 @@ public interface PlayerItem {
 	public void setParent(PlayerItem item);
 	public void addChild(PlayerItem item);
 	public PropertySet<String,Object> getProperties();
-	public Actor getClone(String newName);
+	public PlayerItem getClone(String newName);
 	public void setItemText(String text);
     public void setProgress(int progress);
 	public int getProgress();
@@ -38,6 +43,12 @@ public interface PlayerItem {
 	public float distToPoint(float x,float y);
 	public float getActorX();
 	public float getActorY();
+	public float getActorHeight();
+	public float getActorWidth();
+	public float angleTo(PlayerItem item);
+	public float angleToPoint(float x,float y);
+	public float angleToPointDegrees(float x,float y);
+	public float angleDegreesTo(PlayerItem item);
 	public float distTo(PlayerItem item);
 	public boolean isExsits(String file);
 	public Actor getActor();

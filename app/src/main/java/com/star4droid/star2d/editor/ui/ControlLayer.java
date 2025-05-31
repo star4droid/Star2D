@@ -34,6 +34,7 @@ import com.star4droid.star2d.Helpers.FilesChangeDetector;
 import com.star4droid.star2d.Helpers.Project;
 import com.star4droid.star2d.Helpers.PropertySet;
 import com.star4droid.star2d.editor.TestApp;
+import com.star4droid.star2d.editor.Utils;
 import com.star4droid.star2d.editor.items.*;
 import com.star4droid.star2d.editor.ui.custom.CustomColliderEditor;
 import com.star4droid.star2d.editor.ui.sub.ConfirmDialog;
@@ -50,7 +51,7 @@ public class ControlLayer extends Table {
     private Table bottomContainer,windowsTable;
     private VisScrollPane topScrollPane;
     private VisScrollPane bottomScrollPane;
-	private String clickedAction = "";
+	private String clickedAction = "grid";
 	//private VisImageButton closeBtn;
 	String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890_";
     
@@ -67,6 +68,7 @@ public class ControlLayer extends Table {
 	VisLabel indexingLabel;
 	JointsList jointsList;
 	FileHandle fileBroweserDir;
+	TextShow textShow;
 	ControlType controlType;
 	CustomColliderEditor customColliderEditor;
 	public TabsItem tabsItem;
@@ -229,7 +231,7 @@ public class ControlLayer extends Table {
 		compileDialog.add(cancelBtn).padRight(10).padBottom(5);
 		compileDialog.add(copyBtn).padBottom(5);
 		*/
-		TextShow textShow = new TextShow("Compiler");
+		textShow = new TextShow("Compiler");
 		xyMenu = new PopupMenu();
 		xyMenu.addItem(new MenuItem("No Lock",new ChangeListener() {
 			@Override
@@ -467,6 +469,7 @@ public class ControlLayer extends Table {
 			compileDialog.show(getStage());
 			*/
 			textShow.setEnabled(false);
+			textShow.setText("Generating Code...");
 			textShow.toFront();
 			textShow.show(getStage());
 			getStage().addActor(textShow);
@@ -538,11 +541,15 @@ public class ControlLayer extends Table {
 		});
 		
 		gridBtn = addIconToBottom("grid",drawable("grid-icon.png"),(btn)->{
+			if(clickedAction.equals("grid")){
+				showXYMenu(btn,"");
+				return;
+			}
 			gridBtn.setColor(Color.YELLOW);
 			moveBtn.setColor(Color.WHITE);
 			scaleBtn.setColor(Color.WHITE);
 			rotateBtn.setColor(Color.WHITE);
-			clickedAction = "";
+			clickedAction = "grid";
 			app.getEditor().setTouchMode(com.star4droid.star2d.editor.LibgdxEditor.TOUCHMODE.GRID);
 		});
 		gridBtn.setColor(Color.YELLOW);
@@ -683,7 +690,10 @@ public class ControlLayer extends Table {
 				app.getEditor().setScene(name);
 				//app.getEditor().loadFromPath();
 			} else if(sceneAction == SceneAction.COPY || sceneAction == SceneAction.CREATE){
+			    com.star4droid.star2d.editor.LibgdxEditor prev = app.getEditor();
 				app.openSceneInNewEditor(name);
+				if(sceneAction == SceneAction.CREATE)
+				    app.getEditor().setLandscape(prev.isLandscape());
 			} else if(sceneAction == SceneAction.DELETE){
 				app.openSceneInNewEditor("scene1");
 			}
@@ -748,17 +758,24 @@ public class ControlLayer extends Table {
 			MenuItem item = new MenuItem(name,drawable("bodies/"+icons[x]+".png"),new ChangeListener() {
 				@Override
 				public void changed (ChangeEvent event, Actor actor) {
-					EditorItem item = getItem(pos);
-                	app.getEditor().addActor((Actor)item);
-                	((Actor)item).setName(app.getEditor().getName((Actor)item));
-                	try {
-						java.lang.reflect.Method method = item.getClass().getMethod("setDefault");
-						Object[] objs = null;
-						method.invoke(item,objs);
-					} catch(Exception e){}
-                	item.getPropertySet().put("z",app.getEditor().getActors().size);
-                	app.getEditor().selectActor((Actor)item);
-                	item.update();
+					try {
+						EditorItem item = getItem(pos);
+                		app.getEditor().addActor((Actor)item);
+                		((Actor)item).setName(app.getEditor().getName((Actor)item));
+                		try {
+							java.lang.reflect.Method method = item.getClass().getMethod("setDefault");
+							Object[] objs = null;
+							method.invoke(item,objs);
+						} catch(Exception e){}
+                		item.getPropertySet().put("z",app.getEditor().getActors().size);
+                		app.getEditor().selectActor((Actor)item);
+						EditorAction.itemAdded(app.getEditor(),(Actor)item);
+                		item.update();
+					} catch(Error error){
+						textShow.setText("Error :\n"+Utils.getStackTraceString(error));
+						textShow.show(getStage());
+						textShow.toFront();
+					}
 				}
 			});
 			item.pad(5);
@@ -781,6 +798,10 @@ public class ControlLayer extends Table {
 		return null;
 	}
 	
+	public String getTouchMode(){
+		return clickedAction;
+	}
+	
 	private PopupMenu createLightMenu(){
 		PopupMenu menu = new PopupMenu();
 		String[] list = {"Point Light","Directional Light","Cone Light","Light Settings"};
@@ -792,13 +813,20 @@ public class ControlLayer extends Table {
 					if(pos == 3){
 						LightSettingsDialog.showFor(new Project(app.getEditor().getProject().getPath()),app.getEditor().getScene());
 					} else {
-						LightItem lightItem = new LightItem(app.getEditor());
-            			app.getEditor().addActor(lightItem);
-            			lightItem.setName(app.getEditor().getName(lightItem));
-            			lightItem.setDefault(getLightType(pos));
-            			lightItem.getPropertySet().put("z",app.getEditor().getActors().size);
-            			app.getEditor().selectActor(lightItem);
-            			lightItem.update();
+						try {
+							LightItem lightItem = new LightItem(app.getEditor());
+            				app.getEditor().addActor(lightItem);
+            				lightItem.setName(app.getEditor().getName(lightItem));
+            				lightItem.setDefault(getLightType(pos));
+            				lightItem.getPropertySet().put("z",app.getEditor().getActors().size);
+            				app.getEditor().selectActor(lightItem);
+            				lightItem.update();
+							EditorAction.itemAdded(app.getEditor(),lightItem);
+						} catch(Error error){
+							textShow.setText("Error :\n"+Utils.getStackTraceString(error));
+							textShow.show(getStage());
+							textShow.toFront();
+						}
 					}
 				}
 			}));

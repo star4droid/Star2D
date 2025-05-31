@@ -81,8 +81,8 @@ public class JoyStickItem extends Touchpad implements EditorItem {
     private void loadImage(String propertyKey, boolean isKnob) {
         String imagePath = editor.getProject().getImagesPath() + 
                          propertySet.getString(propertyKey).replace(Utils.seperator, "/");
-        
-        if (new File(imagePath).exists()) {
+        File file = new File(imagePath);
+        if (file.exists() && !file.isDirectory()) {
             Texture texture = new Texture(Gdx.files.absolute(imagePath));
             TextureRegionDrawable drawable = new TextureRegionDrawable(texture);
             

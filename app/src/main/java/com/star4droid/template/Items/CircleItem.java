@@ -92,6 +92,7 @@ public class CircleItem extends Image implements PlayerItem {
 		}
 		setZIndex(propertySet.getInt("z"));
 		setRotation(-propertySet.getFloat("rotation"));
+		setScale(propertySet.getFloat("Scale X"),propertySet.getFloat("Scale Y"));
 		setVisible(propertySet.getString("Visible").equals("true"));
 		setName(propertySet.getString("name"));
 		if(!propertySet.getString("type").equals("UI")){

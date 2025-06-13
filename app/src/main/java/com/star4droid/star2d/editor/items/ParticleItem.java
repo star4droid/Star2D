@@ -14,7 +14,6 @@ import com.star4droid.star2d.Helpers.PropertySet;
 import com.star4droid.template.Utils.Utils;
 import java.util.ArrayList;
 
-
 public class ParticleItem extends Image implements EditorItem,Disposable {
 	PropertySet<String,Object> propertySet;
 	LibgdxEditor editor;
@@ -27,12 +26,7 @@ public class ParticleItem extends Image implements EditorItem,Disposable {
 		particleEffect = new ParticleEffect();
 		this.editor = libgdxEditor;
 		editor.addActor(this);
-		addListener(new ClickListener(){
-			@Override
-			public void clicked (InputEvent event, float x, float y) {
-				editor.selectActor(ParticleItem.this);
-			}
-		});
+		addListener(new ItemClickListener(this, editor));
 		debug();
 	}
 	

@@ -7,6 +7,7 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.scenes.scene2d.Group;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.actions.Actions;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
@@ -26,6 +27,7 @@ import com.kotcrab.vis.ui.widget.VisImageButton;
 import com.kotcrab.vis.ui.widget.VisLabel;
 import com.kotcrab.vis.ui.widget.VisScrollPane;
 import com.kotcrab.vis.ui.widget.VisTextButton;
+import com.kotcrab.vis.ui.widget.VisWindow;
 import com.kotcrab.vis.ui.widget.color.ColorPicker;
 import com.kotcrab.vis.ui.widget.color.ColorPickerListener;
 import com.star4droid.star2d.Helpers.CodeGenerator;
@@ -45,6 +47,7 @@ import com.star4droid.star2d.editor.ui.sub.TabsItem;
 import com.star4droid.star2d.editor.ui.sub.TextShow;
 import com.star4droid.star2d.editor.utils.EditorAction;
 import java.util.concurrent.Executors;
+import static com.star4droid.star2d.editor.utils.Lang.*;
 
 public class ControlLayer extends Table {
     private Table topContainer;
@@ -81,8 +84,13 @@ public class ControlLayer extends Table {
 		if(type.equals(""))
 			controlType = ControlType.TOP_AND_BOTTOM;
 		else controlType = ControlType.valueOf(type);
-		colorPicker = new ColorPicker("Choose Color");
-		colorPicker.setScale(0.75f);
+		colorPicker = new ColorPicker(getTrans("chooseColor"));/*{
+			@Override
+			protected void setParent (Group parent) {
+				super.setParent(parent);
+				setScale(app.getEditor().isLandscape() ? 1f : 0.75f);
+			}
+		};*/
 		app.setControlLayer(this);
         setupStyles();
         createLayout();
@@ -90,7 +98,7 @@ public class ControlLayer extends Table {
     }
 
     private void setupStyles() {
-        if (!VisUI.isLoaded()) VisUI.load();
+        if (!VisUI.isLoaded()) com.star4droid.star2d.editor.utils.ThemeLoader.loadTheme();
         buttonStyle = new ImageButton.ImageButtonStyle(VisUI.getSkin().get(ImageButton.ImageButtonStyle.class));
     }
 	
@@ -101,8 +109,9 @@ public class ControlLayer extends Table {
         topScrollPane = new VisScrollPane(topContainer);
         topScrollPane.setScrollingDisabled(false, true); // Vertical scroll disabled
         topScrollPane.setFadeScrollBars(true);
-		topScrollPane.setScrollbarsVisible(false);
 		topScrollPane.setScrollbarsOnTop(true);
+		topScrollPane.setOverscroll(false,false);
+		topScrollPane.setScrollbarsVisible(false);
 		topScrollPane.setFlickScroll(true);
 		topScrollPane.getStyle().background = VisUI.getSkin().getDrawable("window-bg");
         
@@ -111,6 +120,7 @@ public class ControlLayer extends Table {
         bottomScrollPane = new VisScrollPane(bottomContainer);
 		bottomScrollPane.setScrollbarsOnTop(true);
         bottomScrollPane.setScrollingDisabled(false, true);
+		bottomScrollPane.setOverscroll(false,false);
         bottomScrollPane.setFadeScrollBars(true);
 		bottomScrollPane.setScrollbarsVisible(false);
 		bottomScrollPane.setFlickScroll(true);
@@ -127,6 +137,10 @@ public class ControlLayer extends Table {
 				eventsBtn = new VisImageButton(drawable("pointer-icon.png")),
 				jointsBtn = new VisImageButton(drawable("link.png")),
 				propsBtn = new VisImageButton(drawable("events/properties.png"));
+		bodiesListBtn.setName("Bodies-List");
+		eventsBtn.setName("Events");
+		jointsBtn.setName("Joints");
+		propsBtn.setName("Properties");
 		bodiesList = new BodiesList(app){
 			@Override
 			public boolean remove(){
@@ -169,10 +183,12 @@ public class ControlLayer extends Table {
 		btnsTable.add(jointsBtn).size(iconSize+2).padTop(2).row();
 		btnsTable.add(eventsBtn).size(iconSize+2).padTop(2);
 		
+		/*
 		bodiesList.setVisible(false);
 		eventsItem.setVisible(false);
 		jointsList.setVisible(false);
 		propertiesItem.setVisible(false);
+		*/
 		addListenerToWindow(bodiesList,bodiesListBtn);
 		addListenerToWindow(eventsItem,eventsBtn);
 		addListenerToWindow(jointsList,jointsBtn);
@@ -197,57 +213,23 @@ public class ControlLayer extends Table {
     }
 	
 	private void init(){
-		/*
-		final VisDialog compileDialog = new VisDialog("Compiler");
-		final ScrollableTextArea compileLabel = new ScrollableTextArea("Compiling...");
-		ScrollPane scrollPane = compileLabel.createCompatibleScrollPane();
-		scrollPane.setFlickScroll(true);
-		scrollPane.setFillParent(true);
-		compileLabel.setReadOnly(true);
-		compileDialog.setFillParent(true);
-		compileDialog.setResizable(true);
-		scrollPane.setFadeScrollBars(false);
-		scrollPane.setScrollingDisabled(false,false);
-		compileDialog.row();
-		compileDialog.add(scrollPane).pad(4).maxHeight(500).maxWidth(Gdx.graphics.getWidth()*0.8f).minHeight(300).growX();
-		compileDialog.row();
-		VisTextButton cancelBtn = new VisTextButton("Cancel");
-		VisTextButton copyBtn = new VisTextButton("Copy");
-		
-		cancelBtn.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                compileDialog.hide();
-            }
-        });
-		
-		copyBtn.addListener(new ClickListener() {
-			@Override
-			public void clicked(InputEvent event, float x, float y) {
-				Gdx.app.getClipboard().setContents(compileLabel.getText().toString());
-			}
-		});
-		
-		compileDialog.add(cancelBtn).padRight(10).padBottom(5);
-		compileDialog.add(copyBtn).padBottom(5);
-		*/
-		textShow = new TextShow("Compiler");
+		textShow = new TextShow(getTrans("compiler"));
 		xyMenu = new PopupMenu();
-		xyMenu.addItem(new MenuItem("No Lock",new ChangeListener() {
+		xyMenu.addItem(new MenuItem(getTrans("noLock"),new ChangeListener() {
 			@Override
 			public void changed (ChangeEvent event, Actor actor) {
 				app.getEditor().setLockX(false);
 				app.getEditor().setLockY(false);
 			}
 		}));
-		xyMenu.addItem(new MenuItem("Lock X",drawable("x.png"),new ChangeListener() {
+		xyMenu.addItem(new MenuItem(getTrans("xLock"),drawable("x.png"),new ChangeListener() {
 			@Override
 			public void changed (ChangeEvent event, Actor actor) {
 				app.getEditor().setLockX(true);
 				app.getEditor().setLockY(false);
 			}
 		}));
-		xyMenu.addItem(new MenuItem("Lock Y",drawable("y.png"),new ChangeListener() {
+		xyMenu.addItem(new MenuItem(getTrans("yLock"),drawable("y.png"),new ChangeListener() {
 			@Override
 			public void changed (ChangeEvent event, Actor actor) {
 				app.getEditor().setLockX(false);
@@ -256,19 +238,19 @@ public class ControlLayer extends Table {
 		}));
 		
 		PopupMenu sceneActions = new PopupMenu();
-		sceneActions.addItem(new MenuItem("Copy Scene",new ChangeListener() {
+		sceneActions.addItem(new MenuItem(getTrans("copyScene"),new ChangeListener() {
 			@Override
 			public void changed (ChangeEvent event, Actor actor) {
 				dialogForScene(SceneAction.COPY,app.getEditor().getScene());
 			}
 		}));
-		sceneActions.addItem(new MenuItem("New Scene",new ChangeListener() {
+		sceneActions.addItem(new MenuItem(getTrans("newScene"),new ChangeListener() {
 			@Override
 			public void changed (ChangeEvent event, Actor actor) {
 				dialogForScene(SceneAction.CREATE,"Scene");
 			}
 		}));
-		sceneActions.addItem(new MenuItem("Delete Scene",new ChangeListener() {
+		sceneActions.addItem(new MenuItem(getTrans("deleteScene"),new ChangeListener() {
 			@Override
 			public void changed (ChangeEvent event, Actor actor) {
 				if(!app.getEditor().getScene().toLowerCase().equals("scene1")){
@@ -287,19 +269,19 @@ public class ControlLayer extends Table {
 							tabsItem.refresh();
 						}
 					}).show(getStage());
-				} else app.toast("You can\'t delete the main scene!");
+				} else app.toast(getTrans("deleteMainScene"));
 			}
 		}));
-		sceneActions.addItem(new MenuItem("Rename Scene",new ChangeListener() {
+		sceneActions.addItem(new MenuItem(getTrans("renameScene"),new ChangeListener() {
 			@Override
 			public void changed (ChangeEvent event, Actor actor) {
 				if(!app.getEditor().getScene().toLowerCase().equals("scene1")){
 					dialogForScene(SceneAction.RENAME,app.getEditor().getScene());
-				} else app.toast("You can\'t rename the main scene!");
+				} else app.toast(getTrans("renameMainScene"));
 			}
 		}));
 		
-		MenuItem openSceneItem = new MenuItem("Open Scene");
+		MenuItem openSceneItem = new MenuItem(getTrans("openScene"));
 		PopupMenu scenesMenu = new PopupMenu();
 		openSceneItem.addListener(new ChangeListener() {
 			@Override
@@ -326,15 +308,15 @@ public class ControlLayer extends Table {
 					lightsMenu = createLightMenu(),
 					createMenu = new PopupMenu();
 		
-		MenuItem bodiesMenuItem = new MenuItem("New Body", drawable("add.png")),
-				 lightsMenuItem = new MenuItem("New Light", drawable("add-light.png"));
+		MenuItem bodiesMenuItem = new MenuItem(getTrans("newBody"), drawable("add.png")),
+				 lightsMenuItem = new MenuItem(getTrans("newLight"), drawable("add-light.png"));
 		bodiesMenuItem.setSubMenu(bodiesMenu);
 		lightsMenuItem.setSubMenu(lightsMenu);
 		createMenu.addItem(bodiesMenuItem);
 		createMenu.addItem(lightsMenuItem);
 		
 		addIconToTop("rotate",drawable("rotate-dev.png"),(btn)->{
-			new ConfirmDialog("Change Orienation","The Editor will restart, continue ?",ok->{
+			new ConfirmDialog(getTrans("changeOrienation"),getTrans("editorRestartNote"),ok->{
 				if(ok)
 					app.setOrienation(!app.getEditor().isLandscape());
 			}).show(getStage());
@@ -363,7 +345,7 @@ public class ControlLayer extends Table {
 			app.getEditor().getProject().save(app.getEditor());
 			//btn.setScale(0);
 			//btn.addAction(Actions.scaleTo(1,1,300));
-			app.toast("Saved...");
+			app.toast(getTrans("saved"));
 		});
 		addIconToTop("files",drawable("file-white.png"),(btn)->{
 			if(fileBroweserDir!=null){
@@ -381,7 +363,7 @@ public class ControlLayer extends Table {
 			app.getFileBrowser().setVisible(!this.app.getFileBrowser().isVisible());
 			if(app.getFileBrowser().isVisible()){
 				app.getFileBrowser().toFront();
-				app.toast("show logs folder");
+				app.toast(getTrans("showLogsFolder"));
 			}
 		});
 		
@@ -443,13 +425,13 @@ public class ControlLayer extends Table {
                 propertySet.put("lock", String.valueOf(isLock));
             }
 		});
-		indexingLabel = new VisLabel("Indexing...");
+		indexingLabel = new VisLabel(getTrans("indexing"));
 		topContainer.add(indexingLabel).padLeft(5).padRight(5).growX();
 		indexingLabel.setName("indexing-lable");
 		
 		backBtn = addIconToTop("back",drawable("back_arrow.png"),btn->{
 			//Gdx.app.exit();
-			new ConfirmDialog("Exit","Do you want to exit ?",(ok)->{
+			new ConfirmDialog(getTrans("exit"),getTrans("exitConfirm"),(ok)->{
 			    if(ok)
 				    app.closeProject();
 			}).show(getStage());
@@ -469,7 +451,7 @@ public class ControlLayer extends Table {
 			compileDialog.show(getStage());
 			*/
 			textShow.setEnabled(false);
-			textShow.setText("Generating Code...");
+			textShow.setText(getTrans("generatingCode"));
 			textShow.toFront();
 			textShow.show(getStage());
 			getStage().addActor(textShow);
@@ -517,7 +499,7 @@ public class ControlLayer extends Table {
 				    compileThread.start();
 					sceneFile.writeString(code,false);
 				} else {
-					textShow.setText("Check Java Files Changes...");
+					textShow.setText(getTrans("checkJavaFilesChanges"));
 					Executors.newSingleThreadExecutor().execute(()->{
 						try {
 							boolean filesChanged = FilesChangeDetector.detect(Gdx.files.absolute(app.getEditor().getProject().get("java")).file().toPath(),Gdx.files.absolute(app.getEditor().getProject().getChangesJson()).file().toPath());
@@ -656,7 +638,7 @@ public class ControlLayer extends Table {
 	public void editScene(String name,SceneAction sceneAction){
 		String path = app.getEditor().getProject().getScenesPath()+name;
 		if (name.equals("")) {
-			app.toast("Can\'t be empty!!");
+			app.toast(getTrans("emptyError"));
 			dialogForScene(sceneAction,name);
 			return;
 		}
@@ -670,7 +652,7 @@ public class ControlLayer extends Table {
 		}
 		FileHandle fhandle = Gdx.files.absolute(path);
 		if (fhandle.exists()) {
-			app.toast("There is scene with the same name..!!");
+			app.toast(getTrans("sceneConflict"));
 			dialogForScene(sceneAction,name);
 			return;
 		}
@@ -680,10 +662,10 @@ public class ControlLayer extends Table {
 		} else if (sceneAction == SceneAction.RENAME) {
 			app.getEditor().getProject().renameScene(app.getEditor().getScene(), name);
 			EditorAction.renameScene(app.getEditor(),app.getEditor().getScene(),name);
-			app.toast("Scene Renamed...");
+			app.toast(getTrans("sceneRenamed"));
 		} else if (sceneAction == SceneAction.COPY) {
 			app.getEditor().getProject().copyScene(app.getEditor().getScene(),name);
-			app.toast("Scene Copied...");
+			app.toast(getTrans("sceneCopied"));
 		}
 		if (fhandle.exists()) {
 			if(sceneAction == SceneAction.RENAME){
@@ -707,7 +689,7 @@ public class ControlLayer extends Table {
 	}
 	
 	public void dialogForScene(SceneAction sceneAction,String initial){
-		new SingleInputDialog(sceneAction.name(),"Enter Name",initial,(text)->{
+		new SingleInputDialog(sceneAction.name(),getTrans("name")+" : ",initial,(text)->{
 			editScene(text,sceneAction);
 		}).show(getStage());
 	}
@@ -755,7 +737,7 @@ public class ControlLayer extends Table {
 		for(int x = 0; x < names.length; x++){
 			final String name = names[x];
 			final int pos = x;
-			MenuItem item = new MenuItem(name,drawable("bodies/"+icons[x]+".png"),new ChangeListener() {
+			MenuItem item = new MenuItem(getTrans(name),drawable("bodies/"+icons[x]+".png"),new ChangeListener() {
 				@Override
 				public void changed (ChangeEvent event, Actor actor) {
 					try {
@@ -807,7 +789,7 @@ public class ControlLayer extends Table {
 		String[] list = {"Point Light","Directional Light","Cone Light","Light Settings"};
 		for(int x = 0; x < 4; x++){
 			final int pos = x;
-			menu.addItem(new MenuItem(list[x],drawable("light.png"),new ChangeListener() {
+			menu.addItem(new MenuItem(getTrans(list[x]),drawable("light.png"),new ChangeListener() {
 				@Override
 				public void changed (ChangeEvent event, Actor actor) {
 					if(pos == 3){
@@ -844,25 +826,40 @@ public class ControlLayer extends Table {
 	
 	//when the button clicked, add the item to the window...
 	private void addListenerToWindow(Actor item,Actor btn){
+		VisWindow dialog = new VisWindow(getTrans(btn.getName().replace("-","")) + " " + getTrans("youCanDrag"));
+		dialog.setKeepWithinStage(false);
+		//dialog.addCloseButton();
+		dialog.reset();
+		dialog.add(item).grow().pad(3).center();
+		dialog.setResizable(true);
+		dialog.setMovable(true);
+		VisImageButton closeButton = new VisImageButton("close-window");
+		closeButton.addListener(new ClickListener() {
+			@Override
+            public void clicked(InputEvent event, float x, float y) {
+				dialog.remove();
+				dialog.setUserObject("false");
+			}
+		});
+		dialog.getTitleTable().add(closeButton).padRight(4);
+		// use user data to check dialog visibility...
+		dialog.setUserObject("false");
 		btn.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                boolean isOnWindow = item.isVisible();
-				if(!isOnWindow){
-					windowsTable.clear();
-					//windowsTable.right();
-					//windowsTable.add(closeBtn).size(iconSize,iconSize).padBottom(3).row();
-					windowsTable.right();
-					if(!app.getEditor().isLandscape())
-						windowsTable.bottom();
-					Cell<Actor> cell = windowsTable.add(item).width(Gdx.graphics.getWidth()*(app.getEditor().isLandscape() ? 0.4f : 0.85f)).padTop(5);
-					// portait mode window is 30% of the screen height for easy control...
-					if(app.getEditor().isLandscape())
-						cell.growY();
-					else cell.height(Gdx.graphics.getHeight()*0.3f).bottom();
-					//app.toast("item added!");
-				} else item.remove();
-				item.setVisible(!isOnWindow);
+				if(dialog.getUserObject().toString().equals("true"))
+					dialog.remove();
+				else {
+					getStage().addActor(dialog);
+					dialog.toFront();
+					float width = Gdx.graphics.getWidth()*(app.getEditor().isLandscape() ? 0.4f : 0.85f),
+						height = app.getEditor().isLandscape() ? windowsTable.getHeight() : Gdx.graphics.getHeight() * 0.3f;
+					if(dialog.getWidth() != width || dialog.getHeight() != height){
+						dialog.setSize(width,height);
+						dialog.setX((getStage().getWidth() - dialog.getWidth()) / 2);
+					}
+				}
+				dialog.setUserObject(dialog.getUserObject().toString().equals("true") ? "false" : "true");
             }
         });
 	}

@@ -47,6 +47,7 @@ enum RtlGlyph {
     // Persian and Arabic A characters (mixer/merger characters)
     //==============================================================
     /** Primary char : ا <br /> End char : ﺎ */ A__SIMPLE(0x627, 0xfe8e),
+    /** Primary char : ء <br /> End char : ء */ A_HAMZA(0x621),
     /** Primary char : آ <br /> End char : ﺂ */ A__HAT_HOLDER(0x622, 0xfe82),
     /** Primary char : أ <br /> End char : ﺄ */  A__HAMZE_TOP(0x623, 0xfe84),
     /** Primary char : إ <br /> End char : ﺈ */ A__HAMZE_BOTTOM(0x625, 0xfe88),

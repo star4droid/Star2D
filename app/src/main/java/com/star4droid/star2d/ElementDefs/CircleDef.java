@@ -11,7 +11,7 @@ public class CircleDef {
 	public ElementEvent elementEvents;
 	public String image="",Tint="",type="DYNAMIC",name="", Collision="",Script="";
 	public boolean Active=true,Bullet=false,isSensor=false,Fixed_Rotation=false,Visible=true;
-	public float ColliderX=0,x=0,y=0,z=0,rotation=0,ColliderY=0,Gravity_Scale=1,tileX=1,tileY=1, Collider_Radius=Integer.MAX_VALUE,
+	public float ColliderX=0,x=0,y=0,z=0,rotation=0,ColliderY=0,Scale_X=1,Scale_Y=1,Gravity_Scale=1,tileX=1,tileY=1, Collider_Radius=Integer.MAX_VALUE,
 	density=1,friction=0,restitution=0.5f,radius=50;
 	
 	public CircleDef(){

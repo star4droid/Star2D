@@ -51,7 +51,7 @@ public class LightDef {
 		    light.setSoftnessLength(Softness_Length);
 		    light.setSoft(Soft);
 		    PlayerItem item=stageImp.findItem(attach_To);
-		    if(item!=null){
+		    if(item!=null && item.getBody()!=null){
 		        light.attachToBody(item.getBody());
 		        if(light instanceof PositionalLight)
 		    ((PositionalLight)light).attachToBody(item.getBody(),Offset_X,Offset_Y);

@@ -301,7 +301,7 @@ public class EditorActivity extends AppCompatActivity implements AndroidFragment
                 if(currentID != id) return;
                 if(editor.getApp().getControlLayer()!=null)
                 Gdx.app.postRunnable(()->{
-                    editor.getApp().toast("Indexing files completed!");
+                    editor.getApp().toast(com.star4droid.star2d.editor.utils.Lang.getTrans("indexingFilesCompleted"));
                     try {
                     editor.getApp().getControlLayer().setIndexing(false);
                     } catch(Exception e){}

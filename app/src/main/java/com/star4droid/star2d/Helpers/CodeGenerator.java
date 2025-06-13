@@ -139,6 +139,7 @@ public class CodeGenerator {
                         jointVars += p.split("-")[1] + " " + p.split("-")[0] + ";\n";
                         String initilaizer = "";
                         StringBuilder init = new StringBuilder("");
+                        StringBuilder fieldsInit = new StringBuilder("");
                         
                         // Parse joint properties from JSON
                         ArrayList<HashMap<String, Object>> fields = new Gson().fromJson(
@@ -149,14 +150,14 @@ public class CodeGenerator {
                         // Process joint properties
                         for (HashMap<String, Object> hash : fields) {
                             if (shouldSkip > 0) {
-                                // Skip initialization vars
+                                // Skip initialization vars (constructor)
                                 initilaizer += (initilaizer.equals("") ? "" : ",") + 
                                               hash.get("value").toString().replace("&&", ",");
                                 shouldSkip--;
                                 continue;
                             }
                             
-                            init.append(String.format(
+                            fieldsInit.append(String.format(
                                 hash.get("code").toString().replace("ff", "f"),
                                 p.split("-")[0] + "_Def"
                             ));
@@ -168,6 +169,8 @@ public class CodeGenerator {
                             initilaizer,
                             p.split("-")[1]
                         ));
+                        
+                        init.append(fieldsInit);
                         
                         joint.append(String.format(
                             defualtJointCode,

@@ -25,12 +25,7 @@ public class LightItem extends Image implements EditorItem {
 		setSize(100,100);
 		editor = libgdxEditor;
 		libgdxEditor.addActor(this);
-		addListener(new ClickListener(){
-			@Override
-			public void clicked (InputEvent event, float x, float y) {
-				libgdxEditor.selectActor(LightItem.this);
-			}
-		});
+		addListener(new ItemClickListener(this, editor));
 		//debug();
 	}
 	@Override
@@ -75,8 +70,11 @@ public class LightItem extends Image implements EditorItem {
 		  	 case "cone":
 			        light = new ConeLight(rayHandler,rays, Color.valueOf(color),Distance,lightX, height - Distance - lightY + Distance*0.5f,-rotation,Cone_Degree);
 		   	break;
-	        	default:
-		        	light = new PointLight(rayHandler,rays,Color.valueOf(color),Distance,lightX+Distance*0.5f, height - Distance - lightY + Distance*0.5f);
+		   	case "point":
+		   	    light = new PointLight(rayHandler,rays,Color.valueOf(color),Distance,lightX+Distance*0.5f, height - Distance - lightY + Distance*0.5f);
+		   	break;
+	        default:
+		        light = new PointLight(rayHandler,rays,Color.valueOf(color),Distance,lightX+Distance*0.5f, height - Distance - lightY + Distance*0.5f);
 			}
 		}
 		
@@ -111,8 +109,10 @@ public class LightItem extends Image implements EditorItem {
 	@Override
 	public boolean remove() {
 		if(light!=null){
-			light.remove();
-			light.dispose();
+		    try {
+    			light.remove();
+    			light.dispose();
+			} catch(Error | Exception ex){}
 		}
 		return super.remove();
 	}

@@ -104,7 +104,9 @@ public class CustomBody extends Image implements PlayerItem {
 	private void createBody(){
 		int rx = propertySet.getInt("tileX"),
 			ry = propertySet.getInt("tileY");
-		setSize(propertySet.getFloat("width"),propertySet.getFloat("height"));
+		float width = propertySet.getFloat("width"),
+			height = propertySet.getFloat("height");
+		setSize(width, height);
 		setOrigin(getWidth()*0.5f,getHeight()*0.5f);
 		float x = propertySet.getFloat("x"),
 		y = propertySet.getFloat("y");
@@ -135,6 +137,7 @@ public class CustomBody extends Image implements PlayerItem {
 		}
 		setZIndex(propertySet.getInt("z"));
 		setRotation(-propertySet.getFloat("rotation"));
+		setScale(propertySet.getFloat("Scale X"),propertySet.getFloat("Scale Y"));
 		setVisible(propertySet.getString("Visible").equals("true"));
 		if(!propertySet.getString("type").equals("UI")){
 			String bt= String.valueOf(propertySet.getString("type").charAt(0)).toUpperCase();
@@ -160,7 +163,7 @@ public class CustomBody extends Image implements PlayerItem {
 			ChainShape shape = new ChainShape();
 			ArrayList<Vector2> array = new ArrayList<>();
 			if(!propertySet.getString("Points").equals("")){
-				String[] pointsStr = propertySet.getString("Points").split("-");
+				/*String[] pointsStr = propertySet.getString("Points").split("-");
 				
 				float hg = propertySet.getFloat("height"),
 				        wd = propertySet.getFloat("height");
@@ -176,15 +179,27 @@ public class CustomBody extends Image implements PlayerItem {
 					    e.printStackTrace();
 					    //Gdx.files.external("/logs/custom.txt").writeString("error points : \n+ "+Utils.getStackTraceString(e),false);
 					}
-				}
-				Vector2[] points = new Vector2[array.size()];
-				int po = 0;
-				for(Vector2 vec:array){
-				    points[po] = vec;
-				    po++;
-				}
-				//Gdx.files.external("/logs/points.txt").writeString("points: "+propertySet.getString("Points"),false);
-				shape.createChain(points);
+				}*/
+			    
+                String pointsStr = propertySet.getString("Points");
+                for (String point : pointsStr.split("-")) {
+                    String[] coords = point.split(",");
+                    if (coords.length == 2) {
+        				try {
+                        	float px = Utils.getFloat(coords[0]) * width - width*0.5f;
+                        	float py = (1 - Utils.getFloat(coords[1])) * height - height*0.5f; // Flip Y-axis
+                        	array.add(new Vector2(px, py));
+        				} catch(Exception e){}
+                    }
+                }
+    			Vector2[] points = new Vector2[array.size()];
+    			int po = 0;
+    			for(Vector2 vec:array){
+    			    points[po] = vec;
+    			    po++;
+    			}
+    			//Gdx.files.external("/logs/points.txt").writeString("points: "+propertySet.getString("Points"),false);
+    			shape.createLoop(points);
 			}
 			FixtureDef fx = new FixtureDef();
 			fx.shape = shape;

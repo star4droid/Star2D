@@ -37,12 +37,7 @@ public class CustomItem extends Image implements EditorItem {
         setSize(250, 250);
         libgdxEditor.addActor(this);
         
-        addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                libgdxEditor.selectActor(CustomItem.this);
-            }
-        });
+        addListener(new ItemClickListener(this,libgdxEditor));
 		//debug();
     }
 
@@ -90,6 +85,7 @@ public class CustomItem extends Image implements EditorItem {
         // Common properties
         setZIndex(propertySet.getInt("z"));
         setRotation(-propertySet.getFloat("rotation"));
+        setScale(propertySet.getFloat("Scale X"),propertySet.getFloat("Scale Y"));
         setVisible(propertySet.getString("Visible").equals("true"));
 		offset[0] = propertySet.getFloat("ColliderX")*-1;
     	offset[1] = propertySet.getFloat("ColliderY")*-1;

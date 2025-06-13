@@ -21,17 +21,22 @@ import com.star4droid.star2d.editor.ui.FilePicker;
 import com.star4droid.star2d.editor.ui.ProjectsListStage;
 import com.star4droid.star2d.editor.ui.sub.BodyScriptSelector;
 import com.star4droid.star2d.editor.ui.sub.ConfirmDialog;
+import com.star4droid.star2d.editor.ui.sub.LanguageDialog;
+import com.star4droid.star2d.editor.ui.sub.SimpleNote;
 import com.star4droid.star2d.editor.ui.sub.inputs.NumberInputDialog;
 import com.star4droid.star2d.editor.utils.ThemeLoader;
 import com.star4droid.template.Items.StageImp;
 import com.star4droid.template.LoadingStage;
 import com.star4droid.template.Utils.ProjectAssetLoader;
+import static com.star4droid.star2d.editor.utils.Lang.*;
 
 public class TestApp implements ApplicationListener {
 	LibgdxEditor editor;
 	public static TestApp currentApp;
 	Project project;
 	ToastManager toastManager;
+	SimpleNote simpleNote;
+	ToastManager mainToastManager;
 	boolean landscape = true;
 	Runnable whenEditorReady,whenAppReady;
 	ProjectAssetLoader projectAssetLoader;
@@ -61,10 +66,11 @@ public class TestApp implements ApplicationListener {
 	@Override
 	public void create() {
 		//Gdx.files.external("logs/testapp.txt").writeString("test app created\n"+"_".repeat(10)+"\n",true);
-		ThemeLoader.loadTheme();
-		currentApp = this;
-		bodyScriptSelector = new BodyScriptSelector(this);
 		preferences = Gdx.app.getPreferences("prefs");
+		currentApp = this;
+		ThemeLoader.loadTheme();
+		bodyScriptSelector = new BodyScriptSelector(this);
+		simpleNote = new SimpleNote(getTrans("info"),"No Message");
 		loadingStage = new LoadingStage();
 		uncaughtExceptionHandler = Thread.getDefaultUncaughtExceptionHandler();
 		projectsListStage = new ProjectsListStage(this);
@@ -73,7 +79,7 @@ public class TestApp implements ApplicationListener {
 			@Override
 			public boolean keyDown(int key){
 				if(key == 4){
-					new ConfirmDialog("Exit","Are you sure ?",ok->{
+					new ConfirmDialog(getTrans("exit"),getTrans("areYouSure"),ok->{
 						if(ok)
 							closeProject();
 					}).show(UiStage);
@@ -84,6 +90,7 @@ public class TestApp implements ApplicationListener {
 		};
 		
 		toastManager = new ToastManager(UiStage);
+		mainToastManager = new ToastManager(projectsListStage);
 		
 		//screenViewport.setUnitsPerPixel(1 / 1.5f);
 		
@@ -92,6 +99,9 @@ public class TestApp implements ApplicationListener {
 		Gdx.input.setInputProcessor(projectsListStage);
 		if(this.whenAppReady!=null)
 			this.whenAppReady.run();
+		if(!preferences.getBoolean("langSelected")){
+			new LanguageDialog(this).show(projectsListStage).toFront();
+		}
 		
 	}
 	
@@ -134,6 +144,10 @@ public class TestApp implements ApplicationListener {
 		// if(propertySet!=null)
 			// openProject(project,propertySet);
 		// else openProject(project);
+	}
+	
+	public SimpleNote getSimpleNote(){
+		return simpleNote;
 	}
 	
 	public void openProject(Project project){
@@ -456,8 +470,9 @@ public class TestApp implements ApplicationListener {
 	
 	public void toast(String message,int duration){
 		//if(toastManager==null) return;
-		toastManager.toFront();
-		toastManager.show(message,duration);
+		ToastManager currentManager = (editors.size == 0 && projectAssetLoader == null) ? mainToastManager : toastManager;
+		currentManager.toFront();
+		currentManager.show(message,duration);
 	}
 	
 	public void toast(String message){
@@ -469,7 +484,6 @@ public class TestApp implements ApplicationListener {
 	}
 	
 	public void play(String path,String scene){
-		//TODO : Show error if something went wrong...
 		play(StageImp.getFromDex(path,scene,null,null));
 	}
 	

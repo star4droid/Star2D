@@ -28,6 +28,7 @@ import com.star4droid.star2d.editor.utils.BitmapFontEditor;
 import com.star4droid.template.Utils.ProjectAssetLoader;
 import java.io.File;
 import java.util.HashSet;
+import static com.star4droid.star2d.editor.utils.Lang.*;
 
 public class FileBrowser extends VisWindow implements Disposable {
     private FileHandle currentDir;
@@ -48,7 +49,7 @@ public class FileBrowser extends VisWindow implements Disposable {
 	private BitmapFontEditor bitmapFontEditor;
 
     public FileBrowser(String rootAbsoulutePath,ProjectAssetLoader assetLoader) {
-        super("File Browser");
+        super(getTrans("fileBrowser"));
 		this.projectAssetLoader = assetLoader;
 		setupDefaults();
         setupIcons();
@@ -77,28 +78,28 @@ public class FileBrowser extends VisWindow implements Disposable {
     }
 
     private void setupUI(String path) {
-		textShow = new TextShow("Text Viewer");
+		textShow = new TextShow(getTrans("textViewer"));
 		animationEditor = new AnimationEditor();
 		bitmapFontEditor = new BitmapFontEditor(TestApp.getCurrentApp());
         // Header
-        VisImageTextButton importBtn = new VisImageTextButton("Import",new TextureRegionDrawable(new Texture("images/download.png")));
-        VisImageTextButton modeToggle = new VisImageTextButton("Switch View",new TextureRegionDrawable(new Texture("images/grid-icon.png")));
-		VisImageTextButton backBtn = new VisImageTextButton("Back",new TextureRegionDrawable(new Texture("images/back_arrow.png")));
-		VisImageTextButton createBtn = new VisImageTextButton("Create",new TextureRegionDrawable(new Texture("images/add.png")));
+        VisImageTextButton importBtn = new VisImageTextButton(getTrans("import"),new TextureRegionDrawable(new Texture("images/download.png")));
+        VisImageTextButton modeToggle = new VisImageTextButton(getTrans("switchView"),new TextureRegionDrawable(new Texture("images/grid-icon.png")));
+		VisImageTextButton backBtn = new VisImageTextButton(getTrans("back"),new TextureRegionDrawable(new Texture("images/back_arrow.png")));
+		VisImageTextButton createBtn = new VisImageTextButton(getTrans("create"),new TextureRegionDrawable(new Texture("images/add.png")));
 		PopupMenu createMenu = new PopupMenu();
-		MenuItem fileItem = new MenuItem("File",new TextureRegionDrawable(fileIcon),new ChangeListener(){
+		MenuItem fileItem = new MenuItem(getTrans("file"),new TextureRegionDrawable(fileIcon),new ChangeListener(){
 			@Override
 			public void changed(ChangeEvent arg0, Actor arg1) {
 				createNew(false);
 			}
 		});
-		MenuItem folderItem = new MenuItem("Folder",new TextureRegionDrawable(folderIcon),new ChangeListener(){
+		MenuItem folderItem = new MenuItem(getTrans("folder"),new TextureRegionDrawable(folderIcon),new ChangeListener(){
 			@Override
 			public void changed(ChangeEvent arg0, Actor arg1) {
 				createNew(true);
 			}
 		});
-		MenuItem bitmapFontItem = new MenuItem("Bitmap Font",new ChangeListener(){
+		MenuItem bitmapFontItem = new MenuItem(getTrans("bitmapFont"),new ChangeListener(){
 			@Override
 			public void changed(ChangeEvent arg0, Actor arg1) {
 				bitmapFontEditor.setData(currentDir,null)
@@ -169,7 +170,7 @@ public class FileBrowser extends VisWindow implements Disposable {
 		new SingleInputDialog("Create New","Enter "+(isDir?"Directory":"File")+" name :","",(input)->{
 			FileHandle newFile = Gdx.files.absolute(currentDir.file().getAbsolutePath()+"/"+input);
 			if(newFile.exists()){
-				toast("already exists !");
+				toast(getTrans("alreadyExists"));
 			} else {
 				try {
 					if(isDir)
@@ -350,12 +351,16 @@ public class FileBrowser extends VisWindow implements Disposable {
 		this.animationOpen = open;
 	}
 
+	PopupMenu contextMenu;
     private void showContextMenu(FileHandle file, Actor item) {
-        PopupMenu menu = new PopupMenu();
-		menu.addItem(getMenuItem("Open",()->open(file)));
-        menu.addItem(getMenuItem("Delete", () -> deleteFile(file)));
-        menu.addItem(getMenuItem("Rename", () -> showRenameDialog(file)));
-        menu.showMenu(getStage(), item);
+		if(contextMenu!=null){
+			contextMenu.showMenu(getStage(),item);
+		}
+        contextMenu = new PopupMenu();
+		contextMenu.addItem(getMenuItem(getTrans("open"),()->open(file)));
+        contextMenu.addItem(getMenuItem(getTrans("delete"), () -> deleteFile(file)));
+        contextMenu.addItem(getMenuItem(getTrans("rename"), () -> showRenameDialog(file)));
+        contextMenu.showMenu(getStage(), item);
     }
 	
 	private MenuItem getMenuItem(String title,Runnable runnable){
@@ -388,12 +393,12 @@ public class FileBrowser extends VisWindow implements Disposable {
 	}
 	
 	private boolean fileIsLarge(FileHandle fileHandle){
-		return fileHandle.length() >= 1024 * 1024;//1MB
+		return fileHandle.length() >= 1024 * 1024 * 0.25f;//0.25MB
 	}
 	
 	private void textViewer(FileHandle fileHandle){
 		if(fileIsLarge(fileHandle))
-			toast("File Is Large!!");
+			toast(getTrans("fileIsLarge"));
 		else {
 			showText(fileHandle.readString());
 		}
@@ -418,7 +423,7 @@ public class FileBrowser extends VisWindow implements Disposable {
     }
 
     private void showRenameDialog(FileHandle file) {
-        new SingleInputDialog("Rename", "New name:", file.name(), result -> {
+        new SingleInputDialog(getTrans("rename"), getTrans("name") +" : ", file.name(), result -> {
             file.moveTo(file.parent().child(result));
             refreshFileList();
         }).show(getStage());

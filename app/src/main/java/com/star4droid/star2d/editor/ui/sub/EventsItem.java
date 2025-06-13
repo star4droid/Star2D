@@ -24,6 +24,7 @@ import com.star4droid.star2d.editor.TestApp;
 import com.star4droid.star2d.editor.ui.SingleInputDialog;
 import com.star4droid.template.Utils.Utils;
 import java.util.HashMap;
+import static com.star4droid.star2d.editor.utils.Lang.*;
 
 public class EventsItem extends Table {
 	TestApp app;
@@ -52,18 +53,18 @@ public class EventsItem extends Table {
 		});
 		*/
 		
-		VisTextButton addScript = new VisTextButton("Add Script");
+		VisTextButton addScript = new VisTextButton(getTrans("addScript"));
 		addScript.addListener(new ClickListener(){
 			@Override
 			public void clicked (InputEvent event, float x, float y) {
-				new SingleInputDialog("Add Script","Name : ","Example",(name)->{
+				new SingleInputDialog(getTrans("Add Script"),getTrans("name") + " : ","Example",(name)->{
 					FileHandle path = Gdx.files.absolute(app.getEditor().getProject().get("scripts")+name+".java");
 					if(path.exists()) {
-						app.toast("There is already script with this name...!");
+						app.toast(getTrans("scriptNameConflict"));
 						return;
 					}
 					if(name.equals("Body Script")) {
-						app.toast("Not allowed name!!");
+						app.toast(getTrans("notAllowedName"));
 						return;
 					}
 					for(char c:name.toCharArray()){
@@ -74,7 +75,7 @@ public class EventsItem extends Table {
 					}
 					path.writeString("",false);
 					if(path.exists()){
-						push(name,"code",false,true);
+						push(name,"code",false,true,false);
 						adapter.itemsChanged();
 					}
 				}).show(getStage());
@@ -105,7 +106,8 @@ public class EventsItem extends Table {
 		@Override
 		protected VisTable createView(final HashMap<String, Object> hashMap) {
 			VisTable table = new VisTable();
-			VisLabel label = new VisLabel(hashMap.get("name").toString());
+			String txt = hashMap.get("name").toString();
+			VisLabel label = new VisLabel(hashMap.get("trans").toString().equals("true") ? getTrans(txt) : txt);
 			label.setName("label");
 			VisImage image = new VisImage(drawable("events/"+hashMap.get("icon").toString()));
 			table.add(image).size(70,70);
@@ -122,7 +124,7 @@ public class EventsItem extends Table {
 					boolean bodyScript = hashMap.get("name").toString().equals("Body Script");
 					if(hashMap.get("icon").toString().equals("code.png") || bodyScript){
 						PopupMenu popupMenu = new PopupMenu();
-						popupMenu.addItem(new MenuItem("Open",new ChangeListener() {
+						popupMenu.addItem(new MenuItem(getTrans("open"),new ChangeListener() {
 							@Override
 							public void changed (ChangeEvent event, Actor actor) {
 							    if(bodyScript){
@@ -131,10 +133,10 @@ public class EventsItem extends Table {
 								VisualScriptingDialog.showFor(hashMap.get("name").toString(),hashMap.get("body").toString().equals(""),hashMap.get("script").toString().equals("true"));
 							}
 						}));
-						popupMenu.addItem(new MenuItem("Delete",new ChangeListener() {
+						popupMenu.addItem(new MenuItem(getTrans("delete"),new ChangeListener() {
 							@Override
 							public void changed (ChangeEvent event, Actor actor) {
-								new ConfirmDialog("Delete","Are you sure ?",(ok)->{
+								ConfirmDialog.confirmDeleteDialog((ok)->{
 									if(ok){
 										if(bodyScript){
 											if(app.getEditor().getSelectedActor()==null) return;
@@ -181,7 +183,8 @@ public class EventsItem extends Table {
 		protected void updateView(VisTable table, HashMap<String, Object> hashMap) {
 			Actor label = table.findActor("label");
 			if(label!=null){
-				((VisLabel)label).setText(hashMap.get("name").toString());
+				String name = hashMap.get("name").toString();
+				((VisLabel)label).setText(hashMap.get("trans").toString().equals("true") ? getTrans(name) : name);
 			}
 		}
 	}
@@ -214,16 +217,21 @@ public class EventsItem extends Table {
 		for(int x=0;x<scripts.length;x++){
 			String path= scripts[x].name();
 			if(path.endsWith(".java")){
-				push(path.replace(".java",""),"code",false,true);
+				push(path.replace(".java",""),"code",false,true,false);
 			}
 		}
 		adapter.itemsChanged();
 	}
 	
 	private void push(String name,String icon,boolean body,boolean script){
+		push(name,icon,body,script,true);
+	}
+	
+	private void push(String name,String icon,boolean body,boolean script,boolean translate){
 		HashMap<String,Object> hashMap = new HashMap<>();
 		hashMap.put("name",name);
 		hashMap.put("icon",icon+".png");
+		hashMap.put("trans",translate);
 		hashMap.put("body",String.valueOf(body));
 		hashMap.put("script",String.valueOf(script));
 		adapter.array.add(hashMap);

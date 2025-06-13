@@ -41,3 +41,8 @@ Vector2 touch = getStage().getTouch();
     to apply tint color to your items (Box/Circle/Custom), useful if you want to create damage effects or something like that ..
 - Added Examples to start (Platformer Game and Anthor Simple Game)
 - Many Many and too many bugs fixed!
+#19
+- Arabic Language Support.
+- Click on property to show informations about it.
+- Now the properties and other windows are draggable and resizeable and you can open multiple windows in the same time.
+- Indonesian Language Support coming soon..

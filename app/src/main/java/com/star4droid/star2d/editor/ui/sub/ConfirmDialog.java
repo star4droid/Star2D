@@ -7,8 +7,8 @@ import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.kotcrab.vis.ui.widget.VisTable;
 import com.kotcrab.vis.ui.widget.VisTextButton;
 import com.kotcrab.vis.ui.widget.VisTextField;
-
 import com.kotcrab.vis.ui.widget.VisDialog;
+import static com.star4droid.star2d.editor.utils.Lang.*;
 
 public class ConfirmDialog extends VisDialog {
 	public VisTextButton okButton;
@@ -17,8 +17,8 @@ public class ConfirmDialog extends VisDialog {
 		super(title);
 		setResizable(true);
 		
-		okButton = new VisTextButton("Confirm");
-		cancelButton = new VisTextButton("Cancel");
+		okButton = new VisTextButton(getTrans("confirm"));
+		cancelButton = new VisTextButton(getTrans("cancel"));
 		
 		getContentTable().add(message).padBottom(8).row();
 		
@@ -60,7 +60,7 @@ public class ConfirmDialog extends VisDialog {
 	}
 	
 	public static ConfirmDialog confirmDeleteDialog(ActionListener actionListener){
-		return new ConfirmDialog("Delete","Are you sure ?",actionListener);
+		return new ConfirmDialog(getTrans("delete"),getTrans("areYouSure"),actionListener);
 	}
 	
 	public interface ActionListener {

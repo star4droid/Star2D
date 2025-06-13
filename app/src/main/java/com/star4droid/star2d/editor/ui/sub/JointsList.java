@@ -22,6 +22,7 @@ import com.kotcrab.vis.ui.widget.VisTextButton;
 import com.star4droid.star2d.JointInputs.JointDialog;
 import com.star4droid.star2d.editor.TestApp;
 import java.util.HashMap;
+import static com.star4droid.star2d.editor.utils.Lang.*;
 
 public class JointsList extends VisTable {
 	TestApp app;
@@ -34,7 +35,7 @@ public class JointsList extends VisTable {
 		listView.setUpdatePolicy(ListView.UpdatePolicy.ON_DRAW);
 		listView.getScrollPane().setFlickScroll(true);
 		add(listView.getMainTable()).grow().row();
-		VisTextButton addBtn = new VisTextButton("Add Joint");
+		VisTextButton addBtn = new VisTextButton(getTrans("addJoint"));
 		addBtn.addListener(new ClickListener() {
 			@Override
 			public void clicked(InputEvent event, float x, float y) {
@@ -84,16 +85,16 @@ public class JointsList extends VisTable {
 				@Override
 				public void clicked(InputEvent event, float x, float y) {
 					PopupMenu popupMenu = new PopupMenu();
-					popupMenu.addItem(new MenuItem("Edit",new ChangeListener() {
+					popupMenu.addItem(new MenuItem(getTrans("edit"),new ChangeListener() {
 						@Override
 						public void changed (ChangeEvent event, Actor actor) {
 							jointOpen(hashMap);
 						}
 					}));
-					popupMenu.addItem(new MenuItem("Delete",new ChangeListener() {
+					popupMenu.addItem(new MenuItem(getTrans("delete"),new ChangeListener() {
 						@Override
 						public void changed (ChangeEvent event, Actor actor) {
-							new ConfirmDialog("Delete","Are you sure ?",(ok)->{
+							ConfirmDialog.confirmDeleteDialog((ok)->{
 								if(ok){
 									deleteJoint(hashMap);
 									refresh();

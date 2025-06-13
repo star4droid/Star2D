@@ -17,10 +17,12 @@ import com.kotcrab.vis.ui.widget.VisTextButton;
 import com.star4droid.star2d.editor.LibgdxEditor;
 import com.star4droid.star2d.editor.TestApp;
 import com.star4droid.template.Utils.Utils;
+import static com.star4droid.star2d.editor.utils.Lang.*;
 
 public class BodyInput extends VisTable implements InputField {
 	public VisTextButton name,value;
 	String valueString = "";
+	private String fieldName;
 	public boolean isSingle = false,mustSelect = false;
 	public Array<String> ignoredBodies = new Array<>();
 	Runnable onChange;
@@ -28,19 +30,25 @@ public class BodyInput extends VisTable implements InputField {
 		super();
 		setBackground(VisUI.getSkin().getDrawable("window-bg"));
 		name = new VisTextButton("Name");
-		value = new VisTextButton("[Choose]");
+		value = new VisTextButton("["+getTrans("choose")+"]");
 		name.setBackground(VisUI.getSkin().getDrawable("separator"));
 		value.setBackground(VisUI.getSkin().getDrawable("separator"));
 		add().width(8);
-		add(name).growX();
+		add(isRTL() ? value : name).growX();
 		add().width(8);
-		add(value).growX();
+		add(isRTL() ? name : value).growX();
 		add().width(8);
 		Array<VisCheckBox> checkBoxes = new Array<>();
+		name.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+				showDetails();
+			}
+		});
 		value.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                VisDialog dialog = new VisDialog("Select Body");
+                VisDialog dialog = new VisDialog(getTrans("selectBody"));
 				dialog.setSize(Gdx.graphics.getWidth()*0.45f,Gdx.graphics.getHeight()*0.75f);
 				VisTable table = new VisTable();
 				VisScrollPane scrollPane = new VisScrollPane(table);
@@ -66,8 +74,8 @@ public class BodyInput extends VisTable implements InputField {
 						});
 					
 				}
-				VisTextButton okBtn = new VisTextButton("Select"),
-					cancelBtn = new VisTextButton("Cancel");
+				VisTextButton okBtn = new VisTextButton(getTrans("select")),
+					cancelBtn = new VisTextButton(getTrans("cancel"));
 				okBtn.addListener(new ClickListener() {
 					@Override
 					public void clicked(InputEvent event, float x, float y) {
@@ -81,7 +89,7 @@ public class BodyInput extends VisTable implements InputField {
 							}
 						}
 						if(num == 0 && mustSelect){
-							app.toast("Select At least One Item!");
+							app.toast(getTrans("selectOneItem"));
 							return;
 						}
 						valueString = (isSingle ? result.replace("(","").replace(")","") : result);
@@ -123,7 +131,7 @@ public class BodyInput extends VisTable implements InputField {
 	
 	@Override
 	public String getFieldName() {
-		return name.getText().toString();
+		return fieldName;
 	}
 	public BodyInput ignoreBodies(boolean clear,String... bodies){
 		if(clear)
@@ -144,7 +152,8 @@ public class BodyInput extends VisTable implements InputField {
 	
 	@Override
 	public void setNameText(String nm) {
-		name.setText(nm);
+		fieldName = nm;
+		name.setText(getTrans(nm));
 	}
 
 	@Override

@@ -12,6 +12,7 @@ import com.kotcrab.vis.ui.widget.VisTextButton;
 import com.star4droid.star2d.Helpers.PropertySet;
 import com.star4droid.star2d.editor.ui.sub.inputs.InputField;
 import com.star4droid.template.Utils.Utils;
+import static com.star4droid.star2d.editor.utils.Lang.*;
 
 public class SectionItem extends VisTable {
 	VisTable content;
@@ -20,7 +21,7 @@ public class SectionItem extends VisTable {
 	public SectionItem(String title){
 		super();
 		content = new VisTable();
-		label = new VisTextButton(title);
+		label = new VisTextButton(getTrans(title));
 		VisImageButton imageButton = new VisImageButton(drawable("down.png"));
 		imageButton.setTouchable(Touchable.disabled);
 		label.setTouchable(Touchable.disabled);
@@ -76,7 +77,7 @@ public class SectionItem extends VisTable {
 	}
 	
 	public SectionItem setSectionName(String name){
-		label.setText(name);
+		label.setText(getTrans(name));
 		return this;
 	}
 	

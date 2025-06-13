@@ -63,6 +63,7 @@ public class EditorAction {
 					propertySet.put("name",get("old"));
 					editor.findActor(get("new")).setName(get("old"));
 					editor.toast("Rename item to : "+get("old"));
+					editor.getControlLayer().getBodiesList().update(true);
 				break;
 				case ITEM_ADD:
 					Actor actor = getActor();
@@ -159,6 +160,7 @@ public class EditorAction {
 					propertySet.put("name",get("new"));
 					editor.findActor(get("old")).setName(get("new"));
 					editor.toast("Rename Item to : "+get("new"));
+					editor.getControlLayer().getBodiesList().update(true);
 				break;
 				case ITEM_ADD:
 					Actor actor = getActor();

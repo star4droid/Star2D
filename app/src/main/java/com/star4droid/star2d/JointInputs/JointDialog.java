@@ -48,119 +48,119 @@ public class JointDialog extends LinearLayout implements JointInput {
 		final AlertDialog dialog = Utils.showMessage(ctx,"please wait...");
 		new Thread(){
 		public void run(){
-		Looper.prepare();
-		View v = LayoutInflater.from(ctx).inflate(R.layout.joint_dialog,null);
-		linear = v.findViewById(R.id.linear);
-		add = v.findViewById(R.id.add);
-		linear.setOrientation(LinearLayout.VERTICAL);
-		name = v.findViewById(R.id.name);
-		name.setText(nm);
-		if(!nm.equals("")){
-			name.setEnabled(false);
-			add.setText(R.string.edit);
-		}
-		v.findViewById(R.id.cancel).setOnClickListener(view->{
-			alertDialog.dismiss();
-		});
-		
-		add.setOnClickListener(view->{
-				String value = getValue();
-				if(value!=null) {
-					if(name.getText().toString().equals("")) return;
-					for(char c:name.getText().toString().toCharArray()){
-						if(!allowedChars.contains(String.valueOf(c))){
-							Utils.showMessage(getContext(),"Not allowed char in the name : "+c);
-							return;
-						}
-					}
-					onDone(value,name.getText().toString());
-					alertDialog.dismiss();
-				}
-		});
-		
-		v.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,LinearLayout.LayoutParams.WRAP_CONTENT));
-		try {
-			//constructor params...(from json file)
-			int i=0;
-			ArrayList<String> list= new ArrayList<>();
-			String[] names=JointsHelper.get(joint,"params").split(",");
-			for(String str:JointsHelper.get(joint,"types").split(",")){
-				list.add(names[i].toLowerCase());
-				switch(str.toLowerCase()){
-					case "vector2":
-					linear.addView(new Vec2Input(ctx,names[i]){
-						@Override
-						public void pick(final TextView tx,final TextView ty){
-							alertDialog.dismiss();
-							Utils.showMessage(ctx,"Select point from the screen");
-							editor.setOnPick((x,y)->{
-								tx.setText(x+"");
-								ty.setText(y+"");
-								alertDialog.show();
-							});
-						}
-					});
-					break;
-					case "float":
-					linear.addView(new FloatInput(ctx,names[i]));
-					break;
-					case "body":
-					linear.addView(new BodyInput(ctx,names[i],editor));
-					break;
-				}
-				i++;
-			}
-			//fields
-			Class<?> clazz = Class.forName("com.badlogic.gdx.physics.box2d.joints."+joint+"Def");
-			Constructor<?> cc = clazz.getConstructor();
-			object = cc.newInstance();
-			for(Field field:clazz.getFields()){
-				if(field.toString().contains("final")) continue;
-				if(list.contains(field.getType().getName().toLowerCase())) continue;
-				if(field.getType().getName().toLowerCase().contains("float")){
-					linear.addView(new FloatInput(ctx,field.getName(),object));
-				} else if(field.getType().getName().toLowerCase().contains("vector2")){
-					linear.addView(new Vec2Input(ctx,field.getName(),object){
-						@Override
-						public void pick(final TextView tx,final TextView ty){
-							alertDialog.dismiss();
-							Utils.showMessage(ctx,"Select point from the screen");
-							editor.setOnPick((x,y)->{
-								tx.setText(x+"");
-								ty.setText(y+"");
-								alertDialog.show();
-							});
-						}
-					});
-				} else if(field.getType().getName().toLowerCase().contains("boolean")){
-					linear.addView(new CheckboxInput(ctx,field.getName(),object));
-				}
-			}
-			
-			alertDialog.setView(JointDialog.this);
-			JointDialog.this.addView(v);
-			Utils.hideSystemUi(alertDialog.getWindow());
-			loadDone = true;
-			if(toSet!=null) setValue(toSet);
-			new Handler(Looper.getMainLooper()).post(new Runnable(){
-				@Override
-				public void run() {
-					dialog.dismiss();
-					alertDialog.setCancelable(false);
-					alertDialog.show();
-				}
-			});
-			
-		} catch(final Throwable ex){
-			new Handler(Looper.getMainLooper()).post(new Runnable(){
-				@Override
-				public void run() {
-					dialog.dismiss();
-					Utils.showMessage(ctx,"Error \n"+Log.getStackTraceString(ex));
-				}
-			});
-		}
-		
+    		Looper.prepare();
+    		View v = LayoutInflater.from(ctx).inflate(R.layout.joint_dialog,null);
+    		linear = v.findViewById(R.id.linear);
+    		add = v.findViewById(R.id.add);
+    		linear.setOrientation(LinearLayout.VERTICAL);
+    		name = v.findViewById(R.id.name);
+    		name.setText(nm);
+    		if(!nm.equals("")){
+    			name.setEnabled(false);
+    			add.setText(R.string.edit);
+    		}
+    		v.findViewById(R.id.cancel).setOnClickListener(view->{
+    			alertDialog.dismiss();
+    		});
+    		
+    		add.setOnClickListener(view->{
+    				String value = getValue();
+    				if(value!=null) {
+    					if(name.getText().toString().equals("")) return;
+    					for(char c:name.getText().toString().toCharArray()){
+    						if(!allowedChars.contains(String.valueOf(c))){
+    							Utils.showMessage(getContext(),"Not allowed char in the name : "+c);
+    							return;
+    						}
+    					}
+    					onDone(value,name.getText().toString());
+    					alertDialog.dismiss();
+    				}
+    		});
+    		
+    		v.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,LinearLayout.LayoutParams.WRAP_CONTENT));
+    		try {
+    			//constructor params...(from json file)
+    			int i=0;
+    			ArrayList<String> list= new ArrayList<>();
+    			String[] names=JointsHelper.get(joint,"params").split(",");
+    			for(String str:JointsHelper.get(joint,"types").split(",")){
+    				list.add(names[i].toLowerCase());
+    				switch(str.toLowerCase()){
+    					case "vector2":
+    					linear.addView(new Vec2Input(ctx,names[i]){
+    						@Override
+    						public void pick(final TextView tx,final TextView ty){
+    							alertDialog.dismiss();
+    							Utils.showMessage(ctx,"Select point from the screen");
+    							editor.setOnPick((x,y)->{
+    								tx.setText(x+"");
+    								ty.setText(y+"");
+    								alertDialog.show();
+    							});
+    						}
+    					});
+    					break;
+    					case "float":
+    					linear.addView(new FloatInput(ctx,names[i]));
+    					break;
+    					case "body":
+    					linear.addView(new BodyInput(ctx,names[i],editor));
+    					break;
+    				}
+    				i++;
+    			}
+    			//fields
+    			Class<?> clazz = Class.forName("com.badlogic.gdx.physics.box2d.joints."+joint+"Def");
+    			Constructor<?> cc = clazz.getConstructor();
+    			object = cc.newInstance();
+    			for(Field field:clazz.getFields()){
+    				if(field.toString().contains("final") && !field.getType().getName().toLowerCase().contains("vector2")) continue;
+    				if(list.contains(field.getType().getName().toLowerCase())) continue;
+    				if(field.getType().getName().toLowerCase().contains("float")){
+    					linear.addView(new FloatInput(ctx,field.getName(),object));
+    				} else if(field.getType().getName().toLowerCase().contains("vector2")){
+    					linear.addView(new Vec2Input(ctx,field.getName(),object){
+    						@Override
+    						public void pick(final TextView tx,final TextView ty){
+    							alertDialog.dismiss();
+    							Utils.showMessage(ctx,"Select point from the screen");
+    							editor.setOnPick((x,y)->{
+    								tx.setText(x+"");
+    								ty.setText(y+"");
+    								alertDialog.show();
+    							});
+    						}
+    					});
+    				} else if(field.getType().getName().toLowerCase().contains("boolean")){
+    					linear.addView(new CheckboxInput(ctx,field.getName(),object));
+    				}
+    			}
+    			
+    			alertDialog.setView(JointDialog.this);
+    			JointDialog.this.addView(v);
+    			Utils.hideSystemUi(alertDialog.getWindow());
+    			loadDone = true;
+    			if(toSet!=null) setValue(toSet);
+    			new Handler(Looper.getMainLooper()).post(new Runnable(){
+    				@Override
+    				public void run() {
+    					dialog.dismiss();
+    					alertDialog.setCancelable(false);
+    					alertDialog.show();
+    				}
+    			});
+    			
+    		} catch(final Throwable ex){
+    			new Handler(Looper.getMainLooper()).post(new Runnable(){
+    				@Override
+    				public void run() {
+    					dialog.dismiss();
+    					Utils.showMessage(ctx,"Error \n"+Log.getStackTraceString(ex));
+    				}
+    			});
+    		}
+    		
 		}
 		}.start();
 	}

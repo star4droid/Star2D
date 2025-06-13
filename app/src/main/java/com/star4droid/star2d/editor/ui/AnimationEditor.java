@@ -26,6 +26,7 @@ import com.star4droid.template.Utils.ProjectAssetLoader;
 import com.star4droid.template.Utils.Utils;
 import java.util.ArrayList;
 import java.util.HashMap;
+import static com.star4droid.star2d.editor.utils.Lang.*;
 /*
 	TODO : Undo/Redo...
 	TODO : Cancel (don't save changes automatically)
@@ -45,11 +46,11 @@ public class AnimationEditor extends VisWindow {
 	VisTable imagesTable,animationTable;
 	ArrayList<HashMap<String,Object>> animationArray = new ArrayList<>();
 	public AnimationEditor(){
-		super("Animation Editor");
+		super(getTrans("animationEditor"));
 		folder = VisUI.getSkin().getDrawable("folder-white");
-		imagesTxt = new VisTextButton("Images");
+		imagesTxt = new VisTextButton(getTrans("images"));
 		//imagesTxt.setDisabled(true);
-		animTxt = new VisTextButton("Animation");
+		animTxt = new VisTextButton(getTrans("animation"));
 		//animTxt.setDisabled(true);
 		setFillParent(true);
 		VisTable imgTable = new VisTable();
@@ -58,7 +59,7 @@ public class AnimationEditor extends VisWindow {
 		imgTable.add(image).size(50,50).pad(5);
 		durationInput = new FloatInput();
 		durationInput.setValue("300");
-		durationInput.setNameText("Duration");
+		durationInput.setNameText(getTrans("duration"));
 		durationInput.setOnChange(()->{
 			try {
 				if(animation!=null)
@@ -81,10 +82,11 @@ public class AnimationEditor extends VisWindow {
 		animationScroll.setFlickScroll(true);
 		
 		imagesScroll.setOverscroll(false,false);
+		animationScroll.setOverscroll(false,false);
 		VisSplitPane pane = new VisSplitPane(imagesScroll,animationScroll,false);
 		add(pane).grow().pad(7).row();
-		VisImageTextButton cancel = new VisImageTextButton("Cancel",VisUI.getSkin().getDrawable("clear-icon")),
-			save = new VisImageTextButton("Save",VisUI.getSkin().getDrawable("save"));
+		VisImageTextButton cancel = new VisImageTextButton(getTrans("cancel"),VisUI.getSkin().getDrawable("clear-icon")),
+			save = new VisImageTextButton(getTrans("save"),VisUI.getSkin().getDrawable("save"));
 		VisTable bottom = new VisTable();
 		bottom.add(save).padRight(5).padLeft(5).growX();
 		bottom.add(cancel).padRight(5).growX();

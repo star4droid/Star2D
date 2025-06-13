@@ -15,6 +15,7 @@ import com.kotcrab.vis.ui.widget.VisTextButton;
 import com.star4droid.star2d.editor.TestApp;
 import com.star4droid.template.Utils.PropertySet;
 import java.util.ArrayList;
+import static com.star4droid.star2d.editor.utils.Lang.*;
 
 public class BodyScriptSelector extends VisDialog {
 	TestApp app;
@@ -24,13 +25,13 @@ public class BodyScriptSelector extends VisDialog {
 	VisTable table,btnsTable;
 	ButtonGroup<VisRadioButton> group;
 	public BodyScriptSelector(TestApp app){
-		super("Select Script");
+		super(getTrans("selectScript"));
 		this.app = app;
 		group = new ButtonGroup<>();
 		btnsTable = new VisTable();
 		table = new VisTable();
-		VisTextButton select = new VisTextButton("Select"),
-			cancel = new VisTextButton("Cancel");
+		VisTextButton select = new VisTextButton(getTrans("select")),
+			cancel = new VisTextButton(getTrans("cancel"));
 		table.add(select).padLeft(6).growX();
 		table.add(cancel).padLeft(6).growX().padRight(6);
 		reset();

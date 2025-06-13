@@ -16,6 +16,7 @@ import com.star4droid.star2d.Helpers.PropertySet;
 import com.star4droid.star2d.editor.TestApp;
 import com.star4droid.star2d.editor.ui.sub.inputs.*;
 import java.lang.reflect.Field;
+import static com.star4droid.star2d.editor.utils.Lang.*;
 
 public class BitmapFontEditor extends VisDialog {
 	private static Class cls = FreeTypeFontGenerator.FreeTypeFontParameter.class;
@@ -34,8 +35,9 @@ public class BitmapFontEditor extends VisDialog {
     	* filehandle = full filepath (null means the user should enter file name)
 	*/
 	public BitmapFontEditor(TestApp app){
-		super("Bitmap Font Editor");
+		super(getTrans("bitmapFontEditor"));
 		this.app = app;
+		reset();
 	}
 	
 	public BitmapFontEditor setData(FileHandle dir,FileHandle fileHandle){
@@ -54,7 +56,7 @@ public class BitmapFontEditor extends VisDialog {
 		// the name of saved font
 		if(name == null)
 			name = new StringInput();
-		name.setNameText("File Name");
+		name.setNameText(getTrans("fileName"));
 		String newName = "font";
 		int n = 1;
 		while(dir!=null && dir.child(newName+n+".s2df").exists())
@@ -79,7 +81,7 @@ public class BitmapFontEditor extends VisDialog {
 		});
 		if(isRtl==null)
 			isRtl = new CheckInput();
-		isRtl.setNameText("Support RTL");
+		isRtl.setNameText(getTrans("Support RTL"));
 		isRtl.setValue(propertySet!=null ? propertySet.getString("rtl") : "false");
 		if(first){
 			table.add(name).row();
@@ -134,7 +136,7 @@ public class BitmapFontEditor extends VisDialog {
 			}
 		}
 		if(save==null){
-			save = new VisTextButton("Save");
+			save = new VisTextButton(getTrans("save"));
 			save.addListener(new ClickListener() {
 				@Override
 				public void clicked(InputEvent event, float x, float y) {
@@ -178,7 +180,7 @@ public class BitmapFontEditor extends VisDialog {
 			});
 		}
 		if(cancel==null){
-			cancel = new VisTextButton("Cancel");
+			cancel = new VisTextButton(getTrans("cancel"));
 			cancel.addListener(new ClickListener() {
 				@Override
 				public void clicked(InputEvent event, float x, float y) {
@@ -190,6 +192,7 @@ public class BitmapFontEditor extends VisDialog {
 			table.add(save).growX().padTop(8).row();
 			table.add(cancel).growX().padTop(8);
 			VisScrollPane scrollPane = new VisScrollPane(table);
+			scrollPane.setScrollbarsVisible(false);
 			add(scrollPane);
 		}
 		return this;
@@ -199,6 +202,7 @@ public class BitmapFontEditor extends VisDialog {
 	public VisDialog show(Stage stage) {
 		super.show(stage);
 		setHeight(Gdx.graphics.getHeight()*0.75f);
+		setWidth(Gdx.graphics.getWidth()*0.85f);
 		toFront();
 		centerWindow();
 		return this;

@@ -12,6 +12,7 @@ import com.kotcrab.vis.ui.widget.VisImage;
 import com.kotcrab.vis.ui.widget.VisLabel;
 import com.star4droid.star2d.editor.LibgdxEditor;
 import com.star4droid.star2d.editor.TestApp;
+import static com.star4droid.star2d.editor.utils.Lang.*;
 
 public class TabsItem extends Table {
 	TestApp app;
@@ -20,7 +21,7 @@ public class TabsItem extends Table {
 	public TabsItem(TestApp app){
 		this.app = app;
 		setBackground(VisUI.getSkin().getDrawable("window-bg"));
-		label = new VisLabel("Scenes");
+		label = new VisLabel("  "+getTrans("scenes"));
 		left();
 		scene = drawable("scene.png");
 	}
@@ -75,8 +76,8 @@ public class TabsItem extends Table {
 							return;
 						}
 					}
-					app.toast("Unknown Error!!");
-				} else app.toast("you can\'t close all scenes!!");
+					app.toast(getTrans("unknownError!!")+" : "+label.getText().toString());
+				} else app.toast(getTrans("closeAllScenes"));
 			}
 		});
 	}

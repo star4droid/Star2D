@@ -43,8 +43,8 @@ public class CompileThread extends Thread {
 		//writeFile(filesPath+"/StarBody.java",Utils.readAssetFile("java/StarBody.java",context));
 		//writeFile(filesPath+"/UI.java",Utils.readAssetFile("java/UI.java",context));
 		try {
-		RunEcj();
-		} catch(Exception exception){
+		    RunEcj();
+		} catch(Error | Exception exception){
 			push(CHANGE_ERROR,Utils.getStackTraceString(exception));
 		}
 	}
@@ -200,7 +200,7 @@ public class CompileThread extends Thread {
 				opt.add(dataDir+"/bin/classes.jar");
 				//com.android.dx.command.dexer.Main.main(opt.toArray(new String[0]));
 			}
-			} catch (Exception e) {
+		} catch (Exception e) {
 			push(CHANGE_ERROR, "Dex failed: " + e.toString());
 			return;
 		}

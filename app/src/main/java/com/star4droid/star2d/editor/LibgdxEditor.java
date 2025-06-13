@@ -126,6 +126,10 @@ public class LibgdxEditor extends Stage {
 		this.controlLayer = layer;
 	}
 	
+	public ControlLayer getControlLayer(){
+		return this.controlLayer;
+	}
+	
 	// UI Stage which is drawn on the top of the editor
 	public void setUiStage(Stage stage){
 		this.UiStage = stage;

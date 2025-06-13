@@ -30,12 +30,7 @@ public class BoxItem extends Image implements EditorItem {
 		setSize(50,50);
 		libgdxEditor.addActor(this);
 		setDrawable(new TextureRegionDrawable(new Texture(Gdx.files.internal("images/logo.png"))));
-		addListener(new ClickListener(){
-			@Override
-			public void clicked (InputEvent event, float x, float y) {
-				libgdxEditor.selectActor(BoxItem.this);
-			}
-		});
+		addListener(new ItemClickListener(this,editor));
 		//debug();
 	}
 	
@@ -59,6 +54,7 @@ public class BoxItem extends Image implements EditorItem {
 		setPosition(x,y);
 		setZIndex(propertySet.getInt("z"));
 		setRotation(-propertySet.getFloat("rotation"));
+		setScale(propertySet.getFloat("Scale X"),propertySet.getFloat("Scale Y"));
 		setVisible(propertySet.getString("Visible").equals("true"));
 		offset[0] = propertySet.getFloat("ColliderX")*-1;
     	offset[1] = propertySet.getFloat("ColliderY")*-1;

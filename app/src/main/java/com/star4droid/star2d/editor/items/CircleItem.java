@@ -31,12 +31,7 @@ public class CircleItem extends Image implements EditorItem {
         setSize(250, 250);
         libgdxEditor.addActor(this);
         setDrawable(new TextureRegionDrawable(new Texture(Gdx.files.internal("images/logo.png"))));
-        addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                libgdxEditor.selectActor(CircleItem.this);
-            }
-        });
+        addListener(new ItemClickListener(this,libgdxEditor));
 		//debug();
     }
 
@@ -62,6 +57,7 @@ public class CircleItem extends Image implements EditorItem {
         // Common properties
         setZIndex(propertySet.getInt("z"));
         setRotation(-propertySet.getFloat("rotation"));
+        setScale(propertySet.getFloat("Scale X"),propertySet.getFloat("Scale Y"));
         setVisible(propertySet.getString("Visible").equals("true"));
         
         // Physics setup

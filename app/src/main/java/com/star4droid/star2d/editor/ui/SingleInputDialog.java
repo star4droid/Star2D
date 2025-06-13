@@ -8,14 +8,15 @@ import com.kotcrab.vis.ui.widget.VisTextButton;
 import com.kotcrab.vis.ui.widget.VisTextField;
 
 import com.kotcrab.vis.ui.widget.VisDialog;
+import static com.star4droid.star2d.editor.utils.Lang.*;
 
 public class SingleInputDialog extends VisDialog {
 	public SingleInputDialog(String title, String message, String initialText, InputListener listener) {
 		super(title);
 		setResizable(true);
 		VisTextField textField = new VisTextField(initialText);
-		VisTextButton okButton = new VisTextButton("OK");
-		VisTextButton cancelButton = new VisTextButton("Cancel");
+		VisTextButton okButton = new VisTextButton(getTrans("ok"));
+		VisTextButton cancelButton = new VisTextButton(getTrans("cancel"));
 		
 		getContentTable().add(message).padBottom(8).row();
 		getContentTable().add(textField).minWidth(320).pad(5).row();

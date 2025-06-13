@@ -21,12 +21,7 @@ public class EditorTextItem extends Label implements EditorItem {
 		setStyle(createDefaultStyle());
 		setText("TextItem");
 		editor.addActor(this);
-		addListener(new ClickListener(){
-			@Override
-			public void clicked (InputEvent event, float x, float y) {
-				editor.selectActor(EditorTextItem.this);
-			}
-		});
+		addListener(new ItemClickListener(this, editor));
 		//debug();
 		setWrap(true);
 	}

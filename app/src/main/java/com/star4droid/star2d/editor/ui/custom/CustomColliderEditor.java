@@ -25,7 +25,7 @@ import com.star4droid.star2d.editor.TestApp;
 import com.star4droid.star2d.editor.ui.sub.ConfirmDialog;
 import com.star4droid.star2d.editor.utils.EditorAction;
 import com.star4droid.template.Utils.Utils;
-
+import static com.star4droid.star2d.editor.utils.Lang.*;
 /*
     Custom Collider Editor to edit custom collider shape of Custom Body
     Custom Body > collider > edit
@@ -48,12 +48,12 @@ public class CustomColliderEditor extends VisDialog {
   private Point selectedPoint;
   private VisLabel debugLabel;
   public CustomColliderEditor(TestApp app) {
-    super("Custom Collider Editor");
+    super(getTrans("customColliderTitle"));
     this.app = app;
     
     setFillParent(true);
 	
-    // VisDialog is maked a default settings in add() using defaults() in it table so I use reset()
+    // VisDialog has a default settings in add() using defaults() in it table so I use reset()
     // to remove it
     reset();
 	// item image ...
@@ -76,10 +76,10 @@ public class CustomColliderEditor extends VisDialog {
 	mainTable.add(group).bottom().left().grow();
 	
 	// buttons...
-    addPoint = new VisTextButton("Add Point");
-	deletePoint = new VisTextButton("Delete Point");
-	save = new VisTextButton("Save");
-	cancel = new VisTextButton("Cancel");
+    addPoint = new VisTextButton(getTrans("addPoint"));
+	deletePoint = new VisTextButton(getTrans("deletePoint"));
+	save = new VisTextButton(getTrans("save"));
+	cancel = new VisTextButton(getTrans("cancel"));
 	VisTable btnsTable = new VisTable();
 	btnsTable.defaults().padLeft(5).padTop(8).padRight(5).growX();
 	btnsTable.add(addPoint).row();
@@ -127,7 +127,7 @@ public class CustomColliderEditor extends VisDialog {
 	cancel.addListener(new ClickListener() {
 		@Override
 		public void clicked(InputEvent event, float x, float y) {
-			new ConfirmDialog("Cancel","Do you want to cancel ?",ok->{
+			new ConfirmDialog(getTrans("cancel"),getTrans("cancelConfirm"),ok->{
 				if(ok) hide();
 			}).show(getStage());
 		}
@@ -165,7 +165,7 @@ public class CustomColliderEditor extends VisDialog {
     EditorAction.propertiesChanged(
        app.getEditor(),
        app.getEditor().getSelectedActor().getName(),
-       "custom collider points",//message...
+       getTrans("customColliderMessage"),//message...
        new String[] {"Points", pointsStr},//new points...
        new String[] {"Points", customBody.getPropertySet().getString("Points")}//old points...
 	);

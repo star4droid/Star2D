@@ -21,6 +21,7 @@ import com.kotcrab.vis.ui.widget.VisScrollPane;
 import com.kotcrab.vis.ui.widget.VisWindow;
 import java.util.Arrays;
 import java.util.function.BiConsumer;
+import static com.star4droid.star2d.editor.utils.Lang.*;
 
 public class FilePicker extends VisWindow implements Disposable {
     public enum Target { FILE, FOLDER }
@@ -40,7 +41,7 @@ public class FilePicker extends VisWindow implements Disposable {
     private Color SELECTED_COLOR = new Color(0.25f, 0.55f, 0.8f, 0.5f);
 	
     public FilePicker() {
-        super("Select File");
+        super(getTrans("selectFile"));
         setupDefaults();
         buildUI();
     }
@@ -71,7 +72,7 @@ public class FilePicker extends VisWindow implements Disposable {
         scrollPane.setFadeScrollBars(false);
         scrollPane.setScrollingDisabled(false, false);
 
-        TextButton okButton = new TextButton("OK", VisUI.getSkin());
+        TextButton okButton = new TextButton(getTrans("select"), VisUI.getSkin());
         okButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
@@ -80,7 +81,7 @@ public class FilePicker extends VisWindow implements Disposable {
             }
         });
 
-        TextButton cancelButton = new TextButton("Cancel", VisUI.getSkin());
+        TextButton cancelButton = new TextButton(getTrans("cancel"), VisUI.getSkin());
         cancelButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {

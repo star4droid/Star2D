@@ -37,12 +37,7 @@ public class EditorProgressItem extends Group implements EditorItem {
     }
 
     private void setupListeners() {
-        addListener(new ClickListener() {
-            @Override
-            public void clicked (InputEvent event, float x, float y) {
-                editor.selectActor(EditorProgressItem.this);
-            }
-        });
+        addListener(new ItemClickListener(this, editor));
     }
 
     @Override

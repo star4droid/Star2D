@@ -1,5 +1,6 @@
 package com.star4droid.star2d.editor.ui;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Preferences;
 import com.badlogic.gdx.scenes.scene2d.Action;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
@@ -12,25 +13,35 @@ import com.kotcrab.vis.ui.widget.VisTextButton;
 import com.star4droid.star2d.Helpers.PropertySet;
 import com.star4droid.star2d.Utils;
 import com.star4droid.star2d.editor.TestApp;
+import com.star4droid.star2d.editor.ui.sub.ConfirmDialog;
 import com.star4droid.star2d.editor.ui.sub.inputs.CheckInput;
 import com.star4droid.star2d.editor.ui.sub.inputs.FloatInput;
 import com.star4droid.star2d.editor.ui.sub.inputs.SpinnerInput;
+import static com.star4droid.star2d.editor.utils.Lang.*;
 
 public class SettingsDialog extends VisDialog {
 	TestApp app;
+	String langOnStart = "en";
 	FloatInput logicWidth,logicHeight;
 	public SettingsDialog(Stage stage,TestApp app){
-		super("Settings");
+		super(getTrans("Settings"));
 		this.app = app;
 		Preferences preferences = app.preferences;
 		VisTable table = new VisTable();
+		
 		CheckInput codeCompletion = new CheckInput();
-		codeCompletion.setNameText("Code Completion");
+		codeCompletion.setNameText(getTrans("codeCompletion"));
 		codeCompletion.setValue(String.valueOf(preferences.getBoolean("Auto Completion",true)));
 		table.add(codeCompletion).padTop(10).row();
 		
+		SpinnerInput lang = new SpinnerInput();
+		lang.setNameText(getTrans("language"));
+		lang.setData("English","العربيه");
+		lang.setValue(preferences.getString("lang","en").equals("ar") ? "العربيه" : "English");
+		table.add(lang).padTop(10).row();
+		
 		CheckInput autoSave = new CheckInput();
-		autoSave.setNameText("Auto Save");
+		autoSave.setNameText(getTrans("autoSave"));
 		autoSave.setValue(String.valueOf(preferences.getBoolean("AutoSave",true)));
 		table.add(autoSave).padTop(10).row();
 		
@@ -41,7 +52,7 @@ public class SettingsDialog extends VisDialog {
 		table.add(compiler).padTop(10).row();
 		
 		CheckInput saveUndoRedo = new CheckInput();
-		saveUndoRedo.setNameText("Save Undo/Redo");
+		saveUndoRedo.setNameText(getTrans("saveUndoRedo"));
 		saveUndoRedo.setValue(String.valueOf(preferences.getBoolean("SaveUndoRedo",true)));
 		table.add(saveUndoRedo).padTop(10).row();
 		
@@ -57,15 +68,17 @@ public class SettingsDialog extends VisDialog {
 		table.add(layoutType).padTop(10).row();
 		
 		//save & cancel
-		VisTextButton okBtn = new VisTextButton("Save"),
-				cancel = new VisTextButton("Cancel");
+		VisTextButton okBtn = new VisTextButton(getTrans("save")),
+				cancel = new VisTextButton(getTrans("cancel"));
 		okBtn.addListener(new ClickListener(){
 			@Override
 			public void clicked (InputEvent event, float x, float y) {
+				String newLang = lang.getValue().substring(0,2).toLowerCase().equals("en") ? "en" : "ar";
 				preferences.putBoolean("Auto Completion",codeCompletion.getValue().equals("true"))
 					.putBoolean("SaveUndoRedo",saveUndoRedo.getValue().equals("true"))
 					.putBoolean("AutoSave",autoSave.getValue().equals("true"))
 					.putString("Control Position",layoutType.getValue())
+					.putString("lang",newLang)
 					.putString("compiler",compiler.getValue()).flush();
 				if(app.getEditor()!=null){
 					try {
@@ -77,6 +90,13 @@ public class SettingsDialog extends VisDialog {
 					}
 				}
 				hide();
+				if(!langOnStart.equals(newLang)){
+					new ConfirmDialog("Restart","App restarting is required!",ok->{
+						if(ok){
+							Gdx.app.exit();// TODO : Auto Restart...
+						}
+					}).show(getStage());
+				}
 			}
 		});
 		cancel.addListener(new ClickListener(){
@@ -123,6 +143,7 @@ public class SettingsDialog extends VisDialog {
 	@Override
 	public VisDialog show(Stage arg0, Action arg1) {
 		refreshEditorFields();
+		langOnStart = app.preferences.getString("lang","en");
 		return super.show(arg0, arg1);
 	}
 }

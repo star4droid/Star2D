@@ -89,7 +89,8 @@ public class Vec2Input extends LinearLayout implements JointInput {
 	
 	@Override
 	public String getCode() {
+	    // field.set(x,y);
 		String v=getValue().replace("&&",",");
-		return "			%1$s."+getName()+"="+v+";\n";
+		return "			%1$s."+getName()+".set("+v+");\n";
 	}
 }

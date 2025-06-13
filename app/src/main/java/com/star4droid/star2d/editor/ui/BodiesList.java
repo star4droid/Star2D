@@ -33,6 +33,7 @@ import com.star4droid.star2d.editor.utils.EditorAction;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.HashMap;
+import static com.star4droid.star2d.editor.utils.Lang.*;
 
 public class BodiesList extends Group {
   ListView<HashMap<String, Object>> listView;
@@ -98,7 +99,7 @@ public class BodiesList extends Group {
   }
   
   public void update(){
-	  update(false);
+	  update(true);
   }
 
   public void update(boolean refresh) {
@@ -255,10 +256,10 @@ public class BodiesList extends Group {
 		  @Override
 		  public void clicked (InputEvent event, float x, float y) {
 			  actionMenu.clear();
-			  MenuItem delItem = new MenuItem("Delete",drawable("delete.png"),new ChangeListener() {
+			  MenuItem delItem = new MenuItem(getTrans("delete"),drawable("delete.png"),new ChangeListener() {
 				  @Override
 				  public void changed (ChangeEvent event, Actor actor) {
-					  new ConfirmDialog("Delete","Are you sure ?",(ok)->{
+					  ConfirmDialog.confirmDeleteDialog((ok)->{
 						  if(ok && hashMap.get("item") instanceof Actor){
 							Actor ac = ((Actor)hashMap.get("item"));
 							ac.remove();
@@ -269,7 +270,7 @@ public class BodiesList extends Group {
 				  }
 			  });
 			  actionMenu.addItem(delItem);
-			  MenuItem copyItem = new MenuItem("Copy",drawable("copy.png"),new ChangeListener() {
+			  MenuItem copyItem = new MenuItem(getTrans("copy"),drawable("copy.png"),new ChangeListener() {
 				  @Override
 				  public void changed (ChangeEvent event, Actor actor) {
 					  try {
@@ -296,10 +297,10 @@ public class BodiesList extends Group {
 				  }
 			  });
 			  actionMenu.addItem(copyItem);
-			  actionMenu.addItem(new MenuItem("Rename",drawable("edit.png"),new ChangeListener() {
+			  actionMenu.addItem(new MenuItem(getTrans("rename"),drawable("edit.png"),new ChangeListener() {
 				  @Override
 				  public void changed (ChangeEvent event, Actor actor) {
-					  new SingleInputDialog("Input Value","Name : ",app.getEditor().getSelectedActor().getName(),(vl)->{
+					  new SingleInputDialog(getTrans("inputValue"),getTrans("name") + " : ",app.getEditor().getSelectedActor().getName(),(vl)->{
 						  for(char c: vl.toCharArray()){
 							  if(!EditorField.allowedChars.contains(String.valueOf(c))){
 								  app.toast("use A-Z a-z or _ , Not Allowed Char : "+c);
@@ -309,7 +310,7 @@ public class BodiesList extends Group {
 						  for(Actor act: app.getEditor().getActors())
 							if(act instanceof EditorItem){
 								if(act.getName().equals(vl)){
-									app.toast("There\'s item with the same name!");
+									app.toast(getTrans("itemConflict"));
 									return;
 								}
 							}
@@ -329,6 +330,7 @@ public class BodiesList extends Group {
         				}
 						  app.getEditor().getSelectedActor().setName(vl);
 						  EditorAction.itemRenamed(app.getEditor(),old,vl).updateEditorProperties();
+						  update(false);
 					  }).show(getStage());
 				  }
 			  }));

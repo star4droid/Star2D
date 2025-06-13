@@ -10,6 +10,7 @@ import com.kotcrab.vis.ui.widget.ScrollableTextArea;
 import com.kotcrab.vis.ui.widget.VisTable;
 import com.kotcrab.vis.ui.widget.VisTextButton;
 import com.kotcrab.vis.ui.widget.VisWindow;
+import static com.star4droid.star2d.editor.utils.Lang.*;
 
 public class TextShow extends VisTable {
 	VisTextButton okBtn,copyBtn;
@@ -27,8 +28,8 @@ public class TextShow extends VisTable {
 		textArea.setWidth(400);
 		scrollPane = textArea.createCompatibleScrollPane();
 		scrollPane.setFlickScroll(true);
-		okBtn = new VisTextButton("OK");
-		copyBtn = new VisTextButton("Copy");
+		okBtn = new VisTextButton(getTrans("ok"));
+		copyBtn = new VisTextButton(getTrans("copy"));
 		left();
 		add(scrollPane).padLeft(10).minSize(450,350).pad(10).grow().row();
 		

@@ -32,12 +32,7 @@ public class JoyStickItem extends Touchpad implements EditorItem {
     }
 
     private void setupListeners() {
-        addListener(new ClickListener() {
-            @Override
-			public void clicked (InputEvent event, float x, float y) {
-				editor.selectActor(JoyStickItem.this);
-			}
-        });
+        addListener(new ItemClickListener(this, editor));
     }
 
     @Override

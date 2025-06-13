@@ -137,6 +137,7 @@ public class BoxBody extends Image implements PlayerItem {
 		}
 		setZIndex(propertySet.getInt("z"));
 		setRotation(-propertySet.getFloat("rotation"));
+		setScale(propertySet.getFloat("Scale X"),propertySet.getFloat("Scale Y"));
 		setVisible(propertySet.getString("Visible").equals("true"));
 		if(!propertySet.getString("type").equals("UI")){
 			String bt= String.valueOf(propertySet.getString("type").charAt(0)).toUpperCase();

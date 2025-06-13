@@ -18,7 +18,7 @@ import com.star4droid.star2d.editor.utils.EditorAction;
 import java.util.HashMap;
 import com.star4droid.star2d.editor.ui.sub.inputs.*;
 import com.star4droid.template.Utils.Utils;
-
+import static com.star4droid.star2d.editor.utils.Lang.*;
 public class EditorField {
 	private InputField inputField;
 	public static String allowedChars="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890_";
@@ -42,7 +42,7 @@ public class EditorField {
 		if(type.equals("script")){
 			inputField = new DefaultInput(){
 				{
-					super.setValue("[Choose]");
+					super.setValue("["+getTrans("choose")+"]");
 				}
 				@Override
 				public void setValue(String value){}
@@ -77,7 +77,7 @@ public class EditorField {
 			});
 		} else if(type.equals("body")){
 			inputField = new BodyInput(app).setIsSingle(!name.equals("Collision")).setMustSelect(name.equals("Script"));
-			//inputField.setValue("[Choose]");
+			//inputField.setValue("["+getTrans("choose")+"]");
 			//acceptValue = false;
 			inputField.setOnChange(()->{
 				try {
@@ -111,7 +111,7 @@ public class EditorField {
 		} else if(type.toLowerCase().equals("file")){
 			inputField = new DefaultInput();
 			acceptValue = false;
-			inputField.setValue("[Choose]");
+			inputField.setValue("["+getTrans("choose")+"]");
 			((DefaultInput)inputField).value.addListener(new ClickListener() {
 				@Override
 				public void clicked(InputEvent event, float x, float y) {
@@ -218,7 +218,7 @@ public class EditorField {
 		} else if(type.equals("image")){
 			inputField = new DefaultInput();
 			acceptValue = false;
-			inputField.setValue("[Choose]");
+			inputField.setValue("["+getTrans("choose")+"]");
 			((DefaultInput)inputField).value.addListener(new ClickListener() {
 				@Override
 				public void clicked(InputEvent event, float x, float y) {
@@ -263,7 +263,7 @@ public class EditorField {
 		} else if(type.equals("points")){
 			inputField = new DefaultInput();
 			acceptValue = false;
-			inputField.setValue("[Choose]");
+			inputField.setValue("["+getTrans("choose")+"]");
 			((DefaultInput)inputField).value.addListener(new ClickListener() {
 				@Override
 				public void clicked(InputEvent event, float x, float y) {
@@ -303,6 +303,7 @@ public class EditorField {
 							newHandle
 						);
 						newHandle.writeString(newHandle.readString().replace(old+"Script",inputField.getValue()+"Script"),false);
+						app.getControlLayer().getBodiesList().update(false);
 					}
 				} catch(Exception ex){}
 				ps.put(getName(),inputField.getValue());
@@ -331,7 +332,7 @@ public class EditorField {
 	public void setValue(String value){
 	    if(acceptValue)
 		    inputField.setValue(isFile ? value.replace(Utils.seperator,"/") : value);
-		else inputField.setValue("[Choose]");
+		else inputField.setValue("["+getTrans("choose")+"]");
 		if(getName().equals("parent") || getName().equals("Collision"))
 			((BodyInput)inputField).ignoreBodies(true,app.getEditor().getSelectedActor().getName());
 	}

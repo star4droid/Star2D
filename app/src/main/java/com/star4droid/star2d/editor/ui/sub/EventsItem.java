@@ -38,7 +38,7 @@ public class EventsItem extends Table {
 		listView = new ListView<HashMap<String, Object>>(adapter);
 		listView.setUpdatePolicy(ListView.UpdatePolicy.ON_DRAW);
 		listView.getMainTable().setFillParent(true);
-		add(listView.getMainTable()).grow();
+		add(listView.getMainTable()).padTop(100).grow();
 		listView.getScrollPane().setFlickScroll(true);
 		pushEvents();
 		

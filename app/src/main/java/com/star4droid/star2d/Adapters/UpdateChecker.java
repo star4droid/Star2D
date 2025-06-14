@@ -13,7 +13,7 @@ import java.util.concurrent.Executors;
 
 public class UpdateChecker {
 
-    private static final String CURRENT_VERSION = "0.1.8";
+    private static final String CURRENT_VERSION = "0.1.9";
     private static final String CHECK_UPDATE_URL = "https://raw.githubusercontent.com/star4droid/Star2D/refs/heads/master/assets/latest.version"; 
     private static final String UPDATE_PAGE_URL = "https://github.com/star4droid/Star2D/releases/"; 
 

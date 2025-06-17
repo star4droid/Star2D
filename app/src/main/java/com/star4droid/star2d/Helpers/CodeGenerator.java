@@ -415,7 +415,7 @@ public class CodeGenerator {
         try {
             Formatter formatter = Formatter.createFormatter(JavaFormatterOptions.defaultOptions());
             return formatter.formatSource(code);
-        } catch (NoSuchMethodError | Exception e) {
+        } catch (Error | Exception e) {
             System.err.println("Error formatting code: " + e.getMessage());
             Gdx.files.external("logs/code format.txt").writeString(com.star4droid.template.Utils.Utils.getStackTraceString(e),false);
             // Return original code if formatting fails

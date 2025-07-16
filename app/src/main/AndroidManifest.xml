@@ -44,6 +44,7 @@
 		android:name="com.star4droid.star2d.EditorActivity"
 		android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout"
 		android:hardwareAccelerated="true"
+		android:windowSoftInputMode="stateHidden|adjustPan"
 		android:supportsPictureInPicture="true"
 		android:screenOrientation="portrait"
 		android:theme="@style/AppTheme.FullScreen"

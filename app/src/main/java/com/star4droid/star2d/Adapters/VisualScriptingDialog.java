@@ -13,9 +13,11 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.PopupMenu;
+import com.badlogic.gdx.Gdx;
 import com.google.gson.Gson;
 import com.star4droid.star2d.Helpers.FileUtil;
 import com.star4droid.star2d.Helpers.editor.Project;
+import com.star4droid.star2d.editor.TestApp;
 import com.star4droid.star2d.evo.R;
 import com.star4droid.star2d.Helpers.PropertySet;
 import com.star4droid.star2d.Items.Editor;
@@ -92,6 +94,13 @@ public class VisualScriptingDialog {
 		visual(editor,event,codePath,false);
 	}
 	public static void visual(Editor editor,String event,String codePath,boolean fromOther){
+		/*
+		Gdx.app.postRunnable(()->{
+			TestApp app = TestApp.getCurrentApp();
+			app.visualScripting.show(app.getUiStage());
+		});
+		if(true) return;
+		*/
 		Context context= editor.getContext();
 		ArrayList<String> hintsList= new ArrayList<>();
 		if(!fromOther)

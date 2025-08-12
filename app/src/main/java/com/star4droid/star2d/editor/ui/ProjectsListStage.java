@@ -8,11 +8,7 @@ import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import com.badlogic.gdx.utils.Align;
 import com.kotcrab.vis.ui.VisUI;
-import com.kotcrab.vis.ui.widget.VisImage;
-import com.kotcrab.vis.ui.widget.VisImageTextButton;
-import com.kotcrab.vis.ui.widget.VisLabel;
-import com.kotcrab.vis.ui.widget.VisScrollPane;
-import com.kotcrab.vis.ui.widget.VisTable;
+import com.kotcrab.vis.ui.widget.*;
 import com.star4droid.star2d.Helpers.editor.Project;
 import com.star4droid.star2d.editor.TestApp;
 import com.star4droid.star2d.editor.ui.sub.ConfirmDialog;
@@ -20,214 +16,260 @@ import com.star4droid.star2d.editor.ui.sub.EditorField;
 import com.star4droid.star2d.editor.ui.sub.ExamplesDialog;
 import com.star4droid.template.Utils.Utils;
 
-public class ProjectsListStage extends Stage {
-	VisTable linearTable,projectsTable;
-	TestApp app;
-	Runnable importRunnable,exportRunnable,backupRunnable;
-	Drawable background;
-	FileHandle selectedProject;
-	public final SettingsDialog settingsDialog;
-	ExamplesDialog examplesDialog;
-	public ProjectsListStage(TestApp app){
-		super();
-		this.app = app;
-		settingsDialog = new SettingsDialog(this,app);
-		examplesDialog = new ExamplesDialog(app);
-		background = drawable("background.png");
-		VisTable backTable = new VisTable();
-		backTable.setBackground(VisUI.getSkin().getDrawable("window-bg"));
-		backTable.setFillParent(true);
-		
-		linearTable = new VisTable();
-		projectsTable = new VisTable();
-		
-		linearTable.center();
-		linearTable.add().growY().row();
-		String dash = "-".repeat(6);
-		VisLabel label = new VisLabel(dash+" Welcome to Star2D.E "+dash);
-		VisLabel projectLabel = new VisLabel(dash+" Project "+dash);
-		VisImageTextButton add = new VisImageTextButton("New Project",drawable("add.png")),
-				importBtn = new VisImageTextButton("Import Project",drawable("download.png")),
-				settings = new VisImageTextButton("Settings",drawable("events/properties.png")),
-				examples = new VisImageTextButton("Examples",drawable("menu.png"));
-		label.setAlignment(Align.center);
-		projectLabel.setAlignment(Align.center);
-		linearTable.add(label).growX().padBottom(10).row();
-		VisScrollPane scrollPane = new VisScrollPane(projects());
-		VisTable openNewTable = new VisTable();
-		scrollPane.setFadeScrollBars(false);
-		scrollPane.setFlickScroll(true);
-		scrollPane.setScrollingDisabled(false,true);
-		linearTable.add(scrollPane).padBottom(15).growX().row();
-		linearTable.add(projectLabel).padBottom(3).growX().row();
-		openNewTable.add(add).center().padLeft(8);
-		openNewTable.add(importBtn).center().padLeft(8);
-		linearTable.add(openNewTable).width(350).center().row();
-		linearTable.add(settings).padTop(8).width(350).center().row();
-		linearTable.add(examples).padTop(8).width(350).center().row();
-		linearTable.add().growY();
-		linearTable.setFillParent(true);
-		addActor(backTable);
-		addActor(linearTable);
-		
-		add.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                new SingleInputDialog("Create New Project","Name : ","Project",name->{
-					for(char c:name.toCharArray()){
-						if(!EditorField.allowedChars.contains(c+"")){
-							app.toast("the name contains not allowed char!\nuse A-Z a-z or _ only");
-							return;
-						}
-					}
-					FileHandle fileHandle = Gdx.files.local("projects/"+name);
-					if(fileHandle.exists()){
-						app.toast("there\'s project with the same name!");
-						return;
-					}
-					
-					fileHandle.mkdirs();
-					createDefaultPaths(fileHandle);
-					refresh();
-					app.openProject(new Project(fileHandle.file().getAbsolutePath()));
-				}).show(ProjectsListStage.this);
-            }
-        });
-		importBtn.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                if(importRunnable!=null)
-					importRunnable.run();
-            }
-        });
-		settings.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                settingsDialog.show(ProjectsListStage.this);
-            }
-        });
-		examples.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-				examplesDialog.show(ProjectsListStage.this);
-			}
-		});
-	}
-	
-	private void createDefaultPaths(FileHandle fileHandle){
-		String[] paths = {"sounds","anims","images","files","icon"};
-		for(String path:paths){
-			FileHandle child = fileHandle.child(path);
-			if(!child.exists())
-				child.mkdirs();
-		}
-	}
+import static com.star4droid.star2d.editor.utils.Lang.*;
 
-	private VisTable projects(){
-		projectsTable.clear();
-		projectsTable.center();
-		FileHandle[] files = Gdx.files.local("projects").list();
-		for(FileHandle fileHandle:files){
-			if(fileHandle.name().contains(" ")){
-				FileHandle newHandle = fileHandle.parent().child(fileHandle.name().replace(" ","_"));
-				fileHandle.moveTo(newHandle);
-				projectsTable.add(projectTable(newHandle)).pad(6);
-			} else projectsTable.add(projectTable(fileHandle)).pad(6);
-		}
-		if(files.length == 0){
-		    projectsTable.add().height(10).row();
-		    VisLabel label = new VisLabel("There\'s no projects\n Create New Project by clicking the button below");
-		    projectsTable.add(label).padBottom(15).row();
-		    projectsTable.add().height(10);
-		}
-		return projectsTable;
-	}
-	
-	public void refresh(){
-		projects();
-	}
-	
-	public FileHandle getSelectedProject(){
+public class ProjectsListStage extends Stage {
+    private VisTable rootTable, projectsTable;
+    private TestApp app;
+    private Runnable importRunnable, exportRunnable, backupRunnable;
+    private Drawable icon;
+    private FileHandle selectedProject;
+    public final SettingsDialog settingsDialog;
+    private final ExamplesDialog examplesDialog;
+    private VisTextField searchField;
+
+    public ProjectsListStage(TestApp app) {
+        this.app = app;
+        settingsDialog = new SettingsDialog(this, app);
+        examplesDialog = new ExamplesDialog(app);
+        icon = drawable("shine-logo.png");
+
+        // Root container
+        rootTable = new VisTable();
+        rootTable.setFillParent(true);
+        rootTable.top().pad(10);
+
+        // Welcome label
+        VisLabel welcomeLabel = new VisLabel(getTrans("welcome"));
+        welcomeLabel.setAlignment(Align.center);
+        welcomeLabel.setFontScale(1.2f);
+        rootTable.add(welcomeLabel).colspan(4).padBottom(10).row();
+
+        // Search bar
+        searchField = new VisTextField();
+        searchField.setMessageText(getTrans("searchProjects"));
+        searchField.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                filterProjects();
+            }
+        });
+        rootTable.add(searchField).growX().colspan(4).padBottom(8).padLeft(8).padRight(8).row();
+
+        // Buttons row
+        VisTextButton newProjectBtn = new VisTextButton(getTrans("newProject"));
+        VisTextButton importBtn = new VisTextButton(getTrans("importProject"));
+        VisTextButton examplesBtn = new VisTextButton(getTrans("examples"));
+        //rootTable.add().growX();
+        rootTable.add(newProjectBtn).padRight(5);
+        rootTable.add(importBtn).padRight(5);
+        rootTable.add(examplesBtn).padRight(5);
+        rootTable.add().growX().row();
+
+        // Scrollable projects grid
+        projectsTable = new VisTable(true);
+        projectsTable.top();
+        VisScrollPane scrollPane = new VisScrollPane(projectsTable);
+        scrollPane.setFadeScrollBars(false);
+        scrollPane.setScrollingDisabled(false, true);
+        rootTable.add(scrollPane).colspan(4).grow().padTop(10);
+
+        addActor(rootTable);
+
+        // Button listeners
+        newProjectBtn.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                createNewProject();
+            }
+        });
+        importBtn.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                if (importRunnable != null) importRunnable.run();
+            }
+        });
+        examplesBtn.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                examplesDialog.show(ProjectsListStage.this);
+            }
+        });
+
+        refresh();
+    }
+
+    private void createNewProject() {
+        new SingleInputDialog(getTrans("newProject"), getTrans("name"), "Project", name -> {
+            name = name.replace(" ", "_");
+            for (char c : name.toCharArray()) {
+                if (!EditorField.allowedChars.contains(c + "")) {
+                    app.toast("Invalid name! Use A-Z, a-z, _ only.");
+                    return;
+                }
+            }
+            FileHandle fileHandle = Gdx.files.local("projects/" + name);
+            if (fileHandle.exists()) {
+                app.toast(getTrans("projectConflict"));
+                return;
+            }
+            fileHandle.mkdirs();
+            createDefaultPaths(fileHandle);
+            refresh();
+            app.openProject(new Project(fileHandle.file().getAbsolutePath()));
+        }).show(this);
+    }
+
+    private void createDefaultPaths(FileHandle fileHandle) {
+        String[] paths = {"sounds", "anims", "images", "files", "icon"};
+        for (String path : paths) {
+            FileHandle child = fileHandle.child(path);
+            if (!child.exists())
+                child.mkdirs();
+        }
+    }
+    
+    public FileHandle getSelectedProject(){
 		return selectedProject;
 	}
-	
-	public void setExportRunnable(Runnable runnable){
-		this.exportRunnable = runnable;
-	}
-	
-	public void setBackupRunnable(Runnable runnable){
-		this.backupRunnable = runnable;
-	}
-	
-	public void setImportRunnable(Runnable runnable){
-		this.importRunnable = runnable;
-	}
-	
-	private VisTable projectTable(FileHandle fileHandle){
-		VisTable table = new VisTable(),
-			btnsTable = new VisTable();
-		table.setBackground(VisUI.getSkin().getDrawable("separator"));
-		VisImageTextButton export = new VisImageTextButton("Export",drawable("save.png")),
-			del = new VisImageTextButton("Delete",drawable("delete.png")),
-			backup = new VisImageTextButton("Backup",drawable("download.png"));
-		table.center();
-		VisLabel label = new VisLabel(fileHandle.name());
-		label.setAlignment(Align.center);
-		VisImage image = new VisImage(background);
-		table.add(image).pad(6).minSize(224,128).growX().row();
-		table.add(label).padLeft(6).padRight(6).growX().row();
-		btnsTable.add(export).height(60).padLeft(5).growX();
-		btnsTable.add(del).height(60).padLeft(5).growX();
-		btnsTable.add(backup).height(60).padLeft(5).growX();
-		table.add(btnsTable).pad(5).growX().row();
-		table.add().height(10);
-		image.addListener(new ClickListener() {
+
+    public void refresh() {
+        projectsTable.clear();
+        FileHandle[] files = Gdx.files.local("projects").list();
+        int colCount = 2; // two per row like screenshot
+        int col = 0;
+
+        if (files.length == 0) {
+            projectsTable.add(new VisLabel(getTrans("noProjects"))).colspan(colCount).pad(20);
+            return;
+        }
+
+        for (FileHandle file : files) {
+            VisTable card = createProjectCard(file);
+            projectsTable.add(card).pad(8).growX();
+            col++;
+            if (col >= colCount) {
+                col = 0;
+                projectsTable.row();
+            }
+        }
+    }
+
+    private VisTable createProjectCard(FileHandle file) {
+        VisTable card = new VisTable();
+        card.setBackground(VisUI.getSkin().getDrawable("window-bg"));
+        
+        // Icon
+        VisImage icon = new VisImage(ProjectsListStage.this.icon);
+        card.add(icon).size(80).pad(25).row();
+
+        // Name
+        VisLabel nameLabel = new VisLabel(file.name());
+        nameLabel.setAlignment(Align.center);
+        card.add(nameLabel).padBottom(25).row();
+        
+        // Open project click
+        icon.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-				createDefaultPaths(fileHandle);
-                app.openProject(new Project(fileHandle.file().getAbsolutePath()));
+                createDefaultPaths(file);
+                app.openProject(new Project(file.file().getAbsolutePath()));
             }
         });
-		export.addListener(new ClickListener() {
+        
+        // More button
+        VisImageButton moreBtn = new VisImageButton(drawable("dots.png"));
+        moreBtn.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                selectedProject = fileHandle;
-				if(exportRunnable!=null)
-					exportRunnable.run();
+                showProjectMenu(file, moreBtn);
             }
         });
-		backup.addListener(new ClickListener() {
+        
+        card.add().growX();
+        card.add(moreBtn).pad(3).right().row();
+        return card;
+    }
+
+    private void showProjectMenu(FileHandle file, VisImageButton anchor) {
+        PopupMenu menu = new PopupMenu();
+        MenuItem exportItem = new MenuItem(getTrans("export"));
+        MenuItem backupItem = new MenuItem(getTrans("backup"));
+        MenuItem deleteItem = new MenuItem(getTrans("delete"));
+
+        exportItem.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                selectedProject = fileHandle;
-				if(backupRunnable!=null)
-					backupRunnable.run();
+                selectedProject = file;
+                if (exportRunnable != null) exportRunnable.run();
             }
         });
-		del.addListener(new ClickListener() {
-			@Override
-			public void clicked(InputEvent event, float x, float y) {
-				ConfirmDialog.confirmDeleteDialog((ok)->{
-					if(ok){
-						if(fileHandle.deleteDirectory())
-							app.toast("Deleted...!");
-						else app.toast("failed to delete..!!");
-						refresh();
-					}
-				}).show(ProjectsListStage.this);
-			}
-		});
-		return table;
-	}
-	
-	private Drawable drawable(String name){
-		int start = name.contains("/") ? name.lastIndexOf("/") : 0;
-		String namePure = start == 0 ? name.substring(0,name.indexOf(".")):name.substring(start+1,name.indexOf(".",start));
-		try {
-			return VisUI.getSkin().getDrawable(namePure);
-		} catch(Exception e){
-			Gdx.files.external("logs/projects drawable.txt").writeString("projects drawbale : "+namePure+", full : "+name+"\n error : "+e.toString()+"\n\n",true);
-			return Utils.getDrawable(Gdx.files.internal("images/"+name));
-		}
-	}
+        backupItem.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                selectedProject = file;
+                if (backupRunnable != null) backupRunnable.run();
+            }
+        });
+        deleteItem.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                ConfirmDialog.confirmDeleteDialog(ok -> {
+                    if (ok) {
+                        if (file.deleteDirectory())
+                            app.toast(getTrans("deleted"));
+                        else app.toast(getTrans("failedToDelete"));
+                        refresh();
+                    }
+                }).show(ProjectsListStage.this);
+            }
+        });
+
+        menu.addItem(exportItem);
+        menu.addItem(backupItem);
+        menu.addItem(deleteItem);
+        menu.showMenu(this, anchor);
+    }
+
+    private void filterProjects() {
+        String query = searchField.getText().toLowerCase();
+        projectsTable.clear();
+        FileHandle[] files = Gdx.files.local("projects").list();
+        int colCount = 2;
+        int col = 0;
+
+        for (FileHandle file : files) {
+            if (file.name().toLowerCase().contains(query)) {
+                projectsTable.add(createProjectCard(file)).pad(8).growX();
+                col++;
+                if (col >= colCount) {
+                    col = 0;
+                    projectsTable.row();
+                }
+            }
+        }
+    }
+
+    private Drawable drawable(String name) {
+        int start = name.contains("/") ? name.lastIndexOf("/") : 0;
+        String namePure = start == 0 ? name.substring(0, name.indexOf(".")) : name.substring(start + 1, name.indexOf(".", start));
+        try {
+            return VisUI.getSkin().getDrawable(namePure);
+        } catch (Exception e) {
+            Gdx.files.external("logs/projects drawable.txt").writeString("projects drawable : " + namePure + ", full : " + name + "\n error : " + e.toString() + "\n\n", true);
+            return Utils.getDrawable(Gdx.files.internal("images/" + name));
+        }
+    }
+
+    public void setExportRunnable(Runnable runnable) {
+        this.exportRunnable = runnable;
+    }
+
+    public void setBackupRunnable(Runnable runnable) {
+        this.backupRunnable = runnable;
+    }
+
+    public void setImportRunnable(Runnable runnable) {
+        this.importRunnable = runnable;
+    }
 }

@@ -19,6 +19,7 @@ import com.star4droid.star2d.editor.ui.ControlLayer;
 import com.star4droid.star2d.editor.ui.FileBrowser;
 import com.star4droid.star2d.editor.ui.FilePicker;
 import com.star4droid.star2d.editor.ui.ProjectsListStage;
+import com.star4droid.star2d.editor.ui.scripting.VisualScripting;
 import com.star4droid.star2d.editor.ui.sub.BodyScriptSelector;
 import com.star4droid.star2d.editor.ui.sub.ConfirmDialog;
 import com.star4droid.star2d.editor.ui.sub.LanguageDialog;
@@ -56,7 +57,7 @@ public class TestApp implements ApplicationListener {
 	public Array<LibgdxEditor> editors = new Array<>();
 	boolean canExitFromProject = true;
 	BodyScriptSelector bodyScriptSelector;
-	
+	public VisualScripting visualScripting;
 	public TestApp(){}
 	
 	public TestApp(Project project){
@@ -70,6 +71,7 @@ public class TestApp implements ApplicationListener {
 		currentApp = this;
 		ThemeLoader.loadTheme();
 		bodyScriptSelector = new BodyScriptSelector(this);
+		visualScripting = new VisualScripting(this);
 		simpleNote = new SimpleNote(getTrans("info"),"No Message");
 		loadingStage = new LoadingStage();
 		uncaughtExceptionHandler = Thread.getDefaultUncaughtExceptionHandler();
@@ -514,6 +516,7 @@ public class TestApp implements ApplicationListener {
 				Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
 				Gdx.input.setCatchKey(4,true);
 				Gdx.input.setInputProcessor(multiplexer);
+				UiStage.getViewport().update(width, height);
 			}
 			this.stageImp = stage;
 		});

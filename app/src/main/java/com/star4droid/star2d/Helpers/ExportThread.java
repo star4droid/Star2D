@@ -91,9 +91,20 @@ public class ExportThread extends Thread {
 			} catch(Exception exception){}
 			String manifest = String.format(Utils.readAssetFile("java/manifest.xml",context),(Object[])manifest_values);
 			FileUtil.writeFile(export_temp+"/manifest",manifest);
-			if(FileUtil.isExistFile(img)){
-				FileUtil.copyFile(img,export_temp+"/res/drawable/icon.png");
-			}
+			if (img != null && !img.isEmpty() && FileUtil.isExistFile(img)) {
+            // Get the file extension from the original image path
+            String ext = img.substring(img.lastIndexOf(".") + 1);
+        
+            // Construct the destination path with the correct extension
+            String destinationPath = export_temp + "/res/drawable/icon." + ext;
+        
+            // Delete the placeholder file
+            FileUtil.deleteFile(export_temp + "/res/drawable/icon.jpg");
+        
+            // Copy the file to the new destination with the correct extension
+            FileUtil.copyFile(img, destinationPath);
+        }
+
 			FileUtil.writeFile(export_temp+"/assets/version",""+new Random().nextInt(9999999));
 			onProgress("Manifest encoding...");
 			AxmlUtil.encodeFile(export_temp+"/manifest",export_temp+"/AndroidManifest.xml");

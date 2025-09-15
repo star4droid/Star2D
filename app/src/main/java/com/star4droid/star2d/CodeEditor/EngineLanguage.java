@@ -9,7 +9,7 @@ import com.star4droid.star2d.Helpers.Project;
 import com.star4droid.star2d.Utils;
 import io.github.rosemoe.sora.widget.CodeEditor;
 import java.util.ArrayList;
-import org.eclipse.tm4e.languageconfiguration.model.IndentationRules;
+import org.eclipse.tm4e.languageconfiguration.internal.model.IndentationRules;
 
 import java.lang.ref.WeakReference;
 
@@ -29,7 +29,7 @@ import io.github.rosemoe.sora.text.Content;
 import io.github.rosemoe.sora.text.ContentLine;
 import io.github.rosemoe.sora.text.ContentReference;
 import io.github.rosemoe.sora.widget.SymbolPairMatch;
-import org.eclipse.tm4e.languageconfiguration.model.LanguageConfiguration;
+import org.eclipse.tm4e.languageconfiguration.internal.model.LanguageConfiguration;
 
 public class EngineLanguage extends EmptyLanguage {
 	private final TextMateLanguage mTextMateLanguage;
@@ -68,7 +68,7 @@ public class EngineLanguage extends EmptyLanguage {
 		//mTextMateLanguage.setCompleterKeywords(keywords);
 		mTextMateLanguage.setAutoCompleteEnabled(true);
 		mTextMateLanguage.setTabSize(editor.getTabWidth());
-		((TextMateSymbolPairMatch)mTextMateLanguage.getSymbolPairs()).setEnabled(true);
+		mTextMateLanguage.getSymbolPairs().setEnabled(true);
 	}
 	
 	@Override

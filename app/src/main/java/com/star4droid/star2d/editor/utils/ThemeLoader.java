@@ -179,7 +179,7 @@ public class ThemeLoader {
         int[] sps =
             (nine && splitsMap != null && splitsMap.containsKey("name"))
                 ? splitsMap.get(name)
-                : null;
+                : new int[]{8,8,8,8};
         // if(!VisUI.getSkin().has(name,nine?NinePatch.class:Drawable.class)){
         VisUI.getSkin()
             .add(

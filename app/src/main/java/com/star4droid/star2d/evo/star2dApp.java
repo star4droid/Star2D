@@ -31,6 +31,7 @@ public class star2dApp extends Application {
 	public void onCreate() {
 		EngineSettings.init(this);
 		Utils.setLanguage(this);
+		
 		new com.github.anrwatchdog.ANRWatchDog(7000).setANRListener(new ANRWatchDog.ANRListener() {
     		@Override
     		public void onAppNotResponding(ANRError error) {

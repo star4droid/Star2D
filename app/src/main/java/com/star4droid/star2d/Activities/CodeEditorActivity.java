@@ -32,6 +32,7 @@ import io.github.rosemoe.sora.langs.textmate.registry.GrammarRegistry;
 import io.github.rosemoe.sora.text.ContentIO;
 import io.github.rosemoe.sora.text.Content;
 import io.github.rosemoe.sora.widget.CodeEditor;
+import io.github.rosemoe.sora.widget.SelectionMovement;
 import java.io.File;
 import java.io.FileInputStream;
 import org.eclipse.tm4e.core.registry.IThemeSource;
@@ -86,16 +87,16 @@ public class CodeEditorActivity extends AppCompatActivity {
 			text.setOnClickListener(v->{
 				switch(c){
 					case '→':
-					editor.moveSelectionRight();
+					editor.moveSelection(SelectionMovement.RIGHT);
 					break;
 					case '←':
-					editor.moveSelectionLeft();
+					editor.moveSelection(SelectionMovement.LEFT);
 					break;
 					case '↓':
-					editor.moveSelectionDown();
+					editor.moveSelection(SelectionMovement.DOWN);
 					break;
 					case '↑':
-					editor.moveSelectionUp();
+					editor.moveSelection(SelectionMovement.UP);
 					break;
 					case '⬿':
 					if(editor.canUndo())
@@ -207,7 +208,7 @@ public class CodeEditorActivity extends AppCompatActivity {
 				path,
 				null),
 				theme));
-				} catch (Exception e) {
+				} catch(Error | Exception e) {
 				e.printStackTrace();
 			}
 		}

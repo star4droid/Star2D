@@ -18,6 +18,7 @@ public class DefaultInput extends VisTable implements InputField {
 		setBackground(VisUI.getSkin().getDrawable("window-bg"));
 		name = new VisTextButton("Name");
 		value = new VisTextButton("Value");
+		value.getLabel().setEllipsis(true);
 		name.setBackground(VisUI.getSkin().getDrawable("separator"));
 		value.setBackground(VisUI.getSkin().getDrawable("separator"));
 		add().width(8);

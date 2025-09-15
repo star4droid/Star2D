@@ -38,7 +38,7 @@ public class ExportDialog {
 			Intent intent= new Intent(Intent.ACTION_GET_CONTENT);
 			intent.setType("image/*");
 			intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE,true);
-			((Activity)context).startActivityForResult(intent,RECIEVE_ICON);
+			//((Activity)context).startActivityForResult(intent,RECIEVE_ICON);
 		});
 		cv.findViewById(R.id.export).setOnClickListener(view->{
 			String[] data = getText(context,project,portrait.isChecked(),version,version_name,package_name,name);

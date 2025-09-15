@@ -552,6 +552,22 @@ public class Utils {
 					return _filePath;
 		}
 		
+		public static ArrayList<Uri> getUriList(int code, int result, Intent data,Context context) {
+					ArrayList<Uri> _filePath = new ArrayList<>();
+					if (data != null) {
+						if (data.getClipData() != null) {
+							for (int _index = 0; _index < data.getClipData().getItemCount(); _index++) {
+								ClipData.Item _item = data.getClipData().getItemAt(_index);
+								_filePath.add(_item.getUri());
+							}
+						}
+						else {
+							_filePath.add(data.getData());
+						}
+					}
+					return _filePath;
+		}
+		
 		public static void unzipf(InputStream inputStream, String destinationPath,String password) throws Exception {
 				// Create a temporary file to write the input stream
 				File tempFile = File.createTempFile("temp", ".zip");

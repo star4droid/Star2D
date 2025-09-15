@@ -20,6 +20,9 @@ import com.star4droid.template.Utils.ItemScript;
 import com.star4droid.template.Utils.PlayerItem;
 import com.star4droid.template.Utils.PropertySet;
 import com.star4droid.template.Utils.Utils;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 
 public class Joystick extends Touchpad implements PlayerItem {
 	StageImp stage;
@@ -94,8 +97,9 @@ public class Joystick extends Touchpad implements PlayerItem {
 		FileHandle btnHandle = Gdx.files.absolute(btn),
 			bgHandle = Gdx.files.absolute(background);
 		//stageImp.debug("\nbtn : "+btn+"\nbg : "+background+"\n");
-		return create(stageImp,stageImp.getAssets().contains(btn)?stageImp.getAssets().get(btn) : Utils.getDrawable((btnHandle.exists() && !btnHandle.isDirectory()) ? btnHandle : Utils.internal("images/joybtn.png")),
-								stageImp.getAssets().contains(btn)?stageImp.getAssets().get(background): Utils.getDrawable((bgHandle.exists() && !bgHandle.isDirectory()) ? bgHandle : Utils.internal("images/joyback.png")));
+		
+		return create(stageImp,stageImp.getAssets().contains(btn)?new TextureRegionDrawable(new TextureRegion((Texture)stageImp.getAssets().get(btn))) : Utils.getDrawable((btnHandle.exists() && !btnHandle.isDirectory()) ? btnHandle : Utils.internal("images/joybtn.png")),
+								stageImp.getAssets().contains(btn)?new TextureRegionDrawable(new TextureRegion((Texture)stageImp.getAssets().get(background))): Utils.getDrawable((bgHandle.exists() && !bgHandle.isDirectory()) ? bgHandle : Utils.internal("images/joyback.png")));
 	}
 	
 	@Override

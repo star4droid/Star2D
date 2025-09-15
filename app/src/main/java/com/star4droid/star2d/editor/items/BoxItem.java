@@ -102,7 +102,7 @@ public class BoxItem extends Image implements EditorItem {
 
 	@Override
 	public void setProperties(PropertySet<String, Object> propertySet) {
-		this.propertySet = propertySet;
+	    this.propertySet = propertySet;
 		if(propertySet==null) return;
 		if(!propertySet.getString("Shape").equals("Box")){
 		    if(editor!=null){

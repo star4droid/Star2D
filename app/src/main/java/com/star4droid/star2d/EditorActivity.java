@@ -136,7 +136,7 @@ public class EditorActivity extends AppCompatActivity implements AndroidFragment
     					//FileUtil.writeFile(getExternalFilesDir("logs")+"/file.txt","to : "+to);
     					UriUtils.copyUriToUri(EditorActivity.this,uri,Uri.fromFile(new java.io.File(to)));
 						editor.getApp().getFileBrowser().refreshFileList();
-    				} else if(filePickerAction.equals("restore")){
+    				} else if(filePickerAction.equals("import")){
 						Gdx.app.postRunnable(()->editor.getApp().toast("Restoring..."));
     				    try {
 							restoreProject(getContentResolver().openInputStream(uri));
@@ -223,7 +223,23 @@ public class EditorActivity extends AppCompatActivity implements AndroidFragment
 		intent.setClass(this,com.star4droid.star2d.Activities.CodeEditorActivity.class);
 		startActivity(intent);
 	}
-	
+	//useless : to change your game icon, go to directory "/icon/" and put your icon there...
+	// @Override
+    // protected void onActivityResult(int code, int result, Intent data) {
+        // super.onActivityResult(code, result, data);
+        // if (result == RESULT_OK) {
+            // if (code == ExportDialog.RECIEVE_ICON){
+                // for(Uri uri:Utils.getUriList(code, result,data,this)){
+                    // String path = getFilesDir()+"/temp/"+uri.getLastPathSegment();
+                    // Uri destination = Uri.fromFile(new java.io.File(path));
+                    // UriUtils.copyUriToUri(this, uri, destination);
+                    // ExportDialog.imgPath = path;
+                    
+                    // break;//we need only the first one, which is icon...
+                // }
+            // }
+        // }
+    // }
 	private void initApp(){
 	    com.star4droid.star2d.Adapters.UpdateChecker.checkForUpdate(editor.getApp());
 		editor.getApp().setOrienationChanger(landscape->{

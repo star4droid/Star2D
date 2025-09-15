@@ -146,7 +146,7 @@ public class LibgdxEditor extends Stage {
 	}
 	
 	public void toast(String message,int duration){
-	    //if(toastManager==null) return;
+	    if(toastManager==null) return;
 		toastManager.toFront();
 		toastManager.show(message,duration);
 	}
@@ -916,11 +916,12 @@ public class LibgdxEditor extends Stage {
 				double angle = Math.atan2(iy - centerY, ix - centerX);
 				angle = Math.toDegrees(angle) - 90;
 				//float dy = centerY - iy;
+				/*
 				shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
 				shapeRenderer.setColor(Color.YELLOW);
 				shapeRenderer.line(ix,iy,centerX,centerY);
 				shapeRenderer.end();
-				
+				*/
 				float currentAngle = propertySet.containsKey("rotation") ? propertySet.getFloat("rotation") : 0;
 				double deltaRotation = startAngle - angle;
 				startAngle = (float)angle;

@@ -23,13 +23,13 @@ public class Lang {
                 locale = new Locale("ar", "SD");
                 break;
             case "fr":
-                fileName = "strings_fr";
+                fileName = "strings_fr_US";  
                 locale = Locale.FRENCH;
-                break;
-            case "br":
-                fileName = "strings_br";
-                locale = new Locale("pt", "BR");
-                break;
+               break;
+           case "br":
+               fileName = "strings_br_us";  
+               locale = new Locale("pt", "BR");
+               break;
             default:
                 fileName = "strings_en_GB";
                 locale = Locale.UK;

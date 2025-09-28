@@ -714,18 +714,40 @@ public class Utils {
 	 }
 	
 	public static void setLanguage(Context context){
-		if(EngineSettings.get()==null) EngineSettings.init(context);
-		String lng=EngineSettings.get().getString("lang",""),
-		local=EngineSettings.get().getString("local","");
-		if(!lng.equals("")){
-			java.util.Locale locale = new java.util.Locale(lng);
-			java.util.Locale.setDefault(locale);
-			android.content.res.Resources resources = context.getResources();
-			android.content.res.Configuration config = resources.getConfiguration();
-			config.setLocale(locale);
-			resources.updateConfiguration(config, resources.getDisplayMetrics());
-		}
-		AppCompatDelegate.setDefaultNightMode(EngineSettings.get().getBoolean("night",false)?AppCompatDelegate.MODE_NIGHT_YES:AppCompatDelegate.MODE_NIGHT_NO);
+    if(EngineSettings.get()==null) EngineSettings.init(context);
+    String lng=EngineSettings.get().getString("lang",""),
+    local=EngineSettings.get().getString("local","");
+    
+    // Conversion des codes courts vers les codes complets
+    String fullLanguageCode = "";
+    switch(lng) {
+        case "ar":
+            fullLanguageCode = "ar_SD";
+            break;
+        case "en":
+            fullLanguageCode = "en_GB";
+            break;
+        case "fr":
+            fullLanguageCode = "fr_US";  // ou "fr_FR" selon tes fichiers
+            break;
+        case "br":
+            fullLanguageCode = "pt_BR";
+            break;
+        default:
+            fullLanguageCode = "en_GB"; // langue par défaut
+    }
+    
+    if(!lng.equals("")){
+        // Utilise le code complet pour Android
+        String[] parts = fullLanguageCode.split("_");
+        java.util.Locale locale = new java.util.Locale(parts[0], parts[1]);
+        java.util.Locale.setDefault(locale);
+        android.content.res.Resources resources = context.getResources();
+        android.content.res.Configuration config = resources.getConfiguration();
+        config.setLocale(locale);
+        resources.updateConfiguration(config, resources.getDisplayMetrics());
+    }
+    AppCompatDelegate.setDefaultNightMode(EngineSettings.get().getBoolean("night",false)?AppCompatDelegate.MODE_NIGHT_YES:AppCompatDelegate.MODE_NIGHT_NO);
 	}
 	
 	public static void Log(String error,String string){

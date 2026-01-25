@@ -55,6 +55,18 @@ public class Editor extends FrameLayout {
 		currentEditor = this;
 		FrameLayout frameLayout = new FrameLayout(getContext());
 		testApp = new TestApp();
+        
+        // Initialize StageImp.mainLoader for Android Editor environment
+        try {
+            java.io.File filesDir = getContext().getFilesDir();
+            java.io.File codeCacheDir = getContext().getCodeCacheDir();
+            com.star4droid.star2d.Helpers.Project coreProject = new com.star4droid.star2d.Helpers.Project(project.getPath());
+            com.star4droid.template.AndroidSceneLoader loader = new com.star4droid.template.AndroidSceneLoader(filesDir, codeCacheDir, coreProject, null, null, null);
+            StageImp.mainLoader = loader;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        
 		testApp.setWhenAppReady(whenAppReady);
 		frameLayout.setId(2);
 		addView(frameLayout);

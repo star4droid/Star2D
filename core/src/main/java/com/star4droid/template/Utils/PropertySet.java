@@ -1,7 +1,14 @@
 package com.star4droid.template.Utils;
 
 import com.badlogic.gdx.graphics.Color;
-import android.util.Log;
+import com.badlogic.gdx.Gdx;
+// ... imports
+
+// inside class or usage
+    // Gdx.app.log(tag, msg);
+// I need to see the file content first to know line numbers or just replace imports and usage blind?
+// Better view file first.
+
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import java.util.ArrayList;

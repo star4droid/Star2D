@@ -1,6 +1,5 @@
 package com.star4droid.star2d.Helpers;
 
-import com.star4droid.star2d.Items.Editor;
 import java.util.ArrayList;
 
 public class Project {
@@ -8,6 +7,11 @@ public class Project {
 	public Project(String p){
 		path = p;
 	}
+	
+	public void setPath(String p){
+		path = p;
+	}
+
 	public String getPath(){
 		return path;
 	}
@@ -26,23 +30,23 @@ public class Project {
 	
 	public String readEvent(String scene,String event){
 	    String pth = getEventPath(scene,"",event);
-		String result = FileUtil.readFile(pth+".java");
+		String result = CoreFileUtil.readFile(pth+".java");
 		/*
-		FileUtil.writeFile(get("log")+scene+"/"+event+".txt", 
+		CoreFileUtil.writeFile(get("log")+scene+"/"+event+".txt", 
 	    pth+".java\n"+
 	    result);
 	    if(result.equals(""))
-	        FileUtil.writeFile(pth,"//test");
+	        CoreFileUtil.writeFile(pth,"//test");
 	   */
 		return result;
 	}
 	
 	public String readEvent(String scene,String event,String body){
 	    String scrp = getEventPath(scene,body,event);
-		String result= FileUtil.readFile(scrp+".java")+"\n"+FileUtil.readFile(scrp+".code");
+		String result= CoreFileUtil.readFile(scrp+".java")+"\n"+CoreFileUtil.readFile(scrp+".code");
 		//Log.e("eeeee","empty "+getEventPath(event,body));
 	    /*
-	    FileUtil.writeFile(get("log")+event+"/"+body+".txt", 
+	    CoreFileUtil.writeFile(get("log")+event+"/"+body+".txt", 
 	    scrp+".java\n"+
 	    result);
 	    */
@@ -57,7 +61,7 @@ public class Project {
 		ArrayList<String> arrayList = getSceneList(newScene);
 		int x=0;
 		for(String file:getSceneList(scene)){
-			FileUtil.moveFile(file,arrayList.get(x));
+			CoreFileUtil.moveFile(file,arrayList.get(x));
 			x++;
 		}
 	}
@@ -70,23 +74,23 @@ public class Project {
 		ArrayList<String> arrayList = getSceneList(newScene);
 		int x=0;
 		for(String file:getSceneList(scene)){
-			if(FileUtil.isFile(file))
-			    FileUtil.copyFile(file,arrayList.get(x));
-			else FileUtil.copyDir(file, arrayList.get(x));
+			if(CoreFileUtil.isFile(file))
+			    CoreFileUtil.copyFile(file,arrayList.get(x));
+			else CoreFileUtil.copyDir(file, arrayList.get(x));
 			x++;
 		}
 		
 		ArrayList<String> temp = new ArrayList<>();
-		FileUtil.listDir(getBodiesScripts(scene),temp);
+		CoreFileUtil.listDir(getBodiesScripts(scene),temp);
 		for(String file:temp){
-		    if(FileUtil.isFile(file)){
-		        String read = FileUtil.readFile(file);
-		        FileUtil.writeFile(file, read.replace("."+scene,"."+newScene).replace("."+scene.toLowerCase(),"."+newScene.toLowerCase()));
+		    if(CoreFileUtil.isFile(file)){
+		        String read = CoreFileUtil.readFile(file);
+		        CoreFileUtil.writeFile(file, read.replace("."+scene,"."+newScene).replace("."+scene.toLowerCase(),"."+newScene.toLowerCase()));
 		    }
 		}
 		
-		String read = FileUtil.readFile(getCodesPath(newScene));
-		FileUtil.writeFile(getCodesPath(newScene), read.replace("public class "+scene+ " extends StageImp","public class "+newScene+" extends StageImp"));
+		String read = CoreFileUtil.readFile(getCodesPath(newScene));
+		CoreFileUtil.writeFile(getCodesPath(newScene), read.replace("public class "+scene+ " extends StageImp","public class "+newScene+" extends StageImp"));
 	}
 	
 	public ArrayList<String> getSceneList(String scene){
@@ -117,13 +121,13 @@ public class Project {
 	public void deleteScene(String scene){
 	    //ArrayList<String> arrayList = getSceneList(newScene);
 		for(String file:getSceneList(scene)){
-			FileUtil.deleteFile(file);
+			CoreFileUtil.deleteFile(file);
 		}
 	}
 	
 	public void deleteBody(String scene,String body){
-		FileUtil.deleteFile(path+"/Events/"+scene+"/private/"+body);
-		FileUtil.deleteFile(getScriptsPath(scene)+body);
+		CoreFileUtil.deleteFile(path+"/Events/"+scene+"/private/"+body);
+		CoreFileUtil.deleteFile(getScriptsPath(scene)+body);
 	}
 	
 	public String getEventPath(String scene,String body,String event){
@@ -147,8 +151,9 @@ public class Project {
 		return new java.io.File(path).getName();
 	}
 	
-	public void save(Editor editor){
-		FileUtil.writeFile(path+"/scenes/"+editor.getScene(),editor.getSaveState());
+    // Refactored to avoid dependency on Editor
+	public void save(String sceneName, String saveState){
+		CoreFileUtil.writeFile(path+"/scenes/"+sceneName, saveState);
 	}
 	
 	public String getScenesPath(){

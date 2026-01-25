@@ -520,13 +520,84 @@ public class TestApp implements ApplicationListener {
 	}
 	
 	public void play(String path,String scene){
-		play(StageImp.getFromDex(path,scene,null,null));
+        System.out.println("TestApp.play(path, scene) called with: " + path + ", " + scene);
+        StageImp.StageLoaderParameters params = new StageImp.StageLoaderParameters();
+        params.dexPath = path;
+        
+        // ALWAYS create a fresh loader to ensure parameters (Project, etc.) are up to date.
+        // We do NOT use StageImp.mainLoader here because it might hold stale state.
+	    try {
+	        String projectPath = path;
+	        try {
+	            if(projectPath != null && !projectPath.isEmpty()) {
+	                java.io.File f = new java.io.File(projectPath);
+	                if(f.exists()) {
+	                    if(f.getName().endsWith(".dex")) f = f.getParentFile().getParentFile();
+	                    else if(f.getName().equals("dex")) f = f.getParentFile();
+	                    projectPath = f.getAbsolutePath();
+	                }
+	            }
+	        } catch(Exception e) {
+	            System.err.println("Path resolution error: " + e.getMessage());
+	        }
+	        
+	        if(projectPath == null || projectPath.isEmpty()) {
+	             if(project != null) projectPath = project.getPath();
+	             else projectPath = Gdx.files.local(".").file().getAbsolutePath();
+	        }
+	        
+	        System.out.println("Resolved Project Path: " + projectPath);
+	        // Debug logging
+			Gdx.files.external("pppp.txt").writeString(projectPath,false);
+	        
+            com.star4droid.star2d.Helpers.Project helperProject = new com.star4droid.star2d.Helpers.Project(projectPath);
+            java.io.File filesDir = new java.io.File(projectPath); 
+            java.io.File cacheDir = Gdx.files.local("code_cache").file();
+            if(!filesDir.exists()) filesDir.mkdirs();
+            if(!cacheDir.exists()) cacheDir.mkdirs();
+            
+            // Create fresh loader with fresh Project instance
+            params.loader = new com.star4droid.template.AndroidSceneLoader(
+                filesDir, 
+                cacheDir, 
+                helperProject, 
+                null, 
+                null, 
+                null
+            );
+        } catch(Exception ex) {
+            System.err.println("Failed to create loader: " + ex.getMessage());
+            ex.printStackTrace();
+            toast("Failed to initialize loader: " + ex.getMessage());
+            return;
+        }
+		
+		try {
+		    StageImp stage = StageImp.loadScene(scene,null,null,params);
+		    // Fix back button: callback to Editor instead of exiting app
+		    stage.setFinishFunc(s -> {
+		        Gdx.app.postRunnable(() -> play(null));
+		    });
+		    play(stage);
+		} catch (Exception e) {
+		    System.out.println("Error loading scene: " + e.getMessage());
+		    e.printStackTrace();
+		    toast("Error loading scene: " + e.getMessage());
+		}
 	}
 	
 	public void play(StageImp stage){
+	    System.out.println("TestApp.play(StageImp) called with: " + (stage != null ? "valid stage" : "null"));
 		Gdx.app.postRunnable(()->{
 			if(stage!=null){
+			    System.out.println("Starting stage...");
 				stage.create();
+				System.out.println("Stage UI : "+(stage.UiStage!=null)+", GameStage : "+(stage.GameStage!=null));
+				if(stage.UiStage==null || stage.GameStage==null){
+					toast("Stage UI or GameStage is null!");
+					return;
+				}
+				//Gdx.input.setInputProcessor(stage.UiStage);
 				Thread.setDefaultUncaughtExceptionHandler((thread,exc)->{
 					Gdx.app.postRunnable(()->{
 						play(null);
@@ -538,16 +609,21 @@ public class TestApp implements ApplicationListener {
 				if(width!=-1 && height!=-1)
 					stage.resize(width,height);
 			} else {
+			    System.out.println("Stopping stage...");
 				// this.stageImp is the current playing stage...
 			    if(this.stageImp!=null){
 			        this.stageImp.pause();
 					if(Gdx.app.getAudio() instanceof AndroidAudio)
 						((AndroidAudio)Gdx.app.getAudio()).pause();
-					
-					this.stageImp.GameStage.dispose();
-					this.stageImp.UiStage.dispose();
-					this.stageImp.assetLoader.dispose();
-					com.badlogic.gdx.utils.Timer.instance().clear();
+					try {
+						this.stageImp.GameStage.dispose();
+						this.stageImp.UiStage.dispose();
+						this.stageImp.assetLoader.dispose();
+						com.badlogic.gdx.utils.Timer.instance().clear();
+					} catch(Exception e){
+						System.out.println("Error disposing stage: " + e.getMessage());
+						Gdx.files.external("logs/dispose.error.txt").writeString(Utils.getStackTraceString(e)+"\n",false);
+					}
 				}
 				Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
 				Gdx.input.setCatchKey(4,true);
@@ -555,6 +631,7 @@ public class TestApp implements ApplicationListener {
 				UiStage.getViewport().update(width, height);
 			}
 			this.stageImp = stage;
+			System.out.println("this.stageImp set to: " + this.stageImp);
 		});
 	}
 	

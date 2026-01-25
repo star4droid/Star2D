@@ -88,6 +88,7 @@ dependencies {
 
     implementation("com.google.android.material:material:1.11.0")
     implementation project(':Formatter')
+    implementation project(':core')
     implementation 'com.android.billingclient:billing:8.0.0'
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("androidx.appcompat:appcompat:1.6.1")
@@ -101,49 +102,29 @@ dependencies {
     implementation platform("io.github.Rosemoe.sora-editor:bom:0.23.6")
     implementation "io.github.Rosemoe.sora-editor:editor"
     implementation "io.github.Rosemoe.sora-editor:language-textmate"
-    implementation 'com.badlogicgames.gdx:gdx:$gdxVersion'
-    implementation "com.badlogicgames.gdx:gdx-freetype:$gdxVersion"
     
-    natives "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-arm64-v8a"
-    natives "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-armeabi-v7a"
-    natives "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-x86"
-    natives "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-x86_64"
-    natives "com.badlogicgames.gdx:gdx-box2d-platform:$gdxVersion:natives-armeabi-v7a"
-    natives "com.badlogicgames.gdx:gdx-box2d-platform:$gdxVersion:natives-arm64-v8a"
-    natives "com.badlogicgames.gdx:gdx-box2d-platform:$gdxVersion:natives-x86"
-    natives "com.badlogicgames.gdx:gdx-box2d-platform:$gdxVersion:natives-x86_64"
-    natives "com.badlogicgames.gdx:gdx-freetype-platform:$gdxVersion:natives-armeabi-v7a"
-    natives "com.badlogicgames.gdx:gdx-freetype-platform:$gdxVersion:natives-arm64-v8a"
-    natives "com.badlogicgames.gdx:gdx-freetype-platform:$gdxVersion:natives-x86"
-    natives "com.badlogicgames.gdx:gdx-freetype-platform:$gdxVersion:natives-x86_64"
-
-    
-    testImplementation 'com.badlogicgames.gdx:gdx-platform:$gdxVersion'
-    // https://mvnrepository.com/artifact/com.badlogicgames.gdx/gdx-backend-lwjgl
-    testImplementation 'com.badlogicgames.gdx:gdx-backend-lwjgl:$gdxVersion'
-    // https://mvnrepository.com/artifact/com.badlogicgames.gdx/gdx-backend-android
+    // LibGDX Android Backends
     implementation 'com.badlogicgames.gdx:gdx-backend-android:1.13.0'
-    // https://mvnrepository.com/artifact/com.badlogicgames.gdx/gdx-box2d
-    implementation 'com.badlogicgames.gdx:gdx-box2d:1.13.0'
-    // https://mvnrepository.com/artifact/com.badlogicgames.gdx/gdx-box2d-platform
-    testImplementation 'com.badlogicgames.gdx:gdx-box2d-platform:$gdxVersion'
-    constraints {
-        implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.0") {
-            because("kotlin-stdlib-jdk7 is now a part of kotlin-stdlib")
-        }
-        implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.0") {
-            because("kotlin-stdlib-jdk8 is now a part of kotlin-stdlib")
-        }
-    }
-// https://mvnrepository.com/artifact/com.badlogicgames.gdx/gdx-box2d
-    implementation 'com.badlogicgames.gdx:gdx-box2d:$gdxVersion'
+    implementation "com.badlogicgames.gdx:gdx-box2d-platform:$gdxVersion:natives-armeabi-v7a"
+    implementation "com.badlogicgames.gdx:gdx-box2d-platform:$gdxVersion:natives-arm64-v8a"
+    implementation "com.badlogicgames.gdx:gdx-box2d-platform:$gdxVersion:natives-x86"
+    implementation "com.badlogicgames.gdx:gdx-box2d-platform:$gdxVersion:natives-x86_64"
+    
+    implementation "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-armeabi-v7a"
+    implementation "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-arm64-v8a"
+    implementation "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-x86"
+    implementation "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-x86_64"
+    
+    implementation "com.badlogicgames.gdx:gdx-freetype-platform:$gdxVersion:natives-armeabi-v7a"
+    implementation "com.badlogicgames.gdx:gdx-freetype-platform:$gdxVersion:natives-arm64-v8a"
+    implementation "com.badlogicgames.gdx:gdx-freetype-platform:$gdxVersion:natives-x86"
+    implementation "com.badlogicgames.gdx:gdx-freetype-platform:$gdxVersion:natives-x86_64"
+
     
     implementation(platform("com.google.firebase:firebase-bom:34.3.0"))
 
     implementation("com.google.firebase:firebase-crashlytics-ndk")
     implementation("com.google.firebase:firebase-analytics")
-
-
 }
 
 // Called every time gradle gets executed, takes the native dependencies of

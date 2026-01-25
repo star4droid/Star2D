@@ -9,6 +9,11 @@ plugins {
 
 }
 
+
+ext {
+    gdxVersion = '1.13.1'
+}
+
 tasks.register('clean', Delete) {
     delete rootProject.layout.buildDirectory
 }

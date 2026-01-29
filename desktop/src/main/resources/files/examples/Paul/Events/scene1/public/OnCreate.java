@@ -1,0 +1,1 @@
+setAnimation(player,"idle");

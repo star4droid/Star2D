@@ -1,0 +1,57 @@
+[
+  {
+    "joint": "RevoluteJointDef",
+    "params": "bodyA,bodyB,anchor",
+    "types": "Body,Body,Vector2"
+  },
+  {
+    "joint": "PrismaticJointDef",
+    "params": "bodyA,bodyB,anchor,axis",
+    "types": "Body,Body,Vector2,Vector2"
+  },
+  {
+    "joint": "DistanceJointDef",
+    "params": "bodyA,bodyB,anchorA,anchorB",
+    "types": "Body,Body,Vector2,Vector2"
+  },
+  {
+    "joint": "PulleyJointDef",
+    "params": "bodyA,bodyB,groundAnchorA,groundAnchorB,anchorA,anchorB,ratio",
+    "types": "Body,Body,Vector2,Vector2,Vector2,Vector2,float"
+  },
+  {
+    "joint": "MouseJointDef",
+    "params": "bodyA,target",
+    "types": "Body,Vector2"
+  },
+  {
+    "joint": "GearJointDef",
+    "params": "joint1,joint2,ratio",
+    "types": "Joint,Joint,float"
+  },
+  {
+    "joint": "WheelJointDef",
+    "params": "bodyA,bodyB,anchor,axis",
+    "types": "Body,Body,Vector2,Vector2"
+  },
+  {
+    "joint": "WeldJointDef",
+    "params": "bodyA,bodyB,anchor",
+    "types": "Body,Body,Vector2"
+  },
+  {
+    "joint": "FrictionJointDef",
+    "params": "bodyA,bodyB,anchor",
+    "types": "Body,Body,Vector2"
+  },
+  {
+    "joint": "RopeJointDef",
+    "params": "bodyA,bodyB,anchorA,anchorB",
+    "types": "Body,Body,Vector2,Vector2"
+  },
+  {
+    "joint": "MotorJointDef",
+    "params": "bodyA,bodyB",
+    "types": "Body,Body"
+  }
+]

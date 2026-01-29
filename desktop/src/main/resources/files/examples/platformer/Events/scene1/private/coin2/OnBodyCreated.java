@@ -1,0 +1,1 @@
+player.getActor().setVisible(true);

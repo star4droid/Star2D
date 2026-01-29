@@ -1,0 +1,48 @@
+# V16
+- Audio Playing after exiting the game fixed...
+- Fix body selection error
+- Fix Body that has parent isn't shown on bodies list.
+- Fix screen orientation 
+- Enable Auto Completion on the code editor 
+- Lock X/Y on scaling or moving items by double click on the icon.
+- Fix Text Item Color on the game.
+- Themes coming soon...
+    Soon you can try our awesome themes and even create your own themes!
+- Bitmap Font Editor
+
+#17
+- Right To Left Text Support on the TextItem
+- fix freeze When you open Files Browser and open folder contains images other than "images" folder...
+- V3 Apk Signing .
+- Exported Game Fixed.
+- Now The App Doesn't Compile The project again when there's no change on java files ...
+- New methods: getTouch(), setActorX/Y to get touch position as Vector2, example:
+```
+Vector2 touch = getTouch();
+player.setActorX(touch.x);
+player.setActorY(touch.y);
+```
+Note: this methods works only on :
+setActorX/Y : PlayerItem
+getTouch : StageImp 
+you can use getTouch from the scripts by :
+```
+Vector2 touch = getStage().getTouch();
+```
+
+#18
+- Now The Game Player doesn't crash when error happened , instead of that error shown
+- Script doesn't change Error fixed.
+- Scene doesn't open in the game error fixed.
+- code format fixed 
+- new Enhanced Animation Editor 🎉 
+- Now you can choose script for your items from anthor scene, for example, you have to program the player once, then copy it to anthor scene, and if you change scripts for it, linked scripts will take effect ⭐.
+- New Property 🎉: Tint 
+    to apply tint color to your items (Box/Circle/Custom), useful if you want to create damage effects or something like that ..
+- Added Examples to start (Platformer Game and Anthor Simple Game)
+- Many Many and too many bugs fixed!
+#19
+- Arabic Language Support.
+- Click on property to show informations about it.
+- Now the properties and other windows are draggable and resizeable and you can open multiple windows in the same time.
+- Indonesian Language Support coming soon..

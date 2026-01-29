@@ -57,6 +57,10 @@ public class Project {
 		return path+"/java/com/star4droid/Game/"+scene.toLowerCase()+".java";
 	}
 	
+	public String getSceneScript(String scene){
+		return getCodesPath(scene);
+	}
+	
 	public void renameScene(String scene,String newScene){
 		ArrayList<String> arrayList = getSceneList(newScene);
 		int x=0;
@@ -154,6 +158,25 @@ public class Project {
     // Refactored to avoid dependency on Editor
 	public void save(String sceneName, String saveState){
 		CoreFileUtil.writeFile(path+"/scenes/"+sceneName, saveState);
+	}
+	
+	// Overload to accept LibgdxEditor
+	public void save(com.star4droid.star2d.editor.LibgdxEditor editor){
+		if(editor != null){
+			save(editor.getScene(), editor.getSaveState());
+		}
+	}
+	
+	public String getUndoRedo(String scene){
+		return path+"/undoredo/"+scene+".json";
+	}
+	
+	public String getVariables(String scene){
+		return path+"/variables/"+scene+".json";
+	}
+	
+	public String getChangesJson(){
+		return path+"/changes.json";
 	}
 	
 	public String getScenesPath(){

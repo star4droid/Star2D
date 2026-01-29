@@ -1,0 +1,44 @@
+[
+  {
+    "id": "0",
+    "title": "First \u003e ",
+    "x": "43.0",
+    "y": "54.0",
+    "else": "false",
+    "next": "1",
+    "next_id": "null",
+    "else_id": "",
+    "nf": "[]",
+    "code": "%1$s",
+    "color": -1,
+    "close": "false"
+  },
+  {
+    "id": "1",
+    "title": "ifCollision",
+    "x": "404.0",
+    "y": "218.0",
+    "else": "true",
+    "next": "2",
+    "next_id": "null",
+    "else_id": "",
+    "nf": "[\n  {\n    \"name\": \"body1(Body)\",\n    \"value\": \"player\"\n  },\n  {\n    \"name\": \"body2(Body)\",\n    \"value\": \"ground\"\n  }\n]",
+    "code": "if(checkCollision(%1$s,%2$s)){\n%3$s\n} else {\n%4$s\n}\n%5$s",
+    "color": -1,
+    "close": "true"
+  },
+  {
+    "id": "2",
+    "title": "applyForceToCenter",
+    "x": "1004.0",
+    "y": "324.0",
+    "else": "false",
+    "next": "null",
+    "next_id": "null",
+    "else_id": "",
+    "nf": "[\n  {\n    \"name\": \"body(Body)\",\n    \"value\": \"player\"\n  },\n  {\n    \"name\": \"x\",\n    \"value\": \"0\"\n  },\n  {\n    \"name\": \"y\",\n    \"value\": \"force\"\n  },\n  {\n    \"name\": \"wake\",\n    \"value\": \"true\"\n  }\n]",
+    "code": "%1$s.getBody().applyForceToCenter((float)(%2$s),(float)(%3$s),%4$s);\n%5$s",
+    "color": -1,
+    "close": "true"
+  }
+]

@@ -37,6 +37,31 @@ public class PropertySet<K, V> extends HashMap<String,Object> {
 		return propertySet;
 	}
 	
+	/**
+	 * Get default property set for an editor item.
+	 * Stub implementation for desktop compatibility.
+	 */
+	public static PropertySet<String,Object> getDefualt(Object item, String templateName) {
+		PropertySet<String,Object> ps = new PropertySet<>();
+		ps.put("name", "unnamed_" + System.currentTimeMillis());
+		ps.put("x", 0f);
+		ps.put("y", 0f);
+		ps.put("width", 100f);
+		ps.put("height", 100f);
+		ps.put("angle", 0f);
+		return ps;
+	}
+	
+	/**
+	 * Get property set from an Actor (editor item).
+	 */
+	public static PropertySet<String,Object> getPropertySet(Object actor) {
+		if (actor instanceof com.star4droid.star2d.editor.items.EditorItem) {
+			return ((com.star4droid.star2d.editor.items.EditorItem) actor).getPropertySet();
+		}
+		return new PropertySet<>();
+	}
+	
 	public ArrayList<PropertySet> getChilds(){
 		if(childs==null)
 			childs=new ArrayList<>();

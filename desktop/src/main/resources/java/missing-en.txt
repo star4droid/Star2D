@@ -1,0 +1,7 @@
+Read this carefully before asking, I don't want to receive questions about this..., it's simple..
+1- click download button below 👇👇
+2- Download the file.
+3- using Zarchiever app (available in Google Play) or any files manager, copy the file to this path :
+%1$s
+4- re-open the app.
+5- End.

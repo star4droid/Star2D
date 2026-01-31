@@ -517,12 +517,10 @@ public class ControlLayer extends Table {
 						if(errorLog.exists()) errorLog.delete();
 						textShow.remove();
 						FileHandle fileHandle = new FileHandle(app.getEditor().getProject().getDex());
-						
 						if(fileHandle.exists())
 							fileHandle.file().setWritable(true);
 						fileHandle.writeString("", false);
-						Gdx.files.absolute(app.getEditor().getProject().getPath()+"/java/classes.dex").moveTo(fileHandle);
-						
+						Gdx.files.absolute(app.getEditor().getProject().getPath()+"/java/classes.dex").moveTo(fileHandle);	
 						app.play(app.getEditor().getProject().getPath(),app.getEditor().getScene());
 					}
 					
@@ -539,10 +537,11 @@ public class ControlLayer extends Table {
 							if(!filesChanged){
 							    textShow.remove();
 								Gdx.app.postRunnable(()->{
-									if(errorLog.exists())
+									if(errorLog.exists()){
 										textShow.setText(errorLog.readString());
-									else
-										app.play(app.getEditor().getProject().getPath(),app.getEditor().getScene());
+										Gdx.input.setInputProcessor(inputProcessor);
+										textShow.setEnabled(true);
+									} else app.play(app.getEditor().getProject().getPath(),app.getEditor().getScene());
 								});
 								
 							} else compileThread.start();

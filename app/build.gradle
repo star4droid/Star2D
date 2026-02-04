@@ -55,6 +55,7 @@ android {
         pickFirst '**/Messages_ja.properties'
         pickFirst '**/Messages.properties'
         pickFirst '**/Bundle.properties'
+        exclude 'org/eclipse/jdt/internal/compiler/parser/parser13.rsc'
         exclude 'META-INF/DEPENDENCIES'
         exclude 'META-INF/LICENSE'
         exclude 'META-INF/LICENSE.txt'

@@ -1,18 +1,7 @@
-name: Aab & Apk Build
+name: Build Apk
 
 on:
   workflow_dispatch:
-    inputs:
-      upload_to_playstore:
-        description: "Upload to Google Play?"
-        type: boolean
-        required: true
-        default: false
-      changes_not_sent_for_review:
-        description: "changesNotSentForReview?"
-        type: boolean
-        required: false
-        default: true
 
 jobs:
   build:
@@ -29,21 +18,6 @@ jobs:
           java-version: "21"
           distribution: "temurin"
           cache: gradle
-
-      # 🔐 Create keystore from secrets
-      - name: Create keystore from secret
-        run: |
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > app/Star4droid.jks
-          if [ -f app/Star4droid.jks ]; then
-            echo "Keystore file created successfully."
-            echo "KEYSTORE_FILE=$GITHUB_WORKSPACE/app/Star4droid.jks" >> $GITHUB_ENV
-            echo "KEYSTORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> $GITHUB_ENV
-            echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> $GITHUB_ENV
-            echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> $GITHUB_ENV
-          else
-            echo "Error: Keystore file was not created."
-            exit 1
-          fi
 
       # 🛠 Setup Android NDK
       - name: Setup Android NDK

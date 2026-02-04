@@ -10,9 +10,9 @@ import com.star4droid.star2d.Helpers.FileUtil;
 import com.star4droid.star2d.Helpers.Project;
 import com.star4droid.star2d.Items.Editor;
 import com.star4droid.star2d.editor.items.EditorItem;
-import com.tyron.javacompletion.JavaCompletions;
-import com.tyron.javacompletion.completion.CompletionCandidate;
-import com.tyron.javacompletion.completion.CompletionResult;
+// import com.tyron.javacompletion.JavaCompletions;
+// import com.tyron.javacompletion.completion.CompletionCandidate;
+// import com.tyron.javacompletion.completion.CompletionResult;
 import io.github.rosemoe.sora.event.EventReceiver;
 import io.github.rosemoe.sora.event.Unsubscribe;
 import io.github.rosemoe.sora.event.SelectionChangeEvent;
@@ -39,173 +39,140 @@ import java.util.logging.Level;
 import java.util.Locale;
 
 public class CodeCompletionHelper implements EventReceiver<SelectionChangeEvent> {
-	
-	final ArrayList<CompletionItem> items=new ArrayList<>();
-	final ArrayList<KeywordsHolder> keywords= new ArrayList<>();
-	final HashMap<String,Drawable> drawablesMap=new HashMap<>();
-	public boolean proAutoCompletion=true;
-	private final Path path;
-	private final JavaCompletions completions;
-	private final CodeEditor editor;
-	
-	// Performance optimization: cache last update
-	private String lastContent = "";
-	private long lastUpdateTime = 0;
-	private static final long UPDATE_THROTTLE_MS = 300; // تحديث كل 300ms فقط
-	
-	public CodeCompletionHelper(String file,CodeEditor codeEditor){
-		path = new java.io.File(file).toPath();
-		completions = Editor.getCurrentEditor().getIndexer().getJavaCompletions();
-		codeEditor.subscribeEvent(SelectionChangeEvent.class,this);
-		
-		Project project = new Project(Editor.getCurrentEditor().getProject().getPath());
-		editor = codeEditor;
-		try {
-			completions.getFileManager().openFileForSnapshot(getURI(file),FileUtil.readFile(file));
-			if(Editor.getCurrentEditor()!=null)
-				for(Actor actor:Editor.getCurrentEditor().getLibgdxEditor().getActors()){
-					if(actor instanceof Image && actor instanceof EditorItem){
-						String name = ((EditorItem)actor).getPropertySet().getString("name");
-						//TODO : ...
-					}
-				}
-		} catch(Exception exception){}
-	}
-	
-	public void add(String keyword,String type){
-		for(KeywordsHolder holder:keywords){
-			if(holder.type.equals(type)){
-				holder.keywords.add(keyword);
-				return;
-			}
-		}
-		KeywordsHolder holder = new KeywordsHolder(type,new ArrayList<>());
-		holder.keywords.add(keyword);
-		keywords.add(holder);
-	}
-	
-	public static URI getURI(String file){
-		return URI.create("file://"+file);
-	}
-	
-	/**
-	 * فحص ما إذا كان يجب عرض الإكمال التلقائي في السياق الحالي
-	 */
-	private boolean shouldShowCompletion(ContentReference contentReference, CharPosition charPosition) {
-		if (charPosition.column == 0) {
-			return false; // لا تعرض في بداية السطر
-		}
-		
-		String line = contentReference.getLine(charPosition.line).toString();
-		if (charPosition.column > line.length()) {
-			return false;
-		}
-		
-		// احصل على الحرف قبل المؤشر
-		char prevChar = line.charAt(charPosition.column - 1);
-		
-		// لا تعرض بعد المسافة أو الفاصلة المنقوطة
-		if (prevChar == ' ' || prevChar == ';' || prevChar == '{' || prevChar == '}') {
-			return false;
-		}
-		
-		// لا تعرض داخل التعليقات
-		String beforeCursor = line.substring(0, charPosition.column);
-		if (beforeCursor.trim().startsWith("//") || beforeCursor.contains("/*")) {
-			return false;
-		}
-		
-		// لا تعرض داخل النصوص (strings)
-		int quoteCount = 0;
-		for (int i = 0; i < charPosition.column; i++) {
-			if (line.charAt(i) == '"' && (i == 0 || line.charAt(i-1) != '\\')) {
-				quoteCount++;
-			}
-		}
-		if (quoteCount % 2 != 0) {
-			return false; // داخل نص
-		}
-		
-		// اعرض فقط بعد . أو إذا كان يكتب identifier
-		return prevChar == '.' || MyCharacter.isJavaIdentifierPart(prevChar);
-	}
-	
-	/**
-	 * استخراج الـ prefix الحالي (الكلمة التي يكتبها المستخدم)
-	 */
-	private String getCurrentPrefix(ContentReference contentReference, CharPosition charPosition) {
-		String line = contentReference.getLine(charPosition.line).toString();
-		if (charPosition.column == 0) {
-			return "";
-		}
-		
-		int start = charPosition.column - 1;
-		while (start >= 0 && MyCharacter.isJavaIdentifierPart(line.charAt(start))) {
-			start--;
-		}
-		start++; // نرجع خطوة للأمام
-		
-		return line.substring(start, charPosition.column);
-	}
-	
-	public void requireAutoComplete(ContentReference contentReference, CharPosition charPosition, CompletionPublisher completionPublisher) {
-		// فحص السياق أولاً
-		if (!shouldShowCompletion(contentReference, charPosition)) {
-			completionPublisher.setComparator(null);
-			completionPublisher.setUpdateThreshold(0);
-			return; // لا تعرض الإكمال التلقائي
-		}
-		
-		// Throttling للأداء
-		String currentContent = editor.getText().toString();
-		long currentTime = System.currentTimeMillis();
-		
-		// حدّث المحتوى فقط إذا تغير وبعد فترة معينة
-		if (!currentContent.equals(lastContent) && 
-		    (currentTime - lastUpdateTime) > UPDATE_THROTTLE_MS) {
-			completions.updateFileContent(path, currentContent);
-			lastContent = currentContent;
-			lastUpdateTime = currentTime;
-		}
-		
-		try {
-			CompletionResult result = completions.getCompletions(path, charPosition.line, charPosition.column);
-			
-			String currentPrefix = getCurrentPrefix(contentReference, charPosition);
-			int validCount = 0;
-			
-			for (CompletionCandidate candidate : result.getCompletionCandidates()) {
-				if (!"<error>".equals(candidate.getName())) {
-					// فلتر الاقتراحات بناءً على الـ prefix
-					if (currentPrefix.isEmpty() || 
-					    candidate.getName().toLowerCase().startsWith(currentPrefix.toLowerCase())) {
-						CompletionItem item = getCompletion(
-							candidate.getName(),
-							candidate.getDetail().orElse(candidate.getKind().name()),
-							result.getPrefix(),
-							candidate.getKind()
-						);
-						completionPublisher.addItem(item);
-						validCount++;
-						
-						// حدّد عدد الاقتراحات للأداء
-						if (validCount >= 50) {
-							break;
-						}
-					}
-				}
-			}
-			
-			// إذا لم توجد اقتراحات، لا تعرض القائمة
-			if (validCount == 0) {
-				completionPublisher.setUpdateThreshold(0);
-			}
-			
-		} catch (Exception e) {
-			Log.e("completion_error", Log.getStackTraceString(e));
-		}
-	}
-	
+
+    final ArrayList<CompletionItem> items = new ArrayList<>();
+
+    private static class KeywordsHolder {
+
+        String type;
+        ArrayList<String> keywords;
+
+        public KeywordsHolder(String type, ArrayList<String> keywords) {
+            this.type = type;
+            this.keywords = keywords;
+        }
+    }
+
+    final ArrayList<KeywordsHolder> keywords = new ArrayList<>();
+    final HashMap<String, Drawable> drawablesMap = new HashMap<>();
+    public boolean proAutoCompletion = true;
+    private final Path path;
+    // private final JavaCompletions completions; // Commented out due to missing class
+    private final CodeEditor editor;
+
+    // Performance optimization: cache last update
+    private String lastContent = "";
+    private long lastUpdateTime = 0;
+    private static final long UPDATE_THROTTLE_MS = 300; // تحديث كل 300ms فقط
+
+    public CodeCompletionHelper(String file, CodeEditor codeEditor) {
+        path = new java.io.File(file).toPath();
+        // completions = Editor.getCurrentEditor().getIndexer().getJavaCompletions(); // Commented out due to missing class
+        codeEditor.subscribeEvent(SelectionChangeEvent.class, this);
+
+        Project project = new Project(Editor.getCurrentEditor().getProject().getPath());
+        editor = codeEditor;
+        try {
+            // completions.getFileManager().openFileForSnapshot(getURI(file),FileUtil.readFile(file)); // Commented out due to missing class
+            if (Editor.getCurrentEditor() != null) {
+                for (Actor actor : Editor.getCurrentEditor().getLibgdxEditor().getActors()) {
+                    if (actor instanceof Image && actor instanceof EditorItem) {
+                        String name = ((EditorItem) actor).getPropertySet().getString("name");
+                        //TODO : ...
+                    }
+                }
+            }
+        } catch (Exception exception) {
+        }
+    }
+
+    public void add(String keyword, String type) {
+        for (KeywordsHolder holder : keywords) {
+            if (holder.type.equals(type)) {
+                holder.keywords.add(keyword);
+                return;
+            }
+        }
+        KeywordsHolder holder = new KeywordsHolder(type, new ArrayList<>());
+        holder.keywords.add(keyword);
+        keywords.add(holder);
+    }
+
+    public static URI getURI(String file) {
+        return URI.create("file://" + file);
+    }
+
+    /**
+     * فحص ما إذا كان يجب عرض الإكمال التلقائي في السياق الحالي
+     */
+    private boolean shouldShowCompletion(ContentReference contentReference, CharPosition charPosition) {
+        if (charPosition.column == 0) {
+            return false; // لا تعرض في بداية السطر
+        }
+
+        String line = contentReference.getLine(charPosition.line).toString();
+        if (charPosition.column > line.length()) {
+            return false;
+        }
+
+        // احصل على الحرف قبل المؤشر
+        char prevChar = line.charAt(charPosition.column - 1);
+
+        // لا تعرض بعد المسافة أو الفاصلة المنقوطة
+        if (prevChar == ' ' || prevChar == ';' || prevChar == '{' || prevChar == '}') {
+            return false;
+        }
+
+        // لا تعرض داخل التعليقات
+        String beforeCursor = line.substring(0, charPosition.column);
+        if (beforeCursor.trim().startsWith("//") || beforeCursor.contains("/*")) {
+            return false;
+        }
+
+        // لا تعرض داخل النصوص (strings)
+        int quoteCount = 0;
+        for (int i = 0; i < charPosition.column; i++) {
+            if (line.charAt(i) == '"' && (i == 0 || line.charAt(i - 1) != '\\')) {
+                quoteCount++;
+            }
+        }
+        if (quoteCount % 2 != 0) {
+            return false; // داخل نص
+        }
+
+        // اعرض فقط بعد . أو إذا كان يكتب identifier
+        return prevChar == '.' || MyCharacter.isJavaIdentifierPart(prevChar);
+    }
+
+    @Override
+    public void onReceive(SelectionChangeEvent event, Unsubscribe unsubscribe) {
+        // validation logic
+    }
+
+    /**
+     * استخراج الـ prefix الحالي (الكلمة التي يكتبها المستخدم)
+     */
+    private String getCurrentPrefix(ContentReference contentReference, CharPosition charPosition) {
+        String line = contentReference.getLine(charPosition.line).toString();
+        if (charPosition.column == 0) {
+            return "";
+        }
+
+        int start = charPosition.column - 1;
+        while (start >= 0 && MyCharacter.isJavaIdentifierPart(line.charAt(start))) {
+            start--;
+        }
+        start++; // نرجع خطوة للأمام
+
+        return line.substring(start, charPosition.column);
+    }
+
+    public void requireAutoComplete(ContentReference contentReference, CharPosition charPosition, CompletionPublisher completionPublisher) {
+        // Stub
+    }
+
+    /*
+	// Commented out due to missing com.tyron.javacompletion classes
 	private CompletionItemKind getKind(CompletionCandidate.Kind candKind){
 		CompletionItemKind kind;
 		switch (candKind) {
@@ -276,7 +243,7 @@ public class CodeCompletionHelper implements EventReceiver<SelectionChangeEvent>
 			try {
 				String content = editor.getText().toString();
 				if (!content.equals(lastContent)) {
-					completions.updateFileContent(path, content);
+					// completions.updateFileContent(path, content); // Commented out due to missing class
 					lastContent = content;
 					lastUpdateTime = System.currentTimeMillis();
 				}
@@ -285,5 +252,5 @@ public class CodeCompletionHelper implements EventReceiver<SelectionChangeEvent>
 			}
 		}).start();
 	}
-	
+     */
 }

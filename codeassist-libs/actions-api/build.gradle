@@ -1,0 +1,25 @@
+plugins {
+    id 'java-library'
+}
+
+
+dependencies {
+    implementation 'androidx.annotation:annotation:1.8.2'
+    implementation project(path: ':build-logic')
+    implementation project(path: ':project')
+    implementation project(path: ':logging')
+    // needed for UserDataHolder class
+    implementation project(path: ':kotlinc')
+    implementation project(path: ':fileeditor-api')
+    implementation project(path: ':editor-api')
+    compileOnly project(path: ':android-stubs')
+
+    testImplementation 'junit:junit:4.+'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+

@@ -11,6 +11,7 @@ dependencyResolutionManagement {
   repositories {
     mavenCentral()
     maven { url "https://plugins.gradle.org/m2/" }
+    maven { url "https://jitpack.io" }
     google()
   }
 }
@@ -19,3 +20,79 @@ rootProject.name = "Star2D.E"
 
 include(":app")
 include(":Formatter")
+
+// CodeAssist Modules
+include ':code-editor', ':xml-completion', ':viewbinding-inject', ':xml-repository', ':java-completion', ':javac', ':language-api', ':build-logic', ':manifmerger', ':project', ':logging', ':jaxp', ':common', ':apksigner', ':kotlin-completion', ':dependency-resolver', ':treeview', ':completion-api', ':actions-api', ':editor-api', ':fileeditor-api', ':google-java-format', ':ktfmt', ':kotlinc', ':android-stubs', ':viewbinding-lib', ':javapoet'
+project(':code-editor').projectDir = new File(rootDir, 'codeassist-libs/code-editor')
+
+include ':xml-completion'
+project(':xml-completion').projectDir = new File(rootDir, 'codeassist-libs/xml-completion')
+
+include ':viewbinding-inject'
+project(':viewbinding-inject').projectDir = new File(rootDir, 'codeassist-libs/viewbinding-inject')
+
+include ':xml-repository'
+project(':xml-repository').projectDir = new File(rootDir, 'codeassist-libs/xml-repository')
+
+include ':java-completion'
+project(':java-completion').projectDir = new File(rootDir, 'codeassist-libs/java-completion')
+
+include ':javac'
+project(':javac').projectDir = new File(rootDir, 'codeassist-libs/javac')
+
+include ':language-api'
+project(':language-api').projectDir = new File(rootDir, 'codeassist-libs/language-api')
+
+include ':build-logic'
+project(':build-logic').projectDir = new File(rootDir, 'codeassist-libs/build-logic')
+
+include ':manifmerger'
+project(':manifmerger').projectDir = new File(rootDir, 'codeassist-libs/manifmerger')
+
+include ':project'
+project(':project').projectDir = new File(rootDir, 'codeassist-libs/project')
+
+include ':logging'
+project(':logging').projectDir = new File(rootDir, 'codeassist-libs/logging')
+
+include ':jaxp'
+project(':jaxp').projectDir = new File(rootDir, 'codeassist-libs/jaxp')
+
+include ':common'
+project(':common').projectDir = new File(rootDir, 'codeassist-libs/common')
+
+include ':apksigner'
+project(':apksigner').projectDir = new File(rootDir, 'codeassist-libs/apksigner')
+
+
+
+include ':kotlin-completion'
+project(':kotlin-completion').projectDir = new File(rootDir, 'codeassist-libs/kotlin-completion')
+
+include ':dependency-resolver'
+project(':dependency-resolver').projectDir = new File(rootDir, 'codeassist-libs/dependency-resolver')
+
+include ':treeview'
+project(':treeview').projectDir = new File(rootDir, 'codeassist-libs/treeview')
+
+include ':completion-api'
+project(':completion-api').projectDir = new File(rootDir, 'codeassist-libs/completion-api')
+
+include ':actions-api'
+project(':actions-api').projectDir = new File('codeassist-libs/actions-api')
+project(':kotlinc').projectDir = new File('codeassist-libs/kotlinc')
+project(':android-stubs').projectDir = new File('codeassist-libs/android-stubs')
+project(':viewbinding-lib').projectDir = new File('codeassist-libs/viewbinding-lib')
+project(':javapoet').projectDir = new File('codeassist-libs/javapoet')
+
+include ':editor-api'
+project(':editor-api').projectDir = new File(rootDir, 'codeassist-libs/editor-api')
+
+include ':fileeditor-api'
+project(':fileeditor-api').projectDir = new File(rootDir, 'codeassist-libs/fileeditor-api')
+
+include ':google-java-format'
+project(':google-java-format').projectDir = new File(rootDir, 'codeassist-libs/google-java-format')
+
+include ':ktfmt'
+project(':ktfmt').projectDir = new File(rootDir, 'codeassist-libs/ktfmt')

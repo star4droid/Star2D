@@ -6,9 +6,19 @@ plugins {
     id 'com.google.gms.google-services' version '4.4.3' apply false
 
     id 'com.google.firebase.crashlytics' version '3.0.6' apply false
-
+    id 'org.jetbrains.kotlin.android' version '2.0.20' apply false
+    id 'org.jetbrains.kotlin.jvm' version '2.0.20' apply false
 }
 
 tasks.register('clean', Delete) {
     delete rootProject.layout.buildDirectory
+}
+
+ext {
+    compileSdkVersion = 34
+    buildToolsVersion = '34.0.0'
+    targetSdkVersion = 33
+    minSdkVersion = 26
+    versionCode = 1
+    versionName = "1.0.0"
 }

@@ -1,0 +1,16 @@
+plugins {
+    id 'java-library'
+}
+
+
+dependencies {
+	implementation project(path: ':common')
+    api "com.android.tools.build:apksig:8.6.0"   
+    api "org.bouncycastle:bcprov-jdk15on:1.70"
+}
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+

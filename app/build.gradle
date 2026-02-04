@@ -35,7 +35,7 @@ android {
     }
     defaultConfig {
         applicationId "com.star4droid.star2d.evo"
-        minSdk 23
+        minSdk 26
         targetSdk 36
         versionCode 46
         versionName "0.4.6Beta"
@@ -47,6 +47,34 @@ android {
         vectorDrawables { 
             useSupportLibrary true
         }
+    }
+
+    packagingOptions {
+        pickFirst '**/Messages_zh_CN.properties'
+        pickFirst '**/Messages_zh_TW.properties'
+        pickFirst '**/Messages_ja.properties'
+        pickFirst '**/Messages.properties'
+        pickFirst '**/Bundle.properties'
+        exclude 'META-INF/DEPENDENCIES'
+        exclude 'META-INF/LICENSE'
+        exclude 'META-INF/LICENSE.txt'
+        exclude 'META-INF/license.txt'
+        exclude 'META-INF/NOTICE'
+        exclude 'META-INF/NOTICE.txt'
+        exclude 'META-INF/notice.txt'
+        exclude 'META-INF/ASL2.0'
+        exclude("META-INF/*.kotlin_module") 
+        pickFirst 'build-data.properties'
+        pickFirst 'LICENSE'
+        pickFirst 'sun/**/*.class'
+        pickFirst 'com/sun/**/*.class'
+        pickFirst 'org/jetbrains/**/*.class'
+        pickFirst 'org/intellij/**/*.class'
+        pickFirst 'org/apache/http/**/*.class'
+        pickFirst 'net/lingala/zip4j/**/*.class'
+        pickFirst 'org/apache/commons/codec/**/*.class'
+        pickFirst 'javax/lang/model/**/*.class'
+        pickFirst 'META-INF/**'
     }
 
     buildTypes {
@@ -63,8 +91,8 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_21
-        targetCompatibility JavaVersion.VERSION_21
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
 
     if (file("google-services.json").exists()) {
@@ -82,7 +110,12 @@ ext {
     gdxVersion = '1.13.1'
 }
 
-configurations { natives }
+configurations { 
+    natives 
+    all {
+        exclude group: 'com.intellij', module: 'annotations'
+    }
+}
 
 dependencies {
 
@@ -93,6 +126,7 @@ dependencies {
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation fileTree(dir: 'libs', include: ['*.jar']);
     implementation fileTree(dir: 'libs', include: ['*.aar']);
+    implementation files('../codeassist-libs/build-logic/libs/ecj.jar')
     implementation 'com.github.bumptech.glide:glide:4.16.0'
     implementation 'com.google.code.gson:gson:2.10.1'
     implementation 'com.google.guava:guava:32.0.1-android'
@@ -101,6 +135,7 @@ dependencies {
     implementation platform("io.github.Rosemoe.sora-editor:bom:0.23.6")
     implementation "io.github.Rosemoe.sora-editor:editor"
     implementation "io.github.Rosemoe.sora-editor:language-textmate"
+    implementation "io.github.Rosemoe.sora-editor:language-java"
     implementation 'com.badlogicgames.gdx:gdx:$gdxVersion'
     implementation "com.badlogicgames.gdx:gdx-freetype:$gdxVersion"
     
@@ -143,6 +178,51 @@ dependencies {
     implementation("com.google.firebase:firebase-crashlytics-ndk")
     implementation("com.google.firebase:firebase-analytics")
 
+
+    // CodeAssist Dependencies
+    implementation project(path: ':code-editor')
+    implementation project(path: ':xml-completion')
+    implementation project(path: ':viewbinding-inject')
+    implementation project(path: ':xml-repository')
+    implementation project(path: ':java-completion')
+    // not used for compilation, but for analysis
+    implementation project(path: ':javac')
+
+    implementation project(path: ':language-api')
+
+    implementation project(path: ':build-logic')
+    implementation project(path: ':manifmerger')
+    implementation project(path: ':project')
+    implementation project(path: ':logging')
+    implementation project(path: ':jaxp')
+    implementation project(path: ':common')
+    implementation project(path: ':apksigner')
+    implementation project(path: ':kotlin-completion')
+    
+    implementation project(path: ':dependency-resolver')
+
+    implementation project(path: ':treeview')
+
+    // apis
+    implementation project(path: ':completion-api')
+    implementation project(path: ':actions-api')
+    implementation project(path: ':editor-api')
+    implementation project(path: ':fileeditor-api')
+
+    // formatters    
+    implementation project(path: ':google-java-format')
+    implementation project(path: ':ktfmt')
+    
+    // External dependencies required by CodeAssist
+    implementation 'com.github.daniel-stoneuk:material-about-library:3.1.2'
+    implementation 'com.github.angads25:filepicker:1.1.1'
+    implementation 'androidx.preference:preference:1.2.1'
+    implementation 'com.github.TutorialsAndroid:crashx:6.0.19'
+    implementation 'org.slf4j:slf4j-api:2.0.16'
+    implementation 'com.blankj:utilcodex:1.31.1'
+    implementation 'org.jetbrains.kotlin:kotlin-stdlib:2.0.20'
+    implementation 'org.antlr:antlr4-runtime:4.13.2'
+    implementation 'commons-io:commons-io:2.16.1'
 
 }
 

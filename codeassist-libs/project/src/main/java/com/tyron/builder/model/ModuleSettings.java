@@ -1,0 +1,218 @@
+package com.tyron.builder.model;
+
+import android.content.SharedPreferences;
+import android.util.Log;
+import androidx.annotation.Nullable;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonSyntaxException;
+import com.google.gson.reflect.TypeToken;
+import com.google.gson.stream.JsonReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.concurrent.Executors;
+import org.apache.commons.io.FileUtils;
+
+@SuppressWarnings({"unchecked"})
+public class ModuleSettings implements SharedPreferences {
+
+  /** Commonly used keys for project settings */
+  public static final String SAVED_EDITOR_FILES = "editor_opened_files";
+
+  private final File mConfigFile;
+  private final Map<String, Object> mConfigMap;
+
+  public ModuleSettings(File configFile) {
+    mConfigFile = configFile;
+    mConfigMap = parseFile();
+  }
+
+  private Map<String, Object> parseFile() {
+    HashMap<String, Object> config = null;
+    try (FileReader reader = new FileReader(mConfigFile)) {
+      Gson gson = new GsonBuilder().setLenient().create();
+      JsonReader jsonReader = new JsonReader(reader);
+      jsonReader.setLenient(true); // Ensure lenient parsing
+      config = gson.fromJson(jsonReader, new TypeToken<HashMap<String, Object>>() {}.getType());
+
+    } catch (IOException | JsonSyntaxException e) {
+      Log.e("ModuleSettings", "Failed to parse module settings", e);
+    }
+
+    // Null check added here
+    return config != null ? config : getDefaults();
+  }
+
+  protected Map<String, Object> getDefaults() {
+    Map<String, Object> map = new LinkedHashMap<>();
+    return map;
+  }
+
+  public void refresh() {
+    mConfigMap.clear();
+    mConfigMap.putAll(parseFile());
+  }
+
+  @Override
+  public Map<String, ?> getAll() {
+    return mConfigMap;
+  }
+
+  @Nullable
+  @Override
+  public String getString(String key, @Nullable String def) {
+    return (String) mConfigMap.getOrDefault(key, def);
+  }
+
+  @Nullable
+  @Override
+  public Set<String> getStringSet(String s, @Nullable Set<String> set) {
+    Object o = mConfigMap.get(s);
+    if (o != null) {
+      return new TreeSet<>(((ArrayList<String>) o));
+    }
+    return set;
+  }
+
+  @Override
+  public int getInt(String s, int i) {
+    Object o = mConfigMap.get(s);
+    if (o == null) {
+      return i;
+    }
+    String stringValue = String.valueOf(o);
+    if (stringValue.contains(".")) {
+      stringValue = stringValue.substring(0, stringValue.indexOf("."));
+    }
+    return Integer.parseInt(stringValue);
+  }
+
+  @Override
+  public long getLong(String s, long l) {
+    Object o = mConfigMap.get(s);
+    if (o == null) {
+      return l;
+    }
+    return Long.parseLong(String.valueOf(o));
+  }
+
+  @Override
+  public float getFloat(String s, float f) {
+    Object o = mConfigMap.get(s);
+    if (o == null) {
+      return f;
+    }
+    return Float.parseFloat(String.valueOf(o));
+  }
+
+  @Override
+  public boolean getBoolean(String s, boolean b) {
+    return (boolean) mConfigMap.getOrDefault(s, b);
+  }
+
+  @Override
+  public boolean contains(String s) {
+    return mConfigMap.containsKey(s);
+  }
+
+  @Override
+  public Editor edit() {
+    return new Editor(mConfigFile, parseFile());
+  }
+
+  @Override
+  public void registerOnSharedPreferenceChangeListener(
+      OnSharedPreferenceChangeListener onSharedPreferenceChangeListener) {}
+
+  @Override
+  public void unregisterOnSharedPreferenceChangeListener(
+      OnSharedPreferenceChangeListener onSharedPreferenceChangeListener) {}
+
+  public static class Editor implements SharedPreferences.Editor {
+
+    private final File mConfigFile;
+    private final Map<String, Object> mValues;
+
+    public Editor(File file, Map<String, Object> values) {
+      mConfigFile = file;
+      mValues = values;
+    }
+
+    @Override
+    public SharedPreferences.Editor putString(String s, @Nullable String s1) {
+      mValues.put(s, s1);
+      return this;
+    }
+
+    @Override
+    public SharedPreferences.Editor putStringSet(String s, @Nullable Set<String> set) {
+      mValues.put(s, set);
+      return this;
+    }
+
+    @Override
+    public SharedPreferences.Editor putInt(String s, int i) {
+      mValues.put(s, i);
+      return this;
+    }
+
+    @Override
+    public SharedPreferences.Editor putLong(String s, long l) {
+      mValues.put(s, l);
+      return this;
+    }
+
+    @Override
+    public SharedPreferences.Editor putFloat(String s, float v) {
+      mValues.put(s, v);
+      return this;
+    }
+
+    @Override
+    public SharedPreferences.Editor putBoolean(String s, boolean b) {
+      mValues.put(s, b);
+      return this;
+    }
+
+    @Override
+    public SharedPreferences.Editor remove(String s) {
+      mValues.remove(s);
+      return this;
+    }
+
+    @Override
+    public SharedPreferences.Editor clear() {
+      mValues.clear();
+      return this;
+    }
+
+    @Override
+    public boolean commit() {
+      String json;
+      try {
+        if (!mConfigFile.exists() && !mConfigFile.createNewFile()) {
+          return false;
+        }
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        json = gson.toJson(mValues);
+        FileUtils.writeStringToFile(mConfigFile, json, StandardCharsets.UTF_8);
+        return true;
+      } catch (Exception e) {
+        return false;
+      }
+    }
+
+    @Override
+    public void apply() {
+      Executors.newSingleThreadExecutor().execute(this::commit);
+    }
+  }
+}

@@ -1,0 +1,204 @@
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::load has been called by net.rubygrapefruit.platform.internal.NativeLibraryLoader in an unnamed module (file:/C:/Users/Administrator/.gradle/wrapper/dists/gradle-8.14-all/c2qonpi39x1mddn7hk5gh9iqj/gradle-8.14/lib/native-platform-0.22-milestone-28.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+
+Initialized native services in: C:\Users\Administrator\.gradle\native
+Initialized jansi services in: C:\Users\Administrator\.gradle\native
+Found daemon DaemonInfo{pid=4440, address=[1c2ec386-9472-4b7d-814b-3c4b45786fce port:57943, addresses:[/127.0.0.1]], state=Idle, lastBusy=1768672276647, context=DefaultDaemonContext[uid=8f990f4a-d17c-4eae-82d5-e42e23c1998f,javaHome=C:\Users\Administrator\.antigravity\extensions\redhat.java-1.50.0-win32-x64\jre\21.0.9-win32-x86_64,javaVersion=21,javaVendor=Eclipse Adoptium,daemonRegistryDir=C:\Users\Administrator\.gradle\daemon,pid=4440,idleTimeout=10800000,priority=NORMAL,applyInstrumentationAgent=true,nativeServicesMode=ENABLED,daemonOpts=-XX:MaxMetaspaceSize=1024m,-XX:ReservedCodeCacheSize=512m,-XX:+HeapDumpOnOutOfMemoryError,-Xmx4096m,-Dfile.encoding=UTF-8,-Duser.country=US,-Duser.language=en,-Duser.variant]} however its context does not match the desired criteria.
+JVM is incompatible.
+Wanted: DaemonRequestContext{jvmCriteria=C:\Users\Administrator\.gradle\jdks\eclipse_adoptium-17-amd64-windows.2 (from org.gradle.java.home), daemonOpts=[-Xmx4g, -Dfile.encoding=UTF-8, -Duser.country=US, -Duser.language=en, -Duser.variant], applyInstrumentationAgent=true, nativeServicesMode=ENABLED, priority=NORMAL}
+Actual: DefaultDaemonContext[uid=8f990f4a-d17c-4eae-82d5-e42e23c1998f,javaHome=C:\Users\Administrator\.antigravity\extensions\redhat.java-1.50.0-win32-x64\jre\21.0.9-win32-x86_64,javaVersion=21,javaVendor=Eclipse Adoptium,daemonRegistryDir=C:\Users\Administrator\.gradle\daemon,pid=4440,idleTimeout=10800000,priority=NORMAL,applyInstrumentationAgent=true,nativeServicesMode=ENABLED,daemonOpts=-XX:MaxMetaspaceSize=1024m,-XX:ReservedCodeCacheSize=512m,-XX:+HeapDumpOnOutOfMemoryError,-Xmx4096m,-Dfile.encoding=UTF-8,-Duser.country=US,-Duser.language=en,-Duser.variant]
+
+  Looking for a different daemon...
+Found daemon DaemonInfo{pid=13148, address=[d8d537d9-8e90-4fcb-b9a9-de205f930265 port:62904, addresses:[/127.0.0.1]], state=Idle, lastBusy=1769055213131, context=DefaultDaemonContext[uid=75fe8f6e-3aec-48d3-acb8-a0ab6cc4e7eb,javaHome=C:\Program Files\Java\jdk-25,javaVersion=25,javaVendor=Oracle Corporation,daemonRegistryDir=C:\Users\Administrator\.gradle\daemon,pid=13148,idleTimeout=10800000,priority=NORMAL,applyInstrumentationAgent=true,nativeServicesMode=ENABLED,daemonOpts=-XX:MaxMetaspaceSize=4G,-XX:ReservedCodeCacheSize=512m,-XX:+HeapDumpOnOutOfMemoryError,-Xmx8G,-Dfile.encoding=UTF-8,-Duser.country,-Duser.language=en,-Duser.variant]} however its context does not match the desired criteria.
+JVM is incompatible.
+Wanted: DaemonRequestContext{jvmCriteria=C:\Users\Administrator\.gradle\jdks\eclipse_adoptium-17-amd64-windows.2 (from org.gradle.java.home), daemonOpts=[-Xmx4g, -Dfile.encoding=UTF-8, -Duser.country=US, -Duser.language=en, -Duser.variant], applyInstrumentationAgent=true, nativeServicesMode=ENABLED, priority=NORMAL}
+Actual: DefaultDaemonContext[uid=75fe8f6e-3aec-48d3-acb8-a0ab6cc4e7eb,javaHome=C:\Program Files\Java\jdk-25,javaVersion=25,javaVendor=Oracle Corporation,daemonRegistryDir=C:\Users\Administrator\.gradle\daemon,pid=13148,idleTimeout=10800000,priority=NORMAL,applyInstrumentationAgent=true,nativeServicesMode=ENABLED,daemonOpts=-XX:MaxMetaspaceSize=4G,-XX:ReservedCodeCacheSize=512m,-XX:+HeapDumpOnOutOfMemoryError,-Xmx8G,-Dfile.encoding=UTF-8,-Duser.country,-Duser.language=en,-Duser.variant]
+
+  Looking for a different daemon...
+Found daemon DaemonInfo{pid=13396, address=[fc857afd-741b-448f-a4c9-614164335354 port:49283, addresses:[/127.0.0.1]], state=Idle, lastBusy=1769230560343, context=DefaultDaemonContext[uid=442d40ba-bc3d-4f61-977b-c62a26fc5b3c,javaHome=C:\Users\Administrator\.antigravity\extensions\redhat.java-1.50.0-win32-x64\jre\21.0.9-win32-x86_64,javaVersion=21,javaVendor=Eclipse Adoptium,daemonRegistryDir=C:\Users\Administrator\.gradle\daemon,pid=13396,idleTimeout=10800000,priority=NORMAL,applyInstrumentationAgent=true,nativeServicesMode=ENABLED,daemonOpts=-Xmx4g,-Dfile.encoding=UTF-8,-Duser.country=US,-Duser.language=en,-Duser.variant]} however its context does not match the desired criteria.
+JVM is incompatible.
+Wanted: DaemonRequestContext{jvmCriteria=C:\Users\Administrator\.gradle\jdks\eclipse_adoptium-17-amd64-windows.2 (from org.gradle.java.home), daemonOpts=[-Xmx4g, -Dfile.encoding=UTF-8, -Duser.country=US, -Duser.language=en, -Duser.variant], applyInstrumentationAgent=true, nativeServicesMode=ENABLED, priority=NORMAL}
+Actual: DefaultDaemonContext[uid=442d40ba-bc3d-4f61-977b-c62a26fc5b3c,javaHome=C:\Users\Administrator\.antigravity\extensions\redhat.java-1.50.0-win32-x64\jre\21.0.9-win32-x86_64,javaVersion=21,javaVendor=Eclipse Adoptium,daemonRegistryDir=C:\Users\Administrator\.gradle\daemon,pid=13396,idleTimeout=10800000,priority=NORMAL,applyInstrumentationAgent=true,nativeServicesMode=ENABLED,daemonOpts=-Xmx4g,-Dfile.encoding=UTF-8,-Duser.country=US,-Duser.language=en,-Duser.variant]
+
+  Looking for a different daemon...
+Found daemon DaemonInfo{pid=12948, address=[d89dedc9-a336-4e61-95d2-ba72d220c280 port:61386, addresses:[/127.0.0.1]], state=Idle, lastBusy=1770183067746, context=DefaultDaemonContext[uid=363e2eb2-5866-4b74-bed4-48bb531c0444,javaHome=C:\Program Files\Java\jdk-25,javaVersion=25,javaVendor=Oracle Corporation,daemonRegistryDir=C:\Users\Administrator\.gradle\daemon,pid=12948,idleTimeout=10800000,priority=NORMAL,applyInstrumentationAgent=true,nativeServicesMode=ENABLED,daemonOpts=-Xmx4g,-Dfile.encoding=UTF-8,-Duser.country,-Duser.language=en,-Duser.variant]} however its context does not match the desired criteria.
+JVM is incompatible.
+Wanted: DaemonRequestContext{jvmCriteria=C:\Users\Administrator\.gradle\jdks\eclipse_adoptium-17-amd64-windows.2 (from org.gradle.java.home), daemonOpts=[-Xmx4g, -Dfile.encoding=UTF-8, -Duser.country=US, -Duser.language=en, -Duser.variant], applyInstrumentationAgent=true, nativeServicesMode=ENABLED, priority=NORMAL}
+Actual: DefaultDaemonContext[uid=363e2eb2-5866-4b74-bed4-48bb531c0444,javaHome=C:\Program Files\Java\jdk-25,javaVersion=25,javaVendor=Oracle Corporation,daemonRegistryDir=C:\Users\Administrator\.gradle\daemon,pid=12948,idleTimeout=10800000,priority=NORMAL,applyInstrumentationAgent=true,nativeServicesMode=ENABLED,daemonOpts=-Xmx4g,-Dfile.encoding=UTF-8,-Duser.country,-Duser.language=en,-Duser.variant]
+
+  Looking for a different daemon...
+The client will now receive all logging from the daemon (pid: 11876). The daemon log file: C:\Users\Administrator\.gradle\daemon\8.14\daemon-11876.out.log
+Starting 3rd build in daemon [uptime: 1 mins 32.497 secs, performance: 100%, GC rate: 0.00/s, heap usage: 0% of 4 GiB]
+Using 8 worker leases.
+Now considering [D:\Star2D] as hierarchies to watch
+Watching the file system is configured to be enabled if available
+File system watching is active
+Starting Build
+Settings evaluated using settings file 'D:\Star2D\settings.gradle'.
+Projects loaded. Root project using build file 'D:\Star2D\build.gradle'.
+Included projects: [root project 'Star2D.E', project ':actions-api', project ':android-stubs', project ':apksigner', project ':app', project ':build-logic', project ':code-editor', project ':common', project ':completion-api', project ':dependency-resolver', project ':editor-api', project ':fileeditor-api', project ':Formatter', project ':google-java-format', project ':java-completion', project ':javac', project ':jaxp', project ':kotlin-completion', project ':kotlinc', project ':ktfmt', project ':language-api', project ':logging', project ':manifmerger', project ':project', project ':treeview', project ':viewbinding-inject', project ':viewbinding-lib', project ':xml-completion', project ':xml-repository']
+
+> Configure project :
+Evaluating root project 'Star2D.E' using build file 'D:\Star2D\build.gradle'.
+Resolved plugin [id: 'com.android.application', version: '8.13.0', apply: false]
+Resolved plugin [id: 'com.android.library', version: '8.13.0', apply: false]
+Resolved plugin [id: 'com.google.gms.google-services', version: '4.4.3', apply: false]
+Resolved plugin [id: 'com.google.firebase.crashlytics', version: '3.0.6', apply: false]
+Resolved plugin [id: 'org.jetbrains.kotlin.android', version: '2.0.20', apply: false]
+Resolved plugin [id: 'org.jetbrains.kotlin.jvm', version: '2.0.20', apply: false]
+
+> Configure project :actions-api
+Evaluating project ':actions-api' using build file 'D:\Star2D\codeassist-libs\actions-api\build.gradle'.
+Resolved plugin [id: 'java-library']
+
+> Configure project :android-stubs
+Evaluating project ':android-stubs' using build file 'D:\Star2D\codeassist-libs\android-stubs\build.gradle'.
+Resolved plugin [id: 'java-library']
+
+> Configure project :apksigner
+Evaluating project ':apksigner' using build file 'D:\Star2D\codeassist-libs\apksigner\build.gradle'.
+Resolved plugin [id: 'java-library']
+
+> Configure project :app
+Evaluating project ':app' using build file 'D:\Star2D\app\build.gradle'.
+Resolved plugin [id: 'com.android.application']
+Using default execution profile
+
+> Configure project :build-logic
+Evaluating project ':build-logic' using build file 'D:\Star2D\codeassist-libs\build-logic\build.gradle'.
+Resolved plugin [id: 'java-library']
+Using Kotlin Gradle Plugin gradle85 variant
+kotlin scripting plugin: created the scripting discovery configuration: kotlinScriptDef
+kotlin scripting plugin: created the scripting discovery configuration: testKotlinScriptDef
+
+> Configure project :code-editor
+Evaluating project ':code-editor' using build file 'D:\Star2D\codeassist-libs\code-editor\build.gradle'.
+Resolved plugin [id: 'com.android.library']
+Using default execution profile
+
+> Configure project :common
+Evaluating project ':common' using build file 'D:\Star2D\codeassist-libs\common\build.gradle'.
+Resolved plugin [id: 'java-library']
+Resolved plugin [id: 'kotlin']
+Using Kotlin Gradle Plugin gradle85 variant
+kotlin scripting plugin: created the scripting discovery configuration: kotlinScriptDef
+kotlin scripting plugin: created the scripting discovery configuration: testKotlinScriptDef
+
+> Configure project :completion-api
+Evaluating project ':completion-api' using build file 'D:\Star2D\codeassist-libs\completion-api\build.gradle'.
+Resolved plugin [id: 'com.android.library']
+Using default execution profile
+
+> Configure project :dependency-resolver
+Evaluating project ':dependency-resolver' using build file 'D:\Star2D\codeassist-libs\dependency-resolver\build.gradle'.
+Resolved plugin [id: 'com.android.library']
+Using default execution profile
+
+> Configure project :editor-api
+Evaluating project ':editor-api' using build file 'D:\Star2D\codeassist-libs\editor-api\build.gradle'.
+Resolved plugin [id: 'java-library']
+
+> Configure project :fileeditor-api
+Evaluating project ':fileeditor-api' using build file 'D:\Star2D\codeassist-libs\fileeditor-api\build.gradle'.
+Resolved plugin [id: 'java-library']
+
+> Configure project :Formatter
+Evaluating project ':Formatter' using build file 'D:\Star2D\Formatter\build.gradle'.
+Resolved plugin [id: 'java-library']
+
+> Configure project :google-java-format
+Evaluating project ':google-java-format' using build file 'D:\Star2D\codeassist-libs\google-java-format\build.gradle'.
+Resolved plugin [id: 'java-library']
+
+> Configure project :java-completion
+Evaluating project ':java-completion' using build file 'D:\Star2D\codeassist-libs\java-completion\build.gradle'.
+Resolved plugin [id: 'com.android.library']
+Using default execution profile
+Using Kotlin Gradle Plugin gradle85 variant
+
+> Configure project :javac
+Evaluating project ':javac' using build file 'D:\Star2D\codeassist-libs\javac\build.gradle'.
+Resolved plugin [id: 'java-library']
+
+> Configure project :jaxp
+Evaluating project ':jaxp' using build file 'D:\Star2D\codeassist-libs\jaxp\build.gradle'.
+Resolved plugin [id: 'java-library']
+
+> Configure project :kotlin-completion
+Evaluating project ':kotlin-completion' using build file 'D:\Star2D\codeassist-libs\kotlin-completion\build.gradle'.
+Resolved plugin [id: 'com.android.library']
+Using default execution profile
+Using Kotlin Gradle Plugin gradle85 variant
+
+> Configure project :kotlinc
+Evaluating project ':kotlinc' using build file 'D:\Star2D\codeassist-libs\kotlinc\build.gradle'.
+Resolved plugin [id: 'java-library']
+Using Kotlin Gradle Plugin gradle85 variant
+kotlin scripting plugin: created the scripting discovery configuration: kotlinScriptDef
+kotlin scripting plugin: created the scripting discovery configuration: testKotlinScriptDef
+
+> Configure project :ktfmt
+Evaluating project ':ktfmt' using build file 'D:\Star2D\codeassist-libs\ktfmt\build.gradle'.
+Resolved plugin [id: 'java-library']
+
+> Configure project :language-api
+Evaluating project ':language-api' using build file 'D:\Star2D\codeassist-libs\language-api\build.gradle'.
+Resolved plugin [id: 'java-library']
+
+> Configure project :logging
+Evaluating project ':logging' using build file 'D:\Star2D\codeassist-libs\logging\build.gradle'.
+Resolved plugin [id: 'java-library']
+
+> Configure project :manifmerger
+Evaluating project ':manifmerger' using build file 'D:\Star2D\codeassist-libs\manifmerger\build.gradle'.
+Resolved plugin [id: 'java-library']
+
+> Configure project :project
+Evaluating project ':project' using build file 'D:\Star2D\codeassist-libs\project\build.gradle'.
+Resolved plugin [id: 'java-library']
+
+> Configure project :treeview
+Evaluating project ':treeview' using build file 'D:\Star2D\codeassist-libs\treeview\build.gradle'.
+Resolved plugin [id: 'com.android.library']
+Using default execution profile
+
+> Configure project :viewbinding-inject
+Evaluating project ':viewbinding-inject' using build file 'D:\Star2D\codeassist-libs\viewbinding-inject\build.gradle'.
+Resolved plugin [id: 'com.android.library']
+Using default execution profile
+Using Kotlin Gradle Plugin gradle85 variant
+
+> Configure project :viewbinding-lib
+Evaluating project ':viewbinding-lib' using build file 'D:\Star2D\codeassist-libs\viewbinding-lib\build.gradle'.
+Resolved plugin [id: 'java-library']
+Using Kotlin Gradle Plugin gradle85 variant
+kotlin scripting plugin: created the scripting discovery configuration: kotlinScriptDef
+kotlin scripting plugin: created the scripting discovery configuration: testKotlinScriptDef
+
+[Incubating] Problems report is available at: file:///D:/Star2D/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* Where:
+Build file 'D:\Star2D\codeassist-libs\viewbinding-lib\build.gradle' line: 23
+
+* What went wrong:
+A problem occurred evaluating project ':viewbinding-lib'.
+> Project with path ':javapoet' could not be found in project ':viewbinding-lib'.
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.14/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD FAILED in 4s
+Watched directory hierarchies: []

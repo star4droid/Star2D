@@ -1,0 +1,28 @@
+plugins {
+    id 'java-library'
+    id 'kotlin'
+}
+
+
+dependencies {
+    testImplementation 'junit:junit:4.+'
+
+    implementation 'androidx.annotation:annotation:1.8.2'
+    api 'com.google.guava:guava:33.3.0-jre'
+    compileOnlyApi 'com.google.code.gson:gson:2.11.0'
+    api 'commons-io:commons-io:2.16.1'
+    api 'net.lingala.zip4j:zip4j:2.11.5'
+    compileOnly project(path: ':android-stubs')
+	implementation 'org.jetbrains.kotlin:kotlin-stdlib:2.0.20'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+}

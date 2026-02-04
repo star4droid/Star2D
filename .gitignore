@@ -82,3 +82,4 @@ lint/outputs/
 lint/tmp/
 # lint/reports/
 .gradle/buildOutputCleanup/buildOutputCleanup.lock
+codeassist/

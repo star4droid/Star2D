@@ -10,9 +10,9 @@ import com.star4droid.star2d.Helpers.FileUtil;
 import com.star4droid.star2d.Items.Editor;
 import com.star4droid.star2d.Utils;
 import com.star4droid.star2d.Helpers.EngineSettings;
-import com.tyron.javacompletion.JavaCompletions;
-import com.tyron.javacompletion.options.JavaCompletionOptionsImpl;
-import com.tyron.javacompletion.tool.Indexer;
+// import com.tyron.javacompletion.JavaCompletions;
+// import com.tyron.javacompletion.options.JavaCompletionOptionsImpl;
+// import com.tyron.javacompletion.tool.Indexer;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -28,6 +28,7 @@ import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
+/*
 import com.tyron.javacompletion.file.FileManager;
 import com.tyron.javacompletion.file.PathUtils;
 import com.tyron.javacompletion.file.SimpleFileManager;
@@ -40,16 +41,20 @@ import com.tyron.javacompletion.parser.classfile.ClassModuleBuilder;
 import com.tyron.javacompletion.project.Project;
 import com.tyron.javacompletion.project.SimpleModuleManager;
 import com.tyron.javacompletion.storage.IndexStore;
+ */
+public class MyIndexer {
 
-public class MyIndexer extends Indexer {
-	private int isIndexing=0;
-	private String[] indexes;
-	private Editor editor;
-	private JavaCompletions javaCompletions;
-	public String editorProjectPath;
-	public static MyIndexer lastIndexer;
-	public MyIndexer(){
-		editor = Editor.getCurrentEditor();
+    /* extends Indexer */
+    private int isIndexing = 0;
+    private String[] indexes;
+    private Editor editor;
+    // private JavaCompletions javaCompletions;
+    public String editorProjectPath;
+    public static MyIndexer lastIndexer;
+
+    public MyIndexer() {
+        editor = Editor.getCurrentEditor();
+        /*
 		javaCompletions = new JavaCompletions(){
 			@Override
 			public synchronized void updateFileContent(Path path,String str){
@@ -58,126 +63,62 @@ public class MyIndexer extends Indexer {
 				} catch(IllegalStateException ex){}
 			}
 		};
-		editorProjectPath = editor.getProject().getPath();
-		if(lastIndexer!=null)
-			lastIndexer.shutdown();
-		lastIndexer = this;
-	}
-	
-	public JavaCompletions getJavaCompletions(){
-		return javaCompletions;
-	}
-	
-	public boolean isIndexing(){
-		return isIndexing>0;
-	}
-	
-	//check if the user open the same last project
-	public static boolean isIndexerMatch(String projectPath){
-		try {
-			return lastIndexer != null && Uri.parse(projectPath).getLastPathSegment().toLowerCase().equals(Uri.parse(lastIndexer.editorProjectPath).getLastPathSegment());
-		} catch(Exception e){
-			return false;
-		}
-	}
-	
-	private final ParserContext parserContext = new ParserContext();
-	
-	public MyIndexer indexFiles(Editor editor){
-		return indexFiles(editor,editor.getContext());
-	}
-	
-	public String[] getIndexsFiles(){
-		return indexes;
-	}
-	
-	public MyIndexer indexFiles(Editor editor,Context context){
-		//if(isIndexing) return null;
-		isIndexing++;
-		String data = FileUtil.getPackageDataDir(editor.getContext());
-		try {
-		ArrayList<String> jars=new ArrayList<>();
-		String idx1=data+"/bin/index.json";
-		String idx2=data+"/bin/index2.json";
-		String idx3=data+"/bin/index3.json";
-		String idx4=data+"/bin/libgdx.json";
-		/*if(!FileUtil.isExistFile(idx1)){
-			Utils.unzipf(data+"/bin/cp.jar",data+"/bin/files/","");
-			jars.add(data+"/bin/cp.jar");
-			run(jars,idx1,Collections.emptyList(),Collections.emptyList(),data+"/bin/files/");
-			FileUtil.deleteFile(data+"/bin/files/");
-			jars.clear();
-		}*/
-		
-		if((!FileUtil.isExistFile(idx2))||new java.io.File(idx2).length()==0||!EngineSettings.get().getString("JAR_FILE_VERSION","").equals("2.0")){
-    		FileUtil.writeFile(idx2,"");
-    		Utils.extractAssetFile(editor.getContext(),"java/game.zip",data+"/bin/addition.jar");
-    		Utils.unzipf(data+"/bin/addition.jar",data+"/bin/add/","");
-    		jars.add(data+"/bin/add/");
-    		run(jars,idx2,Collections.emptyList(),Collections.emptyList(),data+"/bin/add/");
-    		FileUtil.deleteFile(data+"/bin/add/");
-    		jars.clear();
-    		EngineSettings.set("JAR_FILE_VERSION","2.0");
-		}
-	    
-	    /*
-		{
-		    jars.add(data+"/bin/cp/");
-    		run(jars,idx2,Collections.emptyList(),Collections.emptyList(),data+"/bin/cp/");
-    		FileUtil.deleteFile(data+"/bin/cp/");
-    		jars.clear();
-		}
-		*/
-		
-		/*if((!FileUtil.isExistFile(idx4))||new java.io.File(idx4).length()==0){
-			FileUtil.writeFile(idx4,"");
-			Utils.extractAssetFile(editor.getContext(),"editor/libgdx.json",idx4);
-		}
-		*/
-		
-		jars.add(editor.getProject().get("java"));
-		run(jars,idx3,Collections.emptyList(),Collections.emptyList(),editor.getProject().get("java"));
-		indexes = new String[]{idx2,idx3};
-		} catch(Exception exception){
-			FileUtil.writeFile(data+"/error.txt","Failed To Index Files : \n"+Log.getStackTraceString(exception));
-			return this;
-		}
-		
-		ArrayList<String> list=new ArrayList<>();
-		while(editor.getProject()==null){}
-		String logPath=editor.getProject().get("log")+"/autocomplete.log";
-		if(!FileUtil.isExistFile(logPath)) com.badlogic.gdx.Gdx.files.absolute(logPath).writeString("",false);
-		JavaCompletionOptionsImpl options = new JavaCompletionOptionsImpl(
-		logPath,
-		Level.ALL,
-		java.util.Collections.emptyList(),
-		list/*indexed files list...*/
-		);
-		try {
-		    javaCompletions.initialize(URI.create("file://" + editor.getProject().get("java")),options);
-		} catch(Exception ex){
-		    ex.printStackTrace();
-		}
-		try {
-			IndexUtil.loadJdk(javaCompletions.getProject(),context,indexes);
-			} catch(Exception ex){
-			Log.e("jdk_error",Log.getStackTraceString(ex));
-		}
-		isIndexing--;
-		return this;
-	}
-	
-	public void getClasses(ArrayList<String> arrayList,String path){
-		ArrayList<String> list=new ArrayList<>();
-		FileUtil.listDir(path,list);
-		for(String file:list)
-			if(FileUtil.isDirectory(file))
-				getClasses(arrayList,file);
-					else if(file.endsWith(".class")||file.endsWith(".java"))
-						arrayList.add(file);
-	}
-	ArrayList<SimpleModuleManager> modelsArray = new ArrayList<>();
-	ArrayList<FileManager> fileManagerArrayList = new ArrayList<>();
+         */
+        editorProjectPath = editor.getProject().getPath();
+        if (lastIndexer != null) {
+            lastIndexer.shutdown();
+        }
+        lastIndexer = this;
+    }
+
+    public Object getJavaCompletions() {
+        return null;
+    }
+
+    public boolean isIndexing() {
+        return isIndexing > 0;
+    }
+
+    //check if the user open the same last project
+    public static boolean isIndexerMatch(String projectPath) {
+        try {
+            return lastIndexer != null && Uri.parse(projectPath).getLastPathSegment().toLowerCase().equals(Uri.parse(lastIndexer.editorProjectPath).getLastPathSegment());
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    // private final ParserContext parserContext = new ParserContext();
+    public MyIndexer indexFiles(Editor editor) {
+        return this;
+    }
+
+    public String[] getIndexsFiles() {
+        return indexes;
+    }
+
+    public MyIndexer indexFiles(Editor editor, Context context) {
+        return this;
+    }
+
+    public void getClasses(ArrayList<String> arrayList, String path) {
+        ArrayList<String> list = new ArrayList<>();
+        FileUtil.listDir(path, list);
+        for (String file : list) {
+            if (FileUtil.isDirectory(file)) {
+                getClasses(arrayList, file); 
+            }else if (file.endsWith(".class") || file.endsWith(".java")) {
+                arrayList.add(file);
+            }
+        }
+    }
+    // ArrayList<SimpleModuleManager> modelsArray = new ArrayList<>();
+    // ArrayList<FileManager> fileManagerArrayList = new ArrayList<>();
+
+    public void run(List<String> a, String b, List<String> c, List<String> d, String e) {
+    }
+
+    /*
 	public void run(
 	List<String> inputPaths,
 	String outputPath,
@@ -207,14 +148,17 @@ public class MyIndexer extends Indexer {
 				PathUtils.walkDirectory(
 				path,
 				handlers,
-				/* ignorePredicate= */ fileManager::shouldIgnorePath);
+				// ignorePredicate=
+ fileManager::shouldIgnorePath);
 				} else if (inputPath.endsWith(".jar") || inputPath.endsWith(".srcjar")) {
 				System.out.println("Indexing JAR file: " + inputPath);
 				try {
 					PathUtils.walkDirectory(rootPath
-					/*PathUtils.getRootPathForJarFile(path)*/,
+					//PathUtils.getRootPathForJarFile(path)
+,
 					handlers,
-					/* ignorePredicate= */ subpath -> false);
+					// ignorePredicate=
+ subpath -> false);
 					} catch (Exception t) {
 					throw new RuntimeException(t);
 				}
@@ -239,8 +183,10 @@ public class MyIndexer extends Indexer {
 			module.addOrReplaceFileScope(fileScope);
 		}
 	}
-	
-	public void shutdown(){
+     */
+
+    public void shutdown() {
+        /*
 	    try {
     		javaCompletions.shutdown();
     		for(SimpleModuleManager manager:modelsArray)
@@ -248,6 +194,7 @@ public class MyIndexer extends Indexer {
     		for(FileManager fileManager:fileManagerArrayList)
     			fileManager.shutdown();
 		} catch(Exception ex){}
-		lastIndexer = null;
-	}
+         */
+        lastIndexer = null;
+    }
 }

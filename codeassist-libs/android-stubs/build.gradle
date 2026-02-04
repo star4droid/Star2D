@@ -1,0 +1,17 @@
+plugins {
+    id 'java-library'
+}
+
+
+dependencies {
+    compileOnlyApi files('libs/android.jar')
+
+    compileOnly 'androidx.annotation:annotation:1.8.2'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+

@@ -1,0 +1,62 @@
+plugins {
+    id 'com.android.library'
+}
+
+android {
+    compileSdkVersion rootProject.ext.compileSdkVersion
+    buildToolsVersion rootProject.ext.buildToolsVersion
+	namespace "com.tyron.layoutpreview"
+		
+    defaultConfig {
+        minSdk 26
+        targetSdk 31
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles "consumer-rules.pro"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    
+    buildFeatures {
+        buildConfig true	    
+    }
+}
+
+dependencies {
+
+
+    implementation project(path: ':common')
+    implementation project(path: ':xml-repository')
+    implementation project(path: ':vector-parser')
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation "com.google.truth:truth:1.4.4"
+    testImplementation "org.robolectric:robolectric:4.13"
+    testImplementation('androidx.test:core:1.4.0')
+    androidTestImplementation 'androidx.test.ext:junit:1.2.1'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.6.1'
+
+    implementation project(path: ':build-logic')
+    implementation project(path: ':project')
+    implementation project(path: ':manifmerger')
+    implementation project(path: ':kotlinc')
+    implementation project(path: ':jaxp')
+    implementation project(path: ':appcompat-widgets')
+    implementation project(path: ':constraintlayout')
+    implementation project(path: ':cardview')
+    implementation project(path: ':xml-completion')
+    
+    implementation 'androidx.annotation:annotation:1.8.2'
+    implementation 'com.google.code.gson:gson:2.11.0'
+    implementation 'com.github.bumptech.glide:glide:4.16.0'
+
+    api project(path: ':proteus-core')
+}

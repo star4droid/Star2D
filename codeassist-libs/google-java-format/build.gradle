@@ -1,0 +1,13 @@
+plugins {
+    id 'java-library'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+dependencies {
+	api files('libs/google-java-format.jar')
+    api 'com.google.auto.value:auto-value-annotations:1.11.0'
+}

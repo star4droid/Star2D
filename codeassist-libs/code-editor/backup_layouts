@@ -39,40 +39,36 @@
 			android:orientation="horizontal"
 			android:gravity="center_vertical">
 
-			<Button
+			<ImageButton
 				style="?android:attr/buttonBarButtonStyle"
 				android:layout_height="wrap_content"
 				android:layout_width="wrap_content"
-				android:text="@string/selectAll"
-				android:textColor="#FF000000"
-				android:textSize="12sp"
+				android:src="@drawable/round_select_all_20"
+				android:contentDescription="@string/selectAll"
 				android:id="@+id/panel_btn_select_all"/>
 
-			<Button
+			<ImageButton
 				style="?android:attr/buttonBarButtonStyle"
 				android:layout_height="wrap_content"
 				android:layout_width="wrap_content"
-				android:text="@string/copy"
-				android:textColor="#FF000000"
-				android:textSize="12sp"
+				android:src="@drawable/round_content_copy_20"
+				android:contentDescription="@string/copy"
 				android:id="@+id/panel_btn_copy"/>
 
-			<Button
+			<ImageButton
 				style="?android:attr/buttonBarButtonStyle"
 				android:layout_height="wrap_content"
 				android:layout_width="wrap_content"
-				android:text="@string/paste"
-				android:textColor="#FF000000"
-				android:textSize="12sp"
+				android:src="@drawable/round_content_paste_20"
+				android:contentDescription="@string/paste"
 				android:id="@+id/panel_btn_paste"/>
 
-			<Button
+			<ImageButton
 				style="?android:attr/buttonBarButtonStyle"
 				android:layout_height="wrap_content"
 				android:layout_width="wrap_content"
-				android:text="@string/cut"
-				android:textColor="#FF000000"
-				android:textSize="12sp"
+				android:src="@drawable/round_content_cut_20"
+				android:contentDescription="@string/cut"
 				android:id="@+id/panel_btn_cut"/>
 
 		</LinearLayout>

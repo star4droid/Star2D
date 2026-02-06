@@ -87,7 +87,8 @@ public class ControlLayer extends Table {
 		if(type.equals(""))
 			controlType = ControlType.TOP_AND_BOTTOM;
 		else controlType = ControlType.valueOf(type);
-		colorPicker = new ColorPicker(getTrans("chooseColor"));/*{
+		//colorPicker = new ColorPicker(getTrans("chooseColor"));
+		/*{
 			@Override
 			protected void setParent (Group parent) {
 				super.setParent(parent);

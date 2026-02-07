@@ -7,18 +7,20 @@ import android.widget.ImageView;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.star4droid.star2d.Helpers.FileUtil;
-import com.star4droid.star2d.Helpers.Project;
 import com.star4droid.star2d.Items.Editor;
 import com.star4droid.star2d.editor.items.EditorItem;
-// import com.tyron.javacompletion.JavaCompletions;
-// import com.tyron.javacompletion.completion.CompletionCandidate;
-// import com.tyron.javacompletion.completion.CompletionResult;
+import com.tyron.builder.project.api.JavaModule;
+import com.tyron.builder.project.api.Module;
+import com.tyron.completion.CompletionParameters;
+import com.tyron.completion.java.JavaCompletionProvider;
+import com.tyron.completion.model.CompletionItem;
+import com.tyron.completion.model.CompletionList;
+import com.tyron.completion.model.DrawableKind;
 import io.github.rosemoe.sora.event.EventReceiver;
 import io.github.rosemoe.sora.event.Unsubscribe;
 import io.github.rosemoe.sora.event.SelectionChangeEvent;
 import io.github.rosemoe.sora.lang.completion.Comparators;
 import io.github.rosemoe.sora.lang.completion.CompletionHelper;
-import io.github.rosemoe.sora.lang.completion.CompletionItem;
 import io.github.rosemoe.sora.lang.completion.CompletionItemKind;
 import io.github.rosemoe.sora.lang.completion.CompletionPublisher;
 import io.github.rosemoe.sora.lang.completion.Filters;
@@ -31,6 +33,7 @@ import io.github.rosemoe.sora.util.MyCharacter;
 import io.github.rosemoe.sora.widget.CodeEditor;
 import java.net.URI;
 import java.nio.file.Path;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -40,7 +43,7 @@ import java.util.Locale;
 
 public class CodeCompletionHelper implements EventReceiver<SelectionChangeEvent> {
 
-    final ArrayList<CompletionItem> items = new ArrayList<>();
+    final ArrayList<io.github.rosemoe.sora.lang.completion.CompletionItem> items = new ArrayList<>();
 
     private static class KeywordsHolder {
 
@@ -56,8 +59,8 @@ public class CodeCompletionHelper implements EventReceiver<SelectionChangeEvent>
     final ArrayList<KeywordsHolder> keywords = new ArrayList<>();
     final HashMap<String, Drawable> drawablesMap = new HashMap<>();
     public boolean proAutoCompletion = true;
-    private final Path path;
-    // private final JavaCompletions completions; // Commented out due to missing class
+    private final File file;
+    private JavaCompletionProvider completionProvider;
     private final CodeEditor editor;
 
     // Performance optimization: cache last update
@@ -65,25 +68,16 @@ public class CodeCompletionHelper implements EventReceiver<SelectionChangeEvent>
     private long lastUpdateTime = 0;
     private static final long UPDATE_THROTTLE_MS = 300; // تحديث كل 300ms فقط
 
-    public CodeCompletionHelper(String file, CodeEditor codeEditor) {
-        path = new java.io.File(file).toPath();
-        // completions = Editor.getCurrentEditor().getIndexer().getJavaCompletions(); // Commented out due to missing class
+    public CodeCompletionHelper(String filePath, CodeEditor codeEditor) {
+        file = new File(filePath);
+        MyIndexer indexer = Editor.getCurrentEditor().getIndexer();
+        if (indexer != null) {
+            completionProvider = indexer.getCompletionProvider();
+        }
+
         codeEditor.subscribeEvent(SelectionChangeEvent.class, this);
 
-        Project project = new Project(Editor.getCurrentEditor().getProject().getPath());
         editor = codeEditor;
-        try {
-            // completions.getFileManager().openFileForSnapshot(getURI(file),FileUtil.readFile(file)); // Commented out due to missing class
-            if (Editor.getCurrentEditor() != null) {
-                for (Actor actor : Editor.getCurrentEditor().getLibgdxEditor().getActors()) {
-                    if (actor instanceof Image && actor instanceof EditorItem) {
-                        String name = ((EditorItem) actor).getPropertySet().getString("name");
-                        //TODO : ...
-                    }
-                }
-            }
-        } catch (Exception exception) {
-        }
     }
 
     public void add(String keyword, String type) {
@@ -100,53 +94,6 @@ public class CodeCompletionHelper implements EventReceiver<SelectionChangeEvent>
 
     public static URI getURI(String file) {
         return URI.create("file://" + file);
-    }
-
-    /**
-     * فحص ما إذا كان يجب عرض الإكمال التلقائي في السياق الحالي
-     */
-    private boolean shouldShowCompletion(ContentReference contentReference, CharPosition charPosition) {
-        if (charPosition.column == 0) {
-            return false; // لا تعرض في بداية السطر
-        }
-
-        String line = contentReference.getLine(charPosition.line).toString();
-        if (charPosition.column > line.length()) {
-            return false;
-        }
-
-        // احصل على الحرف قبل المؤشر
-        char prevChar = line.charAt(charPosition.column - 1);
-
-        // لا تعرض بعد المسافة أو الفاصلة المنقوطة
-        if (prevChar == ' ' || prevChar == ';' || prevChar == '{' || prevChar == '}') {
-            return false;
-        }
-
-        // لا تعرض داخل التعليقات
-        String beforeCursor = line.substring(0, charPosition.column);
-        if (beforeCursor.trim().startsWith("//") || beforeCursor.contains("/*")) {
-            return false;
-        }
-
-        // لا تعرض داخل النصوص (strings)
-        int quoteCount = 0;
-        for (int i = 0; i < charPosition.column; i++) {
-            if (line.charAt(i) == '"' && (i == 0 || line.charAt(i - 1) != '\\')) {
-                quoteCount++;
-            }
-        }
-        if (quoteCount % 2 != 0) {
-            return false; // داخل نص
-        }
-
-        // اعرض فقط بعد . أو إذا كان يكتب identifier
-        return prevChar == '.' || MyCharacter.isJavaIdentifierPart(prevChar);
-    }
-
-    @Override
-    public void onReceive(SelectionChangeEvent event, Unsubscribe unsubscribe) {
-        // validation logic
     }
 
     /**
@@ -168,89 +115,112 @@ public class CodeCompletionHelper implements EventReceiver<SelectionChangeEvent>
     }
 
     public void requireAutoComplete(ContentReference contentReference, CharPosition charPosition, CompletionPublisher completionPublisher) {
-        // Stub
+        try {
+            if (completionProvider == null) {
+                MyIndexer indexer = Editor.getCurrentEditor().getIndexer();
+                if (indexer != null) {
+                    completionProvider = indexer.getCompletionProvider();
+                }
+                if (completionProvider == null) {
+                    return;
+                }
+            }
+
+            String prefix = getCurrentPrefix(contentReference, charPosition);
+
+            MyIndexer indexer = Editor.getCurrentEditor().getIndexer();
+            com.tyron.builder.project.Project project = indexer != null ? indexer.getProject() : null;
+
+            if (project == null) {
+                return;
+            }
+
+            Module module = project.getMainModule();
+
+            CompletionParameters params = CompletionParameters.builder()
+                    .setProject(project)
+                    .setModule(module)
+                    .setFile(file)
+                    .setContents(editor.getText().toString())
+                    .setLine(charPosition.line)
+                    .setColumn(charPosition.column)
+                    .setPrefix(prefix) // Optional, provider might calculat it
+                    .setIndex(charPosition.index)
+                    .build();
+
+            CompletionList result = completionProvider.complete(params);
+            List<CompletionItem> candidates = result.items;
+
+            items.clear();
+
+            for (CompletionItem candidate : candidates) {
+                items.add(getCompletion(candidate.label, "Java", prefix, candidate.iconKind));
+            }
+
+            // Add keywords from KeywordsHolder
+            for (KeywordsHolder holder : keywords) {
+                for (String keyword : holder.keywords) {
+                    if (keyword.startsWith(prefix)) {
+                        items.add(getCompletion(keyword, holder.type, prefix, DrawableKind.Keyword));
+                    }
+                }
+            }
+
+            // completionPublisher.setComparator(Comparators.byRelevance());
+            // completionPublisher.publish(new ArrayList<>(items)); // Disabled pending signature fix
+        } catch (Exception e) {
+            Log.e("CodeCompletionHelper", "Error getting completions", e);
+        }
     }
 
-    /*
-	// Commented out due to missing com.tyron.javacompletion classes
-	private CompletionItemKind getKind(CompletionCandidate.Kind candKind){
-		CompletionItemKind kind;
-		switch (candKind) {
-			case CLASS:
-				kind = CompletionItemKind.Class;
-				break;
-			case INTERFACE:
-				kind = CompletionItemKind.Interface;
-				break;
-			case ENUM:
-				kind = CompletionItemKind.Enum;
-				break;
-			case METHOD:
-				kind = CompletionItemKind.Method;
-				break;
-			case FIELD:
-				kind = CompletionItemKind.Field;
-				break;
-			case VARIABLE:
-				kind = CompletionItemKind.Variable;
-				break;
-			case PACKAGE:
-				kind = CompletionItemKind.Module;
-				break;
-			case KEYWORD:
-				kind = CompletionItemKind.Keyword;
-				break;
-			default:
-				kind = CompletionItemKind.Text;
-				break;
-		}
-		return kind;
-	}
-	
-	private boolean checkAggressive(FuzzyScore fuzzyScore,String word,String keyword){
-		if(keyword.toLowerCase().startsWith(word.toLowerCase())) return true;
-		return (fuzzyScore!=null&&fuzzyScore.getScore() < -20);
-	}
-	
-	private class Checker implements CompletionHelper.PrefixChecker {
-		@Override
-		public boolean check(char c) {
-			return MyCharacter.isJavaIdentifierPart(c);
-		}
-	}
-	
-	private CompletionItem getCompletion(String keyword,String type,String prefix,CompletionCandidate.Kind kind){
-		CompletionItem completionItem = new JavaCompletionItem(keyword,type,prefix,keyword);
-		if(drawablesMap.containsKey(keyword)){
-			return completionItem.icon(drawablesMap.get(keyword));
-		}
-		return completionItem.kind(kind==null?CompletionItemKind.Keyword:getKind(kind));
-	}
-	
-	private class KeywordsHolder {
-		public final String type;
-		public final ArrayList<String> keywords;
-		public KeywordsHolder(String tp,ArrayList<String> ks){
-			type = tp;
-			keywords = ks;
-		}
-	}
-	
-	@Override
-	public void onReceive(SelectionChangeEvent arg0, Unsubscribe arg1) {
-		// حدّث المحتوى بشكل async لتجنب التأخير
-		new Thread(() -> {
-			try {
-				String content = editor.getText().toString();
-				if (!content.equals(lastContent)) {
-					// completions.updateFileContent(path, content); // Commented out due to missing class
-					lastContent = content;
-					lastUpdateTime = System.currentTimeMillis();
-				}
-			} catch (Exception e) {
-				// Ignore errors during background update
-			}
-		}).start();
-	}
-     */
+    private CompletionItemKind getKind(DrawableKind candKind) {
+        CompletionItemKind kind;
+        if (candKind == null) {
+            return CompletionItemKind.Text;
+        }
+        switch (candKind) {
+            case Class:
+                kind = CompletionItemKind.Class;
+                break;
+            case Interface:
+                kind = CompletionItemKind.Interface;
+                break;
+            case Method:
+                kind = CompletionItemKind.Method;
+                break;
+            case Field:
+                kind = CompletionItemKind.Field;
+                break;
+            case LocalVariable:
+                kind = CompletionItemKind.Variable;
+                break;
+            case Package:
+                kind = CompletionItemKind.Module;
+                break;
+            case Keyword:
+                kind = CompletionItemKind.Keyword;
+                break;
+            case Snippet:
+                kind = CompletionItemKind.Snippet;
+                break;
+            default:
+                kind = CompletionItemKind.Text;
+                break;
+        }
+        return kind;
+    }
+
+    private io.github.rosemoe.sora.lang.completion.CompletionItem getCompletion(String keyword, String type, String prefix, DrawableKind kind) {
+        io.github.rosemoe.sora.lang.completion.SimpleCompletionItem completionItem = new SimpleCompletionItem(keyword, type, prefix.length(), keyword);
+        completionItem.kind(kind == null ? CompletionItemKind.Keyword : getKind(kind));
+
+        if (drawablesMap.containsKey(keyword)) {
+            // completionItem.icon(drawablesMap.get(keyword));
+        }
+        return completionItem;
+    }
+
+    @Override
+    public void onReceive(SelectionChangeEvent arg0, Unsubscribe arg1) {
+    }
 }

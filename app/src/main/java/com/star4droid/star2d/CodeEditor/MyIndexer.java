@@ -5,81 +5,56 @@ import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
-import com.google.common.collect.ImmutableMap;
 import com.star4droid.star2d.Helpers.FileUtil;
 import com.star4droid.star2d.Items.Editor;
 import com.star4droid.star2d.Utils;
 import com.star4droid.star2d.Helpers.EngineSettings;
-// import com.tyron.javacompletion.JavaCompletions;
-// import com.tyron.javacompletion.options.JavaCompletionOptionsImpl;
-// import com.tyron.javacompletion.tool.Indexer;
+import com.tyron.builder.project.Project;
+import com.tyron.builder.project.api.JavaModule;
+import com.tyron.completion.java.JavaCompletionProvider;
 import java.io.File;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
-import java.util.function.Consumer;
-import java.util.logging.Level;
-import java.util.stream.Collectors;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
-/*
-import com.tyron.javacompletion.file.FileManager;
-import com.tyron.javacompletion.file.PathUtils;
-import com.tyron.javacompletion.file.SimpleFileManager;
-import com.tyron.javacompletion.model.FileScope;
-import com.tyron.javacompletion.model.Module;
-import com.tyron.javacompletion.options.IndexOptions;
-import com.tyron.javacompletion.parser.AstScanner;
-import com.tyron.javacompletion.parser.ParserContext;
-import com.tyron.javacompletion.parser.classfile.ClassModuleBuilder;
-import com.tyron.javacompletion.project.Project;
-import com.tyron.javacompletion.project.SimpleModuleManager;
-import com.tyron.javacompletion.storage.IndexStore;
- */
 public class MyIndexer {
 
-    /* extends Indexer */
     private int isIndexing = 0;
     private String[] indexes;
     private Editor editor;
-    // private JavaCompletions javaCompletions;
+    private JavaCompletionProvider javaCompletionProvider;
+    private Project project;
     public String editorProjectPath;
     public static MyIndexer lastIndexer;
+    private final ExecutorService paddingService = Executors.newSingleThreadExecutor();
 
     public MyIndexer() {
         editor = Editor.getCurrentEditor();
-        /*
-		javaCompletions = new JavaCompletions(){
-			@Override
-			public synchronized void updateFileContent(Path path,String str){
-				try {
-					super.updateFileContent(path,str);
-				} catch(IllegalStateException ex){}
-			}
-		};
-         */
+        // Use the path from the Editor's project
         editorProjectPath = editor.getProject().getPath();
+
+        javaCompletionProvider = new JavaCompletionProvider();
+
         if (lastIndexer != null) {
             lastIndexer.shutdown();
         }
         lastIndexer = this;
     }
 
-    public Object getJavaCompletions() {
-        return null;
+    public JavaCompletionProvider getCompletionProvider() {
+        return javaCompletionProvider;
+    }
+
+    public Project getProject() {
+        return project;
     }
 
     public boolean isIndexing() {
         return isIndexing > 0;
     }
 
-    //check if the user open the same last project
     public static boolean isIndexerMatch(String projectPath) {
         try {
             return lastIndexer != null && Uri.parse(projectPath).getLastPathSegment().toLowerCase().equals(Uri.parse(lastIndexer.editorProjectPath).getLastPathSegment());
@@ -88,9 +63,8 @@ public class MyIndexer {
         }
     }
 
-    // private final ParserContext parserContext = new ParserContext();
     public MyIndexer indexFiles(Editor editor) {
-        return this;
+        return indexFiles(editor, editor.getContext());
     }
 
     public String[] getIndexsFiles() {
@@ -98,103 +72,103 @@ public class MyIndexer {
     }
 
     public MyIndexer indexFiles(Editor editor, Context context) {
+        if (isIndexing > 0) {
+            return this;
+        }
+        isIndexing++;
+
+        paddingService.execute(() -> {
+            String data = FileUtil.getPackageDataDir(editor.getContext());
+            try {
+                // Ensure Project is initialized
+                if (project == null) {
+                    project = new Project(new File(editorProjectPath));
+                }
+
+                JavaModule mainModule = (JavaModule) project.getMainModule();
+
+                String idx2 = data + "/bin/index2.json";
+                String idx3 = data + "/bin/index3.json";
+
+                // 1. Handle addition.jar (Game Libraries)
+                File additionJar = new File(data + "/bin/addition.jar");
+                if ((!FileUtil.isExistFile(idx2)) || new java.io.File(idx2).length() == 0 || !EngineSettings.get().getString("JAR_FILE_VERSION", "").equals("2.0") || !additionJar.exists()) {
+                    FileUtil.writeFile(idx2, "");
+                    // Extract assets
+                    Utils.extractAssetFile(editor.getContext(), "java/game.zip", additionJar.getAbsolutePath());
+                    EngineSettings.set("JAR_FILE_VERSION", "2.0");
+                }
+
+                if (additionJar.exists()) {
+                    mainModule.addLibrary(additionJar);
+                }
+
+                // 2. Handle cp.jar (Classpath / Android.jar)
+                File cpJar = new File(data + "/bin/cp.jar");
+                if (!cpJar.exists()) {
+                    try {
+                        Utils.extractAssetFile(editor.getContext(), "bin/cp.jar", cpJar.getAbsolutePath());
+                    } catch (Exception e) {
+                        try {
+                            Utils.extractAssetFile(editor.getContext(), "cp.jar", cpJar.getAbsolutePath());
+                        } catch (Exception ex) {
+                        }
+                    }
+                }
+
+                if (cpJar.exists()) {
+                    mainModule.addLibrary(cpJar);
+                }
+
+                // 3. User Source Files
+                String javaSourcePath = editor.getProject().get("java");
+                File srcDir = new File(javaSourcePath);
+                if (srcDir.exists()) {
+                    scanAndAddFiles(srcDir, mainModule);
+                }
+
+                indexes = new String[]{idx2, idx3};
+
+            } catch (Exception exception) {
+                FileUtil.writeFile(data + "/error.txt", "Failed To Index Files : \n" + Log.getStackTraceString(exception));
+                Log.e("MyIndexer", "Indexing error", exception);
+            } finally {
+                isIndexing--;
+            }
+        });
+
         return this;
     }
 
-    public void getClasses(ArrayList<String> arrayList, String path) {
-        ArrayList<String> list = new ArrayList<>();
-        FileUtil.listDir(path, list);
-        for (String file : list) {
-            if (FileUtil.isDirectory(file)) {
-                getClasses(arrayList, file); 
-            }else if (file.endsWith(".class") || file.endsWith(".java")) {
-                arrayList.add(file);
+    private void scanAndAddFiles(File dir, JavaModule module) {
+        if (!dir.exists()) {
+            return;
+        }
+        File[] files = dir.listFiles();
+        if (files == null) {
+            return;
+        }
+        for (File f : files) {
+            if (f.isDirectory()) {
+                scanAndAddFiles(f, module);
+            } else {
+                if (f.getName().endsWith(".java")) {
+                    module.addJavaFile(f);
+                } else if (f.getName().endsWith(".jar")) {
+                    module.addLibrary(f);
+                }
             }
         }
     }
-    // ArrayList<SimpleModuleManager> modelsArray = new ArrayList<>();
-    // ArrayList<FileManager> fileManagerArrayList = new ArrayList<>();
 
     public void run(List<String> a, String b, List<String> c, List<String> d, String e) {
     }
 
-    /*
-	public void run(
-	List<String> inputPaths,
-	String outputPath,
-	List<String> ignorePaths,
-	List<String> dependIndexFiles,
-	String root) {
-		Path rootPath = new java.io.File(root).toPath();
-		// Do not initialize the project. We handle the files on our own.
-		SimpleModuleManager moduleManager = new SimpleModuleManager();
-		modelsArray.add(moduleManager);
-		Project project = new Project(moduleManager, moduleManager.getFileManager());
-		for (String inputPath : inputPaths) {
-			Path path = Paths.get(inputPath);
-			// Do not use module manager's file manager because we need to setup root
-			// path and ignore paths per directory.
-			FileManager fileManager = new SimpleFileManager(path, ignorePaths);
-			fileManagerArrayList.add(fileManager);
-			ClassModuleBuilder classModuleBuilder = new ClassModuleBuilder(moduleManager.getModule());
-			ImmutableMap<String, Consumer<Path>> handlers =
-			ImmutableMap.<String, Consumer<Path>>of(
-			".class",
-			classModuleBuilder::processClassFile,
-			".java",
-			subpath ->{addJavaFile(subpath, moduleManager.getModule(), fileManager);});
-			if (Files.isDirectory(path)) {
-				System.out.println("Indexing directory: " + inputPath);
-				PathUtils.walkDirectory(
-				path,
-				handlers,
-				// ignorePredicate=
- fileManager::shouldIgnorePath);
-				} else if (inputPath.endsWith(".jar") || inputPath.endsWith(".srcjar")) {
-				System.out.println("Indexing JAR file: " + inputPath);
-				try {
-					PathUtils.walkDirectory(rootPath
-					//PathUtils.getRootPathForJarFile(path)
-,
-					handlers,
-					// ignorePredicate=
- subpath -> false);
-					} catch (Exception t) {
-					throw new RuntimeException(t);
-				}
-			}
-		}
-		for (String dependIndexFile : dependIndexFiles) {
-			project.loadTypeIndexFile(dependIndexFile);
-		}
-		System.out.println("Writing index file to " + outputPath);
-		new IndexStore().writeModuleToFile(moduleManager.getModule(), Paths.get(outputPath));
-	}
-	
-	private void addJavaFile(Path path, Module module, FileManager fileManager) {
-		Optional<CharSequence> content = fileManager.getFileContent(path);
-		if (content.isPresent()) {
-			FileScope fileScope =
-			new AstScanner(IndexOptions.NON_PRIVATE_BUILDER.build())
-			.startScan(
-			parserContext.parse(path.toString(), content.get()),
-			path.toString(),
-			content.get());
-			module.addOrReplaceFileScope(fileScope);
-		}
-	}
-     */
-
     public void shutdown() {
-        /*
-	    try {
-    		javaCompletions.shutdown();
-    		for(SimpleModuleManager manager:modelsArray)
-    			manager.getFileManager().shutdown();
-    		for(FileManager fileManager:fileManagerArrayList)
-    			fileManager.shutdown();
-		} catch(Exception ex){}
-         */
         lastIndexer = null;
+        if (paddingService != null) {
+            paddingService.shutdown();
+        }
+        // project = null;
     }
 }

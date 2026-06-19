@@ -21,7 +21,7 @@ import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import com.star4droid.star2d.Helpers.CodeGenerator;
 import com.star4droid.star2d.Helpers.CompileThread;
 import com.star4droid.star2d.Helpers.FilesChangeDetector;
-import com.star4droid.star2d.Helpers.Project;
+import com.star4droid.star2d.Helpers.editor.Project;
 import com.star4droid.star2d.Helpers.PropertySet;
 import com.star4droid.star2d.editor.LibgdxEditor;
 import com.star4droid.star2d.editor.TestApp;
@@ -107,6 +107,17 @@ public class EditorControlOverlay extends FrameLayout {
     }
 
     public void setOnReady(Runnable r) { this.onReady = r; }
+
+    public void setApp(TestApp testApp) {
+        this.app = testApp;
+        if (testApp != null) {
+            controlLayer = testApp.getControlLayer();
+            appReady = true;
+            buildToolbars();
+            setupSideButtons();
+            if (onReady != null) onReady.run();
+        }
+    }
 
     private LibgdxEditor getEditor() {
         return app != null ? app.getEditor() : null;

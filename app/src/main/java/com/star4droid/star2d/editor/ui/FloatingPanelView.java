@@ -14,6 +14,8 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.star4droid.star2d.evo.R;
+
 public class FloatingPanelView extends FrameLayout {
 
     private final TextView titleText;

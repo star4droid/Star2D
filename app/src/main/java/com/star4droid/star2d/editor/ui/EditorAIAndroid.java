@@ -594,7 +594,12 @@ public class EditorAIAndroid extends FrameLayout {
         editText.setMinLines(Math.min(lines + 2, 30));
         editText.setMaxLines(Math.min(lines + 2, 40));
 
-        builder.setView(editText, 24, 16, 24, 16);
+        LinearLayout layout = new LinearLayout(getContext());
+        layout.setPadding(24, 16, 24, 16);
+        layout.addView(editText, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT));
+        builder.setView(layout);
         builder.setPositiveButton("Apply Script", (dialog, which) -> {
             applyCode(editText.getText().toString(), lang);
         });

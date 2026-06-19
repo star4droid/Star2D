@@ -35,6 +35,7 @@ import com.star4droid.star2d.Helpers.CompileThread;
 import com.star4droid.star2d.Helpers.FilesChangeDetector;
 import com.star4droid.star2d.Helpers.Project;
 import com.star4droid.star2d.Helpers.PropertySet;
+import com.star4droid.star2d.Items.Editor;
 import com.star4droid.star2d.editor.TestApp;
 import com.star4droid.star2d.editor.Utils;
 import com.star4droid.star2d.editor.items.*;
@@ -209,7 +210,12 @@ public class ControlLayer extends Table {
         VisImageButton aiBtn = new VisImageButton(drawable("gemini.png"));
         aiBtn.setName("AI");
         btnsTable.add(aiBtn).size(iconSize+2).padTop(2);
-        addListenerToWindow(editorAI, aiBtn);
+        aiBtn.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                Editor.toggleAI();
+            }
+        });
 		
 		/*
 		bodiesList.setVisible(false);

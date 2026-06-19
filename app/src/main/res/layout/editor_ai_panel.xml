@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:background="#E0101922">
+
+        <!-- Resize handle at top for dragging -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="24dp"
+            android:background="#FF1A2332"
+            android:id="@+id/drag_handle" />
+
+        <!-- Header -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="12dp"
+            android:background="#FF1A2332"
+            android:elevation="4dp">
+
+            <ImageButton
+                android:id="@+id/history_btn"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@drawable/history"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:scaleType="centerInside"
+                android:contentDescription="History" />
+
+            <ImageView
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:layout_marginStart="8dp"
+                android:src="@drawable/gemini"
+                android:scaleType="fitCenter"
+                android:contentDescription="AI" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Star2D AI"
+                android:textColor="#FFFFFFFF"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:layout_marginHorizontal="8dp" />
+
+            <Spinner
+                android:id="@+id/model_spinner"
+                android:layout_width="140dp"
+                android:layout_height="36dp"
+                android:background="@drawable/field_background"
+                android:popupBackground="#FF2D3A4A"
+                android:gravity="center"
+                android:layout_marginEnd="4dp" />
+
+            <ImageButton
+                android:id="@+id/new_chat_btn"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:src="@drawable/add"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:scaleType="centerInside"
+                android:contentDescription="New Chat" />
+
+            <ImageButton
+                android:id="@+id/settings_btn"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:src="@android:drawable/ic_menu_manage"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:scaleType="centerInside"
+                android:contentDescription="Settings" />
+
+            <ImageButton
+                android:id="@+id/close_btn"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:src="@android:drawable/ic_menu_close_clear_cancel"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:scaleType="centerInside"
+                android:contentDescription="Close" />
+
+        </LinearLayout>
+
+        <!-- Chat messages area -->
+        <ScrollView
+            android:id="@+id/chat_scroll"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:padding="8dp"
+            android:scrollbars="vertical"
+            android:fadeScrollbars="false">
+
+            <LinearLayout
+                android:id="@+id/chat_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+
+        </ScrollView>
+
+        <!-- Input area -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:padding="8dp"
+            android:background="#FF1A2332"
+            android:elevation="4dp">
+
+            <EditText
+                android:id="@+id/input_field"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:minHeight="48dp"
+                android:maxHeight="120dp"
+                android:hint="Ask the AI to create scripts or items..."
+                android:textColor="#FFFFFFFF"
+                android:textColorHint="#80FFFFFF"
+                android:background="@drawable/field_background"
+                android:gravity="top|start"
+                android:padding="12dp"
+                android:inputType="textMultiLine"
+                android:maxLines="4"
+                android:textSize="14sp" />
+
+            <ImageButton
+                android:id="@+id/send_btn"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="8dp"
+                android:src="@android:drawable/ic_menu_send"
+                android:background="@drawable/button_gradient"
+                android:scaleType="centerInside"
+                android:contentDescription="Send"
+                android:tint="#FFFFFFFF" />
+
+        </LinearLayout>
+
+        <!-- Resize handle at bottom -->
+        <View
+            android:id="@+id/resize_handle"
+            android:layout_width="match_parent"
+            android:layout_height="16dp"
+            android:background="#FF1A2332" />
+
+    </LinearLayout>
+
+</merge>

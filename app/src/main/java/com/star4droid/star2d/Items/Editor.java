@@ -3,6 +3,7 @@ package com.star4droid.star2d.Items;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.ViewGroup;
+import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
@@ -15,11 +16,13 @@ import com.star4droid.star2d.Helpers.PropertySet;
 import com.star4droid.star2d.editor.LibgdxEditor;
 import com.star4droid.star2d.editor.TestApp;
 import com.star4droid.star2d.editor.items.EditorItem;
+import com.star4droid.star2d.editor.ui.EditorAIAndroid;
 import com.star4droid.template.Items.StageImp;
 import android.util.AttributeSet;
 import android.content.Context;
 import android.widget.FrameLayout;
 import java.util.ArrayList;
+import com.star4droid.star2d.evo.R;
 import com.star4droid.star2d.CodeEditor.MyIndexer;
 
 public class Editor extends FrameLayout {
@@ -146,6 +149,24 @@ public class Editor extends FrameLayout {
 	
 	public static Editor getCurrentEditor(){
 		return currentEditor;
+	}
+
+	public static void toggleAI() {
+		Editor editor = currentEditor;
+		if (editor == null) return;
+		new Handler(Looper.getMainLooper()).post(() -> {
+			EditorAIAndroid aiPanel = editor.getRootView().findViewById(R.id.ai_panel);
+			if (aiPanel != null) {
+				aiPanel.toggle();
+			}
+		});
+	}
+
+	public static boolean isAIVisible() {
+		Editor editor = currentEditor;
+		if (editor == null) return false;
+		EditorAIAndroid aiPanel = editor.getRootView().findViewById(R.id.ai_panel);
+		return aiPanel != null && aiPanel.isPanelVisible();
 	}
 		
 	boolean propsSet = false;

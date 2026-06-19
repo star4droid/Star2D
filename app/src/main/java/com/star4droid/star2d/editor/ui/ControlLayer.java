@@ -78,6 +78,13 @@ public class ControlLayer extends Table {
 	CustomColliderEditor customColliderEditor;
 	EditorAI editorAI;
 	public TabsItem tabsItem;
+	private EditorControlOverlay overlayRef;
+	private android.os.Handler uiHandler;
+	
+	public void setEditorControlOverlay(EditorControlOverlay overlay) {
+		this.overlayRef = overlay;
+		this.uiHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+	}
 	VisImageButton gridBtn,backBtn,sceneActionsBtn,moveBtn,rotateBtn,lockBtn,scaleBtn,undoBtn,redoBtn;
 
     public ControlLayer(TestApp testApp) {
@@ -296,7 +303,7 @@ public class ControlLayer extends Table {
 							app.openSceneInNewEditor("scene1");
 							//updateScenes();
 							bodiesList.update();
-							tabsItem.refresh();
+							refreshTabs();
 						}
 					}).show(getStage());
 				} else app.toast(getTrans("deleteMainScene"));
@@ -653,6 +660,9 @@ public class ControlLayer extends Table {
 	
 	public void setIndexing(boolean b){
 		indexingLabel.setVisible(b);
+		if (overlayRef != null && uiHandler != null) {
+			uiHandler.post(() -> overlayRef.setIndexing(b));
+		}
 	}
 	
 	public CustomColliderEditor getCustomColliderEditor(){
@@ -703,7 +713,7 @@ public class ControlLayer extends Table {
 			} else if(sceneAction == SceneAction.DELETE){
 				app.openSceneInNewEditor("scene1");
 			}
-			tabsItem.refresh();
+			refreshTabs();
 			//updateScenes();
 		} else {
 			app.toast("Failed to create the path..");
@@ -726,12 +736,31 @@ public class ControlLayer extends Table {
 	    return varsItem;
 	}
 	
+	public void refreshTabs() {
+		tabsItem.refresh();
+		if (overlayRef != null && uiHandler != null) {
+			uiHandler.post(() -> overlayRef.updateSceneTabs());
+		}
+	}
+	
+	public void notifyAppReady() {
+		if (overlayRef != null && uiHandler != null) {
+			uiHandler.post(() -> {
+				overlayRef.setApp(app);
+				overlayRef.updateSceneTabs();
+			});
+		}
+	}
+	
 	public void updateUndoRedo(){
 		undoBtn.setDisabled(!app.getEditor().canUndo());
 		undoBtn.setColor(app.getEditor().canUndo()?Color.YELLOW:Color.WHITE);
 		
 		redoBtn.setDisabled(!app.getEditor().canRedo());
 		redoBtn.setColor(app.getEditor().canRedo()?Color.YELLOW:Color.WHITE);
+		if (overlayRef != null && uiHandler != null) {
+			uiHandler.post(() -> overlayRef.updateUndoRedo());
+		}
 	}
 	
 	public void bodySelected(){
@@ -744,6 +773,9 @@ public class ControlLayer extends Table {
 			propertiesItem.refresh();
 		} catch(Exception e){
 			Gdx.files.external("logs/app_logs.txt").writeString("error on control layer code for refreshing : "+e.toString()+"\n",true);
+		}
+		if (overlayRef != null && uiHandler != null) {
+			uiHandler.post(() -> overlayRef.bodySelected());
 		}
 	}
 	
@@ -912,6 +944,14 @@ public class ControlLayer extends Table {
 	
 	public PropertiesItem getPropertiesItem(){
 		return propertiesItem;
+	}
+	
+	public EventsItem getEventsItem() {
+		return eventsItem;
+	}
+	
+	public EditorAI getEditorAI() {
+		return editorAI;
 	}
 
     public VisImageButton addIconToTop(String name, Drawable drawable, IconListener iconListener) {

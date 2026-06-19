@@ -1,27 +1,162 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-     xmlns:android="http://schemas.android.com/apk/res/android"
-     xmlns:app="http://schemas.android.com/apk/res-auto"
-     xmlns:tools="http://schemas.android.com/tools"
-     android:layout_height="match_parent"
-     android:layout_width="match_parent"
-     android:orientation="vertical"
-     android:fitsSystemWindows="true"
-     android:clipToPadding="true">
-    <LinearLayout
-         android:layout_height="match_parent"
-         android:layout_width="match_parent"
-         android:orientation="vertical">
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+    android:clipChildren="false"
+    android:clipToPadding="false">
+
+    <com.star4droid.star2d.Items.Editor
+        android:id="@+id/editor"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <com.star4droid.star2d.editor.ui.EditorControlOverlay
+        android:id="@+id/editor_overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipChildren="false"
+        android:clickable="false">
+
+        <!-- Top Toolbar -->
+        <ScrollView
+            android:id="@+id/top_scroll"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top"
+            android:clipToPadding="false"
+            android:paddingHorizontal="8dp"
+            android:paddingTop="8dp"
+            android:scrollbars="none"
+            android:fadeScrollbars="true"
+            android:overScrollMode="never"
+            android:clickable="true">
+
+            <LinearLayout
+                android:id="@+id/top_container"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical" />
+
+        </ScrollView>
+
+        <!-- Right Side Buttons -->
+        <LinearLayout
+            android:id="@+id/side_buttons"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical|end"
+            android:orientation="vertical"
+            android:paddingEnd="6dp"
+            android:paddingVertical="4dp"
+            android:clickable="true">
+
+            <ImageButton
+                android:id="@+id/btn_bodies"
+                style="@style/EditorSideButton"
+                android:src="@drawable/ic_layer"
+                android:contentDescription="Bodies-List" />
+
+            <ImageButton
+                android:id="@+id/btn_properties"
+                style="@style/EditorSideButton"
+                android:src="@drawable/properties"
+                android:contentDescription="Properties" />
+
+            <ImageButton
+                android:id="@+id/btn_joints"
+                style="@style/EditorSideButton"
+                android:src="@drawable/ic_link"
+                android:contentDescription="Joints" />
+
+            <ImageButton
+                android:id="@+id/btn_events"
+                style="@style/EditorSideButton"
+                android:src="@drawable/pointer_icon"
+                android:contentDescription="Events" />
+
+            <ImageButton
+                android:id="@+id/btn_variables"
+                style="@style/EditorSideButton"
+                android:src="@drawable/ic_x"
+                android:contentDescription="Variables" />
+
+            <ImageButton
+                android:id="@+id/btn_ai"
+                style="@style/EditorSideButton"
+                android:src="@drawable/ic_gemini"
+                android:contentDescription="AI" />
+
+        </LinearLayout>
+
+        <!-- Bottom Toolbar -->
+        <ScrollView
+            android:id="@+id/bottom_scroll"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:clipToPadding="false"
+            android:paddingHorizontal="8dp"
+            android:paddingBottom="8dp"
+            android:scrollbars="none"
+            android:fadeScrollbars="true"
+            android:overScrollMode="never"
+            android:clickable="true">
+
+            <LinearLayout
+                android:id="@+id/bottom_container"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical" />
+
+        </ScrollView>
+
+        <!-- Scene Tabs Bar -->
+        <HorizontalScrollView
+            android:id="@+id/scene_tabs_scroll"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top"
+            android:layout_marginTop="56dp"
+            android:clickable="true"
+            android:scrollbars="none"
+            android:clipToPadding="false"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:background="#4D000000">
+
+            <LinearLayout
+                android:id="@+id/scene_tabs_container"
+                android:layout_width="wrap_content"
+                android:layout_height="44dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical" />
+
+        </HorizontalScrollView>
+
+        <!-- Floating Panels Container -->
         <FrameLayout
-             android:layout_height="match_parent"
-             android:layout_width="match_parent"
-             android:orientation="horizontal"
-             android:layout_weight="1"
-             android:id="@+id/frame">
-            <com.star4droid.star2d.Items.Editor
-                 android:layout_height="match_parent"
-                 android:layout_width="match_parent"
-                 android:id="@+id/editor" />
-        </FrameLayout>
-    </LinearLayout>
-</LinearLayout>
+            android:id="@+id/floating_panels_container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clickable="false"
+            android:visibility="gone" />
+
+        <!-- Indexing Label -->
+        <TextView
+            android:id="@+id/indexing_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|center_horizontal"
+            android:layout_marginTop="54dp"
+            android:text="@string/indexing"
+            android:textColor="#FFB781"
+            android:textSize="12sp"
+            android:visibility="gone" />
+
+    </com.star4droid.star2d.editor.ui.EditorControlOverlay>
+
+</FrameLayout>

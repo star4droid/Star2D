@@ -33,7 +33,16 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="35dp"
-                    android:background="@drawable/bg_prop_input" />
+                    android:id="@+id/main_controls"
+                    android:gravity="center"
+                    android:background="@drawable/bg_prop_input" >
+                    <ImageView
+                        android:layout_width="30dp"
+                        android:layout_height="match_parent"
+                        android:padding="5dp"
+                        android:tint="@color/white"
+                        android:src="@drawable/save_icon" />
+                </LinearLayout>
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"

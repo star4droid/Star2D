@@ -207,9 +207,7 @@ public class EditorUI {
         animateSlideOut(bottomControls, 0, bottomControls.getHeight(), () -> {});
         animateSlideOut(leftPanel, -leftPanel.getWidth(), 0, () -> {});
         animateSlideOut(navigationRail, navigationRail.getWidth(), 0, () -> {});
-        animateSlideOut(rightPanel, rightPanel.getWidth(), 0, () -> {
-            editorRoot.setVisibility(View.GONE);
-        });
+        animateSlideOut(rightPanel, rightPanel.getWidth(), 0, () -> {});
         bottomFilesPanel.setVisibility(View.GONE);
         filesPanelVisible = false;
     }
@@ -228,7 +226,11 @@ public class EditorUI {
     }
 
     private void hideAll() {
-        editorRoot.setVisibility(View.GONE);
+        topToolbar.setVisibility(View.GONE);
+        bottomControls.setVisibility(View.GONE);
+        leftPanel.setVisibility(View.GONE);
+        rightPanel.setVisibility(View.GONE);
+        navigationRail.setVisibility(View.GONE);
     }
 
     // ─── Panel Animations ───

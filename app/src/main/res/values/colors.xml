@@ -72,4 +72,53 @@
     <color name="unselect_color">#FF000000</color>
     <color name="section_color">#222222</color>
     <color name="white">#FFFFFF</color>
+    <!-- ─── Property Panel Base ─── -->
+    <color name="prop_bg">#FF12151F</color>
+    <color name="prop_surface">#FF1C2030</color>
+    <color name="prop_surface_elevated">#FF222638</color>
+    <color name="prop_grey">#1B222B</color>
+
+    <!-- ─── Section Headers ─── -->
+    <color name="prop_section_bg">#FF1A1E2E</color>
+    <color name="prop_section_text">#FF8892A4</color>
+
+    <!-- ─── Input Fields ─── -->
+    <color name="prop_input_bg">#FF0D1018</color>
+    <color name="prop_input_border">#FF2A3050</color>
+    <color name="prop_input_border_focused">#FF00D4FF</color>
+    <color name="prop_input_text">#FFE8EDF5</color>
+    <color name="prop_input_hint">#FF4A5568</color>
+
+    <!-- ─── Labels ─── -->
+    <color name="prop_label">#FF8892A4</color>
+    <color name="prop_label_bright">#FFAAB4C8</color>
+
+    <!-- ─── Accent ─── -->
+    <color name="prop_accent_cyan">#FF00D4FF</color>
+    <color name="prop_accent_cyan_dim">#1A00D4FF</color>
+
+    <!-- ─── Checkbox ─── -->
+    <color name="prop_checkbox_checked_bg">#FF00D4FF</color>
+    <color name="prop_checkbox_unchecked_bg">#FF0D1018</color>
+    <color name="prop_checkbox_border">#FF2A3050</color>
+    <color name="prop_checkbox_tick">#FF12151F</color>
+
+    <!-- ─── Spinner / Dropdown ─── -->
+    <color name="prop_spinner_bg">#FF0D1018</color>
+    <color name="prop_spinner_border">#FF2A3050</color>
+    <color name="prop_spinner_arrow">#FF8892A4</color>
+    <color name="prop_spinner_text">#FFE8EDF5</color>
+
+    <!-- ─── Divider ─── -->
+    <color name="prop_divider">#FF252A3A</color>
+
+    <!-- ─── Button ─── -->
+    <color name="prop_btn_bg">#FF1C2030</color>
+    <color name="prop_btn_border">#FF2A3050</color>
+    <color name="prop_btn_text">#FFE8EDF5</color>
+    <color name="prop_btn_pressed_bg">#FF222638</color>
+    <color name="prop_btn_pressed_border">#FF00D4FF</color>
+
+    <!-- ─── Color Swatch ─── -->
+    <color name="prop_swatch_border">#FF2A3050</color>
 </resources>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="text_size_normal">10sp</dimen>
+    <dimen name="text_size_small">8sp</dimen>
+    <dimen name="value_width">50dp</dimen>
+    <dimen name="value_height">20dp</dimen>
+</resources>

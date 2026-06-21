@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    single_number.xml
+    ─────────────────
+    Fixed-width label (90dp) + one numeric EditText.
+    Matches: Rotation [ 0° ] · Z Index [ -10 ]
+-->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:paddingStart="12dp"
+    android:paddingEnd="12dp"
+    android:paddingTop="5dp"
+    android:paddingBottom="5dp"
+    android:minHeight="30dp">
+
+    <!-- Fixed-width label — same width on every row for alignment -->
+    <TextView
+        android:id="@+id/prop_label"
+        android:layout_width="@dimen/value_width"
+        android:layout_height="wrap_content"
+        android:text="Label"
+        android:textColor="@color/prop_label"
+        android:textSize="@dimen/text_size_small"
+        android:fontFamily="sans-serif" />
+
+    <!-- Numeric input -->
+    <EditText
+        android:id="@+id/prop_value"
+        android:layout_width="@dimen/value_width"
+        android:layout_height="@dimen/value_height"
+        android:background="@drawable/selector_prop_input"
+        android:paddingStart="10dp"
+        android:paddingEnd="10dp"
+        android:paddingTop="0dp"
+        android:paddingBottom="0dp"
+        android:gravity="center_vertical"
+        android:inputType="numberDecimal|numberSigned"
+        android:textColor="@color/prop_input_text"
+        android:textSize="@dimen/text_size_small"
+        android:fontFamily="monospace"
+        android:hint="0"
+        android:textColorHint="@color/prop_input_hint"
+        android:singleLine="true"
+        android:includeFontPadding="false" />
+
+</LinearLayout>

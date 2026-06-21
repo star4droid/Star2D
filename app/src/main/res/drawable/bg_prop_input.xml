@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Input field background — dark fill with subtle border, matches the
+     X/Y/W/H/Rotation/Scale/Z-Index number fields in the Properties panel -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+
+    <solid android:color="@color/prop_input_bg" />
+
+    <stroke
+        android:width="1dp"
+        android:color="@color/prop_input_border" />
+
+    <corners android:radius="3dp" />
+
+</shape>

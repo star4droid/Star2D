@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    checkbox.xml
+    ────────────
+    Fixed-width label (90dp) + CheckBox snug against it (no weight spacer).
+    Matches: Visible [✓]
+
+    The CheckBox sits immediately after the label — NOT pushed to the end.
+    Layout is wrap_content so it hugs the label, matching the screenshot.
+-->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:paddingStart="12dp"
+    android:paddingEnd="12dp"
+    android:minHeight="30dp">
+
+    <!-- Fixed-width label — same 90dp as every other row -->
+    <TextView
+        android:id="@+id/prop_label"
+        android:layout_width="@dimen/value_width"
+        android:layout_height="wrap_content"
+        android:text="Visible"
+        android:textColor="@color/prop_label"
+        android:textSize="@dimen/text_size_small"
+        android:fontFamily="sans-serif" />
+
+    <!--
+        CheckBox immediately after label — wrap_content width, no weight.
+        The button drawable handles checked=cyan / unchecked=dark visuals.
+        Text is empty; the label TextView above serves that role.
+    -->
+    <CheckBox
+        android:id="@+id/prop_checkbox"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:checked="true"
+        android:text=""
+        android:textSize="0sp"
+        android:minWidth="18dp"
+        android:minHeight="18dp"
+        android:padding="0dp" />
+
+</LinearLayout>

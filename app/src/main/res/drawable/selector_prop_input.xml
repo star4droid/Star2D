@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Set this as android:background on any EditText in the panel.
+     Cyan border appears automatically on focus. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_focused="true"  android:drawable="@drawable/bg_prop_input_focused" />
+    <item                               android:drawable="@drawable/bg_prop_input" />
+</selector>

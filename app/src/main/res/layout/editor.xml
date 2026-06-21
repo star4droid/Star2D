@@ -1,266 +1,880 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
-     xmlns:android="http://schemas.android.com/apk/res/android"
-     xmlns:app="http://schemas.android.com/apk/res-auto"
-     xmlns:tools="http://schemas.android.com/tools"
-     android:layout_height="match_parent"
-     android:layout_width="match_parent"
-     android:orientation="vertical"
-     android:fitsSystemWindows="true"
-     android:clipToPadding="true">
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_height="match_parent"
+    android:layout_width="match_parent"
+    android:orientation="vertical"
+    android:fitsSystemWindows="true"
+    android:clipToPadding="true"
+    android:background="#FF0D1018"
+    android:id="@+id/editor_root">
+
+    <!-- TOP TOOLBAR -->
     <LinearLayout
-         android:layout_height="match_parent"
-         android:layout_width="match_parent"
-         android:orientation="vertical">
-        <FrameLayout
-             android:layout_height="match_parent"
-             android:layout_width="match_parent"
-             android:orientation="horizontal"
-             android:layout_weight="1"
-             android:id="@+id/frame">
-            <com.star4droid.star2d.Items.Editor
-                 android:layout_height="match_parent"
-                 android:layout_width="match_parent"
-                 android:id="@+id/editor" >
+        android:id="@+id/top_toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="#FF12151F"
+        android:paddingStart="6dp"
+        android:paddingEnd="6dp"
+        android:elevation="4dp">
 
+        <!-- Back button -->
+        <ImageView
+            android:id="@+id/btn_back"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:padding="6dp"
+            android:background="@drawable/toolbar_btn_bg"
+            android:src="@drawable/back_arrow"
+            android:tint="#AAB4C8"
+            android:contentDescription="Back" />
 
-            </com.star4droid.star2d.Items.Editor>
+        <Space android:layout_width="4dp" android:layout_height="0dp" />
+
+        <!-- Rotate orientation -->
+        <ImageView
+            android:id="@+id/btn_rotate"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:padding="6dp"
+            android:background="@drawable/toolbar_btn_bg"
+            android:src="@drawable/screen_rotation"
+            android:tint="#AAB4C8"
+            android:contentDescription="Rotate" />
+
+        <Space android:layout_width="4dp" android:layout_height="0dp" />
+
+        <!-- Add item -->
+        <ImageView
+            android:id="@+id/btn_add_item"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:padding="6dp"
+            android:background="@drawable/toolbar_btn_bg"
+            android:src="@drawable/ic_add_black"
+            android:tint="#AAB4C8"
+            android:contentDescription="Add" />
+
+        <Space android:layout_width="4dp" android:layout_height="0dp" />
+
+        <!-- Scene actions -->
+        <ImageView
+            android:id="@+id/btn_scene_actions"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:padding="6dp"
+            android:background="@drawable/toolbar_btn_bg"
+            app:srcCompat="@drawable/ic_expand_more_black"
+            android:tint="#AAB4C8"
+            android:contentDescription="Scenes" />
+
+        <Space android:layout_width="4dp" android:layout_height="0dp" />
+
+        <!-- Save -->
+        <ImageView
+            android:id="@+id/btn_save"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:padding="6dp"
+            android:background="@drawable/toolbar_btn_bg"
+            android:src="@drawable/save_icon"
+            android:tint="#AAB4C8"
+            android:contentDescription="Save" />
+
+        <Space android:layout_width="4dp" android:layout_height="0dp" />
+
+        <!-- Files -->
+        <ImageView
+            android:id="@+id/btn_files"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:padding="6dp"
+            android:background="@drawable/toolbar_btn_bg"
+            android:src="@drawable/ic_folder_white"
+            android:tint="#AAB4C8"
+            android:contentDescription="Files" />
+
+        <Space android:layout_width="4dp" android:layout_height="0dp" />
+
+        <!-- Logs -->
+        <ImageView
+            android:id="@+id/btn_logs"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:padding="6dp"
+            android:background="@drawable/toolbar_btn_bg"
+            app:srcCompat="@drawable/ic_error_black"
+            android:tint="#AAB4C8"
+            android:contentDescription="Logs" />
+
+        <Space android:layout_width="4dp" android:layout_height="0dp" />
+
+        <!-- Scene color -->
+        <ImageView
+            android:id="@+id/btn_scene_color"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:padding="6dp"
+            android:background="@drawable/toolbar_btn_bg"
+            app:srcCompat="@drawable/color_pal"
+            android:tint="#AAB4C8"
+            android:contentDescription="Color" />
+
+        <Space android:layout_width="4dp" android:layout_height="0dp" />
+
+        <!-- Lock -->
+        <ImageView
+            android:id="@+id/btn_lock"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:padding="6dp"
+            android:background="@drawable/toolbar_btn_bg"
+            android:src="@drawable/unlock"
+            android:tint="#AAB4C8"
+            android:contentDescription="Lock" />
+
+        <Space android:layout_width="0dp" android:layout_height="0dp" android:layout_weight="1" />
+
+        <!-- Indexing label -->
+        <TextView
+            android:id="@+id/indexing_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Indexing..."
+            android:textColor="#FF7A00"
+            android:textSize="10sp"
+            android:visibility="gone" />
+
+    </LinearLayout>
+
+    <!-- MAIN CONTENT AREA -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="horizontal">
+
+        <!-- LEFT PANEL: Hierarchy/Bodies List (collapsible) -->
+        <LinearLayout
+            android:id="@+id/left_panel"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1.2"
+            android:orientation="vertical"
+            android:background="@drawable/panel_bg"
+            android:visibility="visible">
+
+            <!-- Left panel header with collapse -->
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:orientation="vertical"
-                >
+                android:layout_height="32dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingStart="8dp"
+                android:paddingEnd="4dp"
+                android:background="#FF1A1E2E">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="HIERARCHY"
+                    android:textColor="#8892A4"
+                    android:textSize="9sp"
+                    android:textStyle="bold"
+                    android:textAllCaps="true" />
+
+                <ImageView
+                    android:id="@+id/btn_collapse_left"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:padding="4dp"
+                    android:src="@drawable/drop_down_icon"
+                    android:tint="#8892A4"
+                    android:rotation="0"
+                    android:contentDescription="Collapse" />
+            </LinearLayout>
+
+            <!-- Search bar -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:padding="6dp">
+
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="35dp"
-                    android:id="@+id/main_controls"
-                    android:gravity="center"
-                    android:background="@drawable/bg_prop_input" >
-                    <ImageView
-                        android:layout_width="30dp"
-                        android:layout_height="match_parent"
-                        android:padding="5dp"
-                        android:tint="@color/white"
-                        android:src="@drawable/save_icon" />
-                </LinearLayout>
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
+                    android:layout_height="28dp"
+                    android:orientation="horizontal"
                     android:gravity="center_vertical"
-                    >
-                    <LinearLayout
+                    android:background="@drawable/search_bg"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="4dp">
+
+                    <ImageView
+                        android:layout_width="14dp"
+                        android:layout_height="14dp"
+                        android:src="@drawable/search"
+                        android:tint="#4A5568"
+                        android:contentDescription="Search" />
+
+                    <EditText
+                        android:id="@+id/search_bodies"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="1"
+                        android:background="@null"
+                        android:paddingStart="6dp"
+                        android:paddingEnd="4dp"
+                        android:gravity="center_vertical"
+                        android:hint="Search..."
+                        android:textColorHint="#4A5568"
+                        android:textColor="#E8EDF5"
+                        android:textSize="10sp"
+                        android:inputType="text"
+                        android:singleLine="true" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Bodies list content -->
+            <ListView
+                android:id="@+id/bodies_list"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:divider="@null"
+                android:dividerHeight="0dp"
+                android:background="@android:color/transparent" />
+        </LinearLayout>
+
+        <!-- CENTER: Editor Canvas -->
+        <FrameLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="3"
+            android:id="@+id/editor_frame">
+            <com.star4droid.star2d.Items.Editor
+                android:layout_height="match_parent"
+                android:layout_width="match_parent"
+                android:id="@+id/editor" />
+        </FrameLayout>
+
+        <!-- RIGHT SIDE: Properties Panel + Navigation Rail -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1.5"
+            android:orientation="horizontal">
+
+            <!-- Right panel (Properties/Events/Vars/AI/Joints) -->
+            <LinearLayout
+                android:id="@+id/right_panel"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:background="@drawable/panel_bg"
+                android:visibility="visible">
+
+                <!-- Right panel tabs -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="32dp"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingStart="4dp"
+                    android:paddingEnd="4dp"
+                    android:background="#FF1A1E2E">
+
+                    <TextView
+                        android:id="@+id/tab_properties"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:text="PROPERTIES"
+                        android:textColor="#00D4FF"
+                        android:textSize="8sp"
+                        android:textStyle="bold"
+                        android:background="@drawable/tab_bg" />
+
+                    <TextView
+                        android:id="@+id/tab_events"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:text="EVENTS"
+                        android:textColor="#8892A4"
+                        android:textSize="8sp"
+                        android:textStyle="bold"
+                        android:background="@drawable/tab_bg" />
+
+                    <TextView
+                        android:id="@+id/tab_variables"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:text="VARS"
+                        android:textColor="#8892A4"
+                        android:textSize="8sp"
+                        android:textStyle="bold"
+                        android:background="@drawable/tab_bg" />
+
+                    <TextView
+                        android:id="@+id/tab_ai"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:text="AI"
+                        android:textColor="#8892A4"
+                        android:textSize="8sp"
+                        android:textStyle="bold"
+                        android:background="@drawable/tab_bg" />
+
+                    <ImageView
+                        android:id="@+id/btn_collapse_right"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:padding="4dp"
+                        android:src="@drawable/drop_down_icon"
+                        android:tint="#8892A4"
+                        android:rotation="270"
+                        android:contentDescription="Collapse"
+                        android:layout_marginStart="2dp" />
+                </LinearLayout>
+
+                <!-- Properties content area (switched content) -->
+                <FrameLayout
+                    android:id="@+id/right_panel_content"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1">
+
+                    <!-- Properties panel -->
+                    <LinearLayout
+                        android:id="@+id/properties_content"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
                         android:orientation="vertical"
-                        android:background="@color/prop_grey"
-                        >
+                        android:padding="6dp"
+                        android:visibility="visible">
+
+                        <include layout="@layout/section_csv" android:id="@+id/prop_section" />
+                        <include layout="@layout/color_value" android:id="@+id/prop_color" />
+                        <include layout="@layout/checkbox" android:id="@+id/prop_check" />
+                        <include layout="@layout/two_numbers" android:id="@+id/prop_two" />
+                        <include layout="@layout/single_number" android:id="@+id/prop_single" />
+                        <include layout="@layout/spinner" android:id="@+id/prop_spinner" />
+                    </LinearLayout>
+
+                    <!-- Events panel (placeholder, managed by code) -->
+                    <LinearLayout
+                        android:id="@+id/events_content"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:orientation="vertical"
+                        android:visibility="gone"
+                        android:padding="8dp">
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:paddingStart="14dp"
-                            android:layout_marginTop="8dp"
-                            android:textAllCaps="true"
-                            android:text="HIERARCHY"
-                            android:textSize="10sp"
-                            android:textStyle="bold"
-                            android:textColor="@color/white"
-                            />
-                        <!-- Search Bar -->
-                        <LinearLayout
+                            android:text="Events editor"
+                            android:textColor="#8892A4"
+                            android:textSize="10sp" />
+                    </LinearLayout>
+
+                    <!-- Variables panel (placeholder) -->
+                    <LinearLayout
+                        android:id="@+id/variables_content"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:orientation="vertical"
+                        android:visibility="gone"
+                        android:padding="8dp">
+                        <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:orientation="horizontal"
-                            android:gravity="center_vertical"
-                            android:layout_marginTop="3dp"
-                            android:background="@drawable/bg_prop_spinner"
-                            android:padding="4dp"
-                            android:layout_marginBottom="12dp"
-                            android:layout_marginStart="6dp"
-                            android:layout_marginEnd="8dp"
-                            android:elevation="2dp">
-
-                            <ImageView
-                                android:layout_width="20dp"
-                                android:layout_height="20dp"
-                                android:padding="4dp"
-                                android:src="@drawable/search"
-                                android:layout_marginEnd="10dp"
-                                android:contentDescription="search for item"
-                                app:tint="#888888"
-                                />
-
-                            <EditText
-                                android:id="@+id/searchBar"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:hint="Search..."
-                                android:background="@android:color/transparent"
-                                android:textColorHint="#888888"
-                                android:textColor="#FFFFFF"
-                                android:textSize="10sp"
-                                android:inputType="text"
-                                android:imeOptions="actionSearch"
-                                android:singleLine="true" />
-                        </LinearLayout>
+                            android:text="Variables editor"
+                            android:textColor="#8892A4"
+                            android:textSize="10sp" />
                     </LinearLayout>
 
+                    <!-- AI panel (placeholder) -->
                     <LinearLayout
-                        android:layout_width="0dp"
+                        android:id="@+id/ai_content"
+                        android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:orientation="vertical"
-                        android:gravity="right"
-                        android:layout_weight="2">
-
-                        <LinearLayout
+                        android:visibility="gone"
+                        android:padding="8dp">
+                        <TextView
                             android:layout_width="match_parent"
-                            android:layout_height="35dp"
-                            android:background="@color/prop_grey"
-                            android:contentDescription="Controls Linear"
-                            android:gravity="center_vertical">
-
-                            <ImageView
-                                android:layout_width="30dp"
-                                android:layout_height="30dp"
-                                android:background="#226FBB"
-                                android:padding="5dp"
-                                android:src="@drawable/grid_icon_high" />
-
-                            <ImageView
-                                android:layout_width="30dp"
-                                android:layout_height="30dp"
-                                android:padding="5dp"
-                                android:src="@drawable/move_icon" />
-
-                            <ImageView
-                                android:layout_width="30dp"
-                                android:layout_height="30dp"
-                                android:padding="5dp"
-                                android:src="@drawable/scale_icon" />
-
-                            <ImageView
-                                android:layout_width="30dp"
-                                android:layout_height="30dp"
-                                android:padding="5dp"
-                                android:src="@drawable/rotate_icon" />
-                        </LinearLayout>
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:gravity="right|center"
-                            android:layout_weight="1"
-                            >
-                            <ImageView
-                                android:layout_width="20dp"
-                                android:layout_height="20dp"
-                                android:rotation="90"
-                                android:tint="@color/white"
-                                android:translationX="3px"
-                                android:id="@+id/open_right_panel"
-                                android:src="@drawable/drop_down_icon"
-                                android:background="@drawable/bg_properties"
-                                />
-                        </LinearLayout>
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:layout_weight="1"
-                            android:orientation="vertical"
-                            >
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="35dp"
-                                android:background="#12151B"
-                                >
-                                <LinearLayout
-                                    android:layout_width="70dp"
-                                    android:layout_height="match_parent"
-                                    android:background="@color/prop_grey"
-                                    android:gravity="center"
-                                    >
-                                    <TextView
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:text="ASSETS"
-                                        android:textColor="@color/white"
-                                        android:textStyle="bold"
-                                        android:textSize="@dimen/text_size_small"
-                                        />
-                                </LinearLayout>
-                            </LinearLayout>
-                            <include layout="@layout/files_manager_main"/>
-                        </LinearLayout>
+                            android:layout_height="wrap_content"
+                            android:text="AI Assistant"
+                            android:textColor="#8892A4"
+                            android:textSize="10sp" />
                     </LinearLayout>
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:padding="5dp"
-                        android:layout_weight="1"
-                        android:background="@drawable/bg_prop_input"
-                        android:id="@+id/right_container"
-                        >
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:orientation="vertical"
-                            android:paddingStart="3dp"
-                            android:paddingEnd="3dp"
-                            android:background="@drawable/bg_properties"
-                            >
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:paddingStart="14dp"
-                                android:paddingBottom="5dp"
-                                android:paddingTop="5dp"
-                                android:layout_marginTop="2dp"
-                                android:textAllCaps="true"
-                                android:text="PROPERTIES"
-                                android:textSize="10sp"
-                                android:background="#171C23"
-                                android:textStyle="bold"
-                                android:textColor="@color/white"
-                                />
-                            <include
-                                android:layout_height="wrap_content"
-                                android:layout_width="wrap_content"
-                                layout="@layout/section_csv"/>
-                            <include
-                                android:layout_height="wrap_content"
-                                android:layout_width="wrap_content"
-                                layout="@layout/color_value"/>
-                            <include
-                                android:layout_height="wrap_content"
-                                android:layout_width="wrap_content"
-                                layout="@layout/checkbox"/>
-                            <include
-                                android:layout_height="wrap_content"
-                                android:layout_width="wrap_content"
-                                layout="@layout/two_numbers"/>
-                            <include
-                                android:layout_height="wrap_content"
-                                android:layout_width="wrap_content"
-                                layout="@layout/single_number"/>
-                            <include
-                                android:layout_height="wrap_content"
-                                android:layout_width="wrap_content"
-                                layout="@layout/section_csv"/>
-                            <include
-                                android:layout_height="wrap_content"
-                                android:layout_width="wrap_content"
-                                layout="@layout/spinner"/>
-                        </LinearLayout>
+                </FrameLayout>
 
-                    </LinearLayout>
-                    <LinearLayout
-                        android:layout_width="40dp"
-                        android:layout_height="match_parent"
-                        android:id="@+id/navigation_linear"
-                        android:orientation="vertical"
-                        android:background="@drawable/bg_properties"
-                    />
+                <!-- Joints list mini section -->
+                <LinearLayout
+                    android:id="@+id/joints_section"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:background="#FF12151F"
+                    android:padding="4dp"
+                    android:visibility="gone">
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="JOINTS"
+                        android:textColor="#8892A4"
+                        android:textSize="8sp"
+                        android:textStyle="bold"
+                        android:padding="4dp" />
                 </LinearLayout>
             </LinearLayout>
-        </FrameLayout>
+
+            <!-- RIGHT NAVIGATION RAIL (Bodies, Props, Joints, Events, Vars, AI) -->
+            <LinearLayout
+                android:id="@+id/navigation_rail"
+                android:layout_width="42dp"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:gravity="center_horizontal"
+                android:background="#FF12151F"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp">
+
+                <ImageView
+                    android:id="@+id/nav_bodies"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:padding="6dp"
+                    android:background="@drawable/nav_item_bg"
+                    app:srcCompat="@drawable/ic_theaters_black"
+                    android:tint="#AAB4C8"
+                    android:contentDescription="Bodies" />
+
+                <Space android:layout_width="0dp" android:layout_height="6dp" />
+
+                <ImageView
+                    android:id="@+id/nav_properties"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:padding="6dp"
+                    android:background="@drawable/nav_item_bg"
+                    app:srcCompat="@drawable/ic_filter_black"
+                    android:tint="#AAB4C8"
+                    android:contentDescription="Properties" />
+
+                <Space android:layout_width="0dp" android:layout_height="6dp" />
+
+                <ImageView
+                    android:id="@+id/nav_joints"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:padding="6dp"
+                    android:background="@drawable/nav_item_bg"
+                    app:srcCompat="@drawable/ic_add_black"
+                    android:tint="#AAB4C8"
+                    android:contentDescription="Joints" />
+
+                <Space android:layout_width="0dp" android:layout_height="6dp" />
+
+                <ImageView
+                    android:id="@+id/nav_events"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:padding="6dp"
+                    android:background="@drawable/nav_item_bg"
+                    app:srcCompat="@drawable/ic_error_black"
+                    android:tint="#AAB4C8"
+                    android:contentDescription="Events" />
+
+                <Space android:layout_width="0dp" android:layout_height="6dp" />
+
+                <ImageView
+                    android:id="@+id/nav_variables"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:padding="6dp"
+                    android:background="@drawable/nav_item_bg"
+                    app:srcCompat="@drawable/ic_expand_more_black"
+                    android:tint="#AAB4C8"
+                    android:contentDescription="Variables" />
+
+                <Space android:layout_width="0dp" android:layout_height="6dp" />
+
+                <ImageView
+                    android:id="@+id/nav_ai"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:padding="6dp"
+                    android:background="@drawable/nav_item_bg"
+                    app:srcCompat="@drawable/ic_add_black"
+                    android:tint="#AAB4C8"
+                    android:contentDescription="AI" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- BOTTOM FILES MANAGER (collapsible) -->
+    <LinearLayout
+        android:id="@+id/bottom_files_panel"
+        android:layout_width="match_parent"
+        android:layout_height="160dp"
+        android:orientation="vertical"
+        android:background="#FF12151F"
+        android:elevation="4dp"
+        android:visibility="gone">
+
+        <!-- Files manager header with collapse -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="36dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="#FF1A1E2E"
+            android:paddingStart="6dp"
+            android:paddingEnd="6dp">
+
+            <!-- File type tabs -->
+            <TextView
+                android:id="@+id/file_tab_files"
+                android:layout_width="wrap_content"
+                android:layout_height="28dp"
+                android:gravity="center"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:text="Files"
+                android:textColor="#00D4FF"
+                android:textSize="9sp"
+                android:textStyle="bold"
+                android:background="@drawable/tab_bg" />
+
+            <TextView
+                android:id="@+id/file_tab_images"
+                android:layout_width="wrap_content"
+                android:layout_height="28dp"
+                android:gravity="center"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:text="Images"
+                android:textColor="#8892A4"
+                android:textSize="9sp"
+                android:textStyle="bold"
+                android:background="@drawable/tab_bg" />
+
+            <TextView
+                android:id="@+id/file_tab_anims"
+                android:layout_width="wrap_content"
+                android:layout_height="28dp"
+                android:gravity="center"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:text="Anims"
+                android:textColor="#8892A4"
+                android:textSize="9sp"
+                android:textStyle="bold"
+                android:background="@drawable/tab_bg" />
+
+            <TextView
+                android:id="@+id/file_tab_sounds"
+                android:layout_width="wrap_content"
+                android:layout_height="28dp"
+                android:gravity="center"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:text="Sounds"
+                android:textColor="#8892A4"
+                android:textSize="9sp"
+                android:textStyle="bold"
+                android:background="@drawable/tab_bg" />
+
+            <Space android:layout_width="0dp" android:layout_height="0dp" android:layout_weight="1" />
+
+            <!-- Collapse button -->
+            <ImageView
+                android:id="@+id/btn_collapse_files"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:padding="4dp"
+                android:src="@drawable/drop_down_icon"
+                android:tint="#8892A4"
+                android:rotation="180"
+                android:contentDescription="Collapse files" />
+
+            <!-- Close files panel -->
+            <ImageView
+                android:id="@+id/btn_close_files"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:padding="4dp"
+                android:src="@drawable/ic_delete_black"
+                android:tint="#8892A4"
+                android:contentDescription="Close files"
+                android:layout_marginStart="4dp" />
+        </LinearLayout>
+
+        <!-- Files manager controls -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="32dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="6dp"
+            android:paddingEnd="6dp">
+
+            <!-- Back button -->
+            <ImageView
+                android:id="@+id/file_btn_back"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:padding="5dp"
+                android:background="@drawable/rounded_icon_bg"
+                android:src="@drawable/back_arrow"
+                android:tint="#AAB4C8"
+                android:contentDescription="Back" />
+
+            <Space android:layout_width="4dp" android:layout_height="0dp" />
+
+            <!-- Current path -->
+            <TextView
+                android:id="@+id/file_current_path"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:gravity="center_vertical"
+                android:paddingStart="8dp"
+                android:text="/project/path"
+                android:textColor="#8892A4"
+                android:textSize="9sp"
+                android:singleLine="true"
+                android:ellipsize="start" />
+
+            <Space android:layout_width="4dp" android:layout_height="0dp" />
+
+            <!-- Create button -->
+            <ImageView
+                android:id="@+id/file_btn_create"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:padding="5dp"
+                android:background="@drawable/rounded_icon_bg"
+                android:src="@drawable/ic_add_black"
+                android:tint="#AAB4C8"
+                android:contentDescription="Create" />
+
+            <Space android:layout_width="2dp" android:layout_height="0dp" />
+
+            <!-- Import button -->
+            <ImageView
+                android:id="@+id/file_btn_import"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:padding="5dp"
+                android:background="@drawable/rounded_icon_bg"
+                app:srcCompat="@drawable/ic_folder_white"
+                android:tint="#AAB4C8"
+                android:contentDescription="Import" />
+
+            <Space android:layout_width="2dp" android:layout_height="0dp" />
+
+            <!-- Grid/List toggle -->
+            <ImageView
+                android:id="@+id/file_btn_view_toggle"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:padding="5dp"
+                android:background="@drawable/rounded_icon_bg"
+                app:srcCompat="@drawable/ic_filter_black"
+                android:tint="#AAB4C8"
+                android:contentDescription="Toggle view" />
+        </LinearLayout>
+
+        <!-- Files grid/list content -->
+        <GridView
+            android:id="@+id/file_grid"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:numColumns="auto_fit"
+            android:columnWidth="90dp"
+            android:horizontalSpacing="4dp"
+            android:verticalSpacing="4dp"
+            android:stretchMode="columnWidth"
+            android:padding="4dp"
+            android:scrollbars="none"
+            android:clipToPadding="false" />
+    </LinearLayout>
+
+    <!-- BOTTOM CONTROL BAR -->
+    <LinearLayout
+        android:id="@+id/bottom_controls"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="#FF12151F"
+        android:elevation="4dp"
+        android:paddingStart="6dp"
+        android:paddingEnd="6dp">
+
+        <!-- Play button -->
+        <ImageView
+            android:id="@+id/btn_play"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:padding="7dp"
+            android:background="@drawable/rounded_icon_bg_active"
+            android:src="@drawable/play"
+            android:tint="#FFFFFF"
+            android:contentDescription="Play" />
+
+        <Space android:layout_width="6dp" android:layout_height="0dp" />
+        <View android:layout_width="1dp" android:layout_height="28dp" android:background="#2A3050" />
+        <Space android:layout_width="6dp" android:layout_height="0dp" />
+
+        <!-- Grid mode -->
+        <ImageView
+            android:id="@+id/btn_grid"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:padding="6dp"
+            android:background="@drawable/rounded_icon_bg_active"
+            android:src="@drawable/grid_icon_high"
+            android:tint="#FFFFFF"
+            android:contentDescription="Grid" />
+
+        <Space android:layout_width="4dp" android:layout_height="0dp" />
+
+        <!-- Move mode -->
+        <ImageView
+            android:id="@+id/btn_move"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:padding="6dp"
+            android:background="@drawable/rounded_icon_bg"
+            android:src="@drawable/move_icon"
+            android:tint="#AAB4C8"
+            android:contentDescription="Move" />
+
+        <Space android:layout_width="4dp" android:layout_height="0dp" />
+
+        <!-- Scale mode -->
+        <ImageView
+            android:id="@+id/btn_scale"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:padding="6dp"
+            android:background="@drawable/rounded_icon_bg"
+            android:src="@drawable/scale_icon"
+            android:tint="#AAB4C8"
+            android:contentDescription="Scale" />
+
+        <Space android:layout_width="4dp" android:layout_height="0dp" />
+
+        <!-- Rotate mode -->
+        <ImageView
+            android:id="@+id/btn_rotate_mode"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:padding="6dp"
+            android:background="@drawable/rounded_icon_bg"
+            android:src="@drawable/rotate_icon"
+            android:tint="#AAB4C8"
+            android:contentDescription="Rotate" />
+
+        <Space android:layout_width="6dp" android:layout_height="0dp" />
+        <View android:layout_width="1dp" android:layout_height="28dp" android:background="#2A3050" />
+        <Space android:layout_width="6dp" android:layout_height="0dp" />
+
+        <!-- Delete -->
+        <ImageView
+            android:id="@+id/btn_delete"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:padding="6dp"
+            android:background="@drawable/rounded_icon_bg"
+            android:src="@drawable/ic_delete_black"
+            android:tint="#AAB4C8"
+            android:contentDescription="Delete" />
+
+        <Space android:layout_width="4dp" android:layout_height="0dp" />
+
+        <!-- Undo -->
+        <ImageView
+            android:id="@+id/btn_undo"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:padding="6dp"
+            android:background="@drawable/rounded_icon_bg"
+            app:srcCompat="@drawable/clear_icon"
+            android:tint="#AAB4C8"
+            android:contentDescription="Undo" />
+
+        <Space android:layout_width="4dp" android:layout_height="0dp" />
+
+        <!-- Redo -->
+        <ImageView
+            android:id="@+id/btn_redo"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:padding="6dp"
+            android:background="@drawable/rounded_icon_bg"
+            app:srcCompat="@drawable/ic_add_black"
+            android:tint="#AAB4C8"
+            android:contentDescription="Redo" />
+
+        <Space android:layout_width="4dp" android:layout_height="0dp" />
+
+        <!-- Center camera -->
+        <ImageView
+            android:id="@+id/btn_center_camera"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:padding="6dp"
+            android:background="@drawable/rounded_icon_bg"
+            android:src="@drawable/center_camera"
+            android:tint="#AAB4C8"
+            android:contentDescription="Center" />
+
+        <Space android:layout_width="0dp" android:layout_height="0dp" android:layout_weight="1" />
+
+        <!-- Settings -->
+        <ImageView
+            android:id="@+id/btn_settings"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:padding="6dp"
+            android:background="@drawable/rounded_icon_bg"
+            app:srcCompat="@drawable/ic_filter_black"
+            android:tint="#AAB4C8"
+            android:contentDescription="Settings" />
+
+        <!-- Toggle files panel -->
+        <Space android:layout_width="4dp" android:layout_height="0dp" />
+
+        <ImageView
+            android:id="@+id/btn_toggle_files"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:padding="6dp"
+            android:background="@drawable/rounded_icon_bg"
+            app:srcCompat="@drawable/ic_expand_more_black"
+            android:tint="#AAB4C8"
+            android:rotation="270"
+            android:contentDescription="Files panel" />
     </LinearLayout>
 </LinearLayout>

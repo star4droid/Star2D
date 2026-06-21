@@ -12,6 +12,7 @@ import android.os.Looper;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
 
@@ -42,6 +43,7 @@ import com.star4droid.star2d.Helpers.PropertySet;
 import com.star4droid.star2d.Helpers.UriUtils;
 import com.star4droid.star2d.Items.*;
 import com.star4droid.star2d.Items.Editor;
+import com.star4droid.star2d.editor.ui.android.EditorUI;
 
 import com.star4droid.star2d.editor.LibgdxEditor;
 import com.star4droid.star2d.evo.R;
@@ -55,6 +57,7 @@ import java.util.concurrent.Executors;
 
 public class EditorActivity extends AppCompatActivity implements AndroidFragmentApplication.Callbacks {
     Editor editor;
+	EditorUI editorUI;
 	ActivityResultLauncher<String[]> files_picker;
 	ActivityResultLauncher saveFile;
     Project project;
@@ -302,12 +305,40 @@ public class EditorActivity extends AppCompatActivity implements AndroidFragment
 		    this.filePickerAction = "files";
 			files_picker.launch(new String[] {"*/*"});
 		});
+		
+		// Wire EditorUI to editor events
+		if (editorUI != null) {
+			editor.setEditorListener(new Editor.EditorListener() {
+				@Override
+				public void onUpdateUndoRedo() {
+					// undo/redo state changes handled by ControlLayer
+				}
+
+				@Override
+				public void onBodySelected() {
+					// Update lock icon state
+					if (editor.getApp() != null && editor.getApp().getEditor() != null) {
+						com.badlogic.gdx.scenes.scene2d.Actor actor = editor.getApp().getEditor().getSelectedActor();
+						if (actor != null) {
+							String isLock = PropertySet.getPropertySet(actor).getString("lock");
+							ImageView lockBtn = editorUI.getLockButton();
+							if (lockBtn != null) {
+								lockBtn.setImageResource("true".equals(isLock) ? R.drawable.lock : R.drawable.unlock);
+							}
+						}
+					}
+				}
+			});
+		}
 		//SPNote.show(this);
         
     }
 
     public void init() {
         editor = findViewById(R.id.editor);
+        editorUI = new EditorUI(this, editor);
+        editorUI.init();
+        editor.setEditorUI(editorUI);
     }
     private static int id = 0;
     public void indexFiles() {

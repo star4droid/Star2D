@@ -239,6 +239,8 @@ public class TestApp implements ApplicationListener {
 	private void onLoad(Project project){
 		editors.clear();
 		UiStage.clear();
+		com.star4droid.star2d.Items.Editor ed = com.star4droid.star2d.Items.Editor.getCurrentEditor();
+		if (ed != null) ed.showEditorUI();
 		toastManager = new ToastManager(UiStage);
 		editor = new LibgdxEditor(project,"scene1",projectAssetLoader);
 		editor.enableAutoSave(preferences.getBoolean("AutoSave",true));
@@ -421,6 +423,8 @@ public class TestApp implements ApplicationListener {
 		Gdx.input.setCatchKey(4,false);
 		Gdx.input.setInputProcessor(projectsListStage);
 		if(changeOrienation) orienationChangeListener.onChange(false);
+		com.star4droid.star2d.Items.Editor ed = com.star4droid.star2d.Items.Editor.getCurrentEditor();
+		if (ed != null) ed.hideEditorUI();
 	}
 	
 	public void updateFont(String path){
@@ -525,6 +529,7 @@ public class TestApp implements ApplicationListener {
 	
 	public void play(StageImp stage){
 		Gdx.app.postRunnable(()->{
+			com.star4droid.star2d.Items.Editor ed = com.star4droid.star2d.Items.Editor.getCurrentEditor();
 			if(stage!=null){
 				stage.create();
 				Thread.setDefaultUncaughtExceptionHandler((thread,exc)->{
@@ -537,6 +542,7 @@ public class TestApp implements ApplicationListener {
 				Gdx.input.setInputProcessor(stage.multiplexer);
 				if(width!=-1 && height!=-1)
 					stage.resize(width,height);
+				if (ed != null) ed.hideEditorUI();
 			} else {
 				// this.stageImp is the current playing stage...
 			    if(this.stageImp!=null){
@@ -553,6 +559,7 @@ public class TestApp implements ApplicationListener {
 				Gdx.input.setCatchKey(4,true);
 				Gdx.input.setInputProcessor(multiplexer);
 				UiStage.getViewport().update(width, height);
+				if (ed != null) ed.showEditorUI();
 			}
 			this.stageImp = stage;
 		});

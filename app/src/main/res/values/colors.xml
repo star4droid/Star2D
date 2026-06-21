@@ -121,4 +121,16 @@
 
     <!-- ─── Color Swatch ─── -->
     <color name="prop_swatch_border">#FF2A3050</color>
+
+    <!-- ─── Navigation (extra) ─── -->
+    <color name="navigation_selected_color">#FF7A00</color>
+
+    <!-- ─── File Manager ─── -->
+    <color name="file_manager_bg">#FF12151F</color>
+    <color name="file_tab_selected">#FF00D4FF</color>
+    <color name="file_tab_unselected">#8892A4</color>
+
+    <!-- ─── Icon Rounded Bg ─── -->
+    <color name="icon_rounded_bg">#1C2030</color>
+    <color name="icon_rounded_bg_active">#33FF7A00</color>
 </resources>

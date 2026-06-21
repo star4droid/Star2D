@@ -15,6 +15,7 @@ import com.star4droid.star2d.Helpers.PropertySet;
 import com.star4droid.star2d.editor.LibgdxEditor;
 import com.star4droid.star2d.editor.TestApp;
 import com.star4droid.star2d.editor.items.EditorItem;
+import com.star4droid.star2d.editor.ui.android.EditorUI;
 import com.star4droid.template.Items.StageImp;
 import android.util.AttributeSet;
 import android.content.Context;
@@ -27,6 +28,7 @@ public class Editor extends FrameLayout {
 	Runnable whenAppReady;
 	private static Editor currentEditor;
 	TestApp testApp;
+	private EditorUI editorUI;
 	/*
 	PropertySet.onChangeListener onChangeListener = new PropertySet.onChangeListener(){
 		@Override
@@ -56,6 +58,10 @@ public class Editor extends FrameLayout {
 		FrameLayout frameLayout = new FrameLayout(getContext());
 		testApp = new TestApp();
 		testApp.setWhenAppReady(whenAppReady);
+		// Set app on EditorUI if it's already created
+		if (editorUI != null) {
+			editorUI.setApp(testApp);
+		}
 		frameLayout.setId(2);
 		addView(frameLayout);
 		/*
@@ -332,6 +338,35 @@ public class Editor extends FrameLayout {
 		public void onPick(float x,float y);
 	}
 	
+	// ─── EditorUI Integration ───
+
+	public void setEditorUI(EditorUI ui) {
+		this.editorUI = ui;
+		if (testApp != null) {
+			ui.setApp(testApp);
+		}
+	}
+
+	public EditorUI getEditorUI() {
+		return editorUI;
+	}
+
+	public void showEditorUI() {
+		if (editorUI != null) editorUI.show();
+	}
+
+	public void hideEditorUI() {
+		if (editorUI != null) editorUI.hide();
+	}
+
+	public void toggleEditorUI() {
+		if (editorUI != null) editorUI.toggle();
+	}
+
+	public boolean isEditorUIVisible() {
+		return editorUI != null && editorUI.isUIVisible();
+	}
+
 	public static class FragmentAdapter extends FragmentStateAdapter {
 		Fragment fragment;
 		public FragmentAdapter(AppCompatActivity ctx,Fragment fragment){

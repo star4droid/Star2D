@@ -121,4 +121,5 @@
 
     <!-- ─── Color Swatch ─── -->
     <color name="prop_swatch_border">#FF2A3050</color>
+    <color name="selected_color">#2270BC</color>
 </resources>

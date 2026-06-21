@@ -1,24 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
+    android:layout_width="100dp"
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:gravity="center"
-    android:padding="16dp"
+    android:padding="5dp"
     android:background="#1E1E1E">
 
     <ImageView
         android:id="@+id/fileIcon"
-        android:layout_width="56dp"
-        android:layout_height="56dp"
-        android:src="@drawable/folder"
-        android:contentDescription="File icon" />
+        android:layout_width="35dp"
+        android:layout_height="35dp"
+        android:contentDescription="File icon"
+        android:src="@drawable/folder" />
 
     <TextView
         android:id="@+id/fileName"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="3dp"
         android:textColor="#FFFFFF"
         android:textSize="13sp"
         android:text="images"

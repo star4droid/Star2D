@@ -4,7 +4,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:background="@color/prop_grey"
-    android:padding="12dp">
+    android:padding="8dp">
 
     <!-- Search Bar -->
     <LinearLayout
@@ -48,7 +48,7 @@
         android:layout_height="0dp"
         android:layout_weight="1"
         android:numColumns="auto_fit"
-        android:columnWidth="120dp"
+        android:columnWidth="90dp"
         android:horizontalSpacing="10dp"
         android:verticalSpacing="10dp"
         android:stretchMode="columnWidth"

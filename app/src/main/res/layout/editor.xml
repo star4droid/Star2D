@@ -21,7 +21,10 @@
             <com.star4droid.star2d.Items.Editor
                  android:layout_height="match_parent"
                  android:layout_width="match_parent"
-                 android:id="@+id/editor" />
+                 android:id="@+id/editor" >
+
+
+            </com.star4droid.star2d.Items.Editor>
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
@@ -30,8 +33,7 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="35dp"
-                    android:background="@drawable/bg_prop_input"
-                    />
+                    android:background="@drawable/bg_prop_input" />
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
@@ -93,35 +95,93 @@
                                 android:singleLine="true" />
                         </LinearLayout>
                     </LinearLayout>
+
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
-                        android:layout_weight="2"
-                        >
+                        android:orientation="vertical"
+                        android:gravity="right"
+                        android:layout_weight="2">
+
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="35dp"
                             android:background="@color/prop_grey"
                             android:contentDescription="Controls Linear"
-                            >
+                            android:gravity="center_vertical">
+
+                            <ImageView
+                                android:layout_width="30dp"
+                                android:layout_height="30dp"
+                                android:background="#226FBB"
+                                android:padding="5dp"
+                                android:src="@drawable/grid_icon_high" />
+
                             <ImageView
                                 android:layout_width="30dp"
                                 android:layout_height="30dp"
                                 android:padding="5dp"
-                                android:src="@drawable/move_icon"
+                                android:src="@drawable/move_icon" />
+
+                            <ImageView
+                                android:layout_width="30dp"
+                                android:layout_height="30dp"
+                                android:padding="5dp"
+                                android:src="@drawable/scale_icon" />
+
+                            <ImageView
+                                android:layout_width="30dp"
+                                android:layout_height="30dp"
+                                android:padding="5dp"
+                                android:src="@drawable/rotate_icon" />
+                        </LinearLayout>
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:gravity="right|center"
+                            android:layout_weight="1"
+                            >
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:rotation="90"
+                                android:tint="@color/white"
+                                android:translationX="3px"
+                                android:id="@+id/open_right_panel"
+                                android:src="@drawable/drop_down_icon"
+                                android:background="@drawable/bg_properties"
                                 />
                         </LinearLayout>
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            >
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="35dp"
+                                android:background="#12151B"
+                                >
+                                <LinearLayout
+                                    android:layout_width="70dp"
+                                    android:layout_height="match_parent"
+                                    android:background="@color/prop_grey"
+                                    android:gravity="center"
+                                    >
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="ASSETS"
+                                        android:textColor="@color/white"
+                                        android:textStyle="bold"
+                                        android:textSize="@dimen/text_size_small"
+                                        />
+                                </LinearLayout>
+                            </LinearLayout>
+                            <include layout="@layout/files_manager_main"/>
+                        </LinearLayout>
                     </LinearLayout>
-                    <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        android:rotation="90"
-                        android:tint="@color/white"
-                        android:translationX="3px"
-                        android:id="@+id/open_right_panel"
-                        android:src="@drawable/drop_down_icon"
-                        android:background="@drawable/bg_properties"
-                        />
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
@@ -181,7 +241,15 @@
                                 android:layout_width="wrap_content"
                                 layout="@layout/spinner"/>
                         </LinearLayout>
+
                     </LinearLayout>
+                    <LinearLayout
+                        android:layout_width="40dp"
+                        android:layout_height="match_parent"
+                        android:id="@+id/navigation_linear"
+                        android:orientation="vertical"
+                        android:background="@drawable/bg_properties"
+                    />
                 </LinearLayout>
             </LinearLayout>
         </FrameLayout>

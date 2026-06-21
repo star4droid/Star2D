@@ -1,28 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="vertical">
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="2dp"
-        android:background="@color/prop_divider"
-        android:layout_marginBottom="6dp"
-        />
+    android:layout_height="18dp"
+    android:background="@color/comp_header_bg"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:paddingStart="6dp"
+    android:paddingEnd="6dp">
+
+    <CheckBox
+        android:layout_width="10dp"
+        android:layout_height="10dp"
+        android:checked="true" />
+
     <TextView
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:paddingStart="12dp"
-        android:textAllCaps="true"
-        android:textSize="@dimen/text_size_small"
-        android:text="TRANSFORM"
-        android:id="@+id/section_name"
+        android:text="UITransform"
+        android:textSize="8sp"
+        android:textColor="@color/accent_blue"
         android:textStyle="bold"
-        android:textColor="@color/white"
-        />
-    <LinearLayout
-        android:layout_width="match_parent"
+        android:layout_marginStart="4dp" />
+
+    <View
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <TextView
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/properties_container"
-        />
+        android:text="⋮"
+        android:textSize="10sp"
+        android:textColor="@color/text_muted" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="✕"
+        android:textSize="10sp"
+        android:textColor="@color/text_muted"
+        android:layout_marginStart="4dp" />
 </LinearLayout>

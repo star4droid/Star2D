@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
     color_value.xml
     ───────────────
     Fixed-width label (90dp) + color swatch + hex EditText.
@@ -9,74 +8,38 @@
         swatch.backgroundTintList =
             ColorStateList.valueOf(Color.parseColor(hexField.text.toString()))
 -->
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="horizontal"
+    android:layout_height="18dp"
     android:gravity="center_vertical"
-    android:paddingStart="12dp"
-    android:paddingEnd="12dp"
-    android:paddingTop="5dp"
-    android:paddingBottom="5dp"
-    android:minHeight="30dp">
+    android:orientation="horizontal"
+    android:paddingStart="6dp"
+    android:paddingEnd="4dp">
 
-    <!-- Fixed-width label -->
     <TextView
-        android:id="@+id/prop_label"
-        android:layout_width="@dimen/value_width"
+        android:layout_width="42dp"
         android:layout_height="wrap_content"
-        android:text="Tint"
-        android:textColor="@color/prop_label"
-        android:textSize="@dimen/text_size_small"
-        android:fontFamily="sans-serif" />
+        android:text="Color"
+        android:textColor="@color/text_secondary"
+        android:textSize="8sp" />
 
-    <!--
-        Swatch + hex field share one bordered container, identical to how
-        the screenshot shows the white square and "#FFFFFF" as one visual unit.
-    -->
-    <LinearLayout
-        android:layout_width="0dp"
-        android:layout_height="@dimen/value_height"
-        android:layout_weight="1"
-        android:orientation="horizontal"
-        android:background="@drawable/selector_prop_input"
-        android:gravity="center_vertical">
+    <View
+        android:layout_width="14dp"
+        android:layout_height="14dp"
+        android:layout_marginEnd="4dp"
+        android:background="#ffffff" />
 
-        <!-- Color swatch — tap to open color picker -->
-        <View
-            android:id="@+id/prop_color_swatch"
-            android:layout_width="12dp"
-            android:layout_height="12dp"
-            android:layout_marginStart="6dp"
-            android:layout_marginEnd="0dp"
-            android:background="@drawable/bg_prop_color_swatch"
-            android:backgroundTint="#FFFFFFFF"
-            android:clickable="true"
-            android:focusable="true"
-            android:contentDescription="Pick color" />
-
-        <!-- Hex value -->
-        <EditText
-            android:id="@+id/prop_color_hex"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:background="@null"
-            android:paddingStart="8dp"
-            android:paddingEnd="8dp"
-            android:paddingTop="0dp"
-            android:paddingBottom="0dp"
-            android:gravity="center_vertical"
-            android:inputType="text"
-            android:textColor="@color/prop_input_text"
-            android:textSize="@dimen/text_size_small"
-            android:fontFamily="monospace"
-            android:hint="#FFFFFF"
-            android:textColorHint="@color/prop_input_hint"
-            android:singleLine="true"
-            android:maxLength="9"
-            android:includeFontPadding="false" />
-    </LinearLayout>
-
+    <EditText
+        android:layout_width="50dp"
+        android:layout_height="16dp"
+        android:background="@drawable/dark_edit_text"
+        android:inputType="text"
+        android:paddingStart="2dp"
+        android:paddingTop="0dp"
+        android:paddingEnd="2dp"
+        android:paddingBottom="0dp"
+        android:singleLine="true"
+        android:text="#FFFFFF"
+        android:textColor="@color/text_primary"
+        android:textSize="8sp" />
 </LinearLayout>

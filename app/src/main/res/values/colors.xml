@@ -122,4 +122,49 @@
     <!-- ─── Color Swatch ─── -->
     <color name="prop_swatch_border">#FF2A3050</color>
     <color name="selected_color">#2270BC</color>
+
+
+    <color name="editor_bg">#1e1e1e</color>
+    <color name="panel_bg">#252526</color>
+    <color name="panel_header_bg">#333333</color>
+    <color name="toolbar_bg">#2d2d2d</color>
+    <color name="input_bg">#1e1e1e</color>
+    <color name="comp_header_bg">#2a2d2e</color>
+
+    <!-- 边框 -->
+    <color name="border_dark">#222222</color>
+    <color name="border_mid">#2a2a2a</color>
+    <color name="border_light">#3c3c3c</color>
+
+    <!-- 文字 -->
+    <color name="text_primary">#cccccc</color>
+    <color name="text_secondary">#999999</color>
+    <color name="text_muted">#777777</color>
+    <color name="text_dim">#555555</color>
+    <color name="text_white">#ffffff</color>
+
+    <!-- 强调色 -->
+    <color name="accent_selected">#094771</color>
+    <color name="accent_blue">#4FC3F7</color>
+    <color name="label_red">#e74c3c</color>
+    <color name="label_green">#27ae60</color>
+
+    <!-- 工具栏按钮 -->
+    <color name="btn_play">#4CAF50</color>
+    <color name="btn_pause">#FF9800</color>
+    <color name="btn_stop">#f44336</color>
+    <color name="btn_hover">#3a3a3a</color>
+
+    <!-- 节点图标色 -->
+    <color name="icon_scene">#e8a735</color>
+    <color name="icon_canvas">#4a90d9</color>
+    <color name="icon_bg">#5cb85c</color>
+    <color name="icon_player">#ff69b4</color>
+    <color name="icon_coin">#ffd700</color>
+    <color name="icon_crate">#8b6914</color>
+    <color name="icon_ui">#9b59b6</color>
+    <color name="icon_text">#999999</color>
+    <color name="icon_button">#3498db</color>
+    <color name="icon_camera">#777777</color>
+    <color name="icon_light">#f1c40f</color>
 </resources>

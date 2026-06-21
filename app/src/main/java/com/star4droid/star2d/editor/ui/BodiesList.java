@@ -22,6 +22,7 @@ import com.kotcrab.vis.ui.widget.MenuItem;
 import com.kotcrab.vis.ui.widget.PopupMenu;
 import com.kotcrab.vis.ui.widget.VisLabel;
 import com.kotcrab.vis.ui.widget.VisTable;
+import com.star4droid.star2d.Helpers.AndroidStatics;
 import com.star4droid.star2d.Helpers.PropertySet;
 import com.star4droid.star2d.editor.LibgdxEditor;
 import com.star4droid.star2d.editor.TestApp;
@@ -104,7 +105,13 @@ public class BodiesList extends Group {
 
   public void update(boolean refresh) {
     int beforeSize = adapter.arrayList.size;
-	try {
+    new android.os.Handler(android.os.Looper.getMainLooper()).post(new Runnable() {
+        @Override
+        public void run() {
+            com.star4droid.star2d.Helpers.AndroidStatics.updateBodiesList();
+        }
+    });
+    try {
       adapter.arrayList.clear();
 	  for (Actor actor : app.getEditor().getActors()) {
         if (!Utils.isEditorItem(actor)) continue;

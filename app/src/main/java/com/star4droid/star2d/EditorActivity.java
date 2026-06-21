@@ -12,6 +12,8 @@ import android.os.Looper;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.EditText;
+import android.widget.GridView;
 import android.widget.Spinner;
 import android.widget.TextView;
 
@@ -21,6 +23,8 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.documentfile.provider.DocumentFile;
+import androidx.recyclerview.widget.RecyclerView;
+
 import java.util.Objects;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.backends.android.AndroidFragmentApplication;
@@ -32,6 +36,7 @@ import com.star4droid.star2d.Activities.AnimationActivity;
 import com.star4droid.star2d.Adapters.ExportDialog;
 import com.star4droid.star2d.Adapters.SPNote;
 import com.star4droid.star2d.CodeEditor.MyIndexer;
+import com.star4droid.star2d.Helpers.AndroidStatics;
 import com.star4droid.star2d.Helpers.CodeGenerator;
 import com.star4droid.star2d.Helpers.CompileThread;
 import com.star4droid.star2d.Helpers.EngineSettings;
@@ -180,9 +185,12 @@ public class EditorActivity extends AppCompatActivity implements AndroidFragment
         setContentView(R.layout.editor);
 		init();
         
-        project = new Project(""/*getIntent().getStringExtra("project")*/);
+        String projectPath = getIntent().getStringExtra("project");
+        if(projectPath == null) projectPath = "";
+        project = new Project(projectPath);
         
         editor.setProject(project);
+        AndroidStatics.setPaths(project.getPath());
 		
         //editor.setScene("scene1");
         //editor.loadFromPath();
@@ -194,6 +202,16 @@ public class EditorActivity extends AppCompatActivity implements AndroidFragment
 		editor.setWhenAppReady(()->{
 			initApp();
 		});
+
+//        editor.setEditorListener(new Editor.EditorListener() {
+//            @Override
+//            public void onUpdateUndoRedo() {}
+//
+//            @Override
+//            public void onBodySelected() {
+//                AndroidStatics.updateBodiesList();
+//            }
+//        });
 	}
 	
 	private void restoreProject(InputStream inputStream) {
@@ -308,6 +326,11 @@ public class EditorActivity extends AppCompatActivity implements AndroidFragment
 
     public void init() {
         editor = findViewById(R.id.editor);
+        RecyclerView itemsList = findViewById(R.id.items_list);
+        GridView gridView = findViewById(R.id.gridView);
+        EditText searchBodies = findViewById(R.id.search_for_item);
+        EditText searchFiles = findViewById(R.id.searchBar);
+        AndroidStatics.init(itemsList, gridView, searchBodies, searchFiles);
     }
     private static int id = 0;
     public void indexFiles() {

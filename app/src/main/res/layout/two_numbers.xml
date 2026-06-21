@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
     two_numbers.xml
     ───────────────
     Fixed-width label (90dp) + two inputs where the axis letter (X/Y or W/H)
@@ -9,126 +8,89 @@
 
     Matches: Position X[0]  Y[0]  ·  Size W[1920] H[1080]  ·  Scale X[1] Y[1]
 -->
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="horizontal"
+    android:layout_height="18dp"
     android:gravity="center_vertical"
-    android:paddingStart="12dp"
-    android:paddingEnd="12dp"
-    android:paddingTop="5dp"
-    android:paddingBottom="5dp"
-    android:minHeight="30dp">
+    android:orientation="horizontal"
+    android:paddingStart="6dp"
+    android:paddingEnd="4dp">
 
-    <!-- Fixed-width label -->
     <TextView
-        android:id="@+id/prop_label"
-        android:layout_width="@dimen/value_width"
+        android:layout_width="42dp"
         android:layout_height="wrap_content"
-        android:text="Label"
-        android:textColor="@color/prop_label"
-        android:textSize="@dimen/text_size_small"
-        android:fontFamily="sans-serif" />
+        android:text="Scale"
+        android:textColor="@color/text_secondary"
+        android:textSize="8sp" />
 
-    <!-- ── First field: axis letter INSIDE the bordered container ── -->
     <LinearLayout
         android:layout_width="0dp"
-        android:layout_height="@dimen/value_height"
+        android:layout_height="16dp"
         android:layout_weight="1"
-        android:layout_marginEnd="6dp"
-        android:orientation="horizontal"
-        android:background="@drawable/selector_prop_input"
-        android:gravity="center_vertical">
+        android:orientation="horizontal">
 
-        <!-- Axis prefix letter, same bg as field -->
-        <TextView
-            android:id="@+id/prop_axis_a_label"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:paddingStart="7dp"
-            android:paddingEnd="6dp"
-            android:gravity="center"
-            android:text="X"
-            android:textColor="@color/prop_label"
-            android:textSize="@dimen/text_size_small"
-            android:fontFamily="sans-serif-medium"
-            android:includeFontPadding="false" />
-
-        <!-- Thin separator between letter and value -->
-        <View
-            android:layout_width="1dp"
-            android:layout_height="match_parent"
-            android:background="@color/prop_input_border" />
-
-        <!-- Numeric value -->
-        <EditText
-            android:id="@+id/prop_value_a"
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:background="@null"
-            android:paddingStart="7dp"
-            android:paddingEnd="6dp"
-            android:paddingTop="0dp"
-            android:paddingBottom="0dp"
             android:gravity="center_vertical"
-            android:inputType="numberDecimal|numberSigned"
-            android:textColor="@color/prop_input_text"
-            android:textSize="@dimen/text_size_small"
-            android:fontFamily="monospace"
-            android:hint="0"
-            android:textColorHint="@color/prop_input_hint"
-            android:singleLine="true"
-            android:includeFontPadding="false" />
-    </LinearLayout>
+            android:orientation="horizontal">
 
-    <!-- ── Second field: axis letter INSIDE the bordered container ── -->
-    <LinearLayout
-        android:layout_width="0dp"
-        android:layout_height="@dimen/value_height"
-        android:layout_weight="1"
-        android:orientation="horizontal"
-        android:background="@drawable/selector_prop_input"
-        android:gravity="center_vertical">
+            <TextView
+                android:layout_width="10dp"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="X"
+                android:textColor="@color/label_red"
+                android:textSize="8sp" />
 
-        <TextView
-            android:id="@+id/prop_axis_b_label"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:paddingStart="7dp"
-            android:paddingEnd="6dp"
-            android:gravity="center"
-            android:text="Y"
-            android:textColor="@color/prop_label"
-            android:textSize="@dimen/text_size_small"
-            android:fontFamily="sans-serif-medium"
-            android:includeFontPadding="false" />
+            <EditText
+                android:layout_width="0dp"
+                android:layout_height="16dp"
+                android:layout_weight="1"
+                android:background="@drawable/dark_edit_text"
+                android:inputType="numberDecimal"
+                android:paddingStart="2dp"
+                android:paddingTop="0dp"
+                android:paddingEnd="2dp"
+                android:paddingBottom="0dp"
+                android:singleLine="true"
+                android:text="1"
+                android:textColor="@color/text_primary"
+                android:textSize="8sp" />
+        </LinearLayout>
 
-        <View
-            android:layout_width="1dp"
-            android:layout_height="match_parent"
-            android:background="@color/prop_input_border" />
-
-        <EditText
-            android:id="@+id/prop_value_b"
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="match_parent"
+            android:layout_marginStart="2dp"
             android:layout_weight="1"
-            android:background="@null"
-            android:paddingStart="7dp"
-            android:paddingEnd="6dp"
-            android:paddingTop="0dp"
-            android:paddingBottom="0dp"
             android:gravity="center_vertical"
-            android:inputType="numberDecimal|numberSigned"
-            android:textColor="@color/prop_input_text"
-            android:textSize="@dimen/text_size_small"
-            android:fontFamily="monospace"
-            android:hint="0"
-            android:textColorHint="@color/prop_input_hint"
-            android:singleLine="true"
-            android:includeFontPadding="false" />
-    </LinearLayout>
+            android:orientation="horizontal">
 
+            <TextView
+                android:layout_width="10dp"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="Y"
+                android:textColor="@color/label_green"
+                android:textSize="8sp" />
+
+            <EditText
+                android:layout_width="0dp"
+                android:layout_height="16dp"
+                android:layout_weight="1"
+                android:background="@drawable/dark_edit_text"
+                android:inputType="numberDecimal"
+                android:paddingStart="2dp"
+                android:paddingTop="0dp"
+                android:paddingEnd="2dp"
+                android:paddingBottom="0dp"
+                android:singleLine="true"
+                android:text="1"
+                android:textColor="@color/text_primary"
+                android:textSize="8sp" />
+        </LinearLayout>
+    </LinearLayout>
 </LinearLayout>

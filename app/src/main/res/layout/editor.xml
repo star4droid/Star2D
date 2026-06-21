@@ -91,7 +91,7 @@
                                 />
 
                             <EditText
-                                android:id="@+id/searchBar"
+                                android:id="@+id/search_for_item"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:hint="Search..."
@@ -131,11 +131,16 @@
                                 android:text="Scene"
                                 />
                         </LinearLayout>
-                        <androidx.recyclerview.widget.RecyclerView
-                            android:id="@+id/items_list"
+                        <HorizontalScrollView
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"
-                            />
+                            android:fillViewport="true">
+                            <androidx.recyclerview.widget.RecyclerView
+                                android:id="@+id/items_list"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                />
+                        </HorizontalScrollView>
                     </LinearLayout>
 
                     <LinearLayout
@@ -190,7 +195,7 @@
                                 android:rotation="270"
                                 android:tint="@color/white"
                                 android:translationX="-3px"
-                                android:id="@+id/open_right_panel"
+                                android:id="@+id/open_left_panel"
                                 android:src="@drawable/drop_down_icon"
                                 android:background="@drawable/bg_properties"
                                 />
@@ -210,34 +215,40 @@
                                 android:background="@drawable/bg_properties"
                                 />
                         </LinearLayout>
+
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"
-                            android:layout_weight="1"
-                            android:orientation="vertical"
-                            >
+                            android:layout_weight="2"
+                            android:orientation="vertical">
+
                             <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="20dp"
-                                android:background="#12151B"
-                                >
+                                android:background="@color/panel_header_bg"
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal">
+
                                 <LinearLayout
                                     android:layout_width="70dp"
                                     android:layout_height="match_parent"
                                     android:background="@color/prop_grey"
-                                    android:gravity="center"
-                                    >
+                                    android:gravity="center">
+
                                     <TextView
                                         android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:text="ASSETS"
-                                        android:textColor="@color/white"
-                                        android:textStyle="bold"
-                                        android:textSize="@dimen/text_size_small"
-                                        />
+                                        android:layout_height="match_parent"
+                                        android:background="@color/panel_bg"
+                                        android:gravity="center"
+                                        android:paddingStart="10dp"
+                                        android:paddingEnd="10dp"
+                                        android:text="Assets"
+                                        android:textColor="@color/text_white"
+                                        android:textSize="9sp" />
                                 </LinearLayout>
                             </LinearLayout>
-                            <include layout="@layout/files_manager_main"/>
+
+                            <include layout="@layout/files_manager_main" />
                         </LinearLayout>
                     </LinearLayout>
                     <LinearLayout
@@ -245,7 +256,7 @@
                         android:layout_height="match_parent"
                         android:padding="5dp"
                         android:layout_weight="1"
-                        android:background="@drawable/bg_prop_input"
+                        android:background="@color/panel_bg"
                         android:id="@+id/right_container"
                         >
                         <LinearLayout
@@ -254,22 +265,22 @@
                             android:orientation="vertical"
                             android:paddingStart="3dp"
                             android:paddingEnd="3dp"
-                            android:background="@drawable/bg_properties"
+                            android:background="@color/panel_bg"
                             >
-                            <TextView
+                            <LinearLayout
                                 android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:paddingStart="14dp"
-                                android:paddingBottom="5dp"
-                                android:paddingTop="5dp"
-                                android:layout_marginTop="2dp"
-                                android:textAllCaps="true"
-                                android:text="PROPERTIES"
-                                android:textSize="10sp"
-                                android:background="#171C23"
-                                android:textStyle="bold"
-                                android:textColor="@color/white"
-                                />
+                                android:layout_height="22dp"
+                                android:background="@color/panel_header_bg"
+                                android:orientation="horizontal"
+                                android:gravity="center_vertical"
+                                android:paddingStart="6dp" android:paddingEnd="6dp">
+                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                                    android:text="Properties" android:textSize="9sp" android:textColor="@color/text_primary"
+                                    android:textStyle="bold"/>
+                                <View android:layout_width="0dp" android:layout_height="0dp" android:layout_weight="1"/>
+                                <TextView android:layout_width="14dp" android:layout_height="14dp"
+                                    android:text="≡" android:textSize="9sp" android:textColor="@color/text_muted" android:gravity="center"/>
+                            </LinearLayout>
                             <ScrollView
                                 android:layout_width="match_parent"
                                 android:layout_height="match_parent"
@@ -280,34 +291,13 @@
                                     android:orientation="vertical"
                                     android:id="@+id/properties_container"
                                     >
-                                    <include
-                                        android:layout_height="wrap_content"
-                                        android:layout_width="wrap_content"
-                                        layout="@layout/section_csv"/>
-                                    <include
-                                        android:layout_height="wrap_content"
-                                        android:layout_width="wrap_content"
-                                        layout="@layout/color_value"/>
-                                    <include
-                                        android:layout_height="wrap_content"
-                                        android:layout_width="wrap_content"
-                                        layout="@layout/checkbox"/>
-                                    <include
-                                        android:layout_height="wrap_content"
-                                        android:layout_width="wrap_content"
-                                        layout="@layout/two_numbers"/>
-                                    <include
-                                        android:layout_height="wrap_content"
-                                        android:layout_width="wrap_content"
-                                        layout="@layout/single_number"/>
-                                    <include
-                                        android:layout_height="wrap_content"
-                                        android:layout_width="wrap_content"
-                                        layout="@layout/section_csv"/>
-                                    <include
-                                        android:layout_height="wrap_content"
-                                        android:layout_width="wrap_content"
-                                        layout="@layout/spinner"/>
+                                    <include layout="@layout/section_csv"/>
+                                    <include layout="@layout/color_value"/>
+                                    <include layout="@layout/checkbox"/>
+                                    <include layout="@layout/two_numbers"/>
+                                    <include layout="@layout/single_number"/>
+                                    <include layout="@layout/section_csv"/>
+                                    <include layout="@layout/spinner"/>
                                 </LinearLayout>
                             </ScrollView>
                         </LinearLayout>

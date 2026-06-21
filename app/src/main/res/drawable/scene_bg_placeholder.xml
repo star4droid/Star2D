@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 天空 -->
+    <item>
+        <shape>
+            <gradient
+                android:startColor="#5ba3d9"
+                android:centerColor="#7ec8e3"
+                android:endColor="#b8e4f0"
+                android:angle="270"/>
+        </shape>
+    </item>
+    <!-- 草地 -->
+    <item android:top="68%">
+        <shape>
+            <solid android:color="#4caf50"/>
+        </shape>
+    </item>
+    <!-- 深色草地底部 -->
+    <item android:top="85%">
+        <shape>
+            <solid android:color="#2e7d32"/>
+        </shape>
+    </item>
+</layer-list>

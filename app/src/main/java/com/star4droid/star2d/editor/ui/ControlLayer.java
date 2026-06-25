@@ -53,8 +53,10 @@ import static com.star4droid.star2d.editor.utils.Lang.*;
 public class ControlLayer extends Table {
     private Table topContainer;
     private Table bottomContainer,windowsTable;
+    private Table btnsTable;
     private VisScrollPane topScrollPane;
     private VisScrollPane bottomScrollPane;
+    private java.util.HashMap<String, VisWindow> windowsMap = new java.util.HashMap<>();
 	private String clickedAction = "grid";
 	//private VisImageButton closeBtn;
 	String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890_";
@@ -69,6 +71,7 @@ public class ControlLayer extends Table {
 	EventsItem eventsItem;
 	PropertiesItem propertiesItem;
 	PopupMenu xyMenu;
+	PopupMenu createMenu, sceneActionsMenu;
 	VarsItem varsItem;
 	VisLabel indexingLabel;
 	JointsList jointsList;
@@ -197,7 +200,7 @@ public class ControlLayer extends Table {
 		
 		windowsTable = new Table();
 		//closeBtn = new VisImageButton(VisUI.getSkin().getDrawable("icon-close"));
-		Table btnsTable = new Table();
+		btnsTable = new Table();
 		centerTable.add(windowsTable).growX().growY();
 		centerTable.add(btnsTable).width(iconSize+2);
 		btnsTable.add(bodiesListBtn).size(iconSize+2).row();
@@ -267,20 +270,20 @@ public class ControlLayer extends Table {
 			}
 		}));
 		
-		PopupMenu sceneActions = new PopupMenu();
-		sceneActions.addItem(new MenuItem(getTrans("copyScene"),new ChangeListener() {
+		sceneActionsMenu = new PopupMenu();
+		sceneActionsMenu.addItem(new MenuItem(getTrans("copyScene"),new ChangeListener() {
 			@Override
 			public void changed (ChangeEvent event, Actor actor) {
 				dialogForScene(SceneAction.COPY,app.getEditor().getScene());
 			}
 		}));
-		sceneActions.addItem(new MenuItem(getTrans("newScene"),new ChangeListener() {
+		sceneActionsMenu.addItem(new MenuItem(getTrans("newScene"),new ChangeListener() {
 			@Override
 			public void changed (ChangeEvent event, Actor actor) {
 				dialogForScene(SceneAction.CREATE,"Scene");
 			}
 		}));
-		sceneActions.addItem(new MenuItem(getTrans("deleteScene"),new ChangeListener() {
+		sceneActionsMenu.addItem(new MenuItem(getTrans("deleteScene"),new ChangeListener() {
 			@Override
 			public void changed (ChangeEvent event, Actor actor) {
 				if(!app.getEditor().getScene().toLowerCase().equals("scene1")){
@@ -302,7 +305,7 @@ public class ControlLayer extends Table {
 				} else app.toast(getTrans("deleteMainScene"));
 			}
 		}));
-		sceneActions.addItem(new MenuItem(getTrans("renameScene"),new ChangeListener() {
+		sceneActionsMenu.addItem(new MenuItem(getTrans("renameScene"),new ChangeListener() {
 			@Override
 			public void changed (ChangeEvent event, Actor actor) {
 				if(!app.getEditor().getScene().toLowerCase().equals("scene1")){
@@ -332,11 +335,11 @@ public class ControlLayer extends Table {
 		});
 		openSceneItem.setSubMenu(scenesMenu);
 		
-		sceneActions.addItem(openSceneItem);
+		sceneActionsMenu.addItem(openSceneItem);
 		
 		PopupMenu bodiesMenu = createBodiesMenu(),
-					lightsMenu = createLightMenu(),
-					createMenu = new PopupMenu();
+					lightsMenu = createLightMenu();
+		createMenu = new PopupMenu();
 		
 		MenuItem bodiesMenuItem = new MenuItem(getTrans("newBody"), drawable("add.png")),
 				 lightsMenuItem = new MenuItem(getTrans("newLight"), drawable("add-light.png"));
@@ -364,7 +367,7 @@ public class ControlLayer extends Table {
 		*/
 		
 		sceneActionsBtn = addIconToTop("scene-actions",drawable("scene.png"),(btn)->{
-			sceneActions.showMenu(getStage(),sceneActionsBtn);
+			sceneActionsMenu.showMenu(getStage(),sceneActionsBtn);
 		});
 		
 		addIconToTop("save",drawable("save.png"),(btn)->{
@@ -640,6 +643,18 @@ public class ControlLayer extends Table {
 		xyMenu.showMenu(getStage(),actor);
 	}
 	
+	public PopupMenu getCreateMenu(){
+		return createMenu;
+	}
+	
+	public PopupMenu getSceneActionsMenu(){
+		return sceneActionsMenu;
+	}
+	
+	public PopupMenu getXYMenu(){
+		return xyMenu;
+	}
+	
 	public ColorPicker getColorPicker(){
 		return colorPicker;
 	}
@@ -818,6 +833,32 @@ public class ControlLayer extends Table {
 		return clickedAction;
 	}
 	
+	/** Sets the touch mode from an external (native) UI. Also updates the libgdx button tints. */
+	public void setTouchMode(String mode){
+		if(mode == null) return;
+		clickedAction = mode;
+		com.star4droid.star2d.editor.LibgdxEditor.TOUCHMODE tmode;
+		switch(mode){
+			case "move": tmode = com.star4droid.star2d.editor.LibgdxEditor.TOUCHMODE.MOVE; break;
+			case "scale": tmode = com.star4droid.star2d.editor.LibgdxEditor.TOUCHMODE.SCALE; break;
+			case "rotate": tmode = com.star4droid.star2d.editor.LibgdxEditor.TOUCHMODE.ROTATE; break;
+			default: tmode = com.star4droid.star2d.editor.LibgdxEditor.TOUCHMODE.GRID; break;
+		}
+		app.getEditor().setTouchMode(tmode);
+		if(gridBtn != null) gridBtn.setColor(mode.equals("grid") ? Color.YELLOW : Color.WHITE);
+		if(moveBtn != null) moveBtn.setColor(mode.equals("move") ? Color.YELLOW : Color.WHITE);
+		if(scaleBtn != null) scaleBtn.setColor(mode.equals("scale") ? Color.YELLOW : Color.WHITE);
+		if(rotateBtn != null) rotateBtn.setColor(mode.equals("rotate") ? Color.YELLOW : Color.WHITE);
+	}
+	
+	/** Updates the lock button image based on the currently selected actor. */
+	public void refreshLockButton(){
+		if(lockBtn != null && lockBtn.getStyle() != null && app.getEditor().getSelectedActor() != null){
+			String isLock = PropertySet.getPropertySet(app.getEditor().getSelectedActor()).getString("lock");
+			lockBtn.getStyle().imageUp = drawable(isLock.equals("true") ? "lock.png" : "unlock.png");
+		}
+	}
+	
 	private PopupMenu createLightMenu(){
 		PopupMenu menu = new PopupMenu();
 		String[] list = {"Point Light","Directional Light","Cone Light","Light Settings"};
@@ -860,7 +901,8 @@ public class ControlLayer extends Table {
 	
 	//when the button clicked, add the item to the window...
 	private void addListenerToWindow(Actor item,Actor btn){
-		VisWindow dialog = new VisWindow(getTrans(btn.getName().replace("-","")) + " " + getTrans("youCanDrag"));
+		final String windowName = btn.getName();
+		VisWindow dialog = new VisWindow(getTrans(windowName.replace("-","")) + " " + getTrans("youCanDrag"));
 		dialog.setKeepWithinStage(false);
 		//dialog.addCloseButton();
 		dialog.reset();
@@ -878,24 +920,47 @@ public class ControlLayer extends Table {
 		//dialog.getTitleTable().add(closeButton).padRight(4);
 		// use user data to check dialog visibility...
 		dialog.setUserObject("false");
+		windowsMap.put(windowName, dialog);
 		btn.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-				if(dialog.getUserObject().toString().equals("true"))
-					dialog.remove();
-				else {
-					getStage().addActor(dialog);
-					dialog.toFront();
-					float width = Gdx.graphics.getWidth()*(app.getEditor().isLandscape() ? 0.4f : 0.85f),
-						height = app.getEditor().isLandscape() ? windowsTable.getHeight() : Gdx.graphics.getHeight() * 0.3f;
-					if(dialog.getWidth() != width || dialog.getHeight() != height){
-						dialog.setSize(width,height);
-						dialog.setX((getStage().getWidth() - dialog.getWidth()) / 2);
-					}
-				}
-				dialog.setUserObject(dialog.getUserObject().toString().equals("true") ? "false" : "true");
+				toggleWindow(windowName);
             }
         });
+	}
+	
+	/** Toggles a named window (Bodies-List, Properties, Joints, Events, Variables, AI). */
+	public void toggleWindow(String name){
+		VisWindow dialog = windowsMap.get(name);
+		if(dialog == null) return;
+		if(dialog.getUserObject().toString().equals("true"))
+			dialog.remove();
+		else {
+			getStage().addActor(dialog);
+			dialog.toFront();
+			float width = Gdx.graphics.getWidth()*(app.getEditor().isLandscape() ? 0.4f : 0.85f),
+				height = app.getEditor().isLandscape() ? windowsTable.getHeight() : Gdx.graphics.getHeight() * 0.3f;
+			if(dialog.getWidth() != width || dialog.getHeight() != height){
+				dialog.setSize(width,height);
+				dialog.setX((getStage().getWidth() - dialog.getWidth()) / 2);
+			}
+		}
+		dialog.setUserObject(dialog.getUserObject().toString().equals("true") ? "false" : "true");
+	}
+	
+	/** Returns true if the named window is currently visible on stage. */
+	public boolean isWindowVisible(String name){
+		VisWindow dialog = windowsMap.get(name);
+		return dialog != null && dialog.getUserObject() != null && dialog.getUserObject().toString().equals("true");
+	}
+	
+	/** Hides the ControlLayer's native toolbar/tabs/sidebar so an Android native UI can drive those. */
+	public void setNativeUiMode(boolean nativeMode){
+		topScrollPane.setVisible(!nativeMode);
+		bottomScrollPane.setVisible(!nativeMode);
+		tabsItem.setVisible(!nativeMode);
+		btnsTable.setVisible(!nativeMode);
+		invalidateHierarchy();
 	}
 	
 	public JointsList getJointsList(){

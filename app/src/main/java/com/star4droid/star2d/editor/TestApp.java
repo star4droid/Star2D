@@ -59,6 +59,8 @@ public class TestApp implements ApplicationListener {
 	public Array<LibgdxEditor> editors = new Array<>();
 	boolean canExitFromProject = true, showVisual = false;
 	BodyScriptSelector bodyScriptSelector;
+	// Native UI visibility callbacks (set by EditorActivity)
+	public Runnable onEnterEditing, onExitEditing;
 	public TestApp(){}
 	
 	public TestApp(Project project){
@@ -282,6 +284,7 @@ public class TestApp implements ApplicationListener {
 		editors.add(editor);
 		controlLayer.tabsItem.refresh();
 		canExitFromProject = true;
+		if(onEnterEditing != null) onEnterEditing.run();
 	}
 	
 	public void openSceneInNewEditor(String scene){
@@ -421,6 +424,7 @@ public class TestApp implements ApplicationListener {
 		Gdx.input.setCatchKey(4,false);
 		Gdx.input.setInputProcessor(projectsListStage);
 		if(changeOrienation) orienationChangeListener.onChange(false);
+		if(onExitEditing != null) onExitEditing.run();
 	}
 	
 	public void updateFont(String path){
@@ -537,6 +541,7 @@ public class TestApp implements ApplicationListener {
 				Gdx.input.setInputProcessor(stage.multiplexer);
 				if(width!=-1 && height!=-1)
 					stage.resize(width,height);
+				if(onExitEditing != null) onExitEditing.run();
 			} else {
 				// this.stageImp is the current playing stage...
 			    if(this.stageImp!=null){
@@ -553,6 +558,7 @@ public class TestApp implements ApplicationListener {
 				Gdx.input.setCatchKey(4,true);
 				Gdx.input.setInputProcessor(multiplexer);
 				UiStage.getViewport().update(width, height);
+				if(isProjectOpened() && onEnterEditing != null) onEnterEditing.run();
 			}
 			this.stageImp = stage;
 		});
@@ -611,13 +617,23 @@ public class TestApp implements ApplicationListener {
 			return;
 		} else {
 			if(editor!=null){
-				editor.act();
-				editor.draw();
+				try {
+					editor.act();
+					editor.draw();
+				} catch(Exception e){
+					Gdx.files.external("logs/editor_draw.error.txt").writeString(Utils.getStackTraceString(e)+"\n",true);
+					try { if(editor.getBatch().isDrawing()) editor.getBatch().end(); } catch(Exception ignored){}
+				}
 			}
 			
 			if(UiStage!=null){
-				UiStage.act();
-				UiStage.draw();
+				try {
+					UiStage.act();
+					UiStage.draw();
+				} catch(Exception e){
+					Gdx.files.external("logs/uistage_draw.error.txt").writeString(Utils.getStackTraceString(e)+"\n",true);
+					try { if(UiStage.getBatch().isDrawing()) UiStage.getBatch().end(); } catch(Exception ignored){}
+				}
 			}
 			
 		}

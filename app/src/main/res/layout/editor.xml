@@ -13,6 +13,7 @@
     <HorizontalScrollView
         android:layout_width="match_parent"
         android:layout_height="26dp"
+        android:id="@+id/top_toolbar"
         android:scrollbars="none"
         android:fillViewport="true">
 
@@ -33,6 +34,7 @@
                 android:tint="@color/white"
                 android:rotation="180"
                 android:src="@drawable/back_arrow"
+                android:id="@+id/btn_back"
                 android:contentDescription="back"/>
 
             <View
@@ -49,6 +51,7 @@
                 android:padding="4dp"
                 android:tint="@color/white"
                 android:src="@drawable/save_icon"
+                android:id="@+id/btn_save"
                 android:contentDescription="save"/>
 
             <!-- Files -->
@@ -57,6 +60,7 @@
                 android:layout_height="22dp"
                 android:padding="4dp"
                 android:src="@drawable/file_white"
+                android:id="@+id/btn_files"
                 android:contentDescription="files"/>
 
             <!-- Logs -->
@@ -65,6 +69,7 @@
                 android:layout_height="22dp"
                 android:padding="4dp"
                 android:src="@drawable/assignment"
+                android:id="@+id/btn_logs"
                 android:contentDescription="logs"/>
 
             <!-- Rotate Screen -->
@@ -73,6 +78,7 @@
                 android:layout_height="22dp"
                 android:padding="4dp"
                 android:src="@drawable/rotate_dev"
+                android:id="@+id/btn_rotate"
                 android:contentDescription="rotate screen orientation"/>
 
             <View
@@ -88,6 +94,7 @@
                 android:layout_height="22dp"
                 android:padding="4dp"
                 android:src="@drawable/add"
+                android:id="@+id/btn_add"
                 android:contentDescription="add item"/>
 
             <!-- Scene Actions -->
@@ -96,6 +103,7 @@
                 android:layout_height="22dp"
                 android:padding="4dp"
                 android:src="@drawable/scene"
+                android:id="@+id/btn_scene"
                 android:contentDescription="scene actions"/>
 
             <!-- Scene Color -->
@@ -104,6 +112,7 @@
                 android:layout_height="22dp"
                 android:padding="4dp"
                 android:src="@drawable/color_pal"
+                android:id="@+id/btn_color"
                 android:contentDescription="scene background color"/>
 
             <!-- Lock -->
@@ -112,6 +121,7 @@
                 android:layout_height="22dp"
                 android:padding="4dp"
                 android:src="@drawable/lock"
+                android:id="@+id/btn_lock"
                 android:contentDescription="lock selected item"/>
 
             <View
@@ -150,6 +160,7 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:id="@+id/overlay_controls"
             android:orientation="vertical">
 
             <!-- ===== Workspace: 3-column layout ===== -->
@@ -319,6 +330,7 @@
                                 android:layout_height="22dp"
                                 android:padding="4dp"
                                 android:src="@drawable/add"
+                                android:id="@+id/btn_add_scene"
                                 android:contentDescription="add new scene tab"/>
 
                             <View
@@ -350,6 +362,7 @@
                                 android:layout_height="22dp"
                                 android:padding="4dp"
                                 android:src="@drawable/play"
+                                android:id="@+id/btn_play"
                                 android:contentDescription="play scene"/>
 
                             <!-- Grid (active by default) -->
@@ -358,7 +371,7 @@
                                 android:layout_height="22dp"
                                 android:padding="4dp"
                                 android:src="@drawable/grid_icon"
-                                android:background="@drawable/bg_button_selected"
+                                android:id="@+id/btn_grid"
                                 android:contentDescription="grid mode"/>
 
                             <!-- Move -->
@@ -367,6 +380,7 @@
                                 android:layout_height="22dp"
                                 android:padding="4dp"
                                 android:src="@drawable/move_icon"
+                                android:id="@+id/btn_move"
                                 android:contentDescription="move mode"
                                 android:layout_marginStart="2dp"/>
 
@@ -376,6 +390,7 @@
                                 android:layout_height="22dp"
                                 android:padding="4dp"
                                 android:src="@drawable/scale_icon"
+                                android:id="@+id/btn_scale"
                                 android:contentDescription="scale mode"
                                 android:layout_marginStart="2dp"/>
 
@@ -385,6 +400,7 @@
                                 android:layout_height="22dp"
                                 android:padding="4dp"
                                 android:src="@drawable/rotate_icon"
+                                android:id="@+id/btn_rotate_mode"
                                 android:contentDescription="rotate mode"
                                 android:layout_marginStart="2dp"/>
 
@@ -401,6 +417,7 @@
                                 android:layout_height="22dp"
                                 android:padding="4dp"
                                 android:src="@drawable/delete"
+                                android:id="@+id/btn_delete"
                                 android:contentDescription="delete selected"/>
 
                             <!-- Undo -->
@@ -409,6 +426,7 @@
                                 android:layout_height="22dp"
                                 android:padding="4dp"
                                 android:src="@drawable/undo"
+                                android:id="@+id/btn_undo"
                                 android:contentDescription="undo"/>
 
                             <!-- Redo -->
@@ -417,6 +435,7 @@
                                 android:layout_height="22dp"
                                 android:padding="4dp"
                                 android:src="@drawable/redo"
+                                android:id="@+id/btn_redo"
                                 android:contentDescription="redo"/>
 
                             <!-- Center Camera -->
@@ -425,6 +444,7 @@
                                 android:layout_height="22dp"
                                 android:padding="4dp"
                                 android:src="@drawable/center_camera"
+                                android:id="@+id/btn_center_camera"
                                 android:contentDescription="center camera"/>
 
                             <!-- Settings -->
@@ -433,6 +453,7 @@
                                 android:layout_height="22dp"
                                 android:padding="4dp"
                                 android:src="@drawable/events_properties"
+                                android:id="@+id/btn_settings"
                                 android:contentDescription="settings"/>
 
                             <View
@@ -565,6 +586,7 @@
                         android:padding="7dp"
                         android:tint="@color/white"
                         android:src="@drawable/layer"
+                        android:id="@+id/nav_bodies"
                         android:layout_margin="2dp"
                         android:background="@drawable/bg_button_selected"
                         android:contentDescription="bodies list"/>
@@ -576,6 +598,7 @@
                         android:layout_weight="1"
                         android:padding="7dp"
                         android:src="@drawable/events_properties"
+                        android:id="@+id/nav_properties"
                         android:layout_margin="2dp"
                         android:background="@drawable/bg_button_selected"                        android:contentDescription="properties"/>
 
@@ -586,6 +609,7 @@
                         android:layout_weight="1"
                         android:padding="7dp"
                         android:src="@drawable/link"
+                        android:id="@+id/nav_joints"
                         android:layout_margin="2dp"
                         android:contentDescription="joints"/>
 
@@ -596,6 +620,7 @@
                         android:layout_weight="1"
                         android:padding="7dp"
                         android:src="@drawable/pointer_icon"
+                        android:id="@+id/nav_events"
                         android:layout_margin="2dp"
                         android:contentDescription="events"/>
 
@@ -606,6 +631,7 @@
                         android:layout_weight="1"
                         android:padding="7dp"
                         android:src="@drawable/x"
+                        android:id="@+id/nav_variables"
                         android:layout_margin="2dp"
                         android:contentDescription="variables"/>
 
@@ -616,6 +642,7 @@
                         android:layout_weight="1"
                         android:padding="7dp"
                         android:src="@drawable/gemini"
+                        android:id="@+id/nav_ai"
                         android:layout_margin="2dp"
                         android:contentDescription="editor AI"/>
                 </LinearLayout>

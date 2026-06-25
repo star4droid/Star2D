@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       model:
-        description: 'Task for OpenCode'
-        required: false
-        default: 'opencode/big-pickle'
+        description: 'model for OpenCode'
+        required: true
+        default: 'big-pickle'
         type: string
       
       custom_prompt:
@@ -58,7 +58,7 @@ jobs:
         env:
           OPENCODE_ZEN_API_KEY: ${{ secrets.OPENCODE_ZEN_API_KEY }}
         with:
-          model: ${{ inputs.model }}
+          model: opencode/${{ inputs.model }}
           prompt: ${{ inputs.custom_prompt }}
 
       # 💾 Commit changes

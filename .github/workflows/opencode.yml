@@ -52,7 +52,7 @@ jobs:
         env:
           OPENCODE_ZEN_API_KEY: ${{ secrets.OPENCODE_ZEN_API_KEY }}
         with:
-          model: zen/glm-5.2
+          model: opencode/glm-5.2
           prompt: ${{ inputs.custom_prompt }}
 
       # 💾 Commit changes

@@ -11,13 +11,13 @@
         </shape>
     </item>
     <!-- 草地 -->
-    <item android:top="68%">
+    <item android:top="200dp">
         <shape>
             <solid android:color="#4caf50"/>
         </shape>
     </item>
     <!-- 深色草地底部 -->
-    <item android:top="85%">
+    <item android:top="250dp">
         <shape>
             <solid android:color="#2e7d32"/>
         </shape>

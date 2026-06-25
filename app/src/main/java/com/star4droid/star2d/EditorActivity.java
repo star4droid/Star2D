@@ -331,6 +331,27 @@ public class EditorActivity extends AppCompatActivity implements AndroidFragment
         EditText searchBodies = findViewById(R.id.search_for_item);
         EditText searchFiles = findViewById(R.id.searchBar);
         AndroidStatics.init(itemsList, gridView, searchBodies, searchFiles);
+
+        View leftContainer = findViewById(R.id.left_container);
+        View rightContainer = findViewById(R.id.right_container);
+        View bottomPanel = findViewById(R.id.bottom_panel);
+
+        findViewById(R.id.open_left_panel).setOnClickListener(v -> {
+            boolean isVisible = leftContainer.getVisibility() == View.VISIBLE;
+            leftContainer.setVisibility(isVisible ? View.GONE : View.VISIBLE);
+            v.setRotation(isVisible ? 90 : 270);
+        });
+
+        findViewById(R.id.open_right_panel).setOnClickListener(v -> {
+            boolean isVisible = rightContainer.getVisibility() == View.VISIBLE;
+            rightContainer.setVisibility(isVisible ? View.GONE : View.VISIBLE);
+            v.setRotation(isVisible ? 270 : 90);
+        });
+
+        findViewById(R.id.assets_tab).setOnClickListener(v -> {
+            boolean isVisible = bottomPanel.getVisibility() == View.VISIBLE;
+            bottomPanel.setVisibility(isVisible ? View.GONE : View.VISIBLE);
+        });
     }
     private static int id = 0;
     public void indexFiles() {

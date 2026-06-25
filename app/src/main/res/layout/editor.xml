@@ -1,317 +1,699 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
-     xmlns:android="http://schemas.android.com/apk/res/android"
-     xmlns:app="http://schemas.android.com/apk/res-auto"
-     xmlns:tools="http://schemas.android.com/tools"
-     android:layout_height="match_parent"
-     android:layout_width="match_parent"
-     android:orientation="vertical"
-     android:fitsSystemWindows="true"
-     android:clipToPadding="true">
-    <LinearLayout
-         android:layout_height="match_parent"
-         android:layout_width="match_parent"
-         android:orientation="vertical">
-        <FrameLayout
-             android:layout_height="match_parent"
-             android:layout_width="match_parent"
-             android:orientation="horizontal"
-             android:layout_weight="1"
-             android:id="@+id/frame">
-            <com.star4droid.star2d.Items.Editor
-                 android:layout_height="match_parent"
-                 android:layout_width="match_parent"
-                 android:id="@+id/editor" >
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_height="match_parent"
+    android:layout_width="match_parent"
+    android:orientation="vertical"
+    android:fitsSystemWindows="true"
+    android:clipToPadding="true"
+    android:background="@color/editor_bg">
 
+    <!-- ==================== Top Toolbar (ControlLayer Top) ==================== -->
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="26dp"
+        android:scrollbars="none"
+        android:fillViewport="true">
 
-            </com.star4droid.star2d.Items.Editor>
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@color/toolbar_bg"
+            android:paddingStart="4dp"
+            android:paddingEnd="4dp">
+
+            <!-- Back -->
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:padding="4dp"
+                android:tint="@color/white"
+                android:rotation="180"
+                android:src="@drawable/back_arrow"
+                android:contentDescription="back"/>
+
+            <View
+                android:layout_width="1dp"
+                android:layout_height="14dp"
+                android:background="#444444"
+                android:layout_marginStart="3dp"
+                android:layout_marginEnd="3dp"/>
+
+            <!-- Save -->
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:padding="4dp"
+                android:tint="@color/white"
+                android:src="@drawable/save_icon"
+                android:contentDescription="save"/>
+
+            <!-- Files -->
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:padding="4dp"
+                android:src="@drawable/file_white"
+                android:contentDescription="files"/>
+
+            <!-- Logs -->
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:padding="4dp"
+                android:src="@drawable/assignment"
+                android:contentDescription="logs"/>
+
+            <!-- Rotate Screen -->
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:padding="4dp"
+                android:src="@drawable/rotate_dev"
+                android:contentDescription="rotate screen orientation"/>
+
+            <View
+                android:layout_width="1dp"
+                android:layout_height="14dp"
+                android:background="#444444"
+                android:layout_marginStart="3dp"
+                android:layout_marginEnd="3dp"/>
+
+            <!-- Add Item -->
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:padding="4dp"
+                android:src="@drawable/add"
+                android:contentDescription="add item"/>
+
+            <!-- Scene Actions -->
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:padding="4dp"
+                android:src="@drawable/scene"
+                android:contentDescription="scene actions"/>
+
+            <!-- Scene Color -->
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:padding="4dp"
+                android:src="@drawable/color_pal"
+                android:contentDescription="scene background color"/>
+
+            <!-- Lock -->
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:padding="4dp"
+                android:src="@drawable/lock"
+                android:contentDescription="lock selected item"/>
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="1"/>
+
+            <!-- Indexing Label -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/indexing_label"
+                android:text="Indexing..."
+                android:textSize="8sp"
+                android:textColor="@color/text_muted"
+                android:visibility="gone"/>
+        </LinearLayout>
+    </HorizontalScrollView>
+
+    <!-- ==================== Main Frame: Editor behind, overlay on top ==================== -->
+    <FrameLayout
+        android:layout_height="0dp"
+        android:layout_width="match_parent"
+        android:layout_weight="1"
+        android:id="@+id/frame">
+
+        <!-- Scene Editor (transparent, renders behind all panels) -->
+        <com.star4droid.star2d.Items.Editor
+            android:layout_height="match_parent"
+            android:layout_width="match_parent"
+            android:id="@+id/editor"
+            android:background="@android:color/transparent">
+        </com.star4droid.star2d.Items.Editor>
+
+        <!-- Overlay panels -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <!-- ===== Workspace: 3-column layout ===== -->
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:orientation="vertical"
-                >
+                android:layout_height="0dp"
+                android:layout_weight="5"
+                android:orientation="horizontal">
+
+                <!-- ===== Left: Hierarchy Panel ===== -->
                 <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="35dp"
-                    android:id="@+id/main_controls"
-                    android:gravity="center"
-                    android:background="@drawable/bg_prop_input" >
-                    <ImageView
-                        android:layout_width="30dp"
-                        android:layout_height="match_parent"
-                        android:padding="5dp"
-                        android:tint="@color/white"
-                        android:src="@drawable/save_icon" />
-                </LinearLayout>
-                <LinearLayout
-                    android:layout_width="match_parent"
+                    android:layout_width="0dp"
                     android:layout_height="match_parent"
-                    android:gravity="center_vertical"
-                    >
+                    android:layout_weight="1.2"
+                    android:id="@+id/left_container"
+                    android:background="@color/panel_bg"
+                    android:orientation="vertical">
+
+                    <!-- Header bar -->
                     <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_weight="1"
-                        android:orientation="vertical"
-                        android:background="@color/prop_grey"
-                        >
+                        android:layout_width="match_parent"
+                        android:layout_height="22dp"
+                        android:background="@color/panel_header_bg"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:paddingStart="6dp"
+                        android:paddingEnd="6dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Hierarchy"
+                            android:textSize="9sp"
+                            android:textColor="@color/text_primary"
+                            android:textStyle="bold"/>
+
+                        <View
+                            android:layout_width="0dp"
+                            android:layout_height="0dp"
+                            android:layout_weight="1"/>
+
+                        <!-- Bodies List (Layer) -->
+                    </LinearLayout>
+
+                    <!-- Search bar -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginTop="2dp"
+                        android:layout_marginStart="4dp"
+                        android:layout_marginEnd="4dp"
+                        android:layout_marginBottom="2dp"
+                        android:background="@color/comp_header_bg"
+                        android:padding="3dp">
+
+                        <ImageView
+                            android:layout_width="14dp"
+                            android:layout_height="14dp"
+                            android:padding="2dp"
+                            android:src="@drawable/search"
+                            android:layout_marginEnd="4dp"
+                            android:contentDescription="search for item"
+                            app:tint="@color/text_muted"/>
+
+                        <EditText
+                            android:id="@+id/search_for_item"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:hint="Search..."
+                            android:background="@android:color/transparent"
+                            android:textColorHint="@color/text_muted"
+                            android:textColor="@color/text_primary"
+                            android:textSize="8sp"
+                            android:inputType="text"
+                            android:imeOptions="actionSearch"
+                            android:singleLine="true"/>
+                    </LinearLayout>
+
+                    <!-- Divider -->
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@color/border_light"/>
+
+                    <!-- Current item name -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="18dp"
+                        android:gravity="center_vertical"
+                        android:paddingStart="4dp">
+
+                        <ImageView
+                            android:layout_width="14dp"
+                            android:layout_height="14dp"
+                            android:padding="2dp"
+                            android:tint="@color/text_primary"
+                            android:src="@drawable/ic_filter_black"
+                            android:contentDescription="filter"/>
+
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:paddingStart="14dp"
-                            android:layout_marginTop="8dp"
-                            android:textAllCaps="true"
-                            android:text="HIERARCHY"
-                            android:textSize="10sp"
-                            android:textStyle="bold"
-                            android:textColor="@color/white"
-                            />
-                        <!-- Search Bar -->
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="horizontal"
-                            android:gravity="center_vertical"
-                            android:layout_marginTop="3dp"
-                            android:background="@drawable/bg_prop_spinner"
-                            android:padding="4dp"
-                            android:layout_marginBottom="6dp"
-                            android:layout_marginStart="6dp"
-                            android:layout_marginEnd="8dp"
-                            android:elevation="2dp">
-
-                            <ImageView
-                                android:layout_width="20dp"
-                                android:layout_height="20dp"
-                                android:padding="4dp"
-                                android:src="@drawable/search"
-                                android:layout_marginEnd="10dp"
-                                android:contentDescription="search for item"
-                                app:tint="#888888"
-                                />
-
-                            <EditText
-                                android:id="@+id/search_for_item"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:hint="Search..."
-                                android:background="@android:color/transparent"
-                                android:textColorHint="#888888"
-                                android:textColor="#FFFFFF"
-                                android:textSize="10sp"
-                                android:inputType="text"
-                                android:imeOptions="actionSearch"
-                                android:singleLine="true" />
-                        </LinearLayout>
-                        <View
-                            android:layout_width="match_parent"
-                            android:layout_height="2dp"
-                            android:background="@color/prop_divider"
-                            />
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:gravity="center_vertical"
-                            >
-                            <ImageView
-                                android:layout_width="20dp"
-                                android:layout_height="20dp"
-                                android:layout_marginStart="3dp"
-                                android:padding="2dp"
-                                android:tint="@color/white"
-                                android:src="@drawable/ic_filter_black"
-                                />
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:id="@+id/item_name"
-                                android:paddingStart="5dp"
-                                android:textColor="@color/white"
-                                android:textSize="@dimen/text_size_small"
-                                android:text="Scene"
-                                />
-                        </LinearLayout>
-                        <HorizontalScrollView
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:fillViewport="true">
-                            <androidx.recyclerview.widget.RecyclerView
-                                android:id="@+id/items_list"
-                                android:layout_width="match_parent"
-                                android:layout_height="match_parent"
-                                />
-                        </HorizontalScrollView>
+                            android:id="@+id/item_name"
+                            android:paddingStart="4dp"
+                            android:textColor="@color/text_primary"
+                            android:textSize="9sp"
+                            android:text="Scene"/>
                     </LinearLayout>
 
-                    <LinearLayout
-                        android:layout_width="0dp"
+                    <!-- Items list -->
+                    <HorizontalScrollView
+                        android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:orientation="vertical"
-                        android:gravity="right"
-                        android:layout_weight="2">
+                        android:fillViewport="true">
+
+                        <androidx.recyclerview.widget.RecyclerView
+                            android:id="@+id/items_list"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"/>
+                    </HorizontalScrollView>
+                </LinearLayout>
+
+                <!-- Left separator -->
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="match_parent"
+                    android:background="@color/border_light"/>
+
+                <!-- ===== Center: Scene Viewport (transparent) ===== -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="4"
+                    android:orientation="vertical"
+                    android:background="@android:color/transparent">
+
+                    <!-- Scene Tabs -->
+                    <HorizontalScrollView
+                        android:layout_width="match_parent"
+                        android:layout_height="22dp"
+                        android:scrollbars="none"
+                        android:fillViewport="true">
 
                         <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="35dp"
-                            android:background="@color/prop_grey"
-                            android:contentDescription="Controls Linear"
+                            android:layout_width="wrap_content"
+                            android:layout_height="match_parent"
+                            android:orientation="horizontal"
+                            android:background="@color/toolbar_bg"
                             android:gravity="center_vertical">
 
-                            <ImageView
-                                android:layout_width="25dp"
-                                android:layout_height="25dp"
-                                android:layout_marginStart="6dp"
-                                android:background="@drawable/bg_button_selected"
-                                android:padding="5dp"
-                                android:src="@drawable/grid_icon_high" />
-
-                            <ImageView
-                                android:layout_width="25dp"
-                                android:layout_height="25dp"
-                                android:padding="5dp"
-                                android:src="@drawable/move_icon" />
-
-                            <ImageView
-                                android:layout_width="25dp"
-                                android:layout_height="25dp"
-                                android:padding="5dp"
-                                android:src="@drawable/scale_icon" />
-
-                            <ImageView
-                                android:layout_width="25dp"
-                                android:layout_height="25dp"
-                                android:padding="5dp"
-                                android:src="@drawable/rotate_icon" />
-                        </LinearLayout>
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:gravity="right|center"
-                            android:layout_weight="1"
-                            >
-                            <ImageView
-                                android:layout_width="20dp"
-                                android:layout_height="20dp"
-                                android:rotation="270"
-                                android:tint="@color/white"
-                                android:translationX="-3px"
-                                android:id="@+id/open_left_panel"
-                                android:src="@drawable/drop_down_icon"
-                                android:background="@drawable/bg_properties"
-                                />
-                            <LinearLayout
-                                android:layout_width="0dp"
+                            <TextView
+                                android:layout_width="wrap_content"
                                 android:layout_height="match_parent"
-                                android:layout_weight="1"
-                                />
+                                android:text="Scene1"
+                                android:textSize="9sp"
+                                android:textColor="@color/text_white"
+                                android:gravity="center"
+                                android:paddingStart="10dp"
+                                android:paddingEnd="10dp"
+                                android:background="@color/panel_bg"/>
+
+                            <!-- Add Scene -->
                             <ImageView
-                                android:layout_width="20dp"
-                                android:layout_height="20dp"
-                                android:rotation="90"
-                                android:tint="@color/white"
-                                android:translationX="3px"
-                                android:id="@+id/open_right_panel"
-                                android:src="@drawable/drop_down_icon"
-                                android:background="@drawable/bg_properties"
-                                />
+                                android:layout_width="22dp"
+                                android:layout_height="22dp"
+                                android:padding="4dp"
+                                android:src="@drawable/add"
+                                android:contentDescription="add new scene tab"/>
+
+                            <View
+                                android:layout_width="0dp"
+                                android:layout_height="0dp"
+                                android:layout_weight="1"/>
                         </LinearLayout>
+                    </HorizontalScrollView>
+
+                    <!-- ==================== Actions Toolbar (ControlLayer Bottom) ==================== -->
+                    <HorizontalScrollView
+                        android:layout_width="match_parent"
+                        android:layout_height="26dp"
+                        android:scrollbars="none"
+                        android:fillViewport="true">
 
                         <LinearLayout
-                            android:layout_width="match_parent"
+                            android:layout_width="wrap_content"
                             android:layout_height="match_parent"
-                            android:layout_weight="2"
-                            android:orientation="vertical">
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:background="@color/toolbar_bg"
+                            android:paddingStart="4dp"
+                            android:paddingEnd="4dp">
 
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="20dp"
-                                android:background="@color/panel_header_bg"
-                                android:gravity="center_vertical"
-                                android:orientation="horizontal">
+                            <!-- Play -->
+                            <ImageView
+                                android:layout_width="27dp"
+                                android:layout_height="22dp"
+                                android:padding="4dp"
+                                android:src="@drawable/play"
+                                android:contentDescription="play scene"/>
 
-                                <LinearLayout
-                                    android:layout_width="70dp"
-                                    android:layout_height="match_parent"
-                                    android:background="@color/prop_grey"
-                                    android:gravity="center">
+                            <!-- Grid (active by default) -->
+                            <ImageView
+                                android:layout_width="22dp"
+                                android:layout_height="22dp"
+                                android:padding="4dp"
+                                android:src="@drawable/grid_icon"
+                                android:background="@drawable/bg_button_selected"
+                                android:contentDescription="grid mode"/>
 
-                                    <TextView
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="match_parent"
-                                        android:background="@color/panel_bg"
-                                        android:gravity="center"
-                                        android:paddingStart="10dp"
-                                        android:paddingEnd="10dp"
-                                        android:text="Assets"
-                                        android:textColor="@color/text_white"
-                                        android:textSize="9sp" />
-                                </LinearLayout>
-                            </LinearLayout>
+                            <!-- Move -->
+                            <ImageView
+                                android:layout_width="22dp"
+                                android:layout_height="22dp"
+                                android:padding="4dp"
+                                android:src="@drawable/move_icon"
+                                android:contentDescription="move mode"
+                                android:layout_marginStart="2dp"/>
 
-                            <include layout="@layout/files_manager_main" />
+                            <!-- Scale -->
+                            <ImageView
+                                android:layout_width="22dp"
+                                android:layout_height="22dp"
+                                android:padding="4dp"
+                                android:src="@drawable/scale_icon"
+                                android:contentDescription="scale mode"
+                                android:layout_marginStart="2dp"/>
+
+                            <!-- Rotate -->
+                            <ImageView
+                                android:layout_width="22dp"
+                                android:layout_height="22dp"
+                                android:padding="4dp"
+                                android:src="@drawable/rotate_icon"
+                                android:contentDescription="rotate mode"
+                                android:layout_marginStart="2dp"/>
+
+                            <View
+                                android:layout_width="1dp"
+                                android:layout_height="14dp"
+                                android:background="#444444"
+                                android:layout_marginStart="4dp"
+                                android:layout_marginEnd="4dp"/>
+
+                            <!-- Delete -->
+                            <ImageView
+                                android:layout_width="22dp"
+                                android:layout_height="22dp"
+                                android:padding="4dp"
+                                android:src="@drawable/delete"
+                                android:contentDescription="delete selected"/>
+
+                            <!-- Undo -->
+                            <ImageView
+                                android:layout_width="22dp"
+                                android:layout_height="22dp"
+                                android:padding="4dp"
+                                android:src="@drawable/undo"
+                                android:contentDescription="undo"/>
+
+                            <!-- Redo -->
+                            <ImageView
+                                android:layout_width="22dp"
+                                android:layout_height="22dp"
+                                android:padding="4dp"
+                                android:src="@drawable/redo"
+                                android:contentDescription="redo"/>
+
+                            <!-- Center Camera -->
+                            <ImageView
+                                android:layout_width="22dp"
+                                android:layout_height="22dp"
+                                android:padding="4dp"
+                                android:src="@drawable/center_camera"
+                                android:contentDescription="center camera"/>
+
+                            <!-- Settings -->
+                            <ImageView
+                                android:layout_width="22dp"
+                                android:layout_height="22dp"
+                                android:padding="4dp"
+                                android:src="@drawable/events_properties"
+                                android:contentDescription="settings"/>
+
+                            <View
+                                android:layout_width="0dp"
+                                android:layout_height="0dp"
+                                android:layout_weight="1"/>
                         </LinearLayout>
-                    </LinearLayout>
+                    </HorizontalScrollView>
+                    <!-- Transparent area with panel toggle buttons -->
                     <LinearLayout
-                        android:layout_width="0dp"
+                        android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:padding="5dp"
-                        android:layout_weight="1"
-                        android:background="@color/panel_bg"
-                        android:id="@+id/right_container"
-                        >
+                        android:gravity="center_vertical"
+                        android:background="@android:color/transparent">
+
+                        <!-- Toggle left panel -->
+                        <ImageView
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:rotation="270"
+                            android:tint="@color/text_muted"
+                            android:id="@+id/open_left_panel"
+                            android:src="@drawable/drop_down_icon"
+                            android:background="@color/comp_header_bg"
+                            android:contentDescription="toggle left panel"/>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:background="@android:color/transparent"/>
+
+                        <!-- Toggle right panel -->
+                        <ImageView
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:rotation="90"
+                            android:tint="@color/text_muted"
+                            android:id="@+id/open_right_panel"
+                            android:src="@drawable/drop_down_icon"
+                            android:background="@color/comp_header_bg"
+                            android:contentDescription="toggle right panel"/>
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- Right separator -->
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="match_parent"
+                    android:background="@color/border_light"/>
+
+                <!-- ===== Right: Properties Panel ===== -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1.5"
+                    android:background="@color/panel_bg"
+                    android:id="@+id/right_container"
+                    android:orientation="vertical">
+
+                    <!-- Header -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="22dp"
+                        android:background="@color/panel_header_bg"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:paddingStart="6dp"
+                        android:paddingEnd="6dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Properties"
+                            android:textSize="9sp"
+                            android:textColor="@color/text_primary"
+                            android:textStyle="bold"/>
+
+                        <View
+                            android:layout_width="0dp"
+                            android:layout_height="0dp"
+                            android:layout_weight="1"/>
+
+                        <TextView
+                            android:layout_width="14dp"
+                            android:layout_height="14dp"
+                            android:text="≡"
+                            android:textSize="9sp"
+                            android:textColor="@color/text_muted"
+                            android:gravity="center"/>
+                    </LinearLayout>
+
+                    <!-- Properties content -->
+                    <ScrollView
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:scrollbars="none">
+
                         <LinearLayout
                             android:layout_width="match_parent"
-                            android:layout_height="match_parent"
+                            android:layout_height="wrap_content"
                             android:orientation="vertical"
                             android:paddingStart="3dp"
                             android:paddingEnd="3dp"
-                            android:background="@color/panel_bg"
-                            >
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="22dp"
-                                android:background="@color/panel_header_bg"
-                                android:orientation="horizontal"
-                                android:gravity="center_vertical"
-                                android:paddingStart="6dp" android:paddingEnd="6dp">
-                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                                    android:text="Properties" android:textSize="9sp" android:textColor="@color/text_primary"
-                                    android:textStyle="bold"/>
-                                <View android:layout_width="0dp" android:layout_height="0dp" android:layout_weight="1"/>
-                                <TextView android:layout_width="14dp" android:layout_height="14dp"
-                                    android:text="≡" android:textSize="9sp" android:textColor="@color/text_muted" android:gravity="center"/>
-                            </LinearLayout>
-                            <ScrollView
-                                android:layout_width="match_parent"
-                                android:layout_height="match_parent"
-                                >
-                                <LinearLayout
-                                    android:layout_width="match_parent"
-                                    android:layout_height="match_parent"
-                                    android:orientation="vertical"
-                                    android:id="@+id/properties_container"
-                                    >
-                                    <include layout="@layout/section_csv"/>
-                                    <include layout="@layout/color_value"/>
-                                    <include layout="@layout/checkbox"/>
-                                    <include layout="@layout/two_numbers"/>
-                                    <include layout="@layout/single_number"/>
-                                    <include layout="@layout/section_csv"/>
-                                    <include layout="@layout/spinner"/>
-                                </LinearLayout>
-                            </ScrollView>
-                        </LinearLayout>
+                            android:id="@+id/properties_container">
 
-                    </LinearLayout>
-                    <LinearLayout
-                        android:layout_width="40dp"
+                            <include layout="@layout/section_csv"/>
+                            <include layout="@layout/color_value"/>
+                            <include layout="@layout/checkbox"/>
+                            <include layout="@layout/two_numbers"/>
+                            <include layout="@layout/single_number"/>
+                            <include layout="@layout/section_csv"/>
+                            <include layout="@layout/spinner"/>
+                        </LinearLayout>
+                    </ScrollView>
+                </LinearLayout>
+
+                <!-- Navigation sidebar -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="0.5"
+                    android:id="@+id/navigation_linear"
+                    android:orientation="vertical"
+                    android:background="@drawable/bg_properties">
+                    <ImageView
+                        android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:id="@+id/navigation_linear"
-                        android:orientation="vertical"
-                        android:background="@drawable/bg_properties"
-                    />
+                        android:layout_weight="1"
+                        android:padding="7dp"
+                        android:tint="@color/white"
+                        android:src="@drawable/layer"
+                        android:layout_margin="2dp"
+                        android:background="@drawable/bg_button_selected"
+                        android:contentDescription="bodies list"/>
+
+                    <!-- Properties -->
+                    <ImageView
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:padding="7dp"
+                        android:src="@drawable/events_properties"
+                        android:layout_margin="2dp"
+                        android:background="@drawable/bg_button_selected"                        android:contentDescription="properties"/>
+
+                    <!-- Joints -->
+                    <ImageView
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:padding="7dp"
+                        android:src="@drawable/link"
+                        android:layout_margin="2dp"
+                        android:contentDescription="joints"/>
+
+                    <!-- Events -->
+                    <ImageView
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:padding="7dp"
+                        android:src="@drawable/pointer_icon"
+                        android:layout_margin="2dp"
+                        android:contentDescription="events"/>
+
+                    <!-- Variables -->
+                    <ImageView
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:padding="7dp"
+                        android:src="@drawable/x"
+                        android:layout_margin="2dp"
+                        android:contentDescription="variables"/>
+
+                    <!-- AI -->
+                    <ImageView
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:padding="7dp"
+                        android:src="@drawable/gemini"
+                        android:layout_margin="2dp"
+                        android:contentDescription="editor AI"/>
                 </LinearLayout>
             </LinearLayout>
-        </FrameLayout>
-    </LinearLayout>
+
+            <!-- Bottom separator -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@color/border_light"/>
+
+            <!-- ===== Bottom: Assets Tab Bar ===== -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="20dp"
+                android:background="@color/panel_header_bg"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:id="@+id/assets_tab"
+                    android:text="Assets"
+                    android:textSize="9sp"
+                    android:textColor="@color/text_white"
+                    android:gravity="center"
+                    android:paddingStart="10dp"
+                    android:paddingEnd="10dp"
+                    android:background="@color/panel_bg"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:text="Anim"
+                    android:textSize="9sp"
+                    android:textColor="@color/text_muted"
+                    android:gravity="center"
+                    android:paddingStart="10dp"
+                    android:paddingEnd="10dp"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:text="Audio"
+                    android:textSize="9sp"
+                    android:textColor="@color/text_muted"
+                    android:gravity="center"
+                    android:paddingStart="10dp"
+                    android:paddingEnd="10dp"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:text="Scripts"
+                    android:textSize="9sp"
+                    android:textColor="@color/text_muted"
+                    android:gravity="center"
+                    android:paddingStart="10dp"
+                    android:paddingEnd="10dp"/>
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"/>
+            </LinearLayout>
+
+            <!-- ===== Bottom: Assets Content ===== -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1.95"
+                android:id="@+id/bottom_panel"
+                android:background="@color/panel_bg"
+                android:orientation="vertical">
+
+                <include layout="@layout/files_manager_main"/>
+            </LinearLayout>
+        </LinearLayout>
+    </FrameLayout>
 </LinearLayout>

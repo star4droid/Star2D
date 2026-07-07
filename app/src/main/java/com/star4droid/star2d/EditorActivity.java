@@ -44,6 +44,7 @@ import com.star4droid.star2d.Items.*;
 import com.star4droid.star2d.Items.Editor;
 
 import com.star4droid.star2d.editor.LibgdxEditor;
+import com.star4droid.star2d.editor.ui.EditorControlOverlay;
 import com.star4droid.star2d.evo.R;
 
 import java.io.InputStream;
@@ -308,6 +309,10 @@ public class EditorActivity extends AppCompatActivity implements AndroidFragment
 
     public void init() {
         editor = findViewById(R.id.editor);
+        EditorControlOverlay overlay = findViewById(R.id.editor_overlay);
+        if (overlay != null) {
+            overlay.setIndexing(true);
+        }
     }
     private static int id = 0;
     public void indexFiles() {

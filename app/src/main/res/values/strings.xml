@@ -80,4 +80,10 @@
 	<string name="delete_the_point">Delete The Point</string>
 	<string name="update_needed">Download The New Update</string>
 	<string name="update">Update</string>
+	<string name="indexing">Indexing files...</string>
+	<string name="youCanDrag">(Drag to move)</string>
+	<string name="exitConfirm">Are you sure you want to exit?</string>
+	<string name="checkJavaFilesChanges">Checking Java file changes...</string>
+	<string name="changeOrienation">Change Orientation</string>
+	<string name="editorRestartNote">The editor will restart to apply changes</string>
 </resources>

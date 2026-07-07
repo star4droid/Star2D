@@ -247,8 +247,10 @@ public class TestApp implements ApplicationListener {
 		editor.setToastManager(toastManager);
 		editor.setLandscape(landscape);
 		editor.setFilePicker(filePicker);
-		if(controlLayer==null)
+		if(controlLayer==null) {
 	    	controlLayer = new ControlLayer(this);
+	    	controlLayer.notifyAppReady();
+		}
 		UiStage.addActor(controlLayer);
 		editor.setControlLayer(controlLayer);
 		controlLayer.getJointsList().refresh();

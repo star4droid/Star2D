@@ -1,4 +1,4 @@
-Name: OpenCode + APK Build
+name: OpenCode + APK Build
 
 on:
   workflow_dispatch:

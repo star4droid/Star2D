@@ -1,12 +1,12 @@
-name: OpenCode + APK Build
+Name: OpenCode + APK Build
 
 on:
   workflow_dispatch:
     inputs:
       model:
-        description: 'Task for OpenCode'
+        description: 'Task for OpenCode (e.g., agentrouter/gpt-6-astra, agentrouter-anthropic/claude-opus-5)'
         required: false
-        default: 'opencode/big-pickle'
+        default: 'agentrouter/gpt-6-astra'
         type: string
       
       custom_prompt:
@@ -52,11 +52,63 @@ jobs:
           fi
           git branch --show-current
 
+      # ⚙️ Setup OpenCode Config for AgentRouter
+      - name: Setup AgentRouter Config
+        run: |
+          cat << 'EOF' > opencode.json
+          {
+            "$schema": "https://opencode.ai/config.json",
+            "provider": {
+              "agentrouter": {
+                "npm": "@ai-sdk/openai-compatible",
+                "name": "AgentRouter (OpenAI Compatible)",
+                "options": {
+                  "baseURL": "https://agentrouter.org/v1"
+                },
+                "models": {
+                  "gpt-6-astra": {
+                    "name": "gpt-6-astra"
+                  },
+                  "gpt-5.6-sol": {
+                    "name": "gpt-5.6-sol"
+                  },
+                  "deepseek-v4-flash": {
+                    "name": "deepseek-v4-flash"
+                  },
+                  "glm-5.3": {
+                    "name": "glm-5.3"
+                  }
+                }
+              },
+              "agentrouter-anthropic": {
+                "npm": "@ai-sdk/anthropic",
+                "name": "AgentRouter (Anthropic Compatible)",
+                "options": {
+                  "baseURL": "https://agentrouter.org"
+                },
+                "models": {
+                  "claude-opus-4-8": {
+                    "name": "claude-opus-4-8"
+                  },
+                  "claude-opus-5": {
+                    "name": "claude-opus-5"
+                  },
+                  "claude-fable-5": {
+                    "name": "claude-fable-5"
+                  }
+                }
+              }
+            }
+          }
+          EOF
+
       # 🤖 Run OpenCode
       - name: Run OpenCode Agent
         uses: anomalyco/opencode/github@latest
         env:
-          OPENCODE_ZEN_API_KEY: ${{ secrets.OPENCODE_ZEN_API_KEY }}
+          AGENTROUTER_API_KEY: ${{ secrets.AGENTROUTER_API_KEY }}
+          AGENTROUTER_ANTHROPIC_API_KEY: ${{ secrets.AGENTROUTER_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.AGENTROUTER_API_KEY }}
         with:
           model: ${{ inputs.model }}
           prompt: ${{ inputs.custom_prompt }}
@@ -64,6 +116,8 @@ jobs:
       # 💾 Commit changes
       - name: Commit and Push Changes
         run: |
+          rm -f opencode.json
+
           git add .
 
           if ! git diff-index --quiet HEAD; then

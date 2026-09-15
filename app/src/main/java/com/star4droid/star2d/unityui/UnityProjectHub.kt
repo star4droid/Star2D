@@ -198,8 +198,6 @@ fun UnityProjectHub(
                             )
                         )
                     }
-
-                    UnityBadge(text = "Unity Edition")
                 }
 
                 // Mobile Horizontal Tab Strip
@@ -300,10 +298,6 @@ fun UnityProjectHub(
                                     color = UnityColors.TextWhite,
                                     fontWeight = FontWeight.Bold
                                 )
-                            )
-                            BasicText(
-                                text = "Unity Edition",
-                                style = UnityTypography.BodySmall.copy(color = UnityColors.TextMuted)
                             )
                         }
                     }

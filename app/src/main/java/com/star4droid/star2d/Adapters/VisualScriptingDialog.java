@@ -188,21 +188,6 @@ public class VisualScriptingDialog {
 		if(files.size()>0) hintsList.add("- Sounds");
 		hintsList.addAll(files);
 		
-		if(true){
-		    String all = ""; // all hints in one string line by line
-		    for(String string : hintsList){
-		        if(all == "")
-		            all = string;
-		        else all = all + "\n" + string;
-		    }
-		    Intent intent = new Intent(context, com.star4droid.star2d.Activities.VisualScriptingActivity.class);
-		    intent.putExtra("codePath", codePath);
-		    intent.putExtra("hints", all);
-		    intent.putExtra("project", editor.getProject().getPath());
-		    context.startActivity(intent);
-		    return;
-		}
-		
 		final AlertDialog dl = Utils.showMessage(context,"please wait...");
 		
 		VisualScriptingView vs = new VisualScriptingView(context,codePath+".java",codePath+".visual",new Gson().toJson(hintsList),editor.getProject().getPath()){

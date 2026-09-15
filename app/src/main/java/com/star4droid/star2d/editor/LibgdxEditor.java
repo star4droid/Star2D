@@ -1148,8 +1148,20 @@ public class LibgdxEditor extends Stage {
 		lockX = b;
 	}
 	
+	public boolean isLockX(){
+		return lockX;
+	}
+	
 	public void setLockY(boolean b){
 		lockY = b;
+	}
+	
+	public boolean isLockY(){
+		return lockY;
+	}
+	
+	public TOUCHMODE getTouchMode(){
+		return touch_mode;
 	}
 	
 	public enum TOUCHMODE {

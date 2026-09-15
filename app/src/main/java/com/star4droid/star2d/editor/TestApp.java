@@ -35,7 +35,10 @@ public class TestApp implements ApplicationListener {
 	LibgdxEditor editor;
 	public static TestApp currentApp;
 	NodeEditorApp visualScripting;
-	Project project;
+	public Project project;
+	public Project getProject() {
+		return project != null ? project : (editor != null ? editor.getProject() : null);
+	}
 	ToastManager toastManager;
 	SimpleNote simpleNote;
 	ToastManager mainToastManager;
@@ -49,6 +52,7 @@ public class TestApp implements ApplicationListener {
 	FilePicker filePicker;
 	public Runnable openDonate;
 	public Runnable onCloseProjectRunnable;
+	public Runnable onPlayStateChanged;
 	ControlLayer controlLayer;
 	Thread.UncaughtExceptionHandler uncaughtExceptionHandler;
 	public Preferences preferences;
@@ -250,6 +254,7 @@ public class TestApp implements ApplicationListener {
 		editor.setFilePicker(filePicker);
 		if(controlLayer==null)
 	    	controlLayer = new ControlLayer(this);
+		controlLayer.setVisible(false);
 		UiStage.addActor(controlLayer);
 		editor.setControlLayer(controlLayer);
 		controlLayer.getJointsList().refresh();
@@ -305,6 +310,7 @@ public class TestApp implements ApplicationListener {
 		editor.setFilePicker(filePicker);
 		editor.setTouchMode(getTouchMode(controlLayer.getTouchMode()));
 		editor.setControlLayer(controlLayer);
+		if(controlLayer!=null) controlLayer.setVisible(false);
 		controlLayer.getJointsList().refresh();
 		controlLayer.getVarsItem().setFileHandle(Gdx.files.absolute(project.getVariables(scene)));
 		editor.setUiStage(UiStage);
@@ -530,10 +536,15 @@ public class TestApp implements ApplicationListener {
 	public void play(StageImp stage){
 		Gdx.app.postRunnable(()->{
 			if(stage!=null){
+				stage.setFinishFunc((st)->{
+					Gdx.app.postRunnable(()->{
+						play((StageImp) null);
+					});
+				});
 				stage.create();
 				Thread.setDefaultUncaughtExceptionHandler((thread,exc)->{
 					Gdx.app.postRunnable(()->{
-						play(null);
+						play((StageImp) null);
 						fileBrowser.showText("Error :\n"+Utils.getStackTraceString(exc));
 						Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
 					});
@@ -559,6 +570,11 @@ public class TestApp implements ApplicationListener {
 				UiStage.getViewport().update(width, height);
 			}
 			this.stageImp = stage;
+			if(onPlayStateChanged != null) {
+				try {
+					onPlayStateChanged.run();
+				} catch(Exception ignored){}
+			}
 		});
 	}
 	

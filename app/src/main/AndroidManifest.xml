@@ -47,7 +47,7 @@
 		android:hardwareAccelerated="true"
 		android:windowSoftInputMode="stateHidden|adjustPan"
 		android:supportsPictureInPicture="true"
-		android:screenOrientation="portrait"
+		android:screenOrientation="fullSensor"
 		android:theme="@style/AppTheme.FullScreen"
 		android:exported="true">
 		</activity>

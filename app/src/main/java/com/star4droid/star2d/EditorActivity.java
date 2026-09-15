@@ -287,6 +287,15 @@ public class EditorActivity extends AppCompatActivity implements AndroidFragment
 	}
 
 	private void openUnityEditorOverlay() {
+		if (editor != null && editor.getApp() != null) {
+			Gdx.app.postRunnable(() -> {
+				try {
+					if (editor.getApp().getControlLayer() != null) {
+						editor.getApp().getControlLayer().setVisible(false);
+					}
+				} catch (Exception ignored) {}
+			});
+		}
 		if (composeEditorOverlay != null) {
 			composeEditorOverlay.setVisibility(View.VISIBLE);
 			com.star4droid.star2d.unityui.UnityHubBridge.setupEditorOverlay(
@@ -294,13 +303,7 @@ public class EditorActivity extends AppCompatActivity implements AndroidFragment
 				composeEditorOverlay,
 				editor,
 				() -> {
-					runOnUiThread(() -> {
-						if (composeEditorOverlay != null) composeEditorOverlay.setVisibility(View.GONE);
-						if (composeProjectHub != null) {
-							composeProjectHub.setVisibility(View.VISIBLE);
-							setupUnityHub();
-						}
-					});
+					runOnUiThread(this::showExitConfirmationDialog);
 					return kotlin.Unit.INSTANCE;
 				}
 			);
@@ -310,6 +313,23 @@ public class EditorActivity extends AppCompatActivity implements AndroidFragment
 	private void initApp(){
 	    JointsHelper.init();
 	    com.star4droid.star2d.Adapters.UpdateChecker.checkForUpdate(editor.getApp());
+		Gdx.app.postRunnable(() -> {
+			try {
+				if (editor.getApp().getControlLayer() != null) {
+					editor.getApp().getControlLayer().setVisible(false);
+				}
+			} catch (Exception ignored) {}
+		});
+		editor.getApp().onPlayStateChanged = () -> {
+			runOnUiThread(() -> {
+				if (editor != null && editor.getApp() != null) {
+					boolean playing = editor.getApp().isPlaying();
+					if (composeEditorOverlay != null) {
+						composeEditorOverlay.setVisibility(playing ? View.GONE : View.VISIBLE);
+					}
+				}
+			});
+		};
 		editor.getApp().onCloseProjectRunnable = () -> {
 			runOnUiThread(() -> {
 				if (composeEditorOverlay != null) {
@@ -325,7 +345,7 @@ public class EditorActivity extends AppCompatActivity implements AndroidFragment
 			runOnUiThread(() -> {
 				boolean isCurrentLandscape = getResources().getConfiguration().orientation==Configuration.ORIENTATION_LANDSCAPE;
 				if(isCurrentLandscape == landscape) return;
-				setRequestedOrientation(landscape?ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE:ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+				setRequestedOrientation(landscape?ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE:ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
 			});
 		});
 		editor.getApp().openDonate = ()->{
@@ -435,25 +455,60 @@ public class EditorActivity extends AppCompatActivity implements AndroidFragment
 	}
 
 	@Override
+	public void onConfigurationChanged(Configuration newConfig) {
+		super.onConfigurationChanged(newConfig);
+		boolean isLandscape = newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE;
+		if (editor != null && editor.getApp() != null) {
+			Gdx.app.postRunnable(() -> {
+				try {
+					if (editor.getApp().getEditor() != null) {
+						editor.getApp().getEditor().setLandscape(isLandscape);
+					}
+				} catch (Exception ignored) {}
+			});
+		}
+	}
+
+	public void showExitConfirmationDialog() {
+		new androidx.appcompat.app.AlertDialog.Builder(this)
+			.setTitle("Exit Project")
+			.setMessage("Are you sure you want to exit to the project list? Any unsaved changes may be lost.")
+			.setPositiveButton("Exit", (dialog, which) -> {
+				dialog.dismiss();
+				if (editor != null && editor.getApp() != null) {
+					Gdx.app.postRunnable(() -> {
+						try {
+							editor.getApp().closeProject();
+						} catch (Exception ignored) {}
+					});
+				}
+				if (composeEditorOverlay != null) {
+					composeEditorOverlay.setVisibility(View.GONE);
+				}
+				if (composeProjectHub != null) {
+					composeProjectHub.setVisibility(View.VISIBLE);
+					setupUnityHub();
+				}
+			})
+			.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
+			.show();
+	}
+
+	@Override
 	public void onBackPressed() {
 		if (composeProjectHub != null && composeProjectHub.getVisibility() == View.VISIBLE) {
 			super.onBackPressed();
-		} else {
-			if (editor != null && editor.getApp() != null) {
-				Gdx.app.postRunnable(() -> {
-					try {
-						editor.getApp().closeProject();
-					} catch (Exception ignored) {}
-				});
-			}
-			if (composeEditorOverlay != null) {
-				composeEditorOverlay.setVisibility(View.GONE);
-			}
-			if (composeProjectHub != null) {
-				composeProjectHub.setVisibility(View.VISIBLE);
-				setupUnityHub();
-			}
+			return;
 		}
+		if (editor != null && editor.getApp() != null && editor.getApp().isPlaying()) {
+			Gdx.app.postRunnable(() -> {
+				try {
+					editor.getApp().play((com.star4droid.template.Items.StageImp) null);
+				} catch (Exception ignored) {}
+			});
+			return;
+		}
+		showExitConfirmationDialog();
 	}
 	
 }

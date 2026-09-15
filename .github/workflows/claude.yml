@@ -61,15 +61,16 @@ jobs:
       - name: Install Claude Code CLI
         run: npm install -g @anthropic-ai/claude-code
 
-      # 🔧 Configure AgentRouter for Claude Code
+      # 🔧 Configure AgentRouter Settings
       - name: Configure AgentRouter Settings
         run: |
           mkdir -p ~/.claude
           cat << 'EOF' > ~/.claude/settings.json
           {
             "env": {
-              "ANTHROPIC_BASE_URL": "https://agentrouter.org",
+              "ANTHROPIC_BASE_URL": "https://agentrouter.org/v1",
               "ANTHROPIC_AUTH_TOKEN": "${{ secrets.AGENTROUTER_API_KEY }}",
+              "ANTHROPIC_API_KEY": "${{ secrets.AGENTROUTER_API_KEY }}",
               "ANTHROPIC_MODEL": "${{ inputs.model }}"
             },
             "model": "${{ inputs.model }}"
@@ -78,8 +79,13 @@ jobs:
 
       # 🤖 Run Claude Code
       - name: Run Claude Code Agent
+        env:
+          ANTHROPIC_BASE_URL: https://agentrouter.org/v1
+          ANTHROPIC_AUTH_TOKEN: ${{ secrets.AGENTROUTER_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.AGENTROUTER_API_KEY }}
+          ANTHROPIC_MODEL: ${{ inputs.model }}
         run: |
-          claude -p "${{ inputs.custom_prompt }}"
+          claude -p "${{ inputs.custom_prompt }}" --dangerously-skip-permissions
 
       # 💾 Commit changes
       - name: Commit and Push Changes

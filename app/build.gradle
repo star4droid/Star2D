@@ -23,16 +23,52 @@ android {
     }
     signingConfigs {
         release {
-            def keystorePath = System.getenv("KEYSTORE_FILE") ?: "Star4droid.jks"
-            def keystoreFile = file(keystorePath)
-            if (keystoreFile.exists()) {
+            def candidateFiles = [
+                System.getenv("KEYSTORE_FILE") ? file(System.getenv("KEYSTORE_FILE")) : null,
+                file("Star4droid.jks"),
+                file("Star4Droid.jks"),
+                rootProject.file("Star4droid.jks"),
+                rootProject.file("Star4Droid.jks")
+            ].findAll { it != null && it.exists() }
+
+            if (!candidateFiles.isEmpty()) {
+                def keystoreFile = candidateFiles.first()
                 storeFile keystoreFile
-                storePassword System.getenv("KEYSTORE_PASSWORD")
-                keyAlias System.getenv("KEY_ALIAS")
-                keyPassword System.getenv("KEYSTORE_PASSWORD")
+                storePassword System.getenv("KEYSTORE_PASSWORD") ?: "star4droid"
+                keyAlias System.getenv("KEY_ALIAS") ?: "star"
+                keyPassword System.getenv("KEY_PASSWORD") ?: (System.getenv("KEYSTORE_PASSWORD") ?: "star4droid")
             } else {
-                println "Release keystore '${keystoreFile.absolutePath}' not found. Using debug keystore."
-                initWith signingConfigs.debug
+                def rootDebugKeystore = rootProject.file("debug.keystore")
+                if (!rootDebugKeystore.exists() && rootProject.file("debug.keystore.base64").exists()) {
+                    try {
+                        byte[] decoded = java.util.Base64.decoder.decode(rootProject.file("debug.keystore.base64").text.trim())
+                        rootDebugKeystore.withOutputStream { it.write(decoded) }
+                    } catch (Exception ignored) {}
+                }
+                if (rootDebugKeystore.exists()) {
+                    storeFile rootDebugKeystore
+                    storePassword "android"
+                    keyAlias "androiddebugkey"
+                    keyPassword "android"
+                } else {
+                    def fallbackKeystore = file("${buildDir}/generated_debug.keystore")
+                    if (!fallbackKeystore.exists()) {
+                        fallbackKeystore.parentFile?.mkdirs()
+                        try {
+                            def cmd = "keytool -genkeypair -alias androiddebugkey -keypass android -keystore ${fallbackKeystore.absolutePath} -storepass android -dname CN=AndroidDebug -validity 10000 -keyalg RSA"
+                            cmd.execute().waitFor()
+                        } catch (Exception ignored) {}
+                    }
+                    if (fallbackKeystore.exists()) {
+                        storeFile fallbackKeystore
+                        storePassword "android"
+                        keyAlias "androiddebugkey"
+                        keyPassword "android"
+                    } else {
+                        println "Release keystore not found. Using debug keystore."
+                        initWith signingConfigs.debug
+                    }
+                }
             }
         }
     }

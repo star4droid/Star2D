@@ -1226,8 +1226,16 @@ public class StageImp extends ApplicationAdapter {
 
         @Override
         public boolean keyDown(int keycode) {
-            if(keycode == 4) { // Back Key
-                // GameStage has the override for Back key, so prioritize it or ensure it gets it
+            if(keycode == 4 || keycode == com.badlogic.gdx.Input.Keys.BACK || keycode == com.badlogic.gdx.Input.Keys.ESCAPE) { // Back Key
+                try {
+                    (currentStage == null ? StageImp.this : currentStage).finish();
+                    return true;
+                } catch (Exception e) {
+                    if (finishFunc != null) {
+                        finishFunc.onFinish(StageImp.this);
+                        return true;
+                    }
+                }
                 if(GameStage.keyDown(keycode)) return true;
                 return UiStage.keyDown(keycode);
             }

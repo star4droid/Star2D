@@ -537,7 +537,7 @@ fun UnityProjectHub(
                         )
 
                         UnityButton(
-                            text = "▶ Open Project",
+                            text = "Open Project",
                             onClick = {
                                 val p = activeActionProject
                                 activeActionProject = null
@@ -550,7 +550,7 @@ fun UnityProjectHub(
                         Spacer(modifier = Modifier.height(8.dp))
 
                         UnityButton(
-                            text = "📦 Export APK / ZIP",
+                            text = "Export APK / ZIP",
                             onClick = {
                                 val p = activeActionProject
                                 activeActionProject = null
@@ -563,7 +563,7 @@ fun UnityProjectHub(
                         Spacer(modifier = Modifier.height(8.dp))
 
                         UnityButton(
-                            text = "🗑 Delete Project",
+                            text = "Delete Project",
                             onClick = {
                                 val p = activeActionProject
                                 activeActionProject = null
@@ -784,8 +784,8 @@ fun TemplatesView(
                                     contentAlignment = Alignment.Center
                                 ) {
                                     BasicText(
-                                        text = "🎮",
-                                        style = TextStyle(fontSize = 12.sp)
+                                        text = "2D",
+                                        style = TextStyle(color = UnityColors.AccentBlue, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                                     )
                                 }
                                 Spacer(modifier = Modifier.width(8.dp))
@@ -878,7 +878,7 @@ fun CommunityView(context: Context) {
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     BasicText(
-                        text = "💖 Support Engine Development",
+                        text = "Support Engine Development",
                         style = UnityTypography.Header.copy(
                             color = UnityColors.TextWhite,
                             fontWeight = FontWeight.Bold

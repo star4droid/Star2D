@@ -37,6 +37,7 @@ object UnityColors {
     val AccentRed = Color(0xFFE53935)
     val AccentRedPressed = Color(0xFFC62828)
     val AccentOrange = Color(0xFFFB8C00)
+    val AccentYellow = Color(0xFFFBC02D)
     val AccentPurple = Color(0xFF9C27B0)
 
     // Button Colors (Unity Matte Bevel)

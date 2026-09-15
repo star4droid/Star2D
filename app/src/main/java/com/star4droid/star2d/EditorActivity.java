@@ -193,6 +193,27 @@ public class EditorActivity extends AppCompatActivity implements AndroidFragment
 		
 		setupUnityHub();
 
+		getOnBackPressedDispatcher().addCallback(this, new androidx.activity.OnBackPressedCallback(true) {
+			@Override
+			public void handleOnBackPressed() {
+				if (composeProjectHub != null && composeProjectHub.getVisibility() == View.VISIBLE) {
+					setEnabled(false);
+					getOnBackPressedDispatcher().onBackPressed();
+					setEnabled(true);
+					return;
+				}
+				if (editor != null && editor.getApp() != null && editor.getApp().isPlaying()) {
+					Gdx.app.postRunnable(() -> {
+						try {
+							editor.getApp().play((com.star4droid.template.Items.StageImp) null);
+						} catch (Exception ignored) {}
+					});
+					return;
+				}
+				showExitConfirmationDialog();
+			}
+		});
+
 		editor.setEditorReadyAction(()->{
 			runOnUiThread(this::continueInit);
 		});

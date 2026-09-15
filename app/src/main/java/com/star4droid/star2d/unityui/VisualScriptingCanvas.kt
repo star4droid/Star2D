@@ -428,8 +428,8 @@ fun VisualScriptingCanvas(
                         contentAlignment = Alignment.Center
                     ) {
                         BasicText(
-                            text = "⚡",
-                            style = TextStyle(color = UnityColors.TextWhite, fontSize = 13.sp)
+                            text = "VS",
+                            style = TextStyle(color = UnityColors.TextWhite, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                         )
                     }
                     Spacer(modifier = Modifier.width(8.dp))
@@ -483,7 +483,7 @@ fun VisualScriptingCanvas(
 
                     // Code Preview Button
                     UnityButton(
-                        text = "📄 Code",
+                        text = "Code",
                         onClick = {
                             exportedCodeText = ScriptNodeEngine.exportCode(nodes)
                             showCodeDialog = true
@@ -495,7 +495,7 @@ fun VisualScriptingCanvas(
 
                     // Save Button (Unity Green Accent)
                     UnityButton(
-                        text = "💾 Save",
+                        text = "Save",
                         onClick = { saveNodes() },
                         variant = UnityButtonVariant.Success
                     )
@@ -504,7 +504,7 @@ fun VisualScriptingCanvas(
 
                     // Exit Button
                     UnityButton(
-                        text = "✕ Exit",
+                        text = "Exit",
                         onClick = onExit,
                         variant = UnityButtonVariant.Normal
                     )

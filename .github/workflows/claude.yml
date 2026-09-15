@@ -68,7 +68,7 @@ jobs:
           cat << 'EOF' > ~/.claude/settings.json
           {
             "env": {
-              "ANTHROPIC_BASE_URL": "https://agentrouter.org/v1",
+              "ANTHROPIC_BASE_URL": "https://agentrouter.org",
               "ANTHROPIC_AUTH_TOKEN": "${{ secrets.AGENTROUTER_API_KEY }}",
               "ANTHROPIC_API_KEY": "${{ secrets.AGENTROUTER_API_KEY }}",
               "ANTHROPIC_MODEL": "${{ inputs.model }}"
@@ -80,7 +80,7 @@ jobs:
       # 🤖 Run Claude Code
       - name: Run Claude Code Agent
         env:
-          ANTHROPIC_BASE_URL: https://agentrouter.org/v1
+          ANTHROPIC_BASE_URL: https://agentrouter.org
           ANTHROPIC_AUTH_TOKEN: ${{ secrets.AGENTROUTER_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.AGENTROUTER_API_KEY }}
           ANTHROPIC_MODEL: ${{ inputs.model }}

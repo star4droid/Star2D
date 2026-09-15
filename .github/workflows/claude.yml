@@ -1,0 +1,139 @@
+name: Claude Code + APK Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      model:
+        description: 'Task for Claude Code'
+        required: false
+        default: 'claude-opus-5'
+        type: string
+      
+      custom_prompt:
+        description: 'Task for Claude Code'
+        required: true
+        type: string
+
+      branch_name:
+        description: 'Branch name'
+        required: true
+        default: 'feature/opencode-patch'
+        type: string
+
+jobs:
+  opencode-build:
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write
+      contents: write
+      pull-requests: write
+
+    steps:
+      # 🔄 Checkout repository
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      # 🌿 Create branch
+      - name: Create and Switch to Branch
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          git fetch origin
+
+          if git ls-remote --heads origin "${{ inputs.branch_name }}" | grep -q "${{ inputs.branch_name }}"; then
+            git checkout "${{ inputs.branch_name }}"
+            git pull origin "${{ inputs.branch_name }}"
+          else
+            git checkout -b "${{ inputs.branch_name }}"
+          fi
+          git branch --show-current
+
+      # ⚙️ Setup Node.js & Claude Code CLI
+      - name: Setup Node.js and Install Claude Code
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Claude Code CLI
+        run: npm install -g @anthropic-ai/claude-code
+
+      # 🔧 Configure AgentRouter for Claude Code
+      - name: Configure AgentRouter Settings
+        run: |
+          mkdir -p ~/.claude
+          cat << 'EOF' > ~/.claude/settings.json
+          {
+            "env": {
+              "ANTHROPIC_BASE_URL": "https://agentrouter.org",
+              "ANTHROPIC_AUTH_TOKEN": "${{ secrets.AGENTROUTER_API_KEY }}",
+              "ANTHROPIC_MODEL": "${{ inputs.model }}"
+            },
+            "model": "${{ inputs.model }}"
+          }
+          EOF
+
+      # 🤖 Run Claude Code
+      - name: Run Claude Code Agent
+        run: |
+          claude -p "${{ inputs.custom_prompt }}"
+
+      # 💾 Commit changes
+      - name: Commit and Push Changes
+        run: |
+          git add .
+
+          if ! git diff-index --quiet HEAD; then
+            git commit -m "automation(opencode): ${{ inputs.custom_prompt }}"
+            git push origin "${{ inputs.branch_name }}" --force
+          else
+            echo "No changes made by OpenCode."
+          fi
+
+      # ☕ Setup Java
+      - name: Set up JDK 21
+        uses: actions/setup-java@v3
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: gradle
+
+      # 🔐 Restore Keystore
+      - name: Create keystore from secret
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > app/Star4droid.jks
+
+          echo "KEYSTORE_FILE=$GITHUB_WORKSPACE/app/Star4droid.jks" >> $GITHUB_ENV
+          echo "KEYSTORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> $GITHUB_ENV
+          echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> $GITHUB_ENV
+          echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> $GITHUB_ENV
+
+      # 🔥 Restore Firebase Config
+      - name: Create google-services.json from secret
+        run: |
+          echo "${{ secrets.FIREBASE_SERVICES_JSON }}" | base64 --decode > app/google-services.json
+
+      # 🛠 Setup Android NDK
+      - name: Setup Android NDK
+        uses: nttld/setup-ndk@v1.5.0
+        with:
+          ndk-version: r28c
+
+      # 🔧 Make gradlew executable
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      # ⚡ Build APK
+      - name: Build APK
+        run: ./gradlew clean assembleRelease
+
+      # 📦 Upload APK
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-apk
+          path: app/build/outputs/apk/release/app-release.apk
+          retention-days: 90

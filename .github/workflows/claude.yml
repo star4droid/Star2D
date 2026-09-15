@@ -61,30 +61,25 @@ jobs:
       - name: Install Claude Code CLI
         run: npm install -g @anthropic-ai/claude-code
 
-      # 🔧 Configure AgentRouter Settings
-      - name: Configure AgentRouter Settings
+      # 🔧 Configure AgentRouter Settings & Run
+      - name: Configure AgentRouter and Run Claude
+        env:
+          ROUTER_TOKEN: ${{ secrets.AGENTROUTER_API_KEY }}
+          CHOSEN_MODEL: ${{ inputs.model }}
         run: |
           mkdir -p ~/.claude
-          cat << 'EOF' > ~/.claude/settings.json
-          {
-            "env": {
-              "ANTHROPIC_BASE_URL": "https://agentrouter.org",
-              "ANTHROPIC_AUTH_TOKEN": "${{ secrets.AGENTROUTER_API_KEY }}",
-              "ANTHROPIC_API_KEY": "${{ secrets.AGENTROUTER_API_KEY }}",
-              "ANTHROPIC_MODEL": "${{ inputs.model }}"
-            },
-            "model": "${{ inputs.model }}"
-          }
-          EOF
-
-      # 🤖 Run Claude Code
-      - name: Run Claude Code Agent
-        env:
-          ANTHROPIC_BASE_URL: https://agentrouter.org
-          ANTHROPIC_AUTH_TOKEN: ${{ secrets.AGENTROUTER_API_KEY }}
-          ANTHROPIC_API_KEY: ${{ secrets.AGENTROUTER_API_KEY }}
-          ANTHROPIC_MODEL: ${{ inputs.model }}
-        run: |
+          node -e '
+            const fs = require("fs");
+            const config = {
+              env: {
+                ANTHROPIC_BASE_URL: "https://agentrouter.org",
+                ANTHROPIC_AUTH_TOKEN: process.env.ROUTER_TOKEN,
+                ANTHROPIC_MODEL: process.env.CHOSEN_MODEL
+              },
+              model: process.env.CHOSEN_MODEL
+            };
+            fs.writeFileSync(require("os").homedir() + "/.claude/settings.json", JSON.stringify(config, null, 2));
+          '
           claude -p "${{ inputs.custom_prompt }}" --dangerously-skip-permissions
 
       # 💾 Commit changes

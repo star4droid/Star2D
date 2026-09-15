@@ -48,6 +48,7 @@ public class TestApp implements ApplicationListener {
 	Stage UiStage;
 	FilePicker filePicker;
 	public Runnable openDonate;
+	public Runnable onCloseProjectRunnable;
 	ControlLayer controlLayer;
 	Thread.UncaughtExceptionHandler uncaughtExceptionHandler;
 	public Preferences preferences;
@@ -421,6 +422,9 @@ public class TestApp implements ApplicationListener {
 		Gdx.input.setCatchKey(4,false);
 		Gdx.input.setInputProcessor(projectsListStage);
 		if(changeOrienation) orienationChangeListener.onChange(false);
+		if(onCloseProjectRunnable != null) {
+			onCloseProjectRunnable.run();
+		}
 	}
 	
 	public void updateFont(String path){

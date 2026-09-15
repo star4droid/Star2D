@@ -1,0 +1,6 @@
+{
+  "name": "Star2D.E",
+  "description": "2D Game Engine and Editor for Android powered by LibGDX and Box2D",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

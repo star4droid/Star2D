@@ -195,7 +195,11 @@ public class VisualScriptingDialog {
 		            all = string;
 		        else all = all + "\n" + string;
 		    }
-		    com.star4droid.star2d.editor.TestApp.getCurrentApp().loadVisual(codePath+".visual",all);
+		    Intent intent = new Intent(context, com.star4droid.star2d.Activities.VisualScriptingActivity.class);
+		    intent.putExtra("codePath", codePath);
+		    intent.putExtra("hints", all);
+		    intent.putExtra("project", editor.getProject().getPath());
+		    context.startActivity(intent);
 		    return;
 		}
 		

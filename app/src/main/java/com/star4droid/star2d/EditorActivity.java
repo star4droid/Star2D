@@ -55,6 +55,9 @@ import java.util.concurrent.Executors;
 
 public class EditorActivity extends AppCompatActivity implements AndroidFragmentApplication.Callbacks {
     Editor editor;
+    androidx.compose.ui.platform.ComposeView composeProjectHub;
+    androidx.compose.ui.platform.ComposeView composeEditorOverlay;
+    Project pendingProjectToOpen = null;
 	ActivityResultLauncher<String[]> files_picker;
 	ActivityResultLauncher saveFile;
     Project project;
@@ -188,11 +191,13 @@ public class EditorActivity extends AppCompatActivity implements AndroidFragment
         //editor.loadFromPath();
 		//editor.setOrienation(editor.getConfig().getString("or").equals("")?Editor.ORIENATION.PORTRAIT:Editor.ORIENATION.LANDSCAPE);
 		
+		setupUnityHub();
+
 		editor.setEditorReadyAction(()->{
-			continueInit();
+			runOnUiThread(this::continueInit);
 		});
 		editor.setWhenAppReady(()->{
-			initApp();
+			runOnUiThread(this::initApp);
 		});
 	}
 	
@@ -241,15 +246,87 @@ public class EditorActivity extends AppCompatActivity implements AndroidFragment
             // }
         // }
     // }
+	private void setupUnityHub() {
+		if (composeProjectHub != null && (project == null || project.getPath().isEmpty())) {
+			composeProjectHub.setVisibility(View.VISIBLE);
+			if (composeEditorOverlay != null) composeEditorOverlay.setVisibility(View.GONE);
+			com.star4droid.star2d.unityui.UnityHubBridge.setupHub(
+				this,
+				composeProjectHub,
+				(name, path) -> {
+					project = new Project(path);
+					composeProjectHub.setVisibility(View.GONE);
+					openUnityEditorOverlay();
+					if (editor != null && editor.getApp() != null) {
+						Gdx.app.postRunnable(() -> {
+							try {
+								editor.getApp().openProject(project);
+							} catch (Exception e) {
+								e.printStackTrace();
+							}
+						});
+					} else {
+						pendingProjectToOpen = project;
+					}
+					return kotlin.Unit.INSTANCE;
+				},
+				() -> {
+					filePickerAction = "import";
+					files_picker.launch(new String[] {"application/zip"});
+					return kotlin.Unit.INSTANCE;
+				},
+				(path) -> {
+					exported_project = path;
+					saveType = "export";
+					String name = Uri.parse(path).getLastPathSegment();
+					Utils.saveFile(name + ".apk", saveFile);
+					return kotlin.Unit.INSTANCE;
+				}
+			);
+		}
+	}
+
+	private void openUnityEditorOverlay() {
+		if (composeEditorOverlay != null) {
+			composeEditorOverlay.setVisibility(View.VISIBLE);
+			com.star4droid.star2d.unityui.UnityHubBridge.setupEditorOverlay(
+				this,
+				composeEditorOverlay,
+				editor,
+				() -> {
+					runOnUiThread(() -> {
+						if (composeEditorOverlay != null) composeEditorOverlay.setVisibility(View.GONE);
+						if (composeProjectHub != null) {
+							composeProjectHub.setVisibility(View.VISIBLE);
+							setupUnityHub();
+						}
+					});
+					return kotlin.Unit.INSTANCE;
+				}
+			);
+		}
+	}
+
 	private void initApp(){
 	    JointsHelper.init();
 	    com.star4droid.star2d.Adapters.UpdateChecker.checkForUpdate(editor.getApp());
+		editor.getApp().onCloseProjectRunnable = () -> {
+			runOnUiThread(() -> {
+				if (composeEditorOverlay != null) {
+					composeEditorOverlay.setVisibility(View.GONE);
+				}
+				if (composeProjectHub != null) {
+					composeProjectHub.setVisibility(View.VISIBLE);
+					setupUnityHub();
+				}
+			});
+		};
 		editor.getApp().setOrienationChanger(landscape->{
-			boolean isCurrentLandscape = getResources().getConfiguration().orientation==Configuration.ORIENTATION_LANDSCAPE;
-			if(isCurrentLandscape == landscape) return;
-			setRequestedOrientation(landscape?ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE:ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-			//String ex = android.util.Log.getStackTraceString(new Exception("Landscape : "+landscape+"\n"))+"\n"+"__".repeat(10)+"\n";
-			//Gdx.files.external("logs/landscape.txt").writeString(ex,true);
+			runOnUiThread(() -> {
+				boolean isCurrentLandscape = getResources().getConfiguration().orientation==Configuration.ORIENTATION_LANDSCAPE;
+				if(isCurrentLandscape == landscape) return;
+				setRequestedOrientation(landscape?ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE:ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+			});
 		});
 		editor.getApp().openDonate = ()->{
 		    Intent intent = new Intent();
@@ -283,7 +360,18 @@ public class EditorActivity extends AppCompatActivity implements AndroidFragment
 		    filePickerAction = "import";
 		    files_picker.launch(new String[] {"application/zip"});
 		});
-		
+
+		if (pendingProjectToOpen != null) {
+			final Project toOpen = pendingProjectToOpen;
+			pendingProjectToOpen = null;
+			Gdx.app.postRunnable(() -> {
+				try {
+					editor.getApp().openProject(toOpen);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			});
+		}
 	}
 	
 	private void continueInit(){
@@ -308,6 +396,8 @@ public class EditorActivity extends AppCompatActivity implements AndroidFragment
 
     public void init() {
         editor = findViewById(R.id.editor);
+        composeProjectHub = findViewById(R.id.compose_project_hub);
+        composeEditorOverlay = findViewById(R.id.compose_editor_overlay);
     }
     private static int id = 0;
     public void indexFiles() {
@@ -342,6 +432,28 @@ public class EditorActivity extends AppCompatActivity implements AndroidFragment
 	@Override
 	public void exit() {
 	    
+	}
+
+	@Override
+	public void onBackPressed() {
+		if (composeProjectHub != null && composeProjectHub.getVisibility() == View.VISIBLE) {
+			super.onBackPressed();
+		} else {
+			if (editor != null && editor.getApp() != null) {
+				Gdx.app.postRunnable(() -> {
+					try {
+						editor.getApp().closeProject();
+					} catch (Exception ignored) {}
+				});
+			}
+			if (composeEditorOverlay != null) {
+				composeEditorOverlay.setVisibility(View.GONE);
+			}
+			if (composeProjectHub != null) {
+				composeProjectHub.setVisibility(View.VISIBLE);
+				setupUnityHub();
+			}
+		}
 	}
 	
 }

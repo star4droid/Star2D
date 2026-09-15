@@ -8,6 +8,8 @@ import androidx.core.content.ContextCompat;
 import androidx.core.app.ActivityCompat;
 
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import com.star4droid.star2d.Helpers.EngineSettings;
 import com.star4droid.star2d.editor.TestApp;
 import com.star4droid.star2d.evo.R;
@@ -23,23 +25,15 @@ public class MainActivity extends AppCompatActivity {
 		Utils.setLanguage(this);
         setContentView(R.layout.activity_main);
 		EngineSettings.init(this);
-		checkPerms(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE/*, Manifest.permission.ACCESS_MEDIA_LOCATION*/);
-		new Timer().schedule(new TimerTask(){
-			@Override
-			public void run() {
-			    open();
-			}
-		},3000);
-		 
+		if (android.os.Build.VERSION.SDK_INT < 33) {
+			checkPerms(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+		}
+		new Handler(Looper.getMainLooper()).postDelayed(this::open, 500);
     }
     
     private void open(){
-		if(TestApp.getCurrentApp()!=null){
-			finish();
-			return;
-		}
         Intent i = new Intent();
-		i.setClass(MainActivity.this,com.star4droid.star2d.EditorActivity.class);
+		i.setClass(MainActivity.this, com.star4droid.star2d.EditorActivity.class);
 		i.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
 		startActivity(i);
 		finish();

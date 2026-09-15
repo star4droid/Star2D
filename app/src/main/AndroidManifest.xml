@@ -60,6 +60,14 @@
 			android:theme="@style/AppTheme"
 			android:windowSoftInputMode="adjustResize|stateVisible"
 			android:exported="true"/>
+		<activity
+			android:name="com.star4droid.star2d.Activities.VisualScriptingActivity"
+			android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout"
+			android:hardwareAccelerated="true"
+			android:screenOrientation="landscape"
+			android:theme="@style/AppTheme.FullScreen"
+			android:windowSoftInputMode="stateHidden|adjustPan"
+			android:exported="true"/>
 			
 		<service
 		android:enabled="true"

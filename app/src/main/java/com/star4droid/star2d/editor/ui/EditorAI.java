@@ -25,6 +25,7 @@ import com.star4droid.star2d.editor.ui.SingleInputDialog;
 
 import java.util.ArrayList;
 import java.util.List;
+import com.star4droid.star2d.evo.BuildConfig;
 
 public class EditorAI extends VisTable {
     private TestApp app;
@@ -277,11 +278,27 @@ public class EditorAI extends VisTable {
         }
     }
     
+    private String getApiKey(String provider) {
+        if ("opencode".equals(provider)) {
+            String key = app.preferences.getString(PREF_ZEN_API_KEY, "");
+            if (key.isEmpty() && BuildConfig.ZEN_API_KEY != null && !BuildConfig.ZEN_API_KEY.isEmpty() && !BuildConfig.ZEN_API_KEY.startsWith("your_")) {
+                key = BuildConfig.ZEN_API_KEY;
+            }
+            return key;
+        } else {
+            String key = app.preferences.getString(PREF_GEMINI_API_KEY, "");
+            if (key.isEmpty() && BuildConfig.GEMINI_API_KEY != null && !BuildConfig.GEMINI_API_KEY.isEmpty() && !BuildConfig.GEMINI_API_KEY.startsWith("your_")) {
+                key = BuildConfig.GEMINI_API_KEY;
+            }
+            return key;
+        }
+    }
+
     private void showApiKeyDialog(String provider) {
         String prefKey = provider.equals("opencode") ? PREF_ZEN_API_KEY : PREF_GEMINI_API_KEY;
         String title = provider.equals("opencode") ? "OpenCode Zen API Key" : "Gemini API Key";
         String message = provider.equals("opencode") ? "Enter OpenCode Zen API Key:" : "Enter Gemini API Key:";
-        String currentKey = app.preferences.getString(prefKey, "");
+        String currentKey = getApiKey(provider);
         new SingleInputDialog(title, message, currentKey, key -> {
             app.preferences.putString(prefKey, key);
             app.preferences.flush();
@@ -296,21 +313,16 @@ public class EditorAI extends VisTable {
         String displayName = modelSelector.getSelected();
         ModelEntry entry = getModelEntry(displayName);
         
-        String apiKey = "";
-        if (entry.provider.equals("opencode")) {
-            apiKey = app.preferences.getString(PREF_ZEN_API_KEY, "");
-            if (apiKey.isEmpty()) {
+        String apiKey = getApiKey(entry.provider);
+        if (apiKey.isEmpty()) {
+            if (entry.provider.equals("opencode")) {
                 app.toast("Please set OpenCode Zen API Key first!");
                 showApiKeyDialog("opencode");
-                return;
-            }
-        } else {
-            apiKey = app.preferences.getString(PREF_GEMINI_API_KEY, "");
-            if (apiKey.isEmpty()) {
+            } else {
                 app.toast("Please set Gemini API Key first!");
                 showApiKeyDialog("gemini");
-                return;
             }
+            return;
         }
         
         // User Message
@@ -771,12 +783,12 @@ public class EditorAI extends VisTable {
         
         // Gemini API Key
         content.add(new VisLabel("Gemini API Key:")).left();
-        final VisTextField geminiKeyField = new VisTextField(app.preferences.getString(PREF_GEMINI_API_KEY, ""));
+        final VisTextField geminiKeyField = new VisTextField(getApiKey("gemini"));
         content.add(geminiKeyField).width(250).row();
         
         // OpenCode Zen API Key
         content.add(new VisLabel("OpenCode Zen API Key:")).left();
-        final VisTextField zenKeyField = new VisTextField(app.preferences.getString(PREF_ZEN_API_KEY, ""));
+        final VisTextField zenKeyField = new VisTextField(getApiKey("opencode"));
         content.add(zenKeyField).width(250).row();
         
         // Read Files
@@ -939,12 +951,7 @@ public class EditorAI extends VisTable {
     private void promptForApiKeyIfNeeded() {
         String displayName = modelSelector.getSelected();
         ModelEntry entry = getModelEntry(displayName);
-        String key = "";
-        if (entry.provider.equals("opencode")) {
-            key = app.preferences.getString(PREF_ZEN_API_KEY, "sk-u2ry3Bfok1KqidNbe2d8tR6oe0ApXC5QfJNbTMvvbEsvr2rm5BVkmfZMBWePY5mg");
-        } else {
-            key = app.preferences.getString(PREF_GEMINI_API_KEY, "");
-        }
+        String key = getApiKey(entry.provider);
         if (key.isEmpty()) {
             showApiKeyDialog(entry.provider);
         }

@@ -88,7 +88,7 @@ jobs:
               messages: [
                 {
                   role: "system",
-                  content: "You are an automated code assistant. If asked to modify or create files, output JSON format with schema: {\"files\": [{\"path\": \"relative/path\", \"content\": \"full file content\"}]}. If simply answering, return normal text."
+                  content: "You are an automated code assistant. If asked to modify or create files, output valid JSON with schema: {\"files\": [{\"path\": \"relative/path\", \"content\": \"full file content\"}]}. If simply answering, return normal text."
                 },
                 {
                   role: "user",
@@ -97,23 +97,33 @@ jobs:
               ]
             });
 
-            const output = response.choices[0].message.content;
+            console.log("Raw Server Response:", JSON.stringify(response, null, 2));
+
+            if (!response || !response.choices || !response.choices.length) {
+              throw new Error(`Invalid response structure: ${JSON.stringify(response)}`);
+            }
+
+            const output = response.choices[0].message?.content || "";
             console.log("Agent Response received.");
 
-            // محاولة تطبيق تعديلات الملفات إذا كانت مخرجات منظمة
             try {
-              const parsed = JSON.parse(output);
-              if (parsed.files && Array.isArray(parsed.files)) {
-                for (const file of parsed.files) {
-                  const fullPath = path.resolve(process.cwd(), file.path);
-                  fs.mkdirSync(path.dirname(fullPath), { recursive: true });
-                  fs.writeFileSync(fullPath, file.content, 'utf8');
-                  console.log(`Updated file: ${file.path}`);
+              // استخراج JSON حتى لو أرجعه النموذج محاطاً بـ markdown code block
+              const jsonMatch = output.match(/\{[\s\S]*\}/);
+              if (jsonMatch) {
+                const parsed = JSON.parse(jsonMatch[0]);
+                if (parsed.files && Array.isArray(parsed.files)) {
+                  for (const file of parsed.files) {
+                    const fullPath = path.resolve(process.cwd(), file.path);
+                    fs.mkdirSync(path.dirname(fullPath), { recursive: true });
+                    fs.writeFileSync(fullPath, file.content, 'utf8');
+                    console.log(`Updated file: ${file.path}`);
+                  }
                 }
+              } else {
+                console.log("Response text:", output);
               }
             } catch (e) {
-              console.log("Response is plain text (no automated file JSON parsed):");
-              console.log(output);
+              console.log("Could not parse file updates, output text:", output);
             }
           }
 

@@ -1,27 +1,27 @@
-name: OpenCode + APK Build
+name: AgentRouter Automation + APK Build
 
 on:
   workflow_dispatch:
     inputs:
       model:
-        description: 'Task for OpenCode (e.g., agentrouter/gpt-6-astra, agentrouter-anthropic/claude-opus-5)'
+        description: 'Model name (e.g. gpt-5.6-sol, gpt-6-astra, claude-opus-5, deepseek-v4-flash)'
         required: false
-        default: 'agentrouter/gpt-6-astra'
+        default: 'gpt-6-astra'
         type: string
       
       custom_prompt:
-        description: 'Task for OpenCode'
+        description: 'Task for Agent'
         required: true
         type: string
 
       branch_name:
         description: 'Branch name'
         required: true
-        default: 'feature/opencode-patch'
+        default: 'feature/agent-patch'
         type: string
 
 jobs:
-  opencode-build:
+  agent-build:
     runs-on: ubuntu-latest
 
     permissions:
@@ -52,79 +52,87 @@ jobs:
           fi
           git branch --show-current
 
-      # ⚙️ Setup OpenCode Config for AgentRouter
-      - name: Setup AgentRouter Config
+      # ⚙️ Setup Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # 🤖 Execute Agent Task via AgentRouter
+      - name: Execute AI Workflow
+        env:
+          OPENAI_BASE_URL: "https://agentrouter.org/v1"
+          OPENAI_API_KEY: ${{ secrets.AGENTROUTER_API_KEY }}
+          AGENT_PROMPT: ${{ inputs.custom_prompt }}
+          AGENT_MODEL: ${{ inputs.model }}
         run: |
-          cat << 'EOF' > opencode.json
-          {
-            "$schema": "https://opencode.ai/config.json",
-            "provider": {
-              "agentrouter": {
-                "npm": "@ai-sdk/openai-compatible",
-                "name": "AgentRouter (OpenAI Compatible)",
-                "options": {
-                  "baseURL": "https://agentrouter.org/v1"
+          npm install --no-save openai
+          node << 'EOF'
+          const fs = require('fs');
+          const path = require('path');
+          const OpenAI = require('openai');
+
+          const client = new OpenAI({
+            baseURL: process.env.OPENAI_BASE_URL,
+            apiKey: process.env.OPENAI_API_KEY
+          });
+
+          async function run() {
+            const prompt = process.env.AGENT_PROMPT;
+            const model = process.env.AGENT_MODEL;
+
+            console.log(`Sending request to AgentRouter using model: ${model}...`);
+
+            const response = await client.chat.completions.create({
+              model: model,
+              messages: [
+                {
+                  role: "system",
+                  content: "You are an automated code assistant. If asked to modify or create files, output JSON format with schema: {\"files\": [{\"path\": \"relative/path\", \"content\": \"full file content\"}]}. If simply answering, return normal text."
                 },
-                "models": {
-                  "gpt-6-astra": {
-                    "name": "gpt-6-astra"
-                  },
-                  "gpt-5.6-sol": {
-                    "name": "gpt-5.6-sol"
-                  },
-                  "deepseek-v4-flash": {
-                    "name": "deepseek-v4-flash"
-                  },
-                  "glm-5.3": {
-                    "name": "glm-5.3"
-                  }
+                {
+                  role: "user",
+                  content: prompt
                 }
-              },
-              "agentrouter-anthropic": {
-                "npm": "@ai-sdk/anthropic",
-                "name": "AgentRouter (Anthropic Compatible)",
-                "options": {
-                  "baseURL": "https://agentrouter.org"
-                },
-                "models": {
-                  "claude-opus-4-8": {
-                    "name": "claude-opus-4-8"
-                  },
-                  "claude-opus-5": {
-                    "name": "claude-opus-5"
-                  },
-                  "claude-fable-5": {
-                    "name": "claude-fable-5"
-                  }
+              ]
+            });
+
+            const output = response.choices[0].message.content;
+            console.log("Agent Response received.");
+
+            // محاولة تطبيق تعديلات الملفات إذا كانت مخرجات منظمة
+            try {
+              const parsed = JSON.parse(output);
+              if (parsed.files && Array.isArray(parsed.files)) {
+                for (const file of parsed.files) {
+                  const fullPath = path.resolve(process.cwd(), file.path);
+                  fs.mkdirSync(path.dirname(fullPath), { recursive: true });
+                  fs.writeFileSync(fullPath, file.content, 'utf8');
+                  console.log(`Updated file: ${file.path}`);
                 }
               }
+            } catch (e) {
+              console.log("Response is plain text (no automated file JSON parsed):");
+              console.log(output);
             }
           }
-          EOF
 
-      # 🤖 Run OpenCode
-      - name: Run OpenCode Agent
-        uses: anomalyco/opencode/github@latest
-        env:
-          AGENTROUTER_API_KEY: ${{ secrets.AGENTROUTER_API_KEY }}
-          AGENTROUTER_ANTHROPIC_API_KEY: ${{ secrets.AGENTROUTER_API_KEY }}
-          ANTHROPIC_API_KEY: ${{ secrets.AGENTROUTER_API_KEY }}
-        with:
-          model: ${{ inputs.model }}
-          prompt: ${{ inputs.custom_prompt }}
+          run().catch(err => {
+            console.error("Agent execution failed:", err);
+            process.exit(1);
+          });
+          EOF
 
       # 💾 Commit changes
       - name: Commit and Push Changes
         run: |
-          rm -f opencode.json
-
           git add .
 
           if ! git diff-index --quiet HEAD; then
-            git commit -m "automation(opencode): ${{ inputs.custom_prompt }}"
+            git commit -m "automation(agent): ${{ inputs.custom_prompt }}"
             git push origin "${{ inputs.branch_name }}" --force
           else
-            echo "No changes made by OpenCode."
+            echo "No changes made by Agent."
           fi
 
       # ☕ Setup Java

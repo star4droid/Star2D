@@ -8,11 +8,24 @@ on:
         type: boolean
         required: true
         default: false
-      changes_not_sent_for_review:
-        description: 'changesNotSentForReview?'
+      play_track:
+        description: 'Google Play track (draft = production track as a draft)'
+        type: choice
+        required: true
+        default: production
+        options:
+          - production
+          - beta
+          - alpha
+          - draft
+      upload_to_releases:
+        description: 'Upload APK to GitHub Releases?'
         type: boolean
-        required: false
-        default: true
+        required: true
+        default: false
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -98,7 +111,24 @@ jobs:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_STORE_JSON_KEY }}
           packageName: com.star4droid.star2d.evo
           releaseFiles: app/build/outputs/bundle/release/*.aab
-          track: production
-          status: completed
+          track: ${{ github.event.inputs.play_track == 'draft' && 'production' || github.event.inputs.play_track }}
+          status: ${{ github.event.inputs.play_track == 'draft' && 'draft' || 'completed' }}
           whatsNewDirectory: whatsNewDirectory
-          changesNotSentForReview: ${{ github.event.inputs.changes_not_sent_for_review == 'true' }}
+
+      # 🏷 Read version name
+      - name: Read version name
+        if: ${{ github.event.inputs.upload_to_releases == 'true' }}
+        run: |
+          V=$(grep -m1 versionName app/build.gradle | sed -E 's/.*"([^"]+)".*/\1/')
+          echo "VERSION_NAME=$V" >> $GITHUB_ENV
+          cp app/build/outputs/apk/release/app-release.apk "Star2D-$V.apk"
+
+      # 📤 Upload APK to GitHub Releases if requested
+      - name: Upload APK to GitHub Releases
+        if: ${{ github.event.inputs.upload_to_releases == 'true' }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ env.VERSION_NAME }}
+          name: Star2D ${{ env.VERSION_NAME }}
+          generate_release_notes: true
+          files: Star2D-${{ env.VERSION_NAME }}.apk

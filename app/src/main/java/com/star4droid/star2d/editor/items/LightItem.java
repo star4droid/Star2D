@@ -73,13 +73,13 @@ public class LightItem extends Image implements EditorItem {
 			        light = new DirectionalLight(rayHandler,rays, Color.valueOf(color),-rotation);
 			   break;
 		  	 case "cone":
-			        light = new ConeLight(rayHandler,rays, Color.valueOf(color),Distance,lightX, height - Distance - lightY + Distance*0.5f,-rotation,Cone_Degree);
+			        light = new ConeLight(rayHandler,rays, Color.valueOf(color),Distance,lightX, lightY,-rotation,Cone_Degree);
 		   	break;
 		   	case "point":
-		   	    light = new PointLight(rayHandler,rays,Color.valueOf(color),Distance,lightX+Distance*0.5f, height - Distance - lightY + Distance*0.5f);
+		   	    light = new PointLight(rayHandler,rays,Color.valueOf(color),Distance,lightX, lightY);
 		   	break;
 	        default:
-		        light = new PointLight(rayHandler,rays,Color.valueOf(color),Distance,lightX+Distance*0.5f, height - Distance - lightY + Distance*0.5f);
+		        light = new PointLight(rayHandler,rays,Color.valueOf(color),Distance,lightX, lightY);
 			}
 		}
 		
@@ -91,10 +91,9 @@ public class LightItem extends Image implements EditorItem {
 		currentType = lightType;
 		
 		if(light!=null){
-			if(light instanceof ConeLight){
-				setPosition(lightX,height - Distance - lightY + Distance*0.5f);
-			} else if(light instanceof PointLight){
-				light.setPosition(lightX+Distance*0.5f, height - Distance - lightY + Distance*0.5f);
+			// same coordinates as the running game (x, y up from the bottom-left): dragging the icon up moves the light up
+			if(light instanceof PositionalLight){
+				light.setPosition(lightX, lightY);
 			}
 			light.setActive(propertySet.getString("Active").equals("true"));
 			light.setXray(propertySet.getString("X Ray").equals("true"));

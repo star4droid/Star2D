@@ -198,6 +198,7 @@ public class EditorActivity extends AppCompatActivity implements AndroidFragment
         EngineSettings.init(this);
 
         setContentView(R.layout.editor);
+        installSafeInsets(findViewById(R.id.frame).getParent() instanceof View ? (View) findViewById(R.id.frame).getParent().getParent() : null);
 		init();
         
         project = new Project(""/*getIntent().getStringExtra("project")*/);
@@ -361,6 +362,30 @@ public class EditorActivity extends AppCompatActivity implements AndroidFragment
 		});
 		//SPNote.show(this);
         
+    }
+
+    /**
+     * The editor root used fitsSystemWindows, which pads by EVERY inset the window reports (keyboard, caption bar, split-screen
+     * or vendor-specific bars). Some devices report a huge top inset, which pushed the whole editor down and cut its bottom bars.
+     * Use only the status / navigation bars and the cutout, never the keyboard, and never more than 96dp per side.
+     */
+    private void installSafeInsets(View root) {
+        if (root == null) return;
+        root.setFitsSystemWindows(false);
+        final int cap = (int) (96 * getResources().getDisplayMetrics().density);
+        root.setOnApplyWindowInsetsListener((v, insets) -> {
+            int l = 0, t = 0, r = 0, b = 0;
+            if (android.os.Build.VERSION.SDK_INT >= 30) {
+                android.graphics.Insets in = insets.getInsets(android.view.WindowInsets.Type.systemBars() | android.view.WindowInsets.Type.displayCutout());
+                l = in.left; t = in.top; r = in.right; b = in.bottom;
+            } else {
+                l = insets.getSystemWindowInsetLeft(); t = insets.getSystemWindowInsetTop();
+                r = insets.getSystemWindowInsetRight(); b = Math.min(insets.getStableInsetBottom(), insets.getSystemWindowInsetBottom());
+            }
+            v.setPadding(Math.min(l, cap), Math.min(t, cap), Math.min(r, cap), Math.min(b, cap));
+            return android.os.Build.VERSION.SDK_INT >= 30 ? android.view.WindowInsets.CONSUMED : insets.consumeSystemWindowInsets();
+        });
+        root.requestApplyInsets();
     }
 
     public void init() {

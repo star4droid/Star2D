@@ -27,7 +27,7 @@ public class LightDef extends ItemDef {
 		        light = new DirectionalLight(rayHandler,(int)rays, Color.valueOf(color),-rotation);
 		   break;
 		   case "cone":
-		        light = new ConeLight(rayHandler,(int)rays, Color.valueOf(color),Distance * StageImp.WORLD_SCALE,x, y * StageImp.WORLD_SCALE,-rotation,Cone_Degree);
+		        light = new ConeLight(rayHandler,(int)rays, Color.valueOf(color),Distance * StageImp.WORLD_SCALE,x * StageImp.WORLD_SCALE, y * StageImp.WORLD_SCALE,-rotation,Cone_Degree);
 		   break;
 	        default:
 		        light = new PointLight(rayHandler,(int)rays,Color.valueOf(color),Distance * StageImp.WORLD_SCALE,x * StageImp.WORLD_SCALE, y * StageImp.WORLD_SCALE);

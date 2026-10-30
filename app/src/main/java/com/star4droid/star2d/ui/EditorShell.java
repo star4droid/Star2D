@@ -202,18 +202,24 @@ public class EditorShell extends FrameLayout implements ControlLayer.NativeUi, T
         boolean land = Ui.isLandscape(c);
 
         LinearLayout root = Ui.column(c);
+        rootCol = root;
+        spacerView = null; sceneToolsShield = null; bottomShield = null;
         chrome.addView(root, Ui.match());
 
-        root.addView(shield(buildTopBar(c, land), true), Ui.matchWrap());
+        topBarView = buildTopBar(c, land);
+        topShield = shield(topBarView, true);
+        root.addView(topShield, Ui.matchWrap());
         if (!land && !inPrefabMode()) {
             LinearLayout tools = bar(c);
             tools.setBackgroundColor(0xEC1C1F24);
             addSceneTools(c, tools);
-            root.addView(shield(wrapScroll(c, tools, false), true), Ui.matchWrap());
+            sceneToolsShield = shield(wrapScroll(c, tools, false), true);
+            root.addView(sceneToolsShield, Ui.matchWrap());
         }   // (landscape: the tabs are inside the top bar, buildTopBar made tabsRow; prefab mode: it is null)
 
         // middle: canvas is visible through here; rails float on the sides
         FrameLayout middle = new FrameLayout(c);
+        middleView = middle;
         root.addView(middle, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
 
         LinearLayout rail = buildRail(c);
@@ -229,7 +235,8 @@ public class EditorShell extends FrameLayout implements ControlLayer.NativeUi, T
             tlp.setMarginStart(Ui.dp(c, 6));
             middle.addView(shield(wrapScroll(c, tools, true), false), tlp);
         } else {
-            root.addView(shield(wrapScroll(c, buildTools(c, false), false), true), Ui.matchWrap());
+            bottomShield = shield(wrapScroll(c, buildTools(c, false), false), true);
+            root.addView(bottomShield, Ui.matchWrap());
         }
 
         indexingChip = Ui.text(c, "  " + Tr.t("indexing", "Indexing files...") + "  ", 12, Ui.TEXT_2);
@@ -247,6 +254,158 @@ public class EditorShell extends FrameLayout implements ControlLayer.NativeUi, T
         updateRailSelection();
         refreshUndoRedo();
         applyRemoteLock();
+        buildDebugChip(c);
+        applyHideStep();
+        if (!fixedListenerAdded) {
+            fixedListenerAdded = true;
+            getViewTreeObserver().addOnGlobalLayoutListener(this::applyFixedSizes);
+        }
+        post(this::applyFixedSizes);
+    }
+
+    // ============================================== temporary layout debugging
+
+    /** Replace the two weights (middle area, top-bar spacer) by measured fixed sizes, or put the weights back. */
+    private void applyFixedSizes() {
+        try {
+            if (rootCol == null || chrome.getHeight() <= 0) return;
+            if (middleView != null && middleView.getParent() == rootCol) {
+                LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) middleView.getLayoutParams();
+                if (fixMiddle) {
+                    int others = 0;
+                    for (int i = 0; i < rootCol.getChildCount(); i++) {
+                        View ch = rootCol.getChildAt(i);
+                        if (ch != middleView && ch.getVisibility() != GONE) others += ch.getMeasuredHeight();
+                    }
+                    int h = Math.max(0, chrome.getHeight() - others);
+                    if (lp.weight != 0f || lp.height != h) { lp.weight = 0f; lp.height = h; middleView.setLayoutParams(lp); }
+                } else if (lp.weight != 1f || lp.height != 0) { lp.weight = 1f; lp.height = 0; middleView.setLayoutParams(lp); }
+            }
+            if (spacerView != null && spacerView.getParent() == topBarView && topBarView.getWidth() > 0) {
+                LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) spacerView.getLayoutParams();
+                if (fixSpacer) {
+                    int others = topBarView.getPaddingLeft() + topBarView.getPaddingRight();
+                    for (int i = 0; i < topBarView.getChildCount(); i++) {
+                        View ch = topBarView.getChildAt(i);
+                        if (ch != spacerView && ch.getVisibility() != GONE) {
+                            ViewGroup.MarginLayoutParams m = (ViewGroup.MarginLayoutParams) ch.getLayoutParams();
+                            others += ch.getMeasuredWidth() + m.leftMargin + m.rightMargin;
+                        }
+                    }
+                    int w = Math.max(0, topBarView.getWidth() - others);
+                    if (lp.weight != 0f || lp.width != w) { lp.weight = 0f; lp.width = w; spacerView.setLayoutParams(lp); }
+                } else if (lp.weight != 1f || lp.width != 0) { lp.weight = 1f; lp.width = 0; spacerView.setLayoutParams(lp); }
+            }
+        } catch (Throwable ignored) {
+        }
+    }
+
+    /** Long press on Back: undo the fixed sizes one by one, bottom first, then the top. */
+    private void revertWeightsStep() {
+        revertStep++;
+        String msg;
+        if (revertStep == 1) { fixMiddle = false; msg = "1/2: middle area back to weight 1"; }
+        else if (revertStep == 2) { fixSpacer = false; msg = "2/2: top-bar spacer back to weight 1 (all original now)"; }
+        else { fixMiddle = true; fixSpacer = true; revertStep = 0; msg = "back to fixed sizes"; }
+        Ui.toast(activity, msg);
+        applyFixedSizes();
+        if (rootCol != null) rootCol.requestLayout();
+    }
+
+    /** Long press on Play: 1) hide the top bar + the bar under it, 2) hide the bottom bar too, 3) show everything. */
+    private void hideStepNext() {
+        hideStep = (hideStep + 1) % 3;
+        applyHideStep();
+        Ui.toast(activity, hideStep == 0 ? "all bars shown" : hideStep == 1 ? "top bars hidden" : "top + bottom bars hidden");
+    }
+
+    private void applyHideStep() {
+        if (topShield != null) topShield.setVisibility(hideStep >= 1 ? GONE : VISIBLE);
+        if (sceneToolsShield != null) sceneToolsShield.setVisibility(hideStep >= 1 ? GONE : VISIBLE);
+        if (bottomShield != null) bottomShield.setVisibility(hideStep >= 2 ? GONE : VISIBLE);
+        if (debugChip != null) debugChip.setVisibility(hideStep >= 1 ? VISIBLE : GONE);
+        if (rootCol != null) rootCol.requestLayout();
+    }
+
+    /** Small floating Play button, only while the top bar is hidden (so Play's long press stays reachable). */
+    private void buildDebugChip(Context c) {
+        debugChip = Ui.iconButton(c, R.drawable.ic_s2_play, "Play", v -> play());
+        debugChip.setBackground(Ui.ripple(Ui.SUCCESS, Ui.dp(c, 10)));
+        debugChip.setOnLongClickListener(v -> { hideStepNext(); return true; });
+        debugChip.setVisibility(GONE);
+        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(Ui.dp(c, 48), Ui.dp(c, 48), Gravity.TOP | Gravity.END);
+        lp.setMargins(0, Ui.dp(c, 4), Ui.dp(c, 4), 0);
+        chrome.addView(debugChip, lp);
+    }
+
+    /** Long press on Save: copy everything about the window and every view of the editor to the clipboard. */
+    private void copyDebugInfo() {
+        StringBuilder sb = new StringBuilder();
+        try {
+            android.util.DisplayMetrics dm = getResources().getDisplayMetrics();
+            android.content.res.Configuration cf = getResources().getConfiguration();
+            sb.append("== Star2D layout debug ==\n");
+            sb.append("device: ").append(android.os.Build.MANUFACTURER).append(' ').append(android.os.Build.MODEL)
+                    .append(" sdk=").append(android.os.Build.VERSION.SDK_INT).append(" rom=").append(android.os.Build.DISPLAY).append('\n');
+            sb.append("metrics: ").append(dm.widthPixels).append('x').append(dm.heightPixels).append(" density=").append(dm.density).append(" fontScale=").append(cf.fontScale).append('\n');
+            sb.append("config: orientation=").append(cf.orientation).append(" screenDp=").append(cf.screenWidthDp).append('x').append(cf.screenHeightDp)
+                    .append(" smallestDp=").append(cf.smallestScreenWidthDp).append(" layoutDir=").append(cf.getLayoutDirection()).append('\n');
+            sb.append("Ui.isLandscape=").append(Ui.isLandscape(activity)).append(" inMultiWindow=").append(android.os.Build.VERSION.SDK_INT >= 24 && activity.isInMultiWindowMode())
+                    .append(" requestedOrientation=").append(activity.getRequestedOrientation()).append('\n');
+            sb.append("flags: fixMiddle=").append(fixMiddle).append(" fixSpacer=").append(fixSpacer).append(" hideStep=").append(hideStep).append(" revertStep=").append(revertStep).append('\n');
+            View decor = activity.getWindow().getDecorView();
+            sb.append("decor: ").append(decor.getWidth()).append('x').append(decor.getHeight()).append('\n');
+            android.view.WindowInsets wi = decor.getRootWindowInsets();
+            if (wi != null) {
+                sb.append("insets(system): ").append(wi.getSystemWindowInsetLeft()).append(',').append(wi.getSystemWindowInsetTop()).append(',')
+                        .append(wi.getSystemWindowInsetRight()).append(',').append(wi.getSystemWindowInsetBottom()).append('\n');
+                if (android.os.Build.VERSION.SDK_INT >= 30) {
+                    int[] types = {android.view.WindowInsets.Type.statusBars(), android.view.WindowInsets.Type.navigationBars(), android.view.WindowInsets.Type.ime(),
+                            android.view.WindowInsets.Type.captionBar(), android.view.WindowInsets.Type.displayCutout(), android.view.WindowInsets.Type.systemGestures(), android.view.WindowInsets.Type.tappableElement()};
+                    String[] names = {"status", "nav", "ime", "caption", "cutout", "gestures", "tappable"};
+                    for (int i = 0; i < types.length; i++) sb.append("  ").append(names[i]).append('=').append(wi.getInsets(types[i])).append('\n');
+                    sb.append("  imeVisible=").append(wi.isVisible(android.view.WindowInsets.Type.ime())).append('\n');
+                }
+            }
+            android.graphics.Rect vis = new android.graphics.Rect();
+            decor.getWindowVisibleDisplayFrame(vis);
+            sb.append("visibleDisplayFrame: ").append(vis.toShortString()).append('\n');
+            sb.append("-- view tree (from the activity content) --\n");
+            View content = activity.findViewById(android.R.id.content);
+            dumpView(sb, content, 0);
+        } catch (Throwable t) {
+            sb.append("dump failed: ").append(android.util.Log.getStackTraceString(t));
+        }
+        Dialogs.copy(activity, sb.toString());
+    }
+
+    private void dumpView(StringBuilder sb, View v, int depth) {
+        if (v == null || depth > 14) return;
+        for (int i = 0; i < depth; i++) sb.append("  ");
+        int[] loc = new int[2];
+        v.getLocationOnScreen(loc);
+        sb.append(v.getClass().getSimpleName());
+        if (v.getId() != View.NO_ID) sb.append(" #").append(Integer.toHexString(v.getId()));
+        sb.append(" screen=(").append(loc[0]).append(',').append(loc[1]).append(") size=").append(v.getWidth()).append('x').append(v.getHeight());
+        sb.append(" vis=").append(v.getVisibility() == VISIBLE ? "V" : v.getVisibility() == GONE ? "G" : "I");
+        if (v.getAlpha() != 1f) sb.append(" alpha=").append(v.getAlpha());
+        if (v.getTranslationX() != 0 || v.getTranslationY() != 0) sb.append(" tr=").append(v.getTranslationX()).append(',').append(v.getTranslationY());
+        if (v.getScaleX() != 1f || v.getScaleY() != 1f) sb.append(" scale=").append(v.getScaleX()).append(',').append(v.getScaleY());
+        ViewGroup.LayoutParams lp = v.getLayoutParams();
+        if (lp != null) {
+            sb.append(" lp=").append(lp.width).append('x').append(lp.height);
+            if (lp instanceof LinearLayout.LayoutParams) sb.append(" w=").append(((LinearLayout.LayoutParams) lp).weight).append(" g=").append(((LinearLayout.LayoutParams) lp).gravity);
+            else if (lp instanceof FrameLayout.LayoutParams) sb.append(" g=").append(((FrameLayout.LayoutParams) lp).gravity);
+        }
+        if (v instanceof LinearLayout) sb.append(" orient=").append(((LinearLayout) v).getOrientation()).append(" gravity=").append(((LinearLayout) v).getGravity());
+        if (v.getPaddingTop() + v.getPaddingBottom() + v.getPaddingLeft() + v.getPaddingRight() > 0)
+            sb.append(" pad=").append(v.getPaddingLeft()).append(',').append(v.getPaddingTop()).append(',').append(v.getPaddingRight()).append(',').append(v.getPaddingBottom());
+        sb.append('\n');
+        if (v instanceof ViewGroup && !(v instanceof android.widget.AbsListView) && !(v instanceof ScrollView && depth > 8)) {
+            ViewGroup g = (ViewGroup) v;
+            int n = Math.min(g.getChildCount(), 40);
+            for (int i = 0; i < n; i++) dumpView(sb, g.getChildAt(i), depth + 1);
+        }
     }
 
     /** Opens the AI panel on its "API" tab (used when an error is sent to the in-editor assistant). */
@@ -313,6 +472,7 @@ public class EditorShell extends FrameLayout implements ControlLayer.NativeUi, T
         final boolean pm = inPrefabMode();
         ImageView back = Ui.iconButton(c, R.drawable.ic_s2_arrow_back, pm ? Tr.t("prefab_leave", "Leave prefab") : Tr.t("exit", "Exit"), v -> exitProject());
         back.setScaleX(Ui.isRtl(c) ? -1 : 1);
+        back.setOnLongClickListener(v -> { revertWeightsStep(); return true; });
         Tut.tag(back, "top:exit");
         top.addView(back);
 
@@ -340,7 +500,8 @@ public class EditorShell extends FrameLayout implements ControlLayer.NativeUi, T
         } else {
             tabsRow = null;
             scenesHolder = null;
-            top.addView(new View(c), Ui.weight(1));
+            spacerView = new View(c);
+            top.addView(spacerView, Ui.weight(1));
         }
         undoBtn = Ui.iconButton(c, R.drawable.ic_s2_undo, Tr.t("undo", "Undo"), v -> Bridge.gl(() -> Bridge.controls().actionUndo()));
         redoBtn = Ui.iconButton(c, R.drawable.ic_s2_redo, Tr.t("redo", "Redo"), v -> Bridge.gl(() -> Bridge.controls().actionRedo()));
@@ -357,6 +518,7 @@ public class EditorShell extends FrameLayout implements ControlLayer.NativeUi, T
         }
         ImageView save = Ui.iconButton(c, R.drawable.ic_s2_save, Tr.t("save", "Save"), v -> save());
         Tut.tag(save, "top:save");
+        save.setOnLongClickListener(v -> { copyDebugInfo(); return true; });
         top.addView(save);
 
         // Play: accent pill
@@ -365,6 +527,7 @@ public class EditorShell extends FrameLayout implements ControlLayer.NativeUi, T
         LinearLayout.LayoutParams plp = (LinearLayout.LayoutParams) play.getLayoutParams();
         plp.setMargins(Ui.dp(c, 4), 0, Ui.dp(c, 4), 0);
         Tut.tag(play, "top:play");
+        play.setOnLongClickListener(v -> { hideStepNext(); return true; });
         top.addView(play);
         return top;
     }
@@ -564,6 +727,17 @@ public class EditorShell extends FrameLayout implements ControlLayer.NativeUi, T
     // =============================================================== scene tabs
 
     private LinearLayout scenesHolder;
+
+    // ---- temporary layout debugging (branch layout-debug-temp)
+    private LinearLayout rootCol;
+    private FrameLayout middleView;
+    private View spacerView, topShield, sceneToolsShield, bottomShield;
+    private LinearLayout topBarView;
+    private ImageView debugChip;
+    private boolean fixMiddle = true, fixSpacer = true;
+    private int hideStep = 0, revertStep = 0;
+    private boolean fixedListenerAdded;
+
 
     public void refreshTabs() {
         if (inPrefabMode()) {

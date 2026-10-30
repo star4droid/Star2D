@@ -23,7 +23,7 @@ Visual blocks, a real code editor, an AI assistant and GitHub sync, powered by L
 
 <br>
 
-<img width="1024" height="500" alt="825378" src="https://github.com/user-attachments/assets/f802b374-eee2-4318-937d-a07a4dfe108f" />
+<img width="800" alt="Star2D" src="https://wsrv.nl/?url=https://github.com/user-attachments/assets/f802b374-eee2-4318-937d-a07a4dfe108f&w=1024&output=webp&q=80" />
 
 </div>
 
@@ -58,39 +58,39 @@ Under the hood it is **LibGDX** for rendering and **Box2D** for physics, with a 
 
 ### Create games right on your phone
 
-<img width="1080" height="1920" alt="825379" src="https://github.com/user-attachments/assets/5f674e26-cd60-4fd5-b1a3-073097b6fbb9" />
+<img width="320" alt="825379" src="https://wsrv.nl/?url=https://github.com/user-attachments/assets/5f674e26-cd60-4fd5-b1a3-073097b6fbb9&w=640&output=webp&q=75" />
 
 ### Learn by making games *(experimental)*
 Interactive lessons guide every tap, step by step.
 
-<img width="1080" height="1920" alt="825380" src="https://github.com/user-attachments/assets/5298861c-49ee-4216-bfe6-553cbfe4f7b8" />
+<img width="320" alt="825380" src="https://wsrv.nl/?url=https://github.com/user-attachments/assets/5298861c-49ee-4216-bfe6-553cbfe4f7b8&w=640&output=webp&q=75" />
 
 ### Blocks or real code
 Drag-and-drop blocks (nested, searchable) **or** a code editor with auto-complete, live error help and a *Copy all errors* button.
 
-<img width="1080" height="1920" alt="825381" src="https://github.com/user-attachments/assets/3f3818f8-e99a-44fa-8fcf-28d5b214872f" />
+<img width="320" alt="825381" src="https://wsrv.nl/?url=https://github.com/user-attachments/assets/3f3818f8-e99a-44fa-8fcf-28d5b214872f&w=640&output=webp&q=75" />
 
 ### 56 ready-made behaviors
 Chase, patrol, shoot, camera follow, camera shake and more. Add one in a tap, then tune its variables.
 
-<img width="1080" height="1920" alt="825382" src="https://github.com/user-attachments/assets/4e7330d9-69a8-4b1f-9cb7-cd4eca0c90bf" />
+<img width="320" alt="825382" src="https://wsrv.nl/?url=https://github.com/user-attachments/assets/4e7330d9-69a8-4b1f-9cb7-cd4eca0c90bf&w=640&output=webp&q=75" />
 
 ### UI Maker and Button Maker
 Menus, HUDs, sliders, switches, themes. Button styles: jelly, neon, candy, flat, with a pressed look.
 
-<img width="1080" height="1920" alt="825383" src="https://github.com/user-attachments/assets/cbd3df6a-693b-4267-8574-f0df2fd8a3b4" />
+<img width="320" alt="825383" src="https://wsrv.nl/?url=https://github.com/user-attachments/assets/cbd3df6a-693b-4267-8574-f0df2fd8a3b4&w=640&output=webp&q=75" />
 
 ### 1,831 icons, free asset packs and an animation editor
-<img width="1080" height="1920" alt="825384" src="https://github.com/user-attachments/assets/f7e3d131-abcb-4a43-a66f-b01e81ee527f" />
+<img width="320" alt="825384" src="https://wsrv.nl/?url=https://github.com/user-attachments/assets/f7e3d131-abcb-4a43-a66f-b01e81ee527f&w=640&output=webp&q=75" />
 
 ### AI assistant and GitHub
 Gemini / OpenRouter inside the editor, a Remote connector for external assistants, and Git (clone, commit, push) from the project screen.
 
-<img width="1080" height="1920" alt="825385" src="https://github.com/user-attachments/assets/b2dfc286-eb15-42b8-b474-7ac04a8bc031" />
+<img width="320" alt="825385" src="https://wsrv.nl/?url=https://github.com/user-attachments/assets/b2dfc286-eb15-42b8-b474-7ac04a8bc031&w=640&output=webp&q=75" />
 
 ### Groups, Prefabs and scenes
 
-<img width="1080" height="1920" alt="825386" src="https://github.com/user-attachments/assets/8351c32f-a7e8-4745-864c-e063d923c693" />
+<img width="320" alt="825386" src="https://wsrv.nl/?url=https://github.com/user-attachments/assets/8351c32f-a7e8-4745-864c-e063d923c693&w=640&output=webp&q=75" />
 
 ---
 

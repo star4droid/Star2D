@@ -340,7 +340,8 @@ public class EditorShell extends FrameLayout implements ControlLayer.NativeUi, T
         } else {
             tabsRow = null;
             scenesHolder = null;
-            top.addView(new View(c), Ui.weight(1));
+            // a plain View measures to the whole available height when WRAP_CONTENT (it made the whole top bar full height): keep it 1px tall
+            top.addView(new View(c), new LinearLayout.LayoutParams(0, 1, 1));
         }
         undoBtn = Ui.iconButton(c, R.drawable.ic_s2_undo, Tr.t("undo", "Undo"), v -> Bridge.gl(() -> Bridge.controls().actionUndo()));
         redoBtn = Ui.iconButton(c, R.drawable.ic_s2_redo, Tr.t("redo", "Redo"), v -> Bridge.gl(() -> Bridge.controls().actionRedo()));

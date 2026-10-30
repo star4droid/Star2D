@@ -123,7 +123,7 @@ public class ProjectsHomeView extends FrameLayout {
             {"Community", "home_tab_community"}, {"Settings", "home_tab_settings"}, {"Open", "home_open"},
             {"New project", "home_new_project"}, {"Search projects...", "home_search"}, {"No projects yet", "home_no_projects"},
             {"Templates & Examples", "home_templates_title"}, {"Jumpstart your game with ready-to-run starter projects and engine features", "home_templates_sub"},
-            {"Learn by making games", "home_learn_title"}, {"Interactive tutorials guide every tap, step by step", "home_learn_sub"},
+            {"Learn by making games", "home_learn_title"}, {"(Experimental)", "home_experimental"}, {"Interactive tutorials guide every tap, step by step", "home_learn_sub"},
             {"Community & Support", "home_community_title"}, {"Connect with the Star2D developer community across the globe", "home_community_sub"},
             {"💖 Support Engine Development", "home_support"}, {"Star2D is developed with passion. Help keep updates and features coming!", "home_support_sub"},
             {"Donate", "home_donate"}, {"Engine Settings", "home_settings_title"}, {"Configure editor behaviors, code generation, and preferences", "home_settings_sub"},

@@ -100,6 +100,7 @@ public final class IconBrowser {
         Runnable pendingSearch;
         View detailHost;     // landscape: the scroll that holds the detail panel (hidden until an icon is chosen)
         boolean land;
+        int landSpan = 6;
 
         Browser(Activity a, IconCatalog catalog, File project, boolean closeOnImport, OnImported cb) {
             this.a = a;
@@ -179,6 +180,13 @@ public final class IconBrowser {
             detail.setBackground(Ui.rounded(Ui.SURFACE_2, Ui.dp(a, 10), Ui.BORDER, 1));
             detail.setPadding(Ui.dp(a, 10), Ui.dp(a, 8), Ui.dp(a, 10), Ui.dp(a, 8));
             detail.setVisibility(View.GONE);
+            if (land) {
+                LinearLayout closeRow = Ui.row(a);
+                closeRow.setGravity(Gravity.END);
+                ImageView x = Ui.iconButton(a, R.drawable.ic_s2_close, Tr.t("close", "Close"), v -> closeDetail());
+                closeRow.addView(x);
+                detail.addView(closeRow, Ui.matchWrap());
+            }
             buildDetail();
             if (land) {
                 // landscape: sets + categories at the side, the grid takes all the rest, the search is a button,
@@ -223,7 +231,8 @@ public final class IconBrowser {
                 body.addView(ds, Ui.margins(new LinearLayout.LayoutParams(Ui.dp(a, 250), -1), a, 8, 0, 0, 0));
                 root.addView(body, new LinearLayout.LayoutParams(-1, 0, 1));
                 widthDp = (int) (a.getResources().getDisplayMetrics().widthPixels * 0.9f / a.getResources().getDisplayMetrics().density) - railDp - 40;
-                ((GridLayoutManager) grid.getLayoutManager()).setSpanCount(Math.max(5, Math.min(12, widthDp / 62)));
+                landSpan = Math.max(5, Math.min(12, widthDp / 62));
+                ((GridLayoutManager) grid.getLayoutManager()).setSpanCount(landSpan);
             } else {
                 root.addView(fh.frame, new LinearLayout.LayoutParams(-1, 0, 1));
                 root.addView(detail, Ui.margins(Ui.matchWrap(), a, 0, 6, 0, 4));
@@ -237,11 +246,22 @@ public final class IconBrowser {
 
             refresh();
 
-            dialog = new AlertDialog.Builder(a)
-                    .setTitle(Tr.t("icn_title", "Icons") + " (" + catalog.size() + ")")
-                    .setView(root)
-                    .setPositiveButton(Tr.t("close", "Close"), null)
-                    .create();
+            String dlgTitle = Tr.t("icn_title", "Icons") + " (" + catalog.size() + ")";
+            AlertDialog.Builder db = new AlertDialog.Builder(a).setView(root);
+            if (land) {
+                // landscape: no bottom Close button (saves height); an X next to the title instead
+                LinearLayout tr = Ui.row(a);
+                tr.setGravity(Gravity.CENTER_VERTICAL);
+                tr.setPadding(Ui.dp(a, 16), Ui.dp(a, 4), Ui.dp(a, 8), 0);
+                TextView tt = Ui.text(a, dlgTitle, 18, Ui.TEXT);
+                tt.setTypeface(Typeface.DEFAULT_BOLD);
+                tr.addView(tt, Ui.weight(1));
+                tr.addView(Ui.iconButton(a, R.drawable.ic_s2_close, Tr.t("close", "Close"), v -> { if (dialog != null) dialog.dismiss(); }));
+                db.setCustomTitle(tr);
+            } else {
+                db.setTitle(dlgTitle).setPositiveButton(Tr.t("close", "Close"), null);
+            }
+            dialog = db.create();
             dialog.show();
             Window w = dialog.getWindow();
             if (w != null) {
@@ -461,10 +481,20 @@ public final class IconBrowser {
             colorRow.addView(custom, new LinearLayout.LayoutParams(Ui.dp(a, 30), Ui.dp(a, 30)));
         }
 
+        /** Landscape: hide the details of the chosen icon and give the grid its columns back. */
+        void closeDetail() {
+            selected = null;
+            detail.setVisibility(View.GONE);
+            if (detailHost != null) detailHost.setVisibility(View.GONE);
+            if (land) ((GridLayoutManager) grid.getLayoutManager()).setSpanCount(landSpan);
+            adapter.notifyDataSetChanged();
+        }
+
         void select(IconCatalog.Icon ic) {
             selected = ic;
             detail.setVisibility(View.VISIBLE);
             if (detailHost != null) detailHost.setVisibility(View.VISIBLE);
+            if (land) ((GridLayoutManager) grid.getLayoutManager()).setSpanCount(4);
             selTitle.setText(ic.id);
             selTags.setText(ic.tags);
             if (!customName) {

@@ -223,7 +223,29 @@
                 android:orientation="vertical"
                 android:padding="18dp">
 
-                <TextView style="@style/HomePageTitle" android:text="Learn by making games" />
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView style="@style/HomePageTitle" android:text="Learn by making games" />
+
+                    <TextView
+                        android:id="@+id/learn_experimental"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:background="@drawable/home_badge_experimental"
+                        android:paddingStart="10dp"
+                        android:paddingTop="3dp"
+                        android:paddingEnd="10dp"
+                        android:paddingBottom="3dp"
+                        android:text="(Experimental)"
+                        android:textColor="#FFB74D"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
 
                 <TextView
                     style="@style/HomePageSubtitle"

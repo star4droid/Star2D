@@ -161,7 +161,16 @@ public class PropertiesPanel implements PanelHost.Panel {
 
     @Override public View[] headerActions(Context c) {
         ImageView search = Ui.iconButton(c, R.drawable.ic_s2_search, Tr.t("ui_prop_search_btn", "Search"), v -> setSearchOpen(searchBar == null || searchBar.getVisibility() != View.VISIBLE));
-        return new View[]{search};
+        ImageView toBehaviors = Ui.iconButton(c, R.drawable.ic_s2_layers, Tr.t("ui_prop_to_behaviors", "Go to behaviors"), v -> scrollToBehaviors());
+        return new View[]{toBehaviors, search};
+    }
+
+    /** The layers icon in the header: scrolls down to the behaviors cards. */
+    private void scrollToBehaviors() {
+        if (root == null || content == null || behaviorSection == null) return;
+        final View target = behaviorFirstChild < content.getChildCount() ? content.getChildAt(behaviorFirstChild) : null;
+        if (target == null) return;
+        root.post(new Runnable() { public void run() { root.smoothScrollTo(0, Math.max(0, content.getTop() + target.getTop() - 4)); } });
     }
 
     private void setSearchOpen(boolean open) {

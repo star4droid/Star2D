@@ -1157,6 +1157,11 @@ public class EditorShell extends FrameLayout implements ControlLayer.NativeUi, T
 
     /** Back key: close the panel first. Returns true when consumed. */
     public boolean onBack() {
+        // a game is being played: Back returns to the editor (the shell is hidden while playing, so without this the activity closed the app)
+        if (playing || (Bridge.app() != null && Bridge.app().isPlaying())) {
+            Bridge.gl(() -> Bridge.app().play(null));
+            return true;
+        }
         if (toolOpen && toolCloser != null) {
             Runnable closer = toolCloser;
             Bridge.gl(closer);

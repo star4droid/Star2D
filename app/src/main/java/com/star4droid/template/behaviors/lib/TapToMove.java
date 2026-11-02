@@ -31,7 +31,7 @@ public class TapToMove extends Behavior {
 	public PlayerItem marker;
 
 	@Header("Movement")
-	@Param(desc = "Walking speed.", unit = "px/s", min = 0, max = 450)
+	@Param(desc = "Walking speed (no upper limit).", unit = "px/s", min = 0)
 	public float speed = 220;
 	@Param(desc = "Counts as arrived when this close.", unit = "px", min = 0, max = 500)
 	public float stopDistance = 4;
@@ -251,9 +251,10 @@ public class TapToMove extends Behavior {
 		} else {
 			float vx = (wx - centerX()) * dragStiffness, vy = (wy - centerY()) * dragStiffness;
 			float m = (float) Math.sqrt(vx * vx + vy * vy);
-			if (m > 450f) {
-				vx *= 450f / m;
-				vy *= 450f / m;
+			float cap = Math.max(450f, speed); // the follow speed grows with the element speed, never below the old safety value
+			if (m > cap) {
+				vx *= cap / m;
+				vy *= cap / m;
 			}
 			if (horizontalOnly) setVelocityX(vx);
 			else setVelocity(vx, vy);

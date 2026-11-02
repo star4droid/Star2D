@@ -776,6 +776,8 @@ public class TestApp implements ApplicationListener {
 						Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
 					});
 				});
+				// while a game is played in the editor the system Back must reach the activity (it stops the game), not be swallowed by LibGDX
+				Gdx.input.setCatchKey(4,false);
 				Gdx.input.setInputProcessor(stage.multiplexer);
 				if(width!=-1 && height!=-1)
 					stage.resize(width,height);

@@ -256,7 +256,7 @@ public final class BehaviorSection implements VarEditors.Host {
 		final BehaviorData.Entry e = entries.get(idx);
 		final BehaviorMeta m = metaOf(e.type);
 		final LinearLayout box = Ui.column(ctx);
-		box.setBackground(Ui.rounded(Ui.SURFACE_3, Ui.dp(ctx, 8)));
+		box.setBackground(Ui.rounded(Ui.SURFACE_3, Ui.dp(ctx, 8), e.enabled ? ((Ui.ACCENT & 0x00FFFFFF) | 0xAA000000) : Ui.BORDER, Math.max(1, Ui.dp(ctx, 1.5f))));
 		box.setLayoutParams(Ui.margins(Ui.matchWrap(), ctx, 0, 3, 0, 3));
 		final String key = element + "|" + e.type;
 		final boolean canOpen = m != null;
@@ -354,7 +354,12 @@ public final class BehaviorSection implements VarEditors.Host {
 			inner.addView(t);
 		}
 		final View[] resetAll = {null};
-		for (VarSpec v : BehaviorText.vars(m)) addField(inner, inner.getChildCount(), v, entries, e, resetAll);
+		final boolean car = "Car".equals(m.id);
+		for (VarSpec v : BehaviorText.vars(m)) {
+			if (car && (v.name.equals("frontJoint") || v.name.equals("rearJoint"))) continue; // edited with the pencil button
+			addField(inner, inner.getChildCount(), v, entries, e, resetAll);
+			if (car && v.name.equals("rearWheel")) addWheelJointRow(inner, entries, e);
+		}
 		if (m.vars.isEmpty()) inner.addView(Ui.text(ctx, Tr.t("bhv_no_params", "No parameters."), 12, Ui.TEXT_3));
 
 		LinearLayout tools = Ui.row(ctx);
@@ -385,6 +390,81 @@ public final class BehaviorSection implements VarEditors.Host {
 					saveBehaviors(entries);
 				})));
 		inner.addView(tools, Ui.matchWrap());
+	}
+
+
+	// ------------------------------------------------------------------------------------------------ car wheel joints
+
+	/** Car: "Wheel joints" row with a pencil. Pick the front or rear wheel, then edit its joint values (or reset them). */
+	private void addWheelJointRow(LinearLayout parent, List<BehaviorData.Entry> entries, BehaviorData.Entry e) {
+		LinearLayout r = Ui.row(ctx);
+		r.setGravity(Gravity.CENTER_VERTICAL);
+		r.setPadding(0, Ui.dp(ctx, 4), 0, Ui.dp(ctx, 4));
+		r.addView(Ui.text(ctx, Tr.t("bhv_wj_title", "Wheel joints"), 13, Ui.TEXT), Ui.weight(1));
+		r.addView(Ui.iconButton(ctx, R.drawable.ic_s2_edit, Tr.t("bhv_wj_edit", "Edit the wheel joints"), v ->
+				Dialogs.choose(ctx, Tr.t("bhv_wj_pick", "Which wheel?"), new String[]{Tr.t("bhv_wj_front", "Front wheel"), Tr.t("bhv_wj_rear", "Rear wheel")},
+						which -> editWheelJoint(entries, e, which == 0))));
+		parent.addView(r, Ui.matchWrap());
+	}
+
+	private void editWheelJoint(List<BehaviorData.Entry> entries, BehaviorData.Entry e, boolean front) {
+		final String key = front ? "frontJoint" : "rearJoint";
+		Object cur = e.params.get(key);
+		final float[] vals = com.star4droid.template.behaviors.lib.Car.parseJoint(cur == null ? "" : String.valueOf(cur), front);
+		final String[] labels = {Tr.t("bhv_wj_freq", "Frequency (Hz)"), Tr.t("bhv_wj_damp", "Damping ratio"), Tr.t("bhv_wj_torque", "Max motor torque"), Tr.t("bhv_wj_motor", "Enable motor"),
+				Tr.t("bhv_wj_speed", "Motor speed (rad/s)"), Tr.t("bhv_wj_axisx", "Axis X"), Tr.t("bhv_wj_axisy", "Axis Y"), Tr.t("bhv_wj_ax", "Anchor offset X (px)"),
+				Tr.t("bhv_wj_ay", "Anchor offset Y (px)"), Tr.t("bhv_wj_collide", "Collide connected")};
+		final int n = labels.length;
+		final View[] fields = new View[n];
+		LinearLayout col = Ui.column(ctx);
+		col.setPadding(Ui.dp(ctx, 16), Ui.dp(ctx, 8), Ui.dp(ctx, 16), Ui.dp(ctx, 4));
+		for (int i = 0; i < n; i++) {
+			boolean bool = i == 3 || i == 9;
+			if (bool) {
+				SwitchCompat sw = new SwitchCompat(ctx);
+				sw.setText(labels[i]);
+				sw.setTextColor(Ui.TEXT);
+				sw.setChecked(vals[i] != 0);
+				fields[i] = sw;
+				col.addView(sw, Ui.margins(Ui.matchWrap(), ctx, 0, 6, 0, 2));
+			} else {
+				col.addView(Ui.text(ctx, labels[i], 12, Ui.TEXT_3), Ui.margins(Ui.matchWrap(), ctx, 0, 6, 0, 0));
+				android.widget.EditText et = Ui.input(ctx, fmt(vals[i]), "");
+				et.setInputType(android.text.InputType.TYPE_CLASS_NUMBER | android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL | android.text.InputType.TYPE_NUMBER_FLAG_SIGNED);
+				fields[i] = et;
+				col.addView(et, Ui.matchWrap());
+			}
+		}
+		ScrollView sv = new ScrollView(ctx);
+		sv.addView(col);
+		final String title = Tr.t("bhv_wj_title", "Wheel joints") + " · " + (front ? Tr.t("bhv_wj_front", "Front wheel") : Tr.t("bhv_wj_rear", "Rear wheel"));
+		new AlertDialog.Builder(ctx).setTitle(title).setView(sv)
+				.setPositiveButton(Tr.t("save", "Save"), (d, w) -> {
+					float[] out = new float[n];
+					for (int i = 0; i < n; i++) {
+						if (fields[i] instanceof SwitchCompat) out[i] = ((SwitchCompat) fields[i]).isChecked() ? 1f : 0f;
+						else {
+							try {
+								out[i] = Float.parseFloat(((android.widget.EditText) fields[i]).getText().toString().trim());
+							} catch (NumberFormatException ex) {
+								out[i] = com.star4droid.template.behaviors.lib.Car.jointDefaults(front)[i];
+							}
+						}
+					}
+					String str = com.star4droid.template.behaviors.lib.Car.formatJoint(out, front);
+					if (str.isEmpty()) e.params.remove(key); else e.params.put(key, str);
+					saveBehaviorValues(entries, true);
+				})
+				.setNeutralButton(Tr.t("bhv_wj_reset", "Reset"), (d, w) -> {
+					e.params.remove(key);
+					saveBehaviorValues(entries, true);
+				})
+				.setNegativeButton(Tr.t("cancel", "Cancel"), null)
+				.show();
+	}
+
+	private static String fmt(float v) {
+		return v == (long) v ? String.valueOf((long) v) : String.valueOf(v);
 	}
 
 	/** One parameter editor. A change is saved at once and only this field is drawn again (no redraw of the card, the open row stays open). */

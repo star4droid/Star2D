@@ -1,7 +1,11 @@
 package com.star4droid.template.behaviors.lib;
 
 import com.badlogic.gdx.physics.box2d.Body;
+import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Contact;
+import com.badlogic.gdx.physics.box2d.JointEdge;
+import com.badlogic.gdx.physics.box2d.joints.WheelJoint;
+import com.badlogic.gdx.physics.box2d.joints.WheelJointDef;
 import com.badlogic.gdx.utils.Array;
 import com.star4droid.template.Items.Joystick;
 import com.star4droid.template.Utils.PlayerItem;
@@ -85,11 +89,63 @@ public class Car extends Behavior {
 	@Header("Wheels (side-scroller)")
 	@Param(desc = "The wheel elements (physical circles joined to the car body with joints). The behavior spins them.")
 	public List<PlayerItem> wheels = new ArrayList<PlayerItem>();
+	@Param(desc = "Create the wheel joints for you (a WheelJoint from the car body to each wheel below). Turn off if you join the wheels yourself in the editor.")
+	public boolean createJoints = true;
+	@Param(desc = "The front wheel element. A wheel joint is created for it and the behavior spins it.")
+	public PlayerItem frontWheel;
+	@Param(desc = "The rear wheel element (the driven one). A wheel joint is created for it and the behavior spins it.")
+	public PlayerItem rearWheel;
+	@Param(desc = "Saved values of the front wheel joint (edit with the pencil button).")
+	public String frontJoint = "";
+	@Param(desc = "Saved values of the rear wheel joint (edit with the pencil button).")
+	public String rearJoint = "";
 	@Param(desc = "How fast the wheel motors speed up.", unit = "rad/s2", min = 1, max = 500, step = 1)
 	public float wheelAcceleration = 40;
 	@Param(desc = "Rotation speed of the car body in the air while left/right is held.", unit = "deg/s", min = 0, max = 720, step = 10)
 	public float airSpin = 120;
 
+	/** The wheel joint settings: key=value pairs split by ';'. A missing key keeps the default. */
+	public static final String[] JOINT_KEYS = {"frequencyHz", "dampingRatio", "maxMotorTorque", "enableMotor", "motorSpeed", "axisX", "axisY", "anchorX", "anchorY", "collideConnected"};
+
+	/** Defaults of the front (front = true) or rear wheel joint, in JOINT_KEYS order. Anchor offsets are from the wheel center (px). */
+	public static float[] jointDefaults(boolean front) {
+		return new float[]{10f, 0.7f, front ? 0f : 9999f, 0f, 0f, 0f, 1f, 0f, 0f, 0f};
+	}
+
+	/** Reads a saved string over the defaults. */
+	public static float[] parseJoint(String s, boolean front) {
+		float[] v = jointDefaults(front);
+		if (s == null) return v;
+		String[] parts = s.split(";");
+		for (int i = 0; i < parts.length; i++) {
+			int eq = parts[i].indexOf('=');
+			if (eq <= 0) continue;
+			String k = parts[i].substring(0, eq).trim();
+			for (int j = 0; j < JOINT_KEYS.length; j++) {
+				if (!JOINT_KEYS[j].equals(k)) continue;
+				try {
+					v[j] = Float.parseFloat(parts[i].substring(eq + 1).trim());
+				} catch (NumberFormatException ignored) {
+				}
+			}
+		}
+		return v;
+	}
+
+	/** Writes only the values that differ from the defaults ("" = all defaults). */
+	public static String formatJoint(float[] v, boolean front) {
+		float[] d = jointDefaults(front);
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < JOINT_KEYS.length; i++) {
+			if (v[i] == d[i]) continue;
+			if (sb.length() > 0) sb.append(';');
+			sb.append(JOINT_KEYS[i]).append('=').append(v[i]);
+		}
+		return sb.toString();
+	}
+
+	private WheelJoint frontJ, rearJ;
+	private boolean jointsTried;
 	private final float[] tilt = new float[2];
 	private float vx, vy, steer, extThrottle, extSteer, savedGravity = 1, airTime;
 	private boolean savedFixed, applied, drifting, grounded;
@@ -215,6 +271,137 @@ public class Car extends Behavior {
 		return grounded;
 	}
 
+	// ------------------------------------------------------------ wheel joints
+
+	private WheelJoint existing(Body car, Body wheel) {
+		for (JointEdge je : wheel.getJointList()) {
+			if (je.joint instanceof WheelJoint && (je.other == car)) return (WheelJoint) je.joint;
+		}
+		return null;
+	}
+
+	private WheelJoint makeJoint(Body car, PlayerItem w, boolean front) {
+		if (w == null) return null;
+		Body wb = w.getBody();
+		if (wb == null) return null;
+		WheelJoint old = existing(car, wb);
+		if (old != null) return old; // joined in the editor already
+		float[] v = parseJoint(front ? frontJoint : rearJoint, front);
+		float ax = v[5], ay = v[6];
+		if (ax == 0 && ay == 0) ay = 1;
+		WheelJointDef def = new WheelJointDef();
+		def.initialize(car, wb, wb.getWorldCenter().add(v[7] * Behavior.W, v[8] * Behavior.W), new Vector2(ax * Behavior.W, ay * Behavior.W));
+		def.collideConnected = v[9] != 0;
+		def.frequencyHz = v[0];
+		def.dampingRatio = v[1];
+		def.maxMotorTorque = v[2];
+		def.enableMotor = v[3] != 0;
+		def.motorSpeed = v[4];
+		WheelJoint j = (WheelJoint) car.getWorld().createJoint(def);
+		try {
+			stage.addJoint(item.getName() + "_" + w.getName() + "_joint", j);
+		} catch (RuntimeException ignored) {
+		}
+		return j;
+	}
+
+	/** Creates the wheel joints once (when every body exists). Returns true when done. */
+	private boolean ensureJoints(Body car) {
+		if (frontJ != null || rearJ != null) return true;
+		if (!createJoints || jointsTried) return false;
+		if ((frontWheel != null && frontWheel.getBody() == null) || (rearWheel != null && rearWheel.getBody() == null)) return false;
+		jointsTried = true;
+		frontJ = makeJoint(car, frontWheel, true);
+		rearJ = makeJoint(car, rearWheel, false);
+		return true;
+	}
+
+	@Block(label = "create wheel joints", desc = "Joins the front and rear wheels to the car body with wheel joints (the settings of the pencil button).", labelAr = "أنشئ روابط العجلات", descAr = "يربط العجلة الأمامية والخلفية بجسم السيارة بروابط عجلات (حسب إعدادات زر القلم).", category = "Car")
+	public void createWheelJoints() {
+		Body b = body();
+		if (b == null) return;
+		jointsTried = true;
+		if (frontJ == null) frontJ = makeJoint(b, frontWheel, true);
+		if (rearJ == null) rearJ = makeJoint(b, rearWheel, false);
+	}
+
+	@Block(label = "remove wheel joints", desc = "Destroys the wheel joints this behavior created.", labelAr = "أزل روابط العجلات", descAr = "يهدم روابط العجلات التي أنشأها السلوك.", category = "Car")
+	public void removeWheelJoints() {
+		Body b = body();
+		if (b == null) return;
+		if (frontJ != null) b.getWorld().destroyJoint(frontJ);
+		if (rearJ != null) b.getWorld().destroyJoint(rearJ);
+		frontJ = null;
+		rearJ = null;
+		jointsTried = true;
+	}
+
+	@Block(label = "set front wheel", desc = "Chooses the front wheel element.", labelAr = "اضبط العجلة الأمامية", descAr = "يحدد عنصر العجلة الأمامية.", category = "Car", args = {"wheel"})
+	public void setFrontWheel(PlayerItem wheel) {
+		frontWheel = wheel;
+		jointsTried = false;
+		frontJ = null;
+	}
+
+	@Block(label = "set rear wheel", desc = "Chooses the rear wheel element.", labelAr = "اضبط العجلة الخلفية", descAr = "يحدد عنصر العجلة الخلفية.", category = "Car", args = {"wheel"})
+	public void setRearWheel(PlayerItem wheel) {
+		rearWheel = wheel;
+		jointsTried = false;
+		rearJ = null;
+	}
+
+	private WheelJoint jointOf(boolean front) {
+		return front ? frontJ : rearJ;
+	}
+
+	@Block(label = "set wheel suspension", desc = "Suspension of a wheel: frequency (Hz, higher = stiffer) and damping ratio. front = true for the front wheel, false for the rear.", labelAr = "اضبط تعليق العجلة", descAr = "تعليق العجلة: التردد (هرتز، الأعلى = أصلب) ونسبة التخميد. front = true للأمامية، false للخلفية.", category = "Car", args = {"front", "frequencyHz", "dampingRatio"})
+	public void setWheelSuspension(boolean front, float frequencyHz, float dampingRatio) {
+		float[] v = parseJoint(front ? frontJoint : rearJoint, front);
+		v[0] = frequencyHz;
+		v[1] = dampingRatio;
+		store(front, v);
+		WheelJoint j = jointOf(front);
+		if (j != null) {
+			j.setSpringFrequencyHz(frequencyHz);
+			j.setSpringDampingRatio(dampingRatio);
+		}
+	}
+
+	@Block(label = "set wheel motor torque", desc = "Strongest push of a wheel motor. front = true for the front wheel, false for the rear.", labelAr = "اضبط عزم محرك العجلة", descAr = "أقصى دفع لمحرك العجلة. front = true للأمامية، false للخلفية.", category = "Car", args = {"front", "torque"})
+	public void setWheelTorque(boolean front, float torque) {
+		float[] v = parseJoint(front ? frontJoint : rearJoint, front);
+		v[2] = torque;
+		store(front, v);
+		WheelJoint j = jointOf(front);
+		if (j != null) j.setMaxMotorTorque(torque);
+	}
+
+	@Block(label = "set wheel motor", desc = "Turns the motor of a wheel joint on/off and sets its speed (rad/s, negative = clockwise = drives right). front = true for the front wheel.", labelAr = "اضبط محرك العجلة", descAr = "يشغّل/يوقف محرك رابط العجلة ويحدد سرعته (راديان/ث، سالب = مع عقارب الساعة = يتجه لليمين). front = true للأمامية.", category = "Car", args = {"front", "enabled", "speed"})
+	public void setWheelMotor(boolean front, boolean enabled, float speed) {
+		float[] v = parseJoint(front ? frontJoint : rearJoint, front);
+		v[3] = enabled ? 1f : 0f;
+		v[4] = speed;
+		store(front, v);
+		WheelJoint j = jointOf(front);
+		if (j != null) {
+			j.enableMotor(enabled);
+			j.setMotorSpeed(speed);
+		}
+	}
+
+	@Block(label = "wheel spin speed", desc = "How fast a wheel turns (rad/s). front = true for the front wheel, false for the rear.", labelAr = "سرعة دوران العجلة", descAr = "سرعة دوران العجلة (راديان/ث). front = true للأمامية، false للخلفية.", category = "Car", args = {"front"})
+	public float getWheelSpin(boolean front) {
+		PlayerItem w = front ? frontWheel : rearWheel;
+		Body wb = w == null ? null : w.getBody();
+		return wb == null ? 0 : wb.getAngularVelocity();
+	}
+
+	private void store(boolean front, float[] v) {
+		String s = formatJoint(v, front);
+		if (front) frontJoint = s;
+		else rearJoint = s;
+	}
+
 	// ------------------------------------------------------------ driving
 
 	private float front() {
@@ -310,6 +497,9 @@ public class Car extends Behavior {
 	}
 
 	private void sideUpdate(Body b, float dt) {
+		ensureJoints(b);
+		if (frontWheel != null && !wheels.contains(frontWheel)) wheels.add(frontWheel);
+		if (rearWheel != null && !wheels.contains(rearWheel)) wheels.add(rearWheel);
 		float dir = extThrottle;
 		boolean brake = false;
 		if (joystick != null) {

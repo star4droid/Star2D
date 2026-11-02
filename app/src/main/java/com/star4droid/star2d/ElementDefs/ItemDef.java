@@ -24,6 +24,8 @@ public abstract class ItemDef {
             return ((GroupDef) this).z;
         if (this instanceof UIHolderDef)
             return ((UIHolderDef) this).z;
+        if (this instanceof CameraViewDef)
+            return ((CameraViewDef) this).z;
         
         return 0; // default if no match
     }
@@ -61,6 +63,14 @@ public abstract class ItemDef {
             return ((GroupDef) this).type;
         if (this instanceof UIHolderDef)
             return ((UIHolderDef) this).type;
+        if (this instanceof CameraViewDef)
+            return ((CameraViewDef) this).type;
+        if (this instanceof Object3DDef)
+            return ((Object3DDef) this).type;
+        if (this instanceof Light3DDef)
+            return ((Light3DDef) this).type;
+        if (this instanceof Camera3DDef)
+            return ((Camera3DDef) this).type;
         return "";
     }
     

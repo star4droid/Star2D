@@ -134,7 +134,7 @@ public class CameraItem extends Actor implements PlayerItem {
 	@Override
 	public void draw(Batch batch, float parentAlpha) {
 		super.draw(batch, parentAlpha);
-		update();
+		if(!StageImp.secondaryPass) update();
 	}
 	
 	@Override

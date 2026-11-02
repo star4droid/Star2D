@@ -24,6 +24,9 @@ dependencies {
     implementation("com.badlogicgames.gdx:gdx-backend-lwjgl3:$gdxVersion")
     implementation("com.badlogicgames.gdx:gdx-freetype:$gdxVersion")
     implementation("com.badlogicgames.gdx:gdx-box2d:$gdxVersion")
+    implementation("com.badlogicgames.gdx:gdx-bullet:$gdxVersion")
+    implementation("com.github.mgsx-dev.gdx-gltf:gltf:2.2.1")
+    runtimeOnly("com.badlogicgames.gdx:gdx-bullet-platform:$gdxVersion:natives-desktop")
     runtimeOnly("com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop")
     runtimeOnly("com.badlogicgames.gdx:gdx-box2d-platform:$gdxVersion:natives-desktop")
     runtimeOnly("com.badlogicgames.gdx:gdx-freetype-platform:$gdxVersion:natives-desktop")
@@ -40,6 +43,7 @@ def runtimePatterns = file('../template/runtime-sources.txt').readLines().collec
 def androidOnly = [
         'com/star4droid/template/MainActivity.java',
         'com/star4droid/template/LoadingScreen.java',
+        'com/star4droid/template/CrashLog.java',
 ]
 
 def syncRuntime = tasks.register('syncRuntimeSources', Sync) {

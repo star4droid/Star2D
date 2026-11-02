@@ -267,7 +267,7 @@ public class ProgressItem extends Group implements PlayerItem {
 	@Override
 	public void draw(Batch batch, float parentAlpha) {
 		super.draw(batch, parentAlpha);
-		update();
+		if(!StageImp.secondaryPass) update();
 	}
 	
 	@Override

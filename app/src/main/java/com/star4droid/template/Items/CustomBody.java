@@ -283,7 +283,7 @@ public class CustomBody extends Image implements PlayerItem {
 		super.draw(batch, parentAlpha);
 		if(animation!=null)
 			super.setDrawable(animation.getKeyFrame(animationTime,true));
-		update();
+		if(!StageImp.secondaryPass) update();
 		if(animation!=null)
 			animationTime+=Gdx.graphics.getDeltaTime();
 	}

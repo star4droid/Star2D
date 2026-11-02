@@ -109,7 +109,7 @@ public class GroupItem extends Actor implements PlayerItem {
 	@Override
 	public void draw(Batch batch, float parentAlpha) {
 		// nothing to draw, only the update event
-		update();
+		if(!StageImp.secondaryPass) update();
 	}
 	
 	@Override

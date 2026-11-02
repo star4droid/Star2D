@@ -44,6 +44,10 @@ public class StageImp extends ApplicationAdapter {
     public static float WORLD_SCALE = 0.25f;
 	public World world = new World(new Vector2(0,-9.8f),true);
 	public boolean playing=true, debugBox2d = false;
+	/** True while a CameraView draws the scene again: elements must not run their update a second time. */
+	public static boolean secondaryPass = false;
+	/** The 3D world of a 3D scene (null in 2D scenes until something asks for it). */
+	protected com.star4droid.template.d3.World3D world3d;
 	public Stage UiStage,GameStage;
 	int steps=6,backgroundColor=0xFFFFFF;
     public Box2DDebugRenderer debugRenderer;
@@ -168,6 +172,7 @@ public class StageImp extends ApplicationAdapter {
 		setupCollision();
 		multiplexer = new InputMultiplexer();
 		multiplexer.addProcessor(getInputProcessor());
+		if(is3D()) multiplexer.addProcessor(world3d().input());
 		// multiplexer.addProcessor(UiStage);
 		// multiplexer.addProcessor(GameStage);
 		Gdx.input.setInputProcessor(multiplexer);
@@ -890,6 +895,50 @@ public class StageImp extends ApplicationAdapter {
 	}
 	
 	public void onCollisionBegin(PlayerItem body1,PlayerItem body2){}
+
+	// ------------------------------------------------------------------ 3D
+
+	/** Scene type 3D (configs/scene.json "sceneType")? */
+	public boolean is3D(){
+		return propertySet!=null && "3D".equalsIgnoreCase(String.valueOf(propertySet.get("sceneType")));
+	}
+
+	/** The 3D world of the scene (created on first use). */
+	public com.star4droid.template.d3.World3D world3d(){
+		if(world3d==null){
+			world3d = new com.star4droid.template.d3.World3D(this);
+			if(project!=null) com.star4droid.template.d3.Assets3D.projectPath = project.getPath();
+			world3d.configure(propertySet);
+			if(multiplexer!=null && !is3D()) multiplexer.addProcessor(world3d.input());
+		}
+		return world3d;
+	}
+
+	public boolean hasWorld3D(){
+		return world3d!=null;
+	}
+
+	/** Bullet contact between two 3D elements (begin / end): element + scene collision events, checkCollision. */
+	public void contact3D(PlayerItem a,PlayerItem b,boolean begin){
+		if(finished || a==null || b==null) return;
+		if(begin){
+			collisionMap.put(a.getName()+","+b.getName(),"true");
+			collisionMap.put(b.getName()+","+a.getName(),"true");
+			if(a.getScript()!=null) a.getScript().collisionBegin(b);
+			else if(a.getElementEvents()!=null) a.getElementEvents().onCollisionBegin(a,b);
+			if(b.getScript()!=null) b.getScript().collisionBegin(a);
+			else if(b.getElementEvents()!=null) b.getElementEvents().onCollisionBegin(b,a);
+			onCollisionBegin(a,b);
+		} else {
+			collisionMap.remove(a.getName()+","+b.getName());
+			collisionMap.remove(b.getName()+","+a.getName());
+			if(a.getScript()!=null) a.getScript().collisionEnd(b);
+			else if(a.getElementEvents()!=null) a.getElementEvents().onCollisionEnd(a,b);
+			if(b.getScript()!=null) b.getScript().collisionEnd(a);
+			else if(b.getElementEvents()!=null) b.getElementEvents().onCollisionEnd(b,a);
+			onCollisionEnd(a,b);
+		}
+	}
 	public void onCollisionEnd(PlayerItem body1,PlayerItem body2){}
 	
 	public static StageImp getFromDex(String path,String scene,ProjectAssetLoader projectAssetLoader,SpriteSheetLoader spriteSheetLoader){
@@ -1137,6 +1186,12 @@ public class StageImp extends ApplicationAdapter {
 		//UiStage.draw();
 		// TODO : This can cause bad performance, need to fix..
 		// suggestion : override setZIndex of the bodies...
+		if(world3d!=null){
+			world3d.update(getDelta(), playing);
+			world3d.render();
+			Gdx.gl.glEnable(GL20.GL_BLEND);
+			GameStage.getViewport().apply();
+		}
 		Stage current=null;
 		GameStage.getCamera().update();
 		UiStage.getCamera().update();
@@ -1172,9 +1227,11 @@ public class StageImp extends ApplicationAdapter {
 		groups().prepare();
 		if(playing) for(int x=0;x<steps;x++)
 						world.step(getDelta(),8,3);
+		if(!is3D()){
 		rayHandler.setCombinedMatrix(GameStage.getViewport().getCamera().combined);
 		GameStage.getViewport().apply();
 		rayHandler.updateAndRender();
+		}
 		GameStage.getViewport().apply(); // the lights' frame buffers leave the GL viewport on the whole surface: put the fit rectangle back
 		onDraw();
 		if(sceneScript!=null)
@@ -1253,6 +1310,10 @@ public class StageImp extends ApplicationAdapter {
 	}
 	
 	public void dispose(){
+	    try {
+	        if(world3d!=null) world3d.dispose();
+	        world3d = null;
+	    } catch(Exception e){}
 	    try {
 	        com.kotcrab.vis.ui.VisUI.dispose();
 		    UiStage.dispose();

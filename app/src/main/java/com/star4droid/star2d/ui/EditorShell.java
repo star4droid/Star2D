@@ -136,6 +136,8 @@ public class EditorShell extends FrameLayout implements ControlLayer.NativeUi, T
         addItem = new AddItemPanel(this);
         remote = new com.star4droid.star2d.ui.panels.RemotePanel(this);
         aiHub = new com.star4droid.star2d.ui.panels.AiHubPanel(this, remote, ai);
+        panels.setNavigator(java.util.Arrays.asList(elements, properties, events, joints, variables, files, aiHub, git, settings),
+                p -> { if (com.star4droid.star2d.remote.RemoteSession.isLocked() && p != files && p != aiHub) togglePanel(p); else panels.show(p); });
         com.star4droid.star2d.remote.RemoteSession.addListener(sessionListener);
         com.star4droid.star2d.remote.RemoteClient.get().addListener((st, d) -> applyRemoteLock());
 

@@ -156,7 +156,16 @@ public class Utils {
 		// contains() is also true for an image that is only queued (just added, not loaded yet): get() would throw and the item would keep the default logo
 		try { if(loader!=null && loader.isLoaded(path)) editorTexture = loader.get(path); } catch(Throwable ignored){}
 		FileHandle fileHandle = Gdx.files.absolute(path);
-		Texture texture = (editorTexture!=null?editorTexture:new Texture(fileHandle.exists()?fileHandle:Gdx.files.internal("images/logo.png")));
+		Texture texture = editorTexture;
+		if(texture == null){
+			try {
+				texture = new Texture(fileHandle.exists()?fileHandle:Gdx.files.internal("images/logo.png"));
+			} catch(Throwable bad){
+				// a corrupt / empty / unsupported image file: show the default picture instead of failing the whole edit
+				Gdx.files.external("logs/image.error.txt").writeString("bad image : "+path+" : "+bad+"\n",true);
+				texture = new Texture(Gdx.files.internal("images/logo.png"));
+			}
+		}
 		if(rx > 1|| ry > 1){
 			try {
 	   	 	//Texture texture = drawable.getRegion().getTexture();

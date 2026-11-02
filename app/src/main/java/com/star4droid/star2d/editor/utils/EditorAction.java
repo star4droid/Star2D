@@ -44,6 +44,7 @@ public class EditorAction {
 			switch(action){
 				case CHANGE_PROPERTY:
 					PropertySet<String,Object> ps = PropertySet.getFrom(get("old"));
+					if(propertySet == null){ editor.toast("Item not found, step skipped : "+get("name")); return this; }
 					propertySet.putAll(ps);
 					if(ps.containsKey("parent")) { com.star4droid.star2d.editor.Hierarchy.relink(editor); com.star4droid.star2d.editor.Hierarchy.refreshLists(editor); }
 					editor.toast("property changed : "+get("message"));
@@ -51,6 +52,7 @@ public class EditorAction {
 				break;
 				case RENAME_ITEM:
 					propertySet = getPropertySet(get("new"));
+					if(propertySet == null || editor.findActor(get("new")) == null){ editor.toast("Item not found, step skipped : "+get("new")); return this; }
 					if(propertySet.getString("Script").equals(propertySet.getString("name"))&&!propertySet.getString("name").equals(get("old"))){
 						propertySet.put("Script",get("old"));
 						try {
@@ -105,12 +107,12 @@ public class EditorAction {
 					com.star4droid.star2d.editor.Hierarchy.refreshLists(editor);
 				break;
 			}
-			if(get("set").toString().equals("true"))
+			if(get("set").toString().equals("true") && editor.findActor(get("name")) instanceof EditorItem)
 				((EditorItem)editor.findActor(get("name"))).setProperties(propertySet);
 			
 			if(get("update").equals("true"))
 				editor.updateProperties();
-			if(get("updateItem").equals("true"))
+			if(get("updateItem").equals("true") && editor.findActor(get("name")) instanceof EditorItem)
 				((EditorItem)editor.findActor(get("name"))).update();
 		} catch(Exception exception){
 			exception.printStackTrace();
@@ -154,6 +156,7 @@ public class EditorAction {
 			switch(action){
 				case CHANGE_PROPERTY:
 					PropertySet<String,Object> ps = PropertySet.getFrom(get("new"));
+					if(propertySet == null){ editor.toast("Item not found, step skipped : "+get("name")); return this; }
 					propertySet.putAll(ps);
 					if(ps.containsKey("parent")) { com.star4droid.star2d.editor.Hierarchy.relink(editor); com.star4droid.star2d.editor.Hierarchy.refreshLists(editor); }
 					editor.toast("property changed : "+get("message"));
@@ -161,6 +164,7 @@ public class EditorAction {
 				break;
 				case RENAME_ITEM:
 					propertySet = getPropertySet(get("old"));
+					if(propertySet == null || editor.findActor(get("old")) == null){ editor.toast("Item not found, step skipped : "+get("old")); return this; }
 					if(propertySet.getString("Script").equals(propertySet.getString("name"))&&!propertySet.getString("name").equals(get("new"))){
 						propertySet.put("Script",get("new"));
 						try {
@@ -190,6 +194,7 @@ public class EditorAction {
 				break;
 				case ITEM_DELETED:
 					Actor actor1 = (values.containsKey("actor") && values.get("actor") instanceof Actor) ?((Actor)values.get("actor")) : editor.findActor(get("name"));
+					if(actor1 == null){ editor.toast("Item not found, step skipped : "+get("name")); return this; }
 					actor1.remove();
 					if(editor.getSelectedActor()!=null && editor.getSelectedActor().getName().equals(actor1.getName()))
 						editor.selectActor(null);
@@ -206,11 +211,11 @@ public class EditorAction {
 					com.star4droid.star2d.editor.Hierarchy.refreshLists(editor);
 				break;
 			}
-			if(get("set").toString().equals("true"))
+			if(get("set").toString().equals("true") && editor.findActor(get("name")) instanceof EditorItem)
 				((EditorItem)editor.findActor(get("name"))).setProperties(propertySet);
 			if(get("update").equals("true"))
 				editor.updateProperties();
-			if(get("updateItem").equals("true"))
+			if(get("updateItem").equals("true") && editor.findActor(get("name")) instanceof EditorItem)
 				((EditorItem)editor.findActor(get("name"))).update();
 		} catch(Exception exception){
 			exception.printStackTrace();
@@ -340,7 +345,8 @@ public class EditorAction {
 		EditorAction action = propertiesChangedQuiet(editor,name,message,values,old);
 		if(action != null)
 			editor.pushUndoEvent(action);
-		return action;
+		// nothing changed: a harmless action that is never pushed, so callers can chain .setItemProperties() etc. without a NullPointerException
+		return action != null ? action : new EditorAction(editor);
 	}
 	
 	/** Like {@link #propertiesChanged} but the action is only returned (not pushed), to be part of a {@link #batch}. */

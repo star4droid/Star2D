@@ -74,7 +74,8 @@ public final class PropertyEditing {
         propertySet.put(field, stored);
         ((EditorItem) editor.getSelectedActor()).setProperties(propertySet);
         editor.getSaveState();
-        EditorAction.propertiesChanged(editor, editor.getSelectedActor().getName(), field, new String[]{field, stored}, new String[]{field, old}).setItemProperties();
+        EditorAction a = EditorAction.propertiesChanged(editor, editor.getSelectedActor().getName(), field, new String[]{field, stored}, new String[]{field, old});
+        if (a != null) a.setItemProperties(); // null when the value did not change
     }
 
     /** Root folder and extensions used by the "file" type picker for this field. */
@@ -191,7 +192,8 @@ public final class PropertyEditing {
         String shown = propertySet.getString(field);
         ((EditorItem) (editor.getSelectedActor())).setProperties(propertySet);
         editor.getSaveState();
-        EditorAction.propertiesChanged(editor, editor.getSelectedActor().getName(), field, new String[]{field, shown.replace("/", Utils.seperator)}, new String[]{field, old}).setItemProperties();
+        EditorAction a = EditorAction.propertiesChanged(editor, editor.getSelectedActor().getName(), field, new String[]{field, shown.replace("/", Utils.seperator)}, new String[]{field, old});
+        if (a != null) a.setItemProperties(); // null when the value did not change
     }
 
     /** type "boolean": "true" / "false". */

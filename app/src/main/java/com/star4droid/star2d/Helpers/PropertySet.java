@@ -92,7 +92,7 @@ public class PropertySet<K, V> extends HashMap<String,Object> {
 		String add=(addition==""?"":(","+Gdx.files.internal("items/"+addition).readString())),
 				json = Gdx.files.internal("items/default.json").readString();
 		try {
-			json = json.replace("--other--",add).replace("ItemName",actor.getName());
+			json = json.replace("--other--",add).replace("ItemName",actor!=null&&actor.getName()!=null?actor.getName():"");
 		} catch(Exception e){
 			Gdx.files.external("logs/getDefault.error.txt").writeString(Utils.getStackTraceString(e)+"\n",true);
 			e.printStackTrace();

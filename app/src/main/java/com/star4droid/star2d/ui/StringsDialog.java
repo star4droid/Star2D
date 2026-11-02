@@ -130,6 +130,11 @@ public class StringsDialog {
                 .setNegativeButton(Tr.t("close", "Close"), null)
                 .create();
         dialog.show();
+        // AlertDialog sets FLAG_ALT_FOCUSABLE_IM when the view has no EditText at show time (the list can be empty, fields come later): that hides the keyboard
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().clearFlags(android.view.WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM | android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE);
+            dialog.getWindow().setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+        }
     }
 
     private String shownInEditor() { return !editorLang.isEmpty() && languages.contains(editorLang) ? editorLang : languages.get(0); }

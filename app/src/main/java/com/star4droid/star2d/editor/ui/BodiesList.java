@@ -317,11 +317,13 @@ public class BodiesList extends Group {
 						  PropertySet<String,Object> ps = PropertySet.getPropertySet(app.getEditor().getSelectedActor());
 						  String old = ps.getString("name");
 						  try {
-        						FileHandle newHandle = Gdx.files.absolute(app.getEditor().getProject().getBodyScriptPath(old,app.getEditor().getScene()));
-								newHandle.moveTo(
-        							Gdx.files.absolute(app.getEditor().getProject().getBodyScriptPath(vl,app.getEditor().getScene()))
-        						);
-								newHandle.writeString(newHandle.readString().replace(old+"Script",vl+"Script"),false);
+								// move the script file, then fix the class name INSIDE the moved file (the handle of the old path no longer exists after the move)
+								FileHandle oldHandle = Gdx.files.absolute(app.getEditor().getProject().getBodyScriptPath(old,app.getEditor().getScene()));
+								FileHandle newHandle = Gdx.files.absolute(app.getEditor().getProject().getBodyScriptPath(vl,app.getEditor().getScene()));
+								if (oldHandle.exists()) {
+									oldHandle.moveTo(newHandle);
+									newHandle.writeString(newHandle.readString().replace(old+"Script",vl+"Script"),false);
+								}
         					} catch(Exception ex){}
 						  ps.put("name",vl);
 						  String scr = ps.getString("Script");

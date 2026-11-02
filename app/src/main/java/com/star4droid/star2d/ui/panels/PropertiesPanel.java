@@ -59,6 +59,14 @@ public class PropertiesPanel implements PanelHost.Panel {
     private static HashMap<String, String> typeOf;
     private static HashMap<String, String[]> spinners;
 
+    // ---- search (the magnifier in the panel header): hides the fields that do not match
+    private LinearLayout wrapper;
+    private LinearLayout searchBar;
+    private EditText searchField;
+    private String query = "";
+    private static final class Sec { View card, body; String title; ArrayList<View> rows = new ArrayList<>(); ArrayList<String> texts = new ArrayList<>(); }
+    private final ArrayList<Sec> searchSecs = new ArrayList<>();
+    private int behaviorFirstChild = -1;
     private String selectedName = null;
     private LinkedHashMap<String, String> values = new LinkedHashMap<>();
     private final HashMap<String, View> editors = new HashMap<>();
@@ -116,7 +124,7 @@ public class PropertiesPanel implements PanelHost.Panel {
     @Override
     public View view(Context c) {
         loadSchema(c);
-        if (root != null) return root;
+        if (wrapper != null) return wrapper;
         root = new ScrollView(c);
         LinearLayout col = Ui.column(c);
         col.setPadding(Ui.dp(c, 10), Ui.dp(c, 4), Ui.dp(c, 10), Ui.dp(c, 20));
@@ -129,7 +137,63 @@ public class PropertiesPanel implements PanelHost.Panel {
         content = Ui.column(c);
         col.addView(content, Ui.matchWrap());
         root.addView(col);
-        return root;
+
+        // search bar on top (hidden until the magnifier in the header is tapped), works in portrait and landscape
+        wrapper = Ui.column(c);
+        searchBar = Ui.row(c);
+        searchBar.setGravity(Gravity.CENTER_VERTICAL);
+        searchBar.setPadding(Ui.dp(c, 10), Ui.dp(c, 2), Ui.dp(c, 6), Ui.dp(c, 6));
+        searchBar.setVisibility(View.GONE);
+        searchBar.addView(Ui.smallIcon(c, R.drawable.ic_s2_search, Ui.TEXT_3, 18));
+        searchField = Ui.input(c, "", Tr.t("ui_prop_search", "Search properties..."));
+        searchField.setImeOptions(android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH);
+        searchField.addTextChangedListener(new android.text.TextWatcher() {
+            public void beforeTextChanged(CharSequence a, int b, int d, int e) {}
+            public void onTextChanged(CharSequence a, int b, int d, int e) {}
+            public void afterTextChanged(android.text.Editable e) { query = e.toString().trim().toLowerCase(); applySearch(); }
+        });
+        searchBar.addView(searchField, Ui.margins(Ui.weight(1), c, 8, 0, 4, 0));
+        searchBar.addView(Ui.iconButton(c, R.drawable.ic_s2_close, Tr.t("close", "Close"), v -> setSearchOpen(false)));
+        wrapper.addView(searchBar, Ui.matchWrap());
+        wrapper.addView(root, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
+        return wrapper;
+    }
+
+    @Override public View[] headerActions(Context c) {
+        ImageView search = Ui.iconButton(c, R.drawable.ic_s2_search, Tr.t("ui_prop_search_btn", "Search"), v -> setSearchOpen(searchBar == null || searchBar.getVisibility() != View.VISIBLE));
+        return new View[]{search};
+    }
+
+    private void setSearchOpen(boolean open) {
+        if (searchBar == null) return;
+        searchBar.setVisibility(open ? View.VISIBLE : View.GONE);
+        android.view.inputmethod.InputMethodManager imm = (android.view.inputmethod.InputMethodManager) searchField.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+        if (open) {
+            searchField.requestFocus();
+            if (imm != null) imm.showSoftInput(searchField, 0);
+        } else {
+            searchField.setText(""); // also clears the filter
+            if (imm != null) imm.hideSoftInputFromWindow(searchField.getWindowToken(), 0);
+        }
+    }
+
+    /** Show only the fields (and sections) that match the query; an empty query restores everything. */
+    private void applySearch() {
+        boolean on = !query.isEmpty();
+        for (Sec sc : searchSecs) {
+            boolean titleHit = on && sc.title.toLowerCase().contains(query);
+            int shown = 0;
+            for (int i = 0; i < sc.rows.size(); i++) {
+                boolean hit = !on || titleHit || sc.texts.get(i).contains(query);
+                sc.rows.get(i).setVisibility(hit ? View.VISIBLE : View.GONE);
+                if (hit) shown++;
+            }
+            sc.card.setVisibility(!on || shown > 0 ? View.VISIBLE : View.GONE);
+            // while searching, matches are shown even inside a collapsed section
+            sc.body.setVisibility(on ? View.VISIBLE : (collapsed.contains(sc.title) ? View.GONE : View.VISIBLE));
+        }
+        if (behaviorFirstChild >= 0 && content != null)
+            for (int i = behaviorFirstChild; i < content.getChildCount(); i++) content.getChildAt(i).setVisibility(on ? View.GONE : View.VISIBLE);
     }
 
     @Override public void onShown() {
@@ -174,6 +238,8 @@ public class PropertiesPanel implements PanelHost.Panel {
             selectedName = null;
             fieldsSignature = "";
             content.removeAllViews();
+            searchSecs.clear();
+            behaviorFirstChild = -1;
             behaviorSection = null;
             editors.clear();
             header.setText("");
@@ -198,6 +264,8 @@ public class PropertiesPanel implements PanelHost.Panel {
         values = v;
         editors.clear();
         content.removeAllViews();
+        searchSecs.clear();
+        behaviorFirstChild = -1;
         behaviorSection = null;
         String type = (String) snap[2];
         header.setText(Tr.t("ui_type_" + (type == null ? "" : type.toLowerCase()), type) + " · " + name);
@@ -216,8 +284,11 @@ public class PropertiesPanel implements PanelHost.Panel {
             if (!known.contains(k) && typeOf.containsKey(k) && !"static".equals(typeOf.get(k))) extra.add(k);
         if (!extra.isEmpty()) addSection(c, "Other", extra);
         // public variables of the Body Script + "Additional behaviors" (stored in the element's scriptVars / behaviors)
-        if (!"LIGHT".equals(v.get("TYPE")))
+        if (!"LIGHT".equals(v.get("TYPE"))) {
+            behaviorFirstChild = content.getChildCount();
             behaviorSection = new com.star4droid.star2d.ui.behaviors.BehaviorSection(shell, content, name, v.get("behaviors"), v.get("scriptVars"));
+        }
+        applySearch();
     }
 
     private void addSection(Context c, String title, ArrayList<String> fields) {
@@ -240,6 +311,11 @@ public class PropertiesPanel implements PanelHost.Panel {
         body.setPadding(Ui.dp(c, 12), 0, Ui.dp(c, 12), Ui.dp(c, 8));
         body.setVisibility(collapsed.contains(title) ? View.GONE : View.VISIBLE);
         card.addView(body);
+        final Sec sec = new Sec();
+        sec.card = card;
+        sec.body = body;
+        sec.title = Tr.t(title);
+        searchSecs.add(sec);
         head.setOnClickListener(x -> {
             boolean col = body.getVisibility() == View.VISIBLE;
             body.setVisibility(col ? View.GONE : View.VISIBLE);
@@ -258,9 +334,21 @@ public class PropertiesPanel implements PanelHost.Panel {
                 pair.addView(sp, new LinearLayout.LayoutParams(Ui.dp(c, 10), 1));
                 pair.addView(field(c, fields.get(i + 1), type), Ui.weight(1));
                 body.addView(pair, Ui.matchWrap());
+                sec.rows.add(pair);
+                sec.texts.add(searchText(f) + " " + searchText(fields.get(i + 1)));
                 i++;
-            } else body.addView(field(c, f, type), Ui.matchWrap());
+            } else {
+                View row = field(c, f, type);
+                body.addView(row, Ui.matchWrap());
+                sec.rows.add(row);
+                sec.texts.add(searchText(f));
+            }
         }
+    }
+
+    /** What a search matches for a field: its raw name and its (translated) label, lower case. */
+    private static String searchText(String f) {
+        return (f + " " + Tr.t(f)).toLowerCase();
     }
 
     private boolean isPair(String a, String b) {

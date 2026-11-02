@@ -440,7 +440,14 @@ public class JointsPanel implements PanelHost.Panel {
             } catch (Exception ignored) {}
         }
 
-        ScrollView sv = new ScrollView(c);
+        // The form can be taller than the screen: cap the scroll area so the Add/Save buttons are always on screen
+        // (without a cap the button bar was pushed out of the window until the layout was redone by a resume or the keyboard).
+        final int maxH = (int) (c.getResources().getDisplayMetrics().heightPixels * 0.6f);
+        ScrollView sv = new ScrollView(c) {
+            @Override protected void onMeasure(int w, int h) {
+                super.onMeasure(w, android.view.View.MeasureSpec.makeMeasureSpec(maxH, android.view.View.MeasureSpec.AT_MOST));
+            }
+        };
         sv.addView(col);
         AlertDialog d = new AlertDialog.Builder(c)
                 .setTitle((file == null ? Tr.t("addJoint", "Add joint") : Tr.t("edit", "Edit")) + " · " + Tr.t("ui_joint_" + t, t.replace("Joint", "")))
@@ -475,6 +482,7 @@ public class JointsPanel implements PanelHost.Panel {
                 Ui.ui(this::refresh);
             });
         }));
+        if (d.getWindow() != null) d.getWindow().setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE | android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
         d.show();
     }
 

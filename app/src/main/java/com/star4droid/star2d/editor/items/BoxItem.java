@@ -84,6 +84,28 @@ public class BoxItem extends Image implements EditorItem {
 		}
 	}
 	
+	/** The Box2D body is only a helper for the editor drawing: destroy it when the item leaves the stage (delete, shape change, reload),
+	 *  otherwise its outline keeps being drawn by the debug renderer. It is recreated by update() when the item comes back (undo). */
+	private boolean bodyDestroyed = false;
+
+	@Override
+	protected void setStage(com.badlogic.gdx.scenes.scene2d.Stage stage) {
+		super.setStage(stage);
+		if (stage == null) {
+			final Body b = body;
+			if (b == null) return;
+			body = null;
+			bodyDestroyed = true;
+			try {
+				if (b.getWorld().isLocked()) com.badlogic.gdx.Gdx.app.postRunnable(() -> { try { b.getWorld().destroyBody(b); } catch (Exception ignored) {} });
+				else b.getWorld().destroyBody(b);
+			} catch (Exception ignored) {}
+		} else if (bodyDestroyed && propertySet != null) {
+			bodyDestroyed = false;
+			try { update(); } catch (Exception ignored) {}
+		}
+	}
+
 	@Override
 	public Body getBody() {
 		return body;
@@ -115,11 +137,12 @@ public class BoxItem extends Image implements EditorItem {
 		        try {
 		            remove();
 		            EditorItem newBody = propertySet.getString("Shape").equals("Circle") ? new CircleItem(editor) : new CustomItem(editor);
+            		((Actor)newBody).setName(propertySet.getString("name")); // the new item needs its name before setProperties (defaults use it)
             		editor.addActor((Actor)newBody);
             		newBody.setProperties(propertySet);
             		editor.selectActor((Actor)newBody);
             		newBody.update();
-		        } catch(Exception e){}
+		        } catch(Exception e){ com.badlogic.gdx.Gdx.files.external("logs/shape.error.txt").writeString(com.star4droid.template.Utils.Utils.getStackTraceString(e)+"\n",true); }
 		    }
 		    return;
 		}

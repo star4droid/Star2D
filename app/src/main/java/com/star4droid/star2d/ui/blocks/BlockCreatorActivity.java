@@ -66,6 +66,8 @@ public class BlockCreatorActivity extends AppCompatActivity {
         String label = "", category = "My blocks", code = "";
         boolean hasElse = false;
         int color = 0xFF5D4037;
+        /** For which scenes: SceneDims.D2, D3 or BOTH (the default; blocks saved before keep BOTH). */
+        int dims = com.star4droid.star2d.blocks.SceneDims.BOTH;
         final ArrayList<String[]> fields = new ArrayList<>(); // {name, type, default}
         /** Description shown by the block's (i) button, one row per language: {language code, text}. */
         final ArrayList<String[]> desc = new ArrayList<>();
@@ -88,6 +90,7 @@ public class BlockCreatorActivity extends AppCompatActivity {
             s.code = code;
             s.hasElse = hasElse;
             s.color = color;
+            s.dims = dims;
             s.originalKind = originalKind;
             for (String[] f : fields) s.fields.add(f.clone());
             for (String[] d : desc) s.desc.add(d.clone());
@@ -193,6 +196,7 @@ public class BlockCreatorActivity extends AppCompatActivity {
             s.index = -2; // not editable here
         }
         try { if (n.has("color")) s.color = n.get("color").getAsInt(); } catch (Exception ignored) {}
+        s.dims = com.star4droid.star2d.blocks.SceneDims.of(n, com.star4droid.star2d.blocks.SceneDims.BOTH);
         for (java.util.Map.Entry<String, String> e : BlockCatalog.parseDesc(n.get("desc")).entrySet()) s.desc.add(new String[]{e.getKey(), e.getValue()});
         return s;
     }
@@ -362,6 +366,7 @@ public class BlockCreatorActivity extends AppCompatActivity {
             n.add("fields", fs);
         }
         n.addProperty("color", s.color);
+        n.addProperty("dims", com.star4droid.star2d.blocks.SceneDims.name(s.dims));
         JsonObject m = new JsonObject();
         m.addProperty("kind", s.kind);
         m.addProperty("label", s.label);
@@ -442,6 +447,7 @@ public class BlockCreatorActivity extends AppCompatActivity {
         d.code = convert(s);
         d.isIf = s.kind == CBLOCK;
         d.color = s.color;
+        d.dims = s.dims;
         d.fields = new String[s.fields.size()];
         d.defaults = new String[s.fields.size()];
         for (int i = 0; i < s.fields.size(); i++) {
@@ -662,6 +668,7 @@ public class BlockCreatorActivity extends AppCompatActivity {
         n.setMaxLines(2);
         texts.addView(n);
         StringBuilder sub = new StringBuilder(kindName(s.kind));
+        if (s.dims != com.star4droid.star2d.blocks.SceneDims.BOTH) sub.append(" · ").append(com.star4droid.star2d.blocks.SceneDims.name(s.dims));
         if (!example) sub.append(" · ★ ").append(s.category);
         if (!s.fields.isEmpty()) {
             sub.append(" · ");
@@ -769,6 +776,38 @@ public class BlockCreatorActivity extends AppCompatActivity {
 
     // ================================================================ editor screen
 
+    /** Three chips 2D / 3D / Both (Both = default). */
+    private View dimsRow(Spec s) {
+        Context c = this;
+        LinearLayout row = Ui.row(c);
+        int[] values = {com.star4droid.star2d.blocks.SceneDims.D2, com.star4droid.star2d.blocks.SceneDims.D3, com.star4droid.star2d.blocks.SceneDims.BOTH};
+        String[] names = {t("dims_2d", "2D scenes"), t("dims_3d", "3D scenes"), t("dims_both", "Both")};
+        ArrayList<TextView> chips = new ArrayList<>();
+        for (int i = 0; i < values.length; i++) {
+            final int v = values[i];
+            TextView ch = Ui.text(c, names[i], 13, Ui.TEXT);
+            ch.setGravity(Gravity.CENTER);
+            ch.setPadding(Ui.dp(c, 8), Ui.dp(c, 9), Ui.dp(c, 8), Ui.dp(c, 9));
+            ch.setBackground(Ui.toggleBg(c));
+            ch.setSelected(s.dims == v);
+            ch.setTypeface(s.dims == v ? Typeface.DEFAULT_BOLD : Typeface.DEFAULT);
+            ch.setTag(v);
+            chips.add(ch);
+            ch.setOnClickListener(x -> {
+                s.dims = v;
+                for (TextView o : chips) {
+                    boolean sel = (Integer) o.getTag() == v;
+                    o.setSelected(sel);
+                    o.setTypeface(sel ? Typeface.DEFAULT_BOLD : Typeface.DEFAULT);
+                }
+            });
+            LinearLayout.LayoutParams lp = Ui.weight(1);
+            lp.setMargins(Ui.dp(c, 3), 0, Ui.dp(c, 3), 0);
+            row.addView(ch, lp);
+        }
+        return row;
+    }
+
     private void showEditor(Spec s) {
         editing = s;
         Context c = this;
@@ -842,6 +881,10 @@ public class BlockCreatorActivity extends AppCompatActivity {
         cat.addView(sw, swl);
         form.addView(Ui.sectionLabel(c, t("category_color", "Category and color")));
         form.addView(cat, Ui.matchWrap());
+
+        // 2D / 3D / both: in which scenes the palette shows the block
+        form.addView(Ui.sectionLabel(c, t("dims", "Show in scenes")));
+        form.addView(dimsRow(s), Ui.matchWrap());
 
         // fields
         form.addView(Ui.sectionLabel(c, t("fields", "Fields (white slots on the block)")));

@@ -25,11 +25,16 @@ import java.util.ArrayList;
 public class Editor3DItem extends Actor implements EditorItem {
 	PropertySet<String, Object> propertySet;
 	final LibgdxEditor editor;
-	public final String kind;
+	public String kind;
 	public Object3D obj;
 	public Light3D light;
 	public Camera3D camera;
 	private String meshSig = "";
+
+	/** Used by duplicate / copy (the kind comes from the properties' TYPE). */
+	public Editor3DItem(LibgdxEditor editor) {
+		this(editor, "OBJ3D");
+	}
 
 	public Editor3DItem(LibgdxEditor editor, String kind) {
 		this.editor = editor;
@@ -58,6 +63,11 @@ public class Editor3DItem extends Actor implements EditorItem {
 	public void setProperties(PropertySet<String, Object> ps) {
 		propertySet = ps;
 		if (ps == null) return;
+		String t = ps.getString("TYPE");
+		if (("OBJ3D".equals(t) || "LIGHT3D".equals(t) || "CAMERA3D".equals(t)) && !t.equals(kind)) {
+			detachForKind();
+			kind = t;
+		}
 		PropertySet<String, Object> temp = PropertySet.getDefualt(this, defaultsFile(kind));
 		for (String s : temp.keySet()) if (!ps.containsKey(s)) ps.put(s, temp.get(s));
 		ArrayList<String> del = new ArrayList<>();
@@ -154,6 +164,10 @@ public class Editor3DItem extends Actor implements EditorItem {
 
 	public float pz() {
 		return propertySet == null ? 0 : propertySet.getFloat("z");
+	}
+
+	private void detachForKind() {
+		detach();
 	}
 
 	private void detach() {

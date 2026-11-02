@@ -131,8 +131,9 @@ public class Editor3D {
 	public void render() {
 		float dt = Math.min(0.05f, Gdx.graphics.getDeltaTime());
 		updateCamera();
-		String q = Quality3D.level;
-		Quality3D.setLevel(editorQuality);
+		Object[] gameQuality = Quality3D.snapshot();
+		Quality3D.setLevel(editorQuality, false);
+		Quality3D.renderScale = 1f;
 		for (Actor a : editor.getActors()) {
 			if (a instanceof Editor3DItem) {
 				Editor3DItem it = (Editor3DItem) a;
@@ -142,7 +143,7 @@ public class Editor3D {
 		world.camera = cam;
 		world.update(dt, false);
 		world.render(cam, Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), true);
-		Quality3D.level = q;
+		Quality3D.restore(gameQuality);
 		Gdx.gl.glEnable(GL20.GL_DEPTH_TEST);
 		Gdx.gl.glEnable(GL20.GL_BLEND);
 		Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);

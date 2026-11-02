@@ -133,6 +133,7 @@ public class Physics3D implements Disposable {
 			sh = new btConeShape(0.5f * Math.max(size.x * s.x, size.z * s.z), size.y * s.y);
 		} else if ("MESH".equals(c) && o.instance != null) {
 			btCollisionShape ms = Bullet.obtainStaticNodeShape(o.instance.nodes);
+			if (ms == null) return new btBoxShape(new Vector3(Math.max(0.005f, size.x * s.x * 0.5f), Math.max(0.005f, size.y * s.y * 0.5f), Math.max(0.005f, size.z * s.z * 0.5f)));
 			ms.setLocalScaling(s);
 			sh = ms;
 			owned.add(ms);

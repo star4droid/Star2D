@@ -328,6 +328,20 @@ public final class B3x {
 		return o == null || o.isDestroyed();
 	}
 
+	/** Removes the element after some seconds (a Timer of the runtime, so the block needs no final variables). */
+	public static void destroyAfter(final Object item, float seconds) {
+		if (seconds <= 0) {
+			B3.destroy(item);
+			return;
+		}
+		com.badlogic.gdx.utils.Timer.schedule(new com.badlogic.gdx.utils.Timer.Task() {
+			@Override
+			public void run() {
+				B3.destroy(item);
+			}
+		}, seconds);
+	}
+
 	/** Copy of an element at the place of another one (bullet at the gun). */
 	public static PlayerItem spawnAt(Object item, String newName, Object place) {
 		return B3.spawn(item, newName, B3.x(place), B3.y(place), B3.z(place));

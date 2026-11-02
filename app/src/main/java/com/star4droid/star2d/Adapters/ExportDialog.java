@@ -45,8 +45,15 @@ public class ExportDialog {
 		merge.setTextColor(portrait.getTextColors());
 		merge.setChecked(sh.getBoolean(project+"-merge",false));
 		((android.view.ViewGroup)portrait.getParent()).addView(merge,((android.view.ViewGroup)portrait.getParent()).indexOfChild(portrait)+1);
+		final android.widget.CheckBox arm = new android.widget.CheckBox(context);
+		arm.setText(com.star4droid.star2d.ui.Tr.t("export_arm_only", "Phones only (ARM): smaller APK, no emulator libraries"));
+		arm.setChecked(sh.getBoolean(project+"-arm",false));
+		arm.setTextColor(portrait.getTextColors());
+		((android.view.ViewGroup)portrait.getParent()).addView(arm,((android.view.ViewGroup)portrait.getParent()).indexOfChild(merge)+1);
 		cv.findViewById(R.id.export).setOnClickListener(view->{
 			ExportThread.mergeTilesets = merge.isChecked();
+			ExportThread.armOnly = arm.isChecked();
+			sh.edit().putBoolean(project+"-arm",arm.isChecked()).apply();
 			sh.edit().putBoolean(project+"-merge",merge.isChecked()).apply();
 			String[] data = getText(context,project,portrait.isChecked(),version,version_name,package_name,name);
 			if(data!=null){

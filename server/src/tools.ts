@@ -235,6 +235,7 @@ export const TOOLS: ToolDef[] = [
       {
         category: str("category name (created if new)"),
         color: str("category color like '#8E24AA'"),
+        dims: str("scenes the blocks are for: 2D, 3D or BOTH (default BOTH; each block may set its own dims)", { enum: ["2D", "3D", "BOTH"] }),
         blocks: arr(
           obj(
             {
@@ -246,6 +247,7 @@ export const TOOLS: ToolDef[] = [
                 "Java template. Use %1$s,%2$s for fields in order; statement: end with %N$s for the next block (N = fields+1); container: %N$s is the inner blocks, %N+1$s the next. Value blocks: an expression using %1$s...",
               ),
               display: str("value blocks: label with ___ for each field, e.g. 'distance ___ to ___'"),
+              dims: str("2D, 3D or BOTH: in which scenes the palette shows it (default: the category's dims)", { enum: ["2D", "3D", "BOTH"] }),
               description: {
                 anyOf: [{ type: "string" }, { type: "object", additionalProperties: { type: "string" } }],
                 description:

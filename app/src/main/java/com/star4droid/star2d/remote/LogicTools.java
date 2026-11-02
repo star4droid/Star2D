@@ -309,17 +309,27 @@ final class LogicTools {
                 active = com.star4droid.star2d.blocks.SceneBehaviors.inProject(projectPath, Proj.sceneOrDefault(sceneArg));
             } catch (Throwable ignored) {
             }
+            // 2D / 3D scene: only the blocks made for this kind of scene (all:true lists both)
+            int mode = 0;
+            try {
+                mode = com.star4droid.star2d.blocks.SceneDims.modeOf(projectPath, Proj.sceneOrDefault(sceneArg));
+            } catch (Throwable ignored) {
+            }
+            final int sceneMode = showAll ? 0 : mode;
+            out.addProperty("scene_type", mode == com.star4droid.star2d.blocks.SceneDims.D3 ? "3D" : "2D");
             JsonArray statements = new JsonArray();
             JsonArray cats = new JsonArray();
             for (Map.Entry<String, ArrayList<BlockCatalog.Def>> e : BlockCatalog.CATEGORIES.entrySet()) {
                 boolean any = false;
                 for (BlockCatalog.Def d : e.getValue()) {
+                    if (!com.star4droid.star2d.blocks.SceneDims.visible(d.dims, sceneMode)) continue;
                     if (d.showWhen == null || showAll || visibleFor(d.showWhen, active)) any = true;
                     else for (String id : d.showWhen) hidden.add(id);
                 }
                 if (any) cats.add(e.getKey());
                 if (!cat.isEmpty() && !e.getKey().toLowerCase(Locale.ROOT).contains(cat)) continue;
                 for (BlockCatalog.Def d : e.getValue()) {
+                    if (!com.star4droid.star2d.blocks.SceneDims.visible(d.dims, sceneMode)) continue;
                     if (d.showWhen != null && !showAll && !visibleFor(d.showWhen, active)) continue;
                     if (!search.isEmpty() && !d.title.toLowerCase(Locale.ROOT).contains(search)
                             && !BlockInfo.label(d.title, false).toLowerCase(Locale.ROOT).contains(search)) continue;
@@ -331,8 +341,16 @@ final class LogicTools {
                         String f = d.fields[i];
                         String def = d.defaults != null && i < d.defaults.length ? d.defaults[i] : "";
                         fs.add(def.isEmpty() ? f : f + " = " + def);
+                        String[] ch = BlockCatalog.choices(new BlockModel.Field(f, "").type());
+                        if (ch != null) {
+                            JsonArray ca = new JsonArray();
+                            for (String x : ch) ca.add(x);
+                            if (!b.has("choices")) b.add("choices", new JsonObject());
+                            b.getAsJsonObject("choices").add(BlockModel.Field.labelOf(f), ca);
+                        }
                     }
                     b.add("fields", fs);
+                    if (d.dims != com.star4droid.star2d.blocks.SceneDims.BOTH) b.addProperty("dims", com.star4droid.star2d.blocks.SceneDims.name(d.dims));
                     if (d.isIf) b.addProperty("container", true);
                     if (d.showWhen != null) b.addProperty("label", BlockInfo.label(d.title, false));
                     if (detail) {
@@ -345,6 +363,7 @@ final class LogicTools {
             }
             JsonArray reporters = new JsonArray();
             for (BlockCatalog.Reporter r : BlockCatalog.REPORTERS) {
+                if (!com.star4droid.star2d.blocks.SceneDims.visible(r.dims, sceneMode)) continue;
                 if (r.showWhen != null && !showAll && !visibleFor(r.showWhen, active)) {
                     for (String id : r.showWhen) hidden.add(id);
                     continue;
@@ -359,6 +378,7 @@ final class LogicTools {
                     if (info != null) b.addProperty("desc", info);
                 }
                 b.addProperty("java", oneLine(r.template));
+                if (r.slots != null && !r.slots.isEmpty()) b.addProperty("slots", r.slots);
                 reporters.add(b);
             }
             out.add("categories", cats);
@@ -370,7 +390,8 @@ final class LogicTools {
                 out.add("hidden_behavior_blocks", h);
                 out.addProperty("hidden_hint", "These behaviors have blocks that appear once an element of the scene uses the behavior (or add them with the addBehavior block); all:true lists them anyway.");
             }
-            out.addProperty("hint", "Use 'block' titles in events.blocks; value blocks go inside fields as {\"r\":\"<r text>\",\"args\":[...]}. Fields typed (Body) take an element name or 'current'.");
+            out.addProperty("hint", "Use 'block' titles in events.blocks; value blocks go inside fields as {\"r\":\"<r text>\",\"args\":[...]}. Fields typed (Body) take an element name or 'current'. "
+                    + "Only the blocks of this scene's type (scene_type 2D or 3D) are listed; 'choices' lists the values of a field; a code(glsl) field holds GLSL as the inside of a Java string (write \\n for new lines). slots: e element, n number, t text, b condition.");
             return null;
         });
         return ToolResult.text(out.toString());
@@ -412,6 +433,8 @@ final class LogicTools {
         if (category.isEmpty()) return ToolResult.error("category is required");
         if (!a.has("blocks") || !a.get("blocks").isJsonArray()) return ToolResult.error("blocks is required");
         final int catColor = color(CoreTools.s(a, "color"), 0xFF5D4037);
+        // "dims": "2D" | "3D" | "BOTH" (default) for the whole category, each block may override it
+        final String catDims = com.star4droid.star2d.blocks.SceneDims.name(com.star4droid.star2d.blocks.SceneDims.parse(CoreTools.s(a, "dims")));
         final JsonArray defs = a.getAsJsonArray("blocks");
         final StringBuilder report = new StringBuilder();
         Gl.run(() -> {
@@ -444,6 +467,7 @@ final class LogicTools {
                     b.addProperty("title", display);
                     b.addProperty("code", code);
                     b.addProperty("color", catColor);
+                    b.addProperty("dims", dimsOf(d, catDims));
                     addDescription(b, d);
                     replaceBy(blockSec.getAsJsonArray("blocks"), "title", display, b);
                 } else {
@@ -469,6 +493,7 @@ final class LogicTools {
                         fa.add(f);
                     }
                     b.add("fields", fa);
+                    b.addProperty("dims", dimsOf(d, catDims));
                     addDescription(b, d);
                     replaceBy(nodeSec.getAsJsonArray("nodes"), "title", title, b);
                 }
@@ -484,6 +509,11 @@ final class LogicTools {
             return null;
         });
         return ToolResult.text("Defined in category '★ " + category + "': " + report + "available now in block_catalog and in the editor's block palette.");
+    }
+
+    private static String dimsOf(JsonObject def, String fallback) {
+        String v = CoreTools.s(def, "dims");
+        return v.trim().isEmpty() ? fallback : com.star4droid.star2d.blocks.SceneDims.name(com.star4droid.star2d.blocks.SceneDims.parse(v));
     }
 
     /** "description": "text" (English) or {"en":"..","ar":".."} -> "desc" {lang: text} on the stored block (shown by its (i) button). */

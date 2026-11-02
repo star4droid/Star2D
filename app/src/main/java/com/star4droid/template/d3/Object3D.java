@@ -161,7 +161,10 @@ public class Object3D extends Actor implements PlayerItem {
 			water.clarity = def.Water_Clarity;
 			water.foamAmount = def.Foam;
 			water.quality = "LOW".equals(q) ? 0 : ("MEDIUM".equals(q) ? 1 : ("HIGH".equals(q) ? 2 : -1));
-			for (Material m : instance.materials) m.set(water);
+			for (Material m : instance.materials) {
+				m.set(water);
+				m.set(new com.badlogic.gdx.graphics.g3d.attributes.BlendingAttribute(true, 0.9f)); // drawn after the solid elements
+			}
 		} else if ("EMPTY".equals(shape)) {
 			instance = null;
 		} else {
@@ -990,5 +993,126 @@ public class Object3D extends Actor implements PlayerItem {
 
 	public Object3DDef getDef() {
 		return def;
+	}
+
+	// ------------------------------------------------------------------ API used by the 3D behaviors (appended)
+
+	/** Heading in degrees around Y, read from the real orientation (also right for elements moved by physics). */
+	public float getYaw3() {
+		forward(tmp);
+		return MathUtils.atan2(-tmp.x, -tmp.z) * MathUtils.radiansToDegrees;
+	}
+
+	/** Stands upright and turns to a heading (degrees around Y). */
+	public void setYaw3(float yaw) {
+		setRotation3(0, yaw, 0);
+	}
+
+	/** Height (meters) of the lowest point of the element (bounds x scale, rotation ignored). */
+	public float getBottomY() {
+		return position.y + Math.min(localBounds().min.y * scale.y, localBounds().max.y * scale.y);
+	}
+
+	/** True when physics moves it (a DYNAMIC body). */
+	public boolean isDynamic() {
+		return rigid != null && "DYNAMIC".equals(def.Body);
+	}
+
+	/** Physics may (false) or may not (true) turn the element around each axis: characters stay upright. */
+	public void lockRotation3(boolean x, boolean y, boolean z) {
+		if (rigid == null) return;
+		rigid.setAngularFactor(v3.set(x ? 0 : 1, y ? 0 : 1, z ? 0 : 1));
+		rigid.setAngularVelocity(v3.set(x ? 0 : rigid.getAngularVelocity().x, y ? 0 : rigid.getAngularVelocity().y, z ? 0 : rigid.getAngularVelocity().z));
+	}
+
+	/** Pushes at a point of the world (meters): it also turns the element (boats on waves, hits). */
+	public void applyForceAt(float fx, float fy, float fz, float px, float py, float pz) {
+		if (rigid == null) return;
+		rigid.activate();
+		Vector3 rel = new Vector3(px, py, pz).sub(rigid.getCenterOfMassTransform().getTranslation(new Vector3()));
+		rigid.applyForce(new Vector3(fx, fy, fz), rel);
+	}
+
+	public void applyImpulseAt(float ix, float iy, float iz, float px, float py, float pz) {
+		if (rigid == null) return;
+		rigid.activate();
+		Vector3 rel = new Vector3(px, py, pz).sub(rigid.getCenterOfMassTransform().getTranslation(new Vector3()));
+		rigid.applyImpulse(new Vector3(ix, iy, iz), rel);
+	}
+
+	/** Velocity (m/s) of the body at a point of the world (0 when it has no body). */
+	public Vector3 velocityAt(float px, float py, float pz, Vector3 out) {
+		if (rigid == null) return out.setZero();
+		Vector3 rel = new Vector3(px, py, pz).sub(rigid.getCenterOfMassTransform().getTranslation(new Vector3()));
+		return out.set(rigid.getVelocityInLocalPoint(rel));
+	}
+
+	public float getAngularVelocityY3() {
+		return rigid == null ? 0 : rigid.getAngularVelocity().y;
+	}
+
+	private com.badlogic.gdx.utils.ObjectMap<String, Quaternion> nodeBaseRot;
+	private com.badlogic.gdx.utils.ObjectMap<String, Vector3> nodeBasePos;
+
+	/**
+	 * Moves / turns a node of the model ON TOP of its pose in the file: rotation (degrees, Y then X then Z) is applied in the
+	 * parent's axes before the node's own rotation, so a mirrored wheel still spins the right way. Wheels, doors, lids, turrets.
+	 */
+	public void setNodeOffset(String node, float dx, float dy, float dz, float rx, float ry, float rz) {
+		if (instance == null) return;
+		Node n = instance.getNode(node, true);
+		if (n == null) return;
+		if (nodeBaseRot == null) {
+			nodeBaseRot = new com.badlogic.gdx.utils.ObjectMap<String, Quaternion>();
+			nodeBasePos = new com.badlogic.gdx.utils.ObjectMap<String, Vector3>();
+		}
+		Quaternion base = nodeBaseRot.get(node);
+		if (base == null) {
+			base = new Quaternion(n.rotation);
+			nodeBaseRot.put(node, base);
+			nodeBasePos.put(node, new Vector3(n.translation));
+		}
+		n.rotation.setEulerAngles(ry, rx, rz).mul(base);
+		n.translation.set(nodeBasePos.get(node)).add(dx, dy, dz);
+		n.isAnimated = true;
+		instance.calculateTransforms();
+	}
+
+	/** Puts a node back where the model file has it. */
+	public void resetNode(String node) {
+		if (instance == null || nodeBaseRot == null || !nodeBaseRot.containsKey(node)) return;
+		Node n = instance.getNode(node, true);
+		if (n == null) return;
+		n.rotation.set(nodeBaseRot.get(node));
+		n.translation.set(nodeBasePos.get(node));
+		instance.calculateTransforms();
+	}
+
+	/** Center of a node of the model in the element's own space (meters before the element's scale); false when there is no such node. */
+	public boolean getNodeCenter(String node, Vector3 out) {
+		if (instance == null) return false;
+		Node n = instance.getNode(node, true);
+		if (n == null) return false;
+		BoundingBox b = n.calculateBoundingBox(new BoundingBox(), true);
+		if (b.isValid() && !b.getDimensions(new Vector3()).isZero()) b.getCenter(out);
+		else n.globalTransform.getTranslation(out);
+		return true;
+	}
+
+	/** Size of a node of the model in the element's own space (before the element's scale); false when there is no such node. */
+	public boolean getNodeSize(String node, Vector3 out) {
+		if (instance == null) return false;
+		Node n = instance.getNode(node, true);
+		if (n == null) return false;
+		BoundingBox b = n.calculateBoundingBox(new BoundingBox(), true);
+		if (!b.isValid()) return false;
+		b.getDimensions(out);
+		return true;
+	}
+
+	/** A point of the element's own space (meters, before scale) -> the world. */
+	public Vector3 localToWorld(float x, float y, float z, Vector3 out) {
+		if (parent3d != null) return out.set(x, y, z).mul(transform);
+		return out.set(x, y, z).scl(scale).mul(rotation).add(position);
 	}
 }

@@ -28,8 +28,8 @@ public final class Scene3DSettings {
 	private Scene3DSettings() {
 	}
 
-	/** {key, kind, default, options} kind: choice, color, float, bool, text */
-	static final String[][] FIELDS = {
+	/** {key, kind, default, options} kind: choice, color, float, bool, text (also read by the AI tools: scenes configure). */
+	public static final String[][] FIELDS = {
 			{"Render Mode", "choice", "SIMPLE", "SIMPLE,SOFT,TOON,PBR,UNLIT"},
 			{"Lighting Preset", "choice", "DAY", "DAY,SUNSET,NIGHT,OVERCAST,STUDIO,HORROR,INDOOR,CARTOON,CUSTOM"},
 			{"Toon Bands", "float", "3", ""},

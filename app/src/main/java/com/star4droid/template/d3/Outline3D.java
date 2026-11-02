@@ -70,6 +70,7 @@ public final class Outline3D {
 			o.shader = null;
 			out.add(o);
 		}
+		pool.freeAll(tmp);
 		tmp.clear();
 	}
 

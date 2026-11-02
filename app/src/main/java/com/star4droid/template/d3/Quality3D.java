@@ -38,6 +38,28 @@ public final class Quality3D {
 	}
 
 	public static void setLevel(String l) {
+		setLevel(l, true);
+	}
+
+	/** Values of every setting (editor: borrow and give back the game's settings). */
+	public static Object[] snapshot() {
+		return new Object[]{level, renderScale, viewDistance, shadowSize, pixelLighting, lodBias, waterLevel, postEffects, fpsLimit, effects};
+	}
+
+	public static void restore(Object[] s) {
+		level = (String) s[0];
+		renderScale = (Float) s[1];
+		viewDistance = (Float) s[2];
+		shadowSize = (Integer) s[3];
+		pixelLighting = (Boolean) s[4];
+		lodBias = (Float) s[5];
+		waterLevel = (Integer) s[6];
+		postEffects = (Boolean) s[7];
+		fpsLimit = (Integer) s[8];
+		effects = (Float) s[9];
+	}
+
+	public static void setLevel(String l, boolean applyNow) {
 		if (l == null) return;
 		l = l.trim().toUpperCase();
 		level = l;
@@ -50,7 +72,7 @@ public final class Quality3D {
 		} else if (ULTRA.equals(l)) {
 			renderScale = 1f; viewDistance = 400f; shadowSize = 4096; pixelLighting = true; lodBias = 1.5f; waterLevel = 2; postEffects = true; fpsLimit = 0; effects = 1f;
 		} else level = CUSTOM;
-		apply();
+		if (applyNow) apply();
 	}
 
 	/** Loads the saved choice of the player (once). The scene's own quality is used when nothing was saved. */

@@ -54,6 +54,7 @@ final class PhysicsInfo {
         final double[] frameW = {0}, frameH = {0};
         final double[] gravity = {num(a, "gravity", -1)};
         final String[] gsrc = {gravity[0] > 0 ? "argument" : ""};
+        final boolean[] is3D = {false};
         Gl.run(() -> {
             LibgdxEditor ed = Proj.editor();
             Project p = ed.getProject();
@@ -61,6 +62,38 @@ final class PhysicsInfo {
             if (!Proj.scenes(p).contains(scene)) throw new Gl.ToolError("No scene named '" + scene + "'. Scenes: " + Proj.scenes(p));
             SceneInfo.Frame f = SceneInfo.of(ed, p, scene);
             out.addProperty("frame", SceneInfo.describe(f));
+            if (f.is3D) {
+                // 3D scene: Bullet physics in meters, gravity from the scene settings (Gravity Y, default -9.81)
+                is3D[0] = true;
+                out.addProperty("sceneType", "3D");
+                if (gravity[0] <= 0) {
+                    double gy = -9.81;
+                    try {
+                        FileHandle cf = Gdx.files.absolute(p.getConfig(scene));
+                        if (cf.exists()) {
+                            JsonObject c = com.google.gson.JsonParser.parseString(cf.readString()).getAsJsonObject();
+                            if (c.has("Gravity Y")) gy = Double.parseDouble(c.get("Gravity Y").getAsString());
+                        }
+                    } catch (Exception ignored) {
+                    }
+                    gravity[0] = Math.abs(gy) < 1e-6 ? 0 : -gy;
+                    gsrc[0] = "scene setting Gravity Y (" + gy + " m/s2)";
+                }
+                if (!element.isEmpty()) {
+                    try {
+                        for (LinkedHashMap<String, String> m : (scene.equals(ed.getScene()) ? CoreTools.liveElements(ed) : CoreTools.fileElements(p, scene))) {
+                            if (!element.equals(m.get("name"))) continue;
+                            JsonObject eo = new JsonObject();
+                            eo.addProperty("name", element);
+                            for (String k : new String[]{"TYPE", "Mesh", "Body", "Collider", "Mass", "Friction", "Restitution", "Linear Damping", "Gravity Scale", "Scale X", "Scale Y", "Scale Z", "Lock Rotation X", "Lock Rotation Z"})
+                                if (m.containsKey(k)) eo.addProperty(k, m.get(k));
+                            out.add("element", eo);
+                        }
+                    } catch (Throwable ignored) {
+                    }
+                }
+                return null;
+            }
             frameW[0] = f.width;
             frameH[0] = f.height;
             // gravity of the scene: parsed from its OnCreate code (setWorldGravity block)
@@ -109,6 +142,7 @@ final class PhysicsInfo {
             return null;
         });
 
+        if (is3D[0]) return info3D(a, out, gravity[0], gsrc[0]);
         double g = gravity[0];
         out.addProperty("gravity_px_s2", g);
         out.addProperty("gravity_source", gsrc[0]);
@@ -182,6 +216,57 @@ final class PhysicsInfo {
         safe.addProperty("platform_gap_comfortable_px", Math.round(move * air * 0.7));
         safe.addProperty("typical", "gravity 600-1000, walk 200-350, jump 400-450, bullets <= 450, enemies 80-150; walls/ground >= 20 px thick");
         safe.addProperty("units", "everything in px and px/s. Y IS UP. setVelocityY/jump: +up -down. setVelocityX: +right -left. setWorldGravity strength: + = falls down.");
+        out.add("safe_ranges", safe);
+        return ToolResult.text(out.toString());
+    }
+
+    /** 3D scenes (Bullet): meters, m/s, y up. No 8 px per step cap; gravity is the scene's Gravity Y. */
+    private static ToolResult info3D(JsonObject a, JsonObject out, double g, String gsrc) {
+        out.addProperty("units", "METERS and m/s, Y is UP, z = depth. 1 unit = 1 m. Bullet physics (elements with Body STATIC / DYNAMIC / KINEMATIC / TRIGGER).");
+        out.addProperty("gravity_m_s2", g);
+        out.addProperty("gravity_source", gsrc);
+        double move = num(a, "move_speed", 5);
+        out.addProperty("move_speed_m_s", move);
+        JsonObject jump = new JsonObject();
+        double jumpSpeed = num(a, "jump_speed", -1), jumpHeight = num(a, "jump_height", -1);
+        if (g <= 0) {
+            jump.addProperty("note", "gravity is 0: things float, a jump never comes down");
+            out.add("jump", jump);
+            return ToolResult.text(out.toString());
+        }
+        if (jumpSpeed <= 0 && jumpHeight > 0) jumpSpeed = Math.sqrt(2 * g * jumpHeight);
+        if (jumpSpeed <= 0) jumpSpeed = 5;
+        double height = jumpSpeed * jumpSpeed / (2 * g), air = 2 * jumpSpeed / g;
+        jump.addProperty("jump_speed_m_s", r1(jumpSpeed * 10) / 10.0);
+        jump.addProperty("height_m", r1(height * 10) / 10.0);
+        jump.addProperty("air_time_flat_s", r1(air * 100) / 100.0);
+        jump.addProperty("max_horizontal_reach_m", r1(move * air * 10) / 10.0);
+        jump.addProperty("how", "a DYNAMIC body: impulse or set velocity Y = " + String.format(Locale.US, "%.1f", jumpSpeed) + " m/s (positive = UP); only when grounded");
+        out.add("jump", jump);
+        JsonArray jumps = new JsonArray();
+        if (a.has("jumps") && a.get("jumps").isJsonArray()) {
+            for (JsonElement je : a.getAsJsonArray("jumps")) {
+                if (!je.isJsonObject()) continue;
+                JsonObject j = je.getAsJsonObject();
+                double gap = num(j, "gap", 0), rise = num(j, "rise", 0);
+                JsonObject r = new JsonObject();
+                if (j.has("name")) r.addProperty("name", CoreTools.s(j, "name"));
+                double disc = jumpSpeed * jumpSpeed - 2 * g * rise;
+                if (disc < 0) {
+                    r.addProperty("reachable", false);
+                    r.addProperty("why", "too high: the jump reaches " + String.format(Locale.US, "%.2f", height) + " m");
+                } else {
+                    double reach = move * (jumpSpeed + Math.sqrt(disc)) / g;
+                    r.addProperty("reach_m", r1(reach * 10) / 10.0);
+                    r.addProperty("reachable", gap <= reach * 0.9);
+                }
+                jumps.add(r);
+            }
+            out.add("jumps", jumps);
+        }
+        JsonObject safe = new JsonObject();
+        safe.addProperty("typical", "gravity 9.81 (Gravity Y -9.81), walk 3-6 m/s, run 8-10, car 15-40, jump 4-7 m/s (about 1-2.5 m high); a human is about 1.8 m tall (CAPSULE Scale Y ~0.9-1), a door 2 m, a floor 3 m");
+        safe.addProperty("bodies", "DYNAMIC = moved by forces/gravity (Mass), STATIC = ground/walls, KINEMATIC = moved by code/tweens and pushes dynamics, TRIGGER = no push, only collision events (pickups, zones). Collider AUTO fits the shape; use CAPSULE for characters (Lock Rotation X/Z true so they do not tip over).");
         out.add("safe_ranges", safe);
         return ToolResult.text(out.toString());
     }

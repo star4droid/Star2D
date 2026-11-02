@@ -319,7 +319,7 @@ public class ProjectsHomeView extends FrameLayout {
         } catch (Exception ignored) {}
 
         // Known templates first, in the designed order; any other example after them.
-        String[] order = {"StarValley", "platformer", "CarsExample", "Paul", "example1"};
+        String[] order = {"City3D", "HorrorHouse3D", "EndlessRoad3D", "SeaDock3D", "StarValley", "platformer", "CarsExample", "Paul", "example1"};
         List<String> sorted = new ArrayList<>();
         for (String o : order) if (examples.remove(o)) sorted.add(o);
         sorted.addAll(examples);
@@ -351,6 +351,18 @@ public class ProjectsHomeView extends FrameLayout {
             case "Paul":
                 return new String[]{"Character Demo", "Platformer",
                         "Animated player character controller demonstrating state machine actions and sprite animations."};
+            case "City3D":
+                return new String[]{"3D City Drive", "3D / Driving",
+                        "Drive a car with real wheels through a small 3D city: joystick or pedals, follow camera, minimap camera view and traffic."};
+            case "HorrorHouse3D":
+                return new String[]{"3D Horror House", "3D / Horror",
+                        "Walk around a house at night, find the key, open creaking doors, climb the stairs and explore with a flashlight. Inventory, sounds and screen effects."};
+            case "EndlessRoad3D":
+                return new String[]{"3D Endless Racer", "3D / Arcade",
+                        "Endless highway: dodge traffic, collect coins, speed grows with the distance. Score, distance and speed on the HUD."};
+            case "SeaDock3D":
+                return new String[]{"3D Sea Dock", "3D / Relax",
+                        "A pier on a calm sea with customizable water simulation. Walk to the bench and tap Sit: the camera sits down and stands up again."};
             case "example1":
                 return new String[]{"2D Starter Core", "Starter",
                         "Clean empty scene with 2D camera viewport, physics world, gravity and joints ready to build on."};

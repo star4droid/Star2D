@@ -15,7 +15,10 @@ final class ItemDefaults {
 
     private static final HashMap<String, LinkedHashMap<String, String>> CACHE = new HashMap<>();
 
-    /** type: BOX, CIRCLE, CUSTOM, TEXT, PROGRESS, JOYSTICK, PARTICLE, CAMERA, MAP, GROUP or LIGHT (lightType: point|directional|cone). */
+    /**
+     * type: BOX, CIRCLE, CUSTOM, TEXT, PROGRESS, JOYSTICK, PARTICLE, CAMERA, MAP, GROUP, UIHOLDER or LIGHT (lightType: point|directional|cone);
+     * 3D scenes: OBJ3D, LIGHT3D, CAMERA3D, and CAMERAVIEW (2D element of both scene kinds).
+     */
     static synchronized LinkedHashMap<String, String> of(String type, String lightType) {
         String t = type == null ? "" : type.toUpperCase();
         String key = t + (t.equals("LIGHT") ? "/" + (lightType == null || lightType.isEmpty() ? "point" : lightType.toLowerCase()) : "");
@@ -34,6 +37,10 @@ final class ItemDefaults {
             case "MAP": file = "map.json"; break;
             case "GROUP": file = "group.json"; break;
             case "UIHOLDER": file = "uiholder.json"; break;
+            case "OBJ3D": file = "obj3d.json"; break;
+            case "LIGHT3D": file = "light3d.json"; break;
+            case "CAMERA3D": file = "camera3d.json"; break;
+            case "CAMERAVIEW": file = "cameraview.json"; break;
             case "LIGHT": file = "Lights/" + key.substring(key.indexOf('/') + 1) + ".json"; break;
             default: file = null;
         }

@@ -8,6 +8,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 import com.star4droid.star2d.blocks.BehaviorBlocks;
+import com.star4droid.star2d.blocks.SceneDims;
 
 import java.io.File;
 import java.io.InputStream;
@@ -35,6 +36,8 @@ public final class BlockCatalog {
         public int color;
         /** Behavior ids: shown only while the scene uses one of them (null = always shown). */
         public String[] showWhen;
+        /** For which scenes: {@link SceneDims#D2}, {@link SceneDims#D3} or {@link SceneDims#BOTH} (0 = decided when added). */
+        public int dims;
 
         public BlockModel.Node create() {
             BlockModel.Node n = new BlockModel.Node();
@@ -53,13 +56,26 @@ public final class BlockCatalog {
         public String group, display, template;
         /** Behavior ids: shown only while the scene uses one of them (null = always shown). */
         public String[] showWhen;
+        /** For which scenes (see {@link Def#dims}). */
+        public int dims = SceneDims.BOTH;
+        /** Kinds of the ___ slots when known: e element, n number, t text, b condition (null = unknown). */
+        public String slots;
         Reporter(String g, String d, String t) { group = g; display = d; template = t; }
     }
 
     public static final LinkedHashMap<String, ArrayList<Def>> CATEGORIES = new LinkedHashMap<>();
     public static final ArrayList<Reporter> REPORTERS = new ArrayList<>();
     private static final HashMap<String, Integer> CATEGORY_COLOR = new HashMap<>();
+    /** Value-block group colors of the built-in 3D groups. */
+    private static final HashMap<String, Integer> GROUP_COLOR = new HashMap<>();
+    /** Field type (the part in brackets: "mode(followMode)") -> the values offered as chips. */
+    private static final HashMap<String, String[]> CHOICES = new HashMap<>();
     private static boolean loaded = false;
+
+    /** Values offered for a field type (null = none). */
+    public static String[] choices(String type) {
+        return type == null ? null : CHOICES.get(type);
+    }
 
     public static synchronized void load(Context c) {
         if (loaded) return;
@@ -78,6 +94,7 @@ public final class BlockCatalog {
         } catch (Exception ignored) {}
         overrideOriginals();
         addExtras();
+        add3D();
         // user custom nodes / blocks (same files as the LibGDX node library)
         File base = c.getExternalFilesDir(null);
         if (base != null) {
@@ -85,6 +102,9 @@ public final class BlockCatalog {
             loadCustomBlocks(new File(base, "Nodes/blocks.json"));
         }
         addReporters();
+        // 3D value blocks after the shared ones (the value groups keep their order)
+        REPORTERS.addAll(PENDING_3D);
+        PENDING_3D.clear();
         applyBehaviorBlocks(behaviorProject, true);
     }
 
@@ -170,6 +190,7 @@ public final class BlockCatalog {
     }
 
     private static void add(Def d) {
+        if (d.dims == 0) d.dims = defaultDims(d.category, d.title);
         ArrayList<Def> l = CATEGORIES.get(d.category);
         if (l == null) {
             l = new ArrayList<>();
@@ -240,6 +261,8 @@ public final class BlockCatalog {
         if (g == null) return 0xFF00838F;
         if (g.startsWith("★")) return 0xFF6D4C41;
         if (g.startsWith(BehaviorBlocks.CATEGORY_PREFIX)) return behaviorColor(g);
+        Integer gc = GROUP_COLOR.get(g);
+        if (gc != null) return gc;
         switch (g) {
             case "Operators": return 0xFF43A047;
             case "Math": return 0xFF2E7D32;
@@ -506,9 +529,12 @@ public final class BlockCatalog {
 
     private static void shape(String template, char k) { SHAPE_OF.put(template, k); }
 
-    private static void r(String g, String d, String t) {
-        REPORTERS.add(new Reporter(g, d, t));
+    private static Reporter r(String g, String d, String t) {
+        Reporter rep = new Reporter(g, d, t);
+        rep.dims = defaultReporterDims(g, d);
+        REPORTERS.add(rep);
         if (!GROUP_OF.containsKey(t)) GROUP_OF.put(t, g);
+        return rep;
     }
 
     // ------------------------------------------------------------------ user libraries
@@ -520,6 +546,7 @@ public final class BlockCatalog {
             for (JsonElement se : sections) {
                 JsonObject s = se.getAsJsonObject();
                 String cat = "★ " + BlockModel.str(s, "name", "Custom");
+                int secDims = SceneDims.of(s, SceneDims.BOTH);
                 if (!s.has("nodes")) continue;
                 for (JsonElement ne : s.getAsJsonArray("nodes")) {
                     JsonObject n = ne.getAsJsonObject();
@@ -539,6 +566,7 @@ public final class BlockCatalog {
                         }
                     d.fields = fs.toArray(new String[0]);
                     d.defaults = dv.toArray(new String[0]);
+                    d.dims = SceneDims.of(n, secDims);
                     add(d);
                     if (n.has("desc")) BlockInfo.setDescription(d.title, parseDesc(n.get("desc")));
                     if (n.has("labels")) BlockInfo.setLabels(d.title, parseDesc(n.get("labels")));
@@ -555,11 +583,12 @@ public final class BlockCatalog {
             for (JsonElement se : sections) {
                 JsonObject s = se.getAsJsonObject();
                 String g = "★ " + BlockModel.str(s, "name", "Custom");
+                int secDims = SceneDims.of(s, SceneDims.BOTH);
                 if (!s.has("blocks")) continue;
                 for (JsonElement be : s.getAsJsonArray("blocks")) {
                     JsonObject b = be.getAsJsonObject();
                     String code = BlockModel.str(b, "code", "%1$s");
-                    r(g, BlockModel.str(b, "title", "___"), code);
+                    r(g, BlockModel.str(b, "title", "___"), code).dims = SceneDims.of(b, secDims);
                     if (b.has("desc")) BlockInfo.setDescription(BlockModel.str(b, "title", "___"), parseDesc(b.get("desc")));
                     if (b.has("labels")) BlockInfo.setLabels(BlockModel.str(b, "title", "___"), parseDesc(b.get("labels")));
                     try { if (b.has("color")) TEMPLATE_COLOR.put(code, b.get("color").getAsInt()); } catch (Exception ignored) {}
@@ -677,9 +706,110 @@ public final class BlockCatalog {
         return false;
     }
 
-    public static boolean isVisible(Def d) { return isVisible(d.showWhen); }
+    /** Scene being edited: 0 = unknown (every 2D and 3D block shows), {@link SceneDims#D2} or {@link SceneDims#D3}. */
+    private static int sceneMode = 0;
 
-    public static boolean isVisible(Reporter r) { return isVisible(r.showWhen); }
+    /** 2D / 3D filter of the palette: pass {@link SceneDims#D2}, {@link SceneDims#D3} (or 0 for no filter). */
+    public static synchronized void setSceneMode(int mode) {
+        if (mode == sceneMode) return;
+        sceneMode = mode;
+        version++;
+    }
+
+    public static synchronized int sceneMode() { return sceneMode; }
+
+    /** Shown in the palette: right scene type (2D / 3D) and, for behavior blocks, a behavior the scene uses. */
+    public static boolean isVisible(Def d) { return SceneDims.visible(d.dims, sceneMode()) && isVisible(d.showWhen); }
+
+    public static boolean isVisible(Reporter r) { return SceneDims.visible(r.dims, sceneMode()) && isVisible(r.showWhen); }
+
+    /** True when a category has a block for this scene mode (0 = any). */
+    public static boolean categoryFor(String category, int mode) {
+        ArrayList<Def> l = CATEGORIES.get(category);
+        if (l == null) return false;
+        for (Def d : l) if (SceneDims.visible(d.dims, mode)) return true;
+        return false;
+    }
+
+    // ------------------------------------------------------------------ 2D / 3D
+
+    /** Built-in categories that only make sense in 2D scenes (Box2D bodies, joints, the 2D camera, sprite animations). */
+    private static final java.util.Set<String> CATS_2D = new java.util.HashSet<>(java.util.Arrays.asList(
+            "Camera", "BodyModify", "bodyControl", "bodyBooleans", "Joints", "Motion", "Physics"));
+    /** Built-in blocks of shared categories that are 2D only. */
+    private static final java.util.Set<String> TITLES_2D = new java.util.HashSet<>(java.util.Arrays.asList(
+            "setsplits", "ifCollision", "setGravity", "setTint", "setOpacity", "flipX", "bringToFront", "sendToBack",
+            "setAnimation", "removeAnimation"));
+    /** Built-in blocks of 2D categories that work in 3D scenes too. */
+    private static final java.util.Set<String> TITLES_BOTH = new java.util.HashSet<>(java.util.Arrays.asList("destroy", "destroyAfter"));
+    private static final java.util.Set<String> GROUPS_2D = new java.util.HashSet<>(java.util.Arrays.asList("PlayerItem", "Box2D Body"));
+    private static final java.util.Set<String> REPORTERS_2D = new java.util.HashSet<>(java.util.Arrays.asList(
+            "___ touches ___", "x of ___", "y of ___", "speed x of ___", "speed y of ___", "angle of ___", "distance ___ to ___",
+            "angle ___ to ___", "width of ___", "height of ___", "touch x", "touch y", "camera x", "camera y", "getCamera()"));
+
+    static int defaultDims(String category, String title) {
+        if (category == null || category.startsWith("★") || category.startsWith(BehaviorBlocks.CATEGORY_PREFIX)) return SceneDims.BOTH;
+        if (TITLES_BOTH.contains(title)) return SceneDims.BOTH;
+        if (CATS_2D.contains(category) || TITLES_2D.contains(title)) return SceneDims.D2;
+        return SceneDims.BOTH;
+    }
+
+    static int defaultReporterDims(String group, String display) {
+        if (GROUPS_2D.contains(group) || REPORTERS_2D.contains(display)) return SceneDims.D2;
+        return SceneDims.BOTH;
+    }
+
+    private static final ArrayList<Reporter> PENDING_3D = new ArrayList<>();
+
+    /** The 3D blocks (and Inventory) of {@link Blocks3D}. */
+    private static void add3D() {
+        Blocks3D.register(new Blocks3D.Sink() {
+            @Override
+            public void category(String name, int color, String en, String ar) {
+                CATEGORY_COLOR.put(name, color);
+                GROUP_COLOR.put(name, color);
+                BlockInfo.builtinCategory(name, en, ar);
+            }
+
+            @Override
+            public void def(String cat, int color, String title, String fields, String defaults, boolean isIf, String code, int dims,
+                            String en, String ar, String infoEn, String infoAr) {
+                Def d = new Def();
+                d.category = cat;
+                d.color = color;
+                d.title = title;
+                d.fields = fields.isEmpty() ? new String[0] : fields.split(" ");
+                d.defaults = defaults == null || defaults.isEmpty() ? null : defaults.split("\\|", -1);
+                d.isIf = isIf;
+                d.code = code;
+                d.dims = dims;
+                add(d);
+                BlockInfo.builtinBlock(title, en, ar, infoEn, infoAr);
+            }
+
+            @Override
+            public void reporter(String group, String display, String template, char shape, String slots, int dims, String displayAr,
+                                 String infoEn, String infoAr) {
+                Reporter rep = new Reporter(group, display, template);
+                rep.dims = dims;
+                rep.slots = slots;
+                PENDING_3D.add(rep);
+                if (!GROUP_OF.containsKey(template)) GROUP_OF.put(template, group);
+                SHAPE_OF.put(template, shape);
+                BlockInfo.builtinReporter(display, displayAr, infoEn, infoAr);
+            }
+
+            @Override
+            public void field(String name, String en, String ar) {
+                BlockInfo.builtinField(name, en, ar);
+            }
+
+            @Override
+            public void choices(String type, String[] values) {
+                CHOICES.put(type, values);
+            }
+        });
+    }
 
     /** Ids of every behavior that has blocks (built-in and the project's). */
     public static java.util.Set<String> behaviorsWithBlocks(String projectPath) {

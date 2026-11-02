@@ -170,7 +170,11 @@ public class BlockEditorActivity extends AppCompatActivity implements BlockCanva
         canvas.setMirror(mirror);
         canvas.setRootParams(eventParams(file));
         canvas.setModel(model, rootLabel());
-        if (!BlockCatalog.CATEGORIES.isEmpty()) currentCategory = BlockCatalog.CATEGORIES.keySet().iterator().next();
+        for (Map.Entry<String, ArrayList<BlockCatalog.Def>> ce : BlockCatalog.CATEGORIES.entrySet())
+            if (hasVisibleBlocks(ce.getValue())) {
+                currentCategory = ce.getKey();
+                break;
+            }
         build();
         canvas.post(canvas::home);
         runCheck(false);
@@ -254,6 +258,10 @@ public class BlockEditorActivity extends AppCompatActivity implements BlockCanva
      * event uses (or that this event already uses / adds with addBehavior).
      */
     private void refreshBehaviorBlocks() {
+        // 2D or 3D scene (configs/<scene>.json "sceneType"): the palette shows only the blocks made for it
+        try {
+            BlockCatalog.setSceneMode(com.star4droid.star2d.blocks.SceneDims.modeOfEventPath(file.getAbsolutePath()));
+        } catch (Throwable ignored) {}
         try {
             BlockCatalog.applyBehaviorBlocks(projectKey);
             java.util.HashSet<String> ids = new java.util.HashSet<>(com.star4droid.star2d.blocks.SceneBehaviors.inProject(projectKey,
@@ -879,12 +887,42 @@ public class BlockEditorActivity extends AppCompatActivity implements BlockCanva
     private void commitValue() {
         if (editField == null || valueInput == null) return;
         String nv = valueInput.getText().toString();
+        if (isGlsl(editField)) nv = escapeGlsl(nv);
         if (nv.equals(editField.value)) return;
         beforeChange();
         editField.value = nv;
         if (!nv.isEmpty()) editField.block = null; // a typed value replaces the value block
         canvas.changed();
         afterChange();
+    }
+
+    /** A shader code field ("code(glsl)"): typed on several lines, kept as the inside of a Java string. */
+    static boolean isGlsl(BlockModel.Field f) {
+        return f != null && "glsl".equalsIgnoreCase(f.type());
+    }
+
+    static String escapeGlsl(String text) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < text.length(); i++) {
+            char ch = text.charAt(i);
+            if (ch == '\\') sb.append("\\\\");
+            else if (ch == '"') sb.append("\\\"");
+            else if (ch == '\n') sb.append("\\n");
+            else if (ch != '\r') sb.append(ch);
+        }
+        return sb.toString();
+    }
+
+    static String unescapeGlsl(String v) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < v.length(); i++) {
+            char ch = v.charAt(i);
+            if (ch == '\\' && i + 1 < v.length()) {
+                char n = v.charAt(++i);
+                sb.append(n == 'n' ? '\n' : n);
+            } else sb.append(ch);
+        }
+        return sb.toString();
     }
 
     private static final java.util.HashSet<String> NUMERIC = new java.util.HashSet<>(java.util.Arrays.asList(
@@ -951,6 +989,8 @@ public class BlockEditorActivity extends AppCompatActivity implements BlockCanva
             case "sound": return "sounds";
             case "animation": return "anims";
             case "scene": return "scenes";
+            case "model": return "models";
+            case "shader": return "shaders";
         }
         if (l.equals("path") || l.equals("file")) return "files";
         if (l.equals("image")) return "images";
@@ -961,9 +1001,12 @@ public class BlockEditorActivity extends AppCompatActivity implements BlockCanva
     private void browse(BlockModel.Field f, String folder, String title) {
         File root = new File(projectKey, folder);
         String[] ext = folder.equals("images") ? new String[]{"png", "jpg", "jpeg"}
-                : folder.equals("sounds") ? new String[]{"mp3", "ogg", "wav", "m4a"} : null;
+                : folder.equals("sounds") ? new String[]{"mp3", "ogg", "wav", "m4a"}
+                : folder.equals("models") ? new String[]{"glb", "gltf"}
+                : folder.equals("shaders") ? new String[]{"glsl"} : null;
         FilePickerDialog.show(this, title, root.getAbsolutePath(), ext, folder.equals("images"), (file, rel) -> {
             String v = folder.equals("anims") || folder.equals("scenes") ? file.getName() : rel;
+            if (folder.equals("shaders")) v = "shaders/" + (rel.endsWith(".glsl") ? rel.substring(0, rel.length() - 5) : rel);
             if (folder.equals("files")) v = "\"" + new File(root, rel).getAbsolutePath().replace("\"", "") + "\"";
             if (valueInput != null && editField == f) {
                 valueInput.setText(v);
@@ -973,7 +1016,7 @@ public class BlockEditorActivity extends AppCompatActivity implements BlockCanva
     }
 
     private boolean isCodeField(BlockModel.Node node, BlockModel.Field f) {
-        return f.label().equals("code") || (node != null && (node.title.equals("addSource") || node.title.equals("codeLine")));
+        return f.label().equals("code") || isGlsl(f) || (node != null && (node.title.equals("addSource") || node.title.equals("codeLine")));
     }
 
     private void showValuePane() {
@@ -1002,7 +1045,7 @@ public class BlockEditorActivity extends AppCompatActivity implements BlockCanva
 
         // typed value
         LinearLayout in = Ui.row(c);
-        valueInput = Ui.input(c, field.value, field.block != null ? "ƒ " + field.block.text() : label);
+        valueInput = Ui.input(c, isGlsl(field) ? unescapeGlsl(field.value) : field.value, field.block != null ? "ƒ " + field.block.text() : label);
         Tut.tag(valueInput, "blocks:value_input");
         if (code) {
             valueInput.setSingleLine(false);
@@ -1469,6 +1512,12 @@ public class BlockEditorActivity extends AppCompatActivity implements BlockCanva
         String l = label.toLowerCase(Locale.ROOT);
         ArrayList<String> items = hints.containsKey("Items") ? hints.get("Items") : new ArrayList<>();
         String elements = Tr.t("blk_elements", "Elements"), vars = Tr.t("blk_variables", "Variables");
+        String[] choices = BlockCatalog.choices(type);
+        if (choices != null) {
+            // a list of values (camera modes, lighting presets, render styles…)
+            out.put(Tr.t("blk_options", "Options"), new ArrayList<>(java.util.Arrays.asList(choices)));
+            return out;
+        }
         if (t.equals("body") || l.equals("joystick") || l.equals("target") || l.equals("ui") || l.equals("holder")) {
             ArrayList<String> s = new ArrayList<>();
             s.add("current");

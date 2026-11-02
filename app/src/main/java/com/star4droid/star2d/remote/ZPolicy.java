@@ -54,10 +54,14 @@ final class ZPolicy {
         return new float[]{f(m, "x", 0), f(m, "y", 0), w, h};
     }
 
-    /** Elements this policy cares about (the others keep their z): real visible things, not groups/cameras/lights. */
+    /**
+     * Elements this policy cares about (the others keep their z): real visible things, not groups/cameras/lights.
+     * 3D elements (OBJ3D, LIGHT3D, CAMERA3D) never count: their z is a depth in meters, not a draw order.
+     */
     static boolean counts(Map<String, String> m) {
         String k = kind(m);
-        return k.equals("BOX") || k.equals("CIRCLE") || k.equals("CUSTOM") || k.equals("MAP") || k.equals("TEXT") || k.equals("PROGRESS") || k.equals("JOYSTICK") || k.equals("PARTICLE");
+        if (SceneInfo.is3DType(k)) return false;
+        return k.equals("CAMERAVIEW") || k.equals("BOX") || k.equals("CIRCLE") || k.equals("CUSTOM") || k.equals("MAP") || k.equals("TEXT") || k.equals("PROGRESS") || k.equals("JOYSTICK") || k.equals("PARTICLE");
     }
 
     /** A big element that acts as the scene background: covers >= 80% of the frame, is not a label/joystick. */

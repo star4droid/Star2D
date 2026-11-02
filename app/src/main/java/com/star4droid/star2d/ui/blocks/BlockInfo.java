@@ -272,6 +272,22 @@ public final class BlockInfo {
         b("logValue", "Log value", "سجّل قيمة", "Writes any value to the debug log.", "يكتب أي قيمة في سجل التصحيح.");
     }
 
+    // ---- built-in blocks registered from code (Blocks3D): same tables as above
+    /** Value block display (en) -> {display ar, info en, info ar} of built-in value blocks registered from code. */
+    private static final HashMap<String, String[]> REP_FIXED = new HashMap<>();
+
+    static synchronized void builtinCategory(String cat, String en, String ar) { c(cat, en, ar); }
+
+    static synchronized void builtinBlock(String title, String en, String ar, String infoEn, String infoAr) { b(title, en, ar, infoEn, infoAr); }
+
+    static synchronized void builtinField(String name, String en, String ar) { if (!FIELD.containsKey(name)) f(name, en, ar); }
+
+    static synchronized void builtinReporter(String display, String ar, String infoEn, String infoAr) {
+        REP_FIXED.put(display, new String[]{ar, infoEn, infoAr});
+    }
+
+    private static synchronized String[] repFixed(String display) { return REP_FIXED.get(display); }
+
     /** Translation override from the language files (fr, pt, ru, es…), or null. */
     private static String tr(String key) {
         return com.star4droid.star2d.ui.Tr.t(key, null);
@@ -349,7 +365,11 @@ public final class BlockInfo {
         if (exact != null) return exact;
         String t = tr("blk_i_" + key(display));
         if (t != null) return t;
-        return description(display);
+        String d = description(display);
+        if (d != null) return d;
+        String[] fx = repFixed(display);
+        if (fx != null) return "ar".equals(com.star4droid.star2d.ui.Tr.lang()) ? fx[2] : fx[1];
+        return null;
     }
 
     /** The description written in the app language itself (no fallback), or null. */
@@ -443,6 +463,8 @@ public final class BlockInfo {
                 a = REP_AR.get(display);
             }
             if (a != null && "ar".equals(com.star4droid.star2d.ui.Tr.lang()) && BlockModel.Param.count(a, "___") == BlockModel.Param.count(display, "___")) return a;
+            String[] fx = repFixed(display);
+            if (fx != null && "ar".equals(com.star4droid.star2d.ui.Tr.lang()) && BlockModel.Param.count(fx[0], "___") == BlockModel.Param.count(display, "___")) return fx[0];
             return display;
         }
         // a translation must keep the same number of slots

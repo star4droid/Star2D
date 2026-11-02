@@ -482,7 +482,13 @@ public final class RemoteDocs {
                 .append("[container] blocks take \"do\" (and \"else\" when listed).\n\n");
         for (Map.Entry<String, ArrayList<BlockCatalog.Def>> e : BlockCatalog.CATEGORIES.entrySet()) {
             if (e.getValue().isEmpty()) continue;
-            sb.append("### ").append(e.getKey()).append("\n");
+            sb.append("### ").append(e.getKey());
+            boolean only2 = true, only3 = true;
+            for (BlockCatalog.Def d : e.getValue()) {
+                if (d.dims != com.star4droid.star2d.blocks.SceneDims.D2) only2 = false;
+                if (d.dims != com.star4droid.star2d.blocks.SceneDims.D3) only3 = false;
+            }
+            sb.append(only3 ? " (3D scenes only)" : only2 ? " (2D scenes only)" : "").append("\n");
             for (BlockCatalog.Def d : e.getValue()) {
                 sb.append("- `").append(d.title).append("(");
                 StringBuilder defs = new StringBuilder();
@@ -509,6 +515,7 @@ public final class RemoteDocs {
                 }
                 sb.append("`");
                 if (defs.length() > 0) sb.append(" - defaults ").append(defs);
+                if (d.dims == com.star4droid.star2d.blocks.SceneDims.D2 && !only2) sb.append(" [2D only]");
                 String note = BLOCK_NOTES.get(d.title);
                 if (note != null) sb.append(" (").append(note).append(")");
                 sb.append("\n");
@@ -531,6 +538,8 @@ public final class RemoteDocs {
             sb.append("### ").append(g.getKey()).append("\n");
             for (BlockCatalog.Reporter r : g.getValue()) {
                 sb.append("- `").append(r.display).append("`");
+                if (r.dims == com.star4droid.star2d.blocks.SceneDims.D3) sb.append(" [3D]");
+                else if (r.dims == com.star4droid.star2d.blocks.SceneDims.D2) sb.append(" [2D]");
                 if (BlockCatalog.isBooleanTemplate(r.template)) sb.append(" [bool]");
                 else if (BlockCatalog.isTextTemplate(r.template)) sb.append(" [text]");
                 String note = REPORTER_NOTES.get(r.display);

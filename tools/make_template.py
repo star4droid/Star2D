@@ -323,12 +323,30 @@ def build(apk, assets):
             if matches(pats, stem + ".java") or stem == "com/star4droid/star2d/Helpers/Project":
                 names.append((rel, os.path.join(dp, fn)))
     names.sort()
+    # 3D: Bullet and gdx-gltf classes too, so scripts / behaviors compiled on the phone may use them
+    extra_jars = []
+    for pat in ("com.badlogicgames.gdx/gdx-bullet/*/*/gdx-bullet-*.jar", "com.github.mgsx-dev.gdx-gltf/gltf/*/*/gltf-*.jar"):
+        found = sorted(glob.glob(os.path.join(os.path.expanduser("~"), ".gradle", "caches", "modules-2", "files-2.1", pat)))
+        found = [j for j in found if not j.endswith("-sources.jar") and not j.endswith("-javadoc.jar")]
+        if found:
+            extra_jars.append(found[-1])
+    have = set(rel for rel, _ in names)
     with zipfile.ZipFile(out_game, "w", zipfile.ZIP_DEFLATED) as z:
         for rel, full in names:
             zi = zipfile.ZipInfo(rel, (1980, 1, 1, 0, 0, 0))
             zi.compress_type = zipfile.ZIP_DEFLATED
             with open(full, "rb") as f:
                 z.writestr(zi, f.read())
+        for jar in extra_jars:
+            with zipfile.ZipFile(jar) as zj:
+                for info in zj.infolist():
+                    if not info.filename.endswith(".class") or info.filename in have:
+                        continue
+                    have.add(info.filename)
+                    zi = zipfile.ZipInfo(info.filename, (1980, 1, 1, 0, 0, 0))
+                    zi.compress_type = zipfile.ZIP_DEFLATED
+                    z.writestr(zi, zj.read(info.filename))
+                    names.append((info.filename, jar))
 
     # 4) version
     with open(out_version, "w") as f:

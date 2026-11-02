@@ -37,7 +37,7 @@ final class LayoutCheck {
     }
 
     private static boolean isUi(LinkedHashMap<String, String> m) {
-        if (type(m).equals("GROUP")) return false;
+        if (type(m).equals("GROUP") || SceneInfo.is3DType(type(m))) return false; // 3D elements: meters, not screen pixels
         if (type(m).equals("UIHOLDER")) return true;
         return "UI".equalsIgnoreCase(m.get("type")) || type(m).equals("JOYSTICK");
     }
@@ -118,9 +118,31 @@ final class LayoutCheck {
                 if ((r[2] < MIN_TOUCH || r[3] < MIN_TOUCH) && touchy(ed, p, scene, m))
                     add(problems, "small_touch", m.get("name"), null, "touch target is " + Math.round(r[2]) + "x" + Math.round(r[3]) + " px; fingers need >= " + Math.round(MIN_TOUCH) + " px. Enlarge it.");
             }
-            // 5. draw order (z): background covering things, hidden elements, UI under the world
+            // 5. draw order (z): background covering things, hidden elements, UI under the world (2D elements only)
             ZPolicy.check(all, sw, sh, problems);
+            // 6. 3D scene: the 3D world is drawn first, the 2D layer on top; it needs a main camera
+            int n3d = 0;
+            if (frame.is3D) {
+                boolean activeCam = false, anyCam = false;
+                for (LinkedHashMap<String, String> m : all) {
+                    if (!SceneInfo.is3DElement(m)) continue;
+                    n3d++;
+                    if (type(m).equals("CAMERA3D")) {
+                        anyCam = true;
+                        if (!"false".equalsIgnoreCase(m.get("Active"))) activeCam = true;
+                    }
+                }
+                if (!anyCam)
+                    add(problems, "no_camera3d", null, null, "3D scene without a CAMERA3D: add one (elements add {type:'CAMERA3D', props:{Active:true}}) so the game has a main camera that you control (position, Follow, Follow Mode).");
+                else if (!activeCam)
+                    add(problems, "no_active_camera3d", null, null, "No CAMERA3D has Active true: set Active true on the main camera.");
+            }
             out.addProperty("scene", scene);
+            out.addProperty("sceneType", frame.is3D ? "3D" : "2D");
+            if (frame.is3D) {
+                out.addProperty("elements_3d", n3d);
+                out.addProperty("note_3d", "Only the 2D layer (px) and the 3D camera are checked here; 3D positions are meters. Look at the 3D world with screenshot.");
+            }
             out.addProperty("frame", SceneInfo.describe(frame));
             out.addProperty("screen", Math.round(sw) + "x" + Math.round(sh));
             out.addProperty("ui_elements", ui.size());

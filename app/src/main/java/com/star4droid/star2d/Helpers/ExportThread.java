@@ -28,6 +28,8 @@ public class ExportThread extends Thread {
 	String state_prefix="";
 	/** Export option: pack the small images into a few tileset pages (see TilesetPacker). */
 	public static boolean mergeTilesets=false;
+	/** Leave out the x86 / x86_64 libraries (phones are ARM): a smaller APK. */
+	public static boolean armOnly=false;
 	public static String TEMPLATE_NOT_FOUND="Template apk not found!";
 	public ExportThread(Context ctx,String p,Uri savePath,String imgPath,String[] manifestV){
 		context = ctx;
@@ -123,6 +125,7 @@ public class ExportThread extends Thread {
 			//FileUtil.copyFile(apk_path,dataDir+"/export.apk");
 			
 			Utils.zipFolderContents(export_temp,dataDir+"/export.apk","");
+			stripNatives(dataDir+"/export.apk");
 			onProgress("Signing...");
 			
 			FileUtil.writeFile(dataDir+"/export.sign.apk","");
@@ -161,6 +164,30 @@ public class ExportThread extends Thread {
 		}
 	}
 	
+	/** Smaller APK: no Bullet (3D physics) library when the project has no 3D scene, no x86 libraries when asked. */
+	private void stripNatives(String apk){
+		try {
+			boolean has3D = false;
+			java.io.File[] cfgs = new java.io.File(project+"/configs").listFiles();
+			if(cfgs != null) for(java.io.File f : cfgs){
+				String t = FileUtil.readFile(f.getAbsolutePath());
+				if(t != null && t.replace(" ","").contains("\"sceneType\":\"3D\"")) { has3D = true; break; }
+			}
+			ZipFile z = new ZipFile(apk);
+			java.util.ArrayList<String> rm = new java.util.ArrayList<>();
+			for(Object o : z.getFileHeaders()){
+				String n = ((net.lingala.zip4j.model.FileHeader) o).getFileName();
+				if(!n.startsWith("lib/")) continue;
+				if(!has3D && n.endsWith("libgdx-bullet.so")) rm.add(n);
+				else if(armOnly && (n.startsWith("lib/x86/") || n.startsWith("lib/x86_64/"))) rm.add(n);
+			}
+			if(!rm.isEmpty()) z.removeFiles(rm);
+			if(!rm.isEmpty()) onProgress("Left out "+rm.size()+" native libraries"+(has3D?"":" (no 3D scene: no Bullet)"));
+		} catch(Throwable t){
+			onProgress("Native libraries kept: "+t);
+		}
+	}
+
 	public void onSuccess(final String message){
 		post(()->{
 			if(dialog!=null&&dialog.isShowing()) dialog.dismiss();

@@ -96,6 +96,7 @@ final class CoreTools {
             o.addProperty("orientation", ed.isLandscape() ? "landscape" : "portrait");
             // plain words first: this is the frame every x/y/width/height you type lives in
             o.addProperty("frame", SceneInfo.describe(ed, p, ed.getScene()));
+            o.addProperty("sceneType", !ed.isLoading() && ed.is3DScene() ? "3D" : "2D");
             o.addProperty("project_orientation", Proj.projectOrientation(null));
             JsonObject logic = new JsonObject();
             logic.addProperty("width", ed.getLogicWidth());
@@ -205,6 +206,7 @@ final class CoreTools {
                     }
                 }
                 so.addProperty("frame", SceneInfo.describe(ed, p, n));
+                so.addProperty("sceneType", SceneInfo.is3DScene(ed, p, n) ? "3D" : "2D");
                 scenes.add(so);
             }
             o.add("scenes", scenes);
@@ -231,7 +233,7 @@ final class CoreTools {
 
     private static JsonObject assets(Project p) {
         JsonObject o = new JsonObject();
-        for (String dir : new String[]{"images", "sounds", "anims", "files", "scripts"}) {
+        for (String dir : new String[]{"images", "sounds", "anims", "files", "scripts", "models", "shaders"}) {
             JsonArray arr = new JsonArray();
             ArrayList<String> names = new ArrayList<>();
             collect(Gdx.files.absolute(p.get(dir)), "", names, 150);
@@ -321,6 +323,7 @@ final class CoreTools {
             boolean live = scene.equals(ed.getScene());
             if (live && ed.isLoading()) throw new Gl.ToolError("The scene is still loading, try again in a moment.");
             o.addProperty("frame", SceneInfo.describe(ed, p, scene));
+            o.addProperty("sceneType", SceneInfo.is3DScene(ed, p, scene) ? "3D" : "2D");
             FileHandle cf = Gdx.files.absolute(p.getConfig(scene));
             try {
                 if (cf.exists()) o.add("config", JsonParser.parseString(cf.readString()));
@@ -329,7 +332,13 @@ final class CoreTools {
             JsonArray els = new JsonArray();
             boolean brief = b(a, "brief", false);
             for (LinkedHashMap<String, String> m : live ? liveElements(ed) : fileElements(p, scene)) {
-                if (brief) els.add(m.get("name") + " " + m.get("TYPE") + " @" + m.get("x") + "," + m.get("y") + " " + m.get("width") + "x" + m.get("height")
+                if (brief && SceneInfo.is3DElement(m)) // meters: position x,y,z, rotation and scale
+                    els.add(m.get("name") + " " + m.get("TYPE") + (m.containsKey("Mesh") ? " " + m.get("Mesh") : m.containsKey("Light Kind") ? " " + m.get("Light Kind") : "")
+                            + " @" + m.get("x") + "," + m.get("y") + "," + m.get("z") + " m rot " + m.get("Rotation X") + "," + m.get("Rotation Y") + "," + m.get("Rotation Z")
+                            + (m.containsKey("Scale X") ? " scale " + m.get("Scale X") + "," + m.get("Scale Y") + "," + m.get("Scale Z") : "")
+                            + (m.get("Model") != null && !m.get("Model").isEmpty() ? " " + m.get("Model") : "")
+                            + (m.get("Body") != null && !"NONE".equals(m.get("Body")) ? " body " + m.get("Body") : ""));
+                else if (brief) els.add(m.get("name") + " " + m.get("TYPE") + " @" + m.get("x") + "," + m.get("y") + " " + m.get("width") + "x" + m.get("height")
                         + (m.get("image") != null && !m.get("image").isEmpty() ? " " + m.get("image") : ""));
                 else els.add(nonDefault(m));
             }

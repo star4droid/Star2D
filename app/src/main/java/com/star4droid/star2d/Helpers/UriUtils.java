@@ -29,7 +29,7 @@ public class UriUtils {
 			checkAndCreateUriFile(destinationUri,context);
 			InputStream inputStream = context.getContentResolver().openInputStream(sourceUri);
 			if (inputStream != null) {
-				OutputStream outputStream = context.getContentResolver().openOutputStream(destinationUri);
+				OutputStream outputStream = context.getContentResolver().openOutputStream(destinationUri, "wt");
 				if (outputStream != null) {
 					copyStream(inputStream, outputStream);
 					inputStream.close();

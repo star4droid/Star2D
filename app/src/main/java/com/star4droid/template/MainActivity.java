@@ -20,7 +20,7 @@ public class MainActivity extends AndroidApplication {
 			}
 		}
 		AndroidApplicationConfiguration configuration= new AndroidApplicationConfiguration();
-		StageImp dex = StageImp.getFromDex((getIntent().hasExtra("path")&&(!getIntent().getStringExtra("path").equals("")))?getIntent().getStringExtra("path"):(new java.io.File(getFilesDir()+"/game/").listFiles()[0]+""),
+		StageImp dex = StageImp.getFromDex((getIntent().hasExtra("path")&&(!getIntent().getStringExtra("path").equals("")))?getIntent().getStringExtra("path"):firstGameDir(),
 		(getIntent().hasExtra("scene")&&(!getIntent().getStringExtra("scene").equals("")))?getIntent().getStringExtra("scene"):"scene1",null,null);
 		if(dex != null)
 		    initialize(dex,configuration);
@@ -32,6 +32,14 @@ public class MainActivity extends AndroidApplication {
 		}
 	}
 	
+	private String firstGameDir() {
+		java.io.File[] l = new java.io.File(getFilesDir() + "/game/").listFiles();
+		if (l == null || l.length == 0) return "";
+		java.util.Arrays.sort(l);
+		for (java.io.File f : l) if (f.isDirectory()) return f.getPath();
+		return l[0].getPath();
+	}
+
 	@Override
 	protected void onResume(){
 		super.onResume();

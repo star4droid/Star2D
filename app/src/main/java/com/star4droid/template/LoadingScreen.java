@@ -15,7 +15,7 @@ import net.lingala.zip4j.ZipFile;
 import com.star4droid.star2d.evo.R;
 
 public class LoadingScreen extends Activity {
-	boolean timerEnded = false,extracted=false;
+	volatile boolean timerEnded = false,extracted=false,crashDone=false;
 	String path="",scene="scene1";
 	SharedPreferences sh;
 	@Override
@@ -29,23 +29,41 @@ public class LoadingScreen extends Activity {
 			if(scene==null||scene.equals("")) scene = "scene1";
 		}
 		sh = getSharedPreferences("game",MODE_PRIVATE);
-		if((!extracted)&&sh.getString("version","").equals(readAssetFile("version",this))){
-			extracted = true;
+		if(!extracted) CrashLog.install(this);
+		final String assetVersion = readAssetFile("version",this);
+		final File gameDir = new File(getFilesDir(),"game");
+		String[] existing = gameDir.list();
+		if((!extracted)&&sh.getString("version","").equals(assetVersion)&&existing!=null&&existing.length>0){
+			extracted = true; // same build as the extracted one
 		} else if(!extracted)
 		new Thread(){
 			public void run(){
 				try {
-					extractAssetFile(LoadingScreen.this,"project.zip",getFilesDir()+"/temp.file.zip");
-					ZipFile zipFile = new ZipFile(getFilesDir()+"/temp.file.zip");
+					// a new build: everything of the old one goes (images, atlas pages, scenes, scripts of another project with the same package)
+					File tmp = new File(getFilesDir(),"game.tmp");
+					deleteRec(tmp);
+					File zip = new File(getFilesDir(),"temp.file.zip");
+					zip.delete();
+					extractAssetFile(LoadingScreen.this,"project.zip",zip.getPath());
+					ZipFile zipFile = new ZipFile(zip.getPath());
 					zipFile.setPassword("tulsgskdiensl626__Xxmoishs".toCharArray());
-					zipFile.extractAll(getFilesDir()+"/game/");
+					zipFile.extractAll(tmp.getPath());
+					zip.delete();
+					deleteRec(gameDir);
+					if(!tmp.renameTo(gameDir)) throw new java.io.IOException("Could not move the extracted game into place");
+					sh.edit().putString("version",assetVersion).commit();
 					extracted = true;
 					openApp();
-				} catch(Exception e){
-					((TextView)findViewById(R.id.text)).setText("error :\n"+Utils.getStackTraceString(e));
+				} catch(final Exception e){
+					sh.edit().remove("version").commit();
+					runOnUiThread(new Runnable(){ public void run(){
+						((TextView)findViewById(R.id.text)).setText("error :\n"+Utils.getStackTraceString(e));
+					}});
 				}
 			}
 		}.start();
+		if(getIntent().hasExtra("path")&&!getIntent().getStringExtra("path").equals("")) crashDone = true; // test run from the editor
+		else CrashLog.showPrevious(this,new Runnable(){ public void run(){ crashDone = true; openApp(); }});
 		new Timer().schedule(new TimerTask(){
 			@Override
 			public void run() {
@@ -55,12 +73,22 @@ public class LoadingScreen extends Activity {
 		},1500);
 	}
 	
-	private void openApp(){
-		if(extracted&&timerEnded){
+	static void deleteRec(File f){
+		if(f==null||!f.exists()) return;
+		File[] l = f.listFiles();
+		if(l!=null) for(File c : l) deleteRec(c);
+		f.delete();
+	}
+
+	private boolean opened;
+	private synchronized void openApp(){
+		if(opened) return;
+		if(extracted&&timerEnded&&crashDone){
 			Intent intent = new Intent();
 			intent.putExtra("path",path);
 			intent.putExtra("scene",scene);
 			intent.setClass(this,MainActivity.class);
+			opened = true;
 			startActivity(intent);
 			finish();
 		}

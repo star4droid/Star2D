@@ -5,5 +5,11 @@
  "fit": "stretch,contain,cover",
  "layout": "free,screen",
  "anchor": "topleft,top,topright,left,center,right,bottomleft,bottom,bottomright",
- "Pivot": "center,left,right,top,bottom,topleft,topright,bottomleft,bottomright,custom"
+ "Pivot": "center,left,right,top,bottom,topleft,topright,bottomleft,bottomright,custom",
+ "Mesh": "CUBE,SPHERE,CYLINDER,CAPSULE,CONE,PLANE,TORUS,RAMP,STAIRS,PYRAMID,HEMISPHERE,TUBE,WEDGE,QUAD,DISC,MODEL,TERRAIN,WATER,EMPTY",
+ "Body": "NONE,STATIC,DYNAMIC,KINEMATIC,TRIGGER",
+ "Collider": "AUTO,BOX,SPHERE,CAPSULE,CYLINDER,CONE,MESH,CONVEX",
+ "Water Quality": "AUTO,LOW,MEDIUM,HIGH",
+ "Light Kind": "POINT,SPOT,DIRECTIONAL",
+ "Follow Mode": "NONE,THIRD_PERSON,FIRST_PERSON,ORBIT,TOP_DOWN,SIDE,LOOK_AT"
 }

@@ -55,7 +55,7 @@ public class PropertiesPanel implements PanelHost.Panel {
     private LinearLayout content;
     private TextView header;
 
-    private static LinkedHashMap<String, String[]> sections;
+    private static LinkedHashMap<String, String[]> sections, sections3d;
     private static HashMap<String, String> typeOf;
     private static HashMap<String, String[]> spinners;
 
@@ -101,6 +101,14 @@ public class PropertiesPanel implements PanelHost.Panel {
                 ArrayList<String> fields = new ArrayList<>();
                 for (String f : e.getValue().split(",")) if (!f.trim().isEmpty()) fields.add(f.trim());
                 sections.put(e.getKey(), fields.toArray(new String[0]));
+            }
+            sections3d = new LinkedHashMap<>();
+            Map<String, String> map3 = readJson(c, "map3d.json");
+            for (Map.Entry<String, String> e : map3.entrySet()) {
+                if (e.getKey().equals("static")) continue;
+                ArrayList<String> fields = new ArrayList<>();
+                for (String f : e.getValue().split(",")) if (!f.trim().isEmpty()) fields.add(f.trim());
+                sections3d.put(e.getKey(), fields.toArray(new String[0]));
             }
             Map<String, String> types = readJson(c, "types.json");
             for (Map.Entry<String, String> e : types.entrySet())
@@ -279,7 +287,8 @@ public class PropertiesPanel implements PanelHost.Panel {
         String type = (String) snap[2];
         header.setText(Tr.t("ui_type_" + (type == null ? "" : type.toLowerCase()), type) + " · " + name);
 
-        for (Map.Entry<String, String[]> sec : sections.entrySet()) {
+        LinkedHashMap<String, String[]> secs = is3dType(type) && sections3d != null && !sections3d.isEmpty() ? sections3d : sections;
+        for (Map.Entry<String, String[]> sec : secs.entrySet()) {
             ArrayList<String> present = new ArrayList<>();
             for (String f : sec.getValue()) if (v.containsKey(f)) present.add(f);
             if (present.isEmpty()) continue;
@@ -288,7 +297,8 @@ public class PropertiesPanel implements PanelHost.Panel {
         // fields not covered by the schema (keep them editable as text)
         ArrayList<String> extra = new ArrayList<>();
         HashSet<String> known = new HashSet<>();
-        for (String[] fs : sections.values()) for (String f : fs) known.add(f);
+        for (String[] fs : secs.values()) for (String f : fs) known.add(f);
+        if (secs == sections3d) known.addAll(java.util.Arrays.asList("type", "Pivot", "Pivot X", "Pivot Y", "Version", "TYPE"));
         for (String k : v.keySet())
             if (!known.contains(k) && typeOf.containsKey(k) && !"static".equals(typeOf.get(k))) extra.add(k);
         if (!extra.isEmpty()) addSection(c, "Other", extra);
@@ -382,6 +392,23 @@ public class PropertiesPanel implements PanelHost.Panel {
             l.setTypeface(Typeface.DEFAULT_BOLD);
         }
         return l;
+    }
+
+    static final String SHADER_TEMPLATE = "// Star2D 3D shader. Write the color of every pixel:\n"
+            + "//   color = the element color (x texture), uv = texture position, normal, worldPos.\n"
+            + "// Ready to use: u_time, u_cameraPos, u_lightDir, u_lightColor, u_ambient, lambert(normal), hasTexture().\n"
+            + "// Values of \"Shader Params\" (speed=2;tint=#ff0000) become u_speed (float) / u_tint (vec4).\n"
+            + "// \u0634\u064a\u062f\u0631 Star2D: \u0627\u0643\u062a\u0628 \u0644\u0648\u0646 \u0643\u0644 \u0628\u0643\u0633\u0644 \u0641\u064a effect().\n\n"
+            + "vec4 effect(vec4 color, vec2 uv, vec3 normal, vec3 worldPos) {\n"
+            + "    float pulse = 0.5 + 0.5 * sin(u_time * 2.0);\n"
+            + "    return vec4(color.rgb * lambert(normal) + color.rgb * pulse * 0.2, color.a);\n"
+            + "}\n\n"
+            + "// Optional: move the vertices\n"
+            + "// vec3 displace(vec3 pos, vec3 normal) { return pos + normal * sin(u_time + pos.y * 4.0) * 0.03; }\n";
+
+    /** Element types of a 3D scene (their own property sections, map3d.json). */
+    public static boolean is3dType(String type) {
+        return "OBJ3D".equals(type) || "LIGHT3D".equals(type) || "CAMERA3D".equals(type);
     }
 
     private View field(Context c, String f, String type) {
@@ -636,6 +663,73 @@ public class PropertiesPanel implements PanelHost.Panel {
                     editors.put(f, t);
                     return box;
                 }
+                box.addView(t, Ui.matchWrap());
+                editors.put(f, t);
+                return box;
+            }
+            case "model": {
+                // glTF / GLB of the project's models folder (import new ones with the Files panel)
+                box.addView(label(c, f));
+                TextView t = chooser(c, val.isEmpty() ? "[" + Tr.t("choose", "choose") + "]" : val);
+                t.setOnClickListener(v -> Bridge.query(() -> {
+                            String root = Bridge.editor().getProject().getPath() + "/models";
+                            new java.io.File(root).mkdirs();
+                            return root;
+                        }, rootPath -> FilePickerDialog.show(c, Tr.t(f), rootPath, new String[]{"glb", "gltf"}, false, (file, rel) -> {
+                            String nv = rel.startsWith("/") ? rel : "/" + rel;
+                            values.put(f, nv);
+                            t.setText(nv);
+                            Bridge.query(() -> {
+                                com.star4droid.template.d3.Assets3D.reload(nv);
+                                if (!"MODEL".equals(values.get("Mesh"))) PropertyEditing.applyString(Bridge.app(), "Mesh", "MODEL");
+                                return PropertyEditing.applyString(Bridge.app(), f, nv);
+                            }, err -> { if (err != null) Ui.toast(c, err); });
+                        })));
+                box.addView(t, Ui.matchWrap());
+                editors.put(f, t);
+                return box;
+            }
+            case "shader": {
+                // none, a ready-made shader (builtin:glow...) or a project file shaders/NAME.glsl (a template is created)
+                box.addView(label(c, f));
+                TextView t = chooser(c, val.isEmpty() ? "—" : val);
+                t.setOnClickListener(v -> Bridge.query(() -> {
+                    java.util.ArrayList<String> opts = new java.util.ArrayList<>();
+                    opts.add("— " + Tr.t("ui_none", "None"));
+                    for (String b : com.star4droid.template.d3.UserShader.BUILTINS) opts.add("builtin:" + b);
+                    java.io.File dir = new java.io.File(Bridge.editor().getProject().getPath() + "/shaders");
+                    String[] list = dir.list();
+                    if (list != null) for (String n : list) if (n.endsWith(".glsl")) opts.add("shaders/" + n.substring(0, n.length() - 5));
+                    opts.add("+ " + Tr.t("ui_shader_new", "New shader file..."));
+                    return opts;
+                }, opts -> Dialogs.choose(c, Tr.t(f), opts.toArray(new String[0]), i -> {
+                    if (i == opts.size() - 1) {
+                        Dialogs.input(c, Tr.t("ui_shader_new", "New shader file..."), Tr.t("ui_shader_name", "Name (letters, digits, _)"), "myShader", nm -> Dialogs.checkName(nm), nm -> Bridge.query(() -> {
+                            java.io.File dir = new java.io.File(Bridge.editor().getProject().getPath() + "/shaders");
+                            dir.mkdirs();
+                            java.io.File fl = new java.io.File(dir, nm + ".glsl");
+                            if (!fl.exists()) com.star4droid.star2d.Helpers.FileUtil.writeFile(fl.getAbsolutePath(), SHADER_TEMPLATE);
+                            String nv = "shaders/" + nm;
+                            com.star4droid.template.d3.UserShader.forget(nv);
+                            return PropertyEditing.applyString(Bridge.app(), f, nv) == null ? nv : null;
+                        }, nv -> {
+                            if (nv == null) return;
+                            values.put(f, nv);
+                            t.setText(nv);
+                            Ui.toast(c, Tr.t("ui_shader_created", "Shader created: edit it in the Files panel (shaders folder)."));
+                        }));
+                        return;
+                    }
+                    String nv = i == 0 ? "" : opts.get(i);
+                    Bridge.query(() -> {
+                        com.star4droid.template.d3.UserShader.forget(nv);
+                        return PropertyEditing.applyString(Bridge.app(), f, nv);
+                    }, err -> {
+                        if (err != null) { Ui.toast(c, err); return; }
+                        values.put(f, nv);
+                        t.setText(nv.isEmpty() ? "—" : nv);
+                    });
+                })));
                 box.addView(t, Ui.matchWrap());
                 editors.put(f, t);
                 return box;

@@ -274,7 +274,7 @@ public final class BehaviorSection implements VarEditors.Host {
 		List<String> warns = new ArrayList<>();
 		if (m == null) warns.add(Tr.t("bhv_missing", "This behavior no longer exists (its file was deleted). Remove it."));
 		else {
-			String misfit = BehaviorText.misfit(m, env.bodyType);
+			String misfit = BehaviorText.misfit(m, env);
 			if (misfit != null) warns.add(misfit);
 			String sw = setsWarning(entries, idx, m);
 			if (sw != null) warns.add(sw);
@@ -374,7 +374,7 @@ public final class BehaviorSection implements VarEditors.Host {
 		}));
 		if (!m.events.isEmpty())
 			tools.addView(Ui.button(ctx, R.drawable.ic_s2_events, Tr.t("bhv_events", "Events"), false, v -> eventsDialog(m)));
-		if (!m.sets.isEmpty() && !env.isUi())
+		if (!m.sets.isEmpty() && !env.isUi() && !env.is3D())
 			tools.addView(Ui.button(ctx, R.drawable.ic_s2_check, Tr.t("bhv_apply", "Apply to element"), false, v -> applySets(m)));
 		ImageView reset = Ui.iconButton(ctx, R.drawable.ic_s2_refresh, Tr.t("bhv_reset_all", "Reset all parameters"), v -> {
 			e.params.clear();

@@ -19,7 +19,12 @@ public final class BehaviorEnv {
 	public String scriptFile, sceneScriptFile;
 
 	public boolean isUi() {
-		return "UI".equals(bodyType);
+		return "UI".equals(bodyType) && !is3D();
+	}
+
+	/** An element of a 3D scene's world (TYPE OBJ3D, LIGHT3D or CAMERA3D): only 3D behaviors fit it. */
+	public boolean is3D() {
+		return com.star4droid.star2d.behaviors.ElementTypes.is3D(elementType);
 	}
 
 	/** GL thread. */

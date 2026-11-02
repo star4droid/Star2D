@@ -29,6 +29,7 @@ public final class Assets3D {
 
 	public static FileHandle file(String path, String folder) {
 		if (path == null || path.length() == 0) return null;
+		path = path.replace(com.star4droid.template.Utils.Utils.seperator, "/");
 		FileHandle f;
 		if (path.startsWith("/") && Gdx.files.absolute(path).exists() && path.length() > 1 && path.indexOf('/', 1) > 0 && new java.io.File(path).isAbsolute() && path.startsWith(projectPath.length() > 0 ? projectPath : "/\u0000"))
 			return Gdx.files.absolute(path);

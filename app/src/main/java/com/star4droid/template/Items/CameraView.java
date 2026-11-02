@@ -199,7 +199,7 @@ public class CameraView extends Actor implements PlayerItem {
 		StageImp.secondaryPass = true;
 		try {
 			fbo.begin();
-			Color bg = def.Background == null ? Color.BLACK : def.getColor(def.Background);
+			Color bg = def.Background_Color == null ? Color.BLACK : def.getColor(def.Background_Color);
 			Gdx.gl.glClearColor(bg.r, bg.g, bg.b, 1);
 			Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
 			if (src instanceof Camera3D && stage.hasWorld3D()) {

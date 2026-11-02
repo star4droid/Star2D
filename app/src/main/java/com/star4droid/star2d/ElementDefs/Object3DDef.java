@@ -57,7 +57,7 @@ public class Object3DDef extends ItemDef {
 	public boolean Lock_Rotation_X = false, Lock_Rotation_Y = false, Lock_Rotation_Z = false, Lock_Move_X = false, Lock_Move_Y = false, Lock_Move_Z = false;
 	public boolean Continuous_Collision = false, Sleep = true;
 	/** Collision layer name ("" = default) and the layers it ignores, comma separated. */
-	public String Collision = "", Ignore_Layers = "";
+	public String Layer = "", Ignore_Layers = "";
 
 	// ---- animation (models)
 	/** Clip played at start ("" = none, "*" = the first clip). */

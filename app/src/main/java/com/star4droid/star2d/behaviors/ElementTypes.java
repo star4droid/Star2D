@@ -19,6 +19,16 @@ public final class ElementTypes {
 	/** Editor TYPE values that can be a screen-space element (their "type" property is UI). */
 	public static final String[] UI_TYPES = {"BOX", "CIRCLE", "CUSTOM", "MAP", "TEXT", "PROGRESS", "JOYSTICK", "PARTICLE", "UIHOLDER", "GROUP"};
 
+	/** Editor TYPE values of the elements of a 3D scene (3D behaviors sit on these; CAMERAVIEW is a 2D / UI element). */
+	public static final String[] THREE_D_TYPES = {"OBJ3D", "LIGHT3D", "CAMERA3D"};
+
+	/** An element of the 3D world (OBJ3D, LIGHT3D, CAMERA3D)? */
+	public static boolean is3D(String editorType) {
+		if (editorType == null) return false;
+		for (String t : THREE_D_TYPES) if (t.equals(editorType)) return true;
+		return false;
+	}
+
 	static {
 		CLASSES.put("PlayerItem", null);
 		CLASSES.put("BoxBody", new String[] {"BOX"});
@@ -32,6 +42,11 @@ public final class ElementTypes {
 		CLASSES.put("CameraItem", new String[] {"CAMERA"});
 		CLASSES.put("MapItem", new String[] {"MAP"});
 		CLASSES.put("UIHolder", new String[] {"UIHOLDER"});
+		CLASSES.put("CameraView", new String[] {"CAMERAVIEW"});
+		// 3D elements (package com.star4droid.template.d3)
+		CLASSES.put("Object3D", new String[] {"OBJ3D"});
+		CLASSES.put("Light3D", new String[] {"LIGHT3D"});
+		CLASSES.put("Camera3D", new String[] {"CAMERA3D"});
 		// an inner element of a UIHolder ("hud/btnPlay"), see com.star4droid.template.ui.UINodeRef
 		CLASSES.put(UI_NODE, new String[] {UI_NODE_TYPE});
 	}
@@ -56,6 +71,7 @@ public final class ElementTypes {
 	public static String fqn(String simple) {
 		if (simple.equals(UI_NODE)) return "com.star4droid.template.ui.UINodeRef";
 		if (simple.equals("PlayerItem")) return "com.star4droid.template.Utils.PlayerItem";
+		if (simple.equals("Object3D") || simple.equals("Light3D") || simple.equals("Camera3D")) return "com.star4droid.template.d3." + simple;
 		return "com.star4droid.template.Items." + simple;
 	}
 }

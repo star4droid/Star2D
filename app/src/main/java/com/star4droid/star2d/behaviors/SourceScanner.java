@@ -20,6 +20,8 @@ public final class SourceScanner {
 		public String pkg = "", className = "", superName = "";
 		public Map<String, String> info = new HashMap<String, String>();
 		public List<String> events = new ArrayList<String>();
+		/** {@code @BehaviorInfo(types = {"OBJ3D", ...})}: editor TYPEs the behavior is made for. */
+		public List<String> types = new ArrayList<String>();
 		public String exclusive = "", reqType = "", reqNote = "";
 		public boolean reqBody, reqUi;
 		public List<String> sets = new ArrayList<String>();
@@ -240,6 +242,11 @@ public final class SourceScanner {
 						for (String x : arrayItems(v)) {
 							String lit = literal(x);
 							if (lit != null) r.events.add(lit);
+						}
+					} else if (k.equals("types")) {
+						for (String x : arrayItems(v)) {
+							String lit = literal(x);
+							if (lit != null && lit.trim().length() > 0) r.types.add(lit.trim().toUpperCase(Locale.ROOT));
 						}
 					} else if (k.equals("targets")) {
 						int d = v.lastIndexOf('.');
@@ -708,7 +715,9 @@ public final class SourceScanner {
 		if (r.info.containsKey("version")) m.version = r.info.get("version");
 		if (r.info.containsKey("author")) m.author = r.info.get("author");
 		if (r.info.containsKey("targets")) m.targets = r.info.get("targets").toUpperCase(Locale.ROOT);
-		if (!m.targets.equals(BehaviorMeta.UI) && !m.targets.equals(BehaviorMeta.PHYSICS)) m.targets = BehaviorMeta.BOTH;
+		if (m.targets.equals("3D") || m.targets.equals("THREED")) m.targets = BehaviorMeta.THREE_D;
+		if (!m.targets.equals(BehaviorMeta.UI) && !m.targets.equals(BehaviorMeta.PHYSICS) && !m.targets.equals(BehaviorMeta.THREE_D)) m.targets = BehaviorMeta.BOTH;
+		m.types.addAll(r.types);
 		for (String e : r.events) m.events.add(BehaviorMeta.EventSpec.parse(e));
 		m.exclusive = r.exclusive;
 		m.reqBody = r.reqBody;

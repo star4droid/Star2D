@@ -48,8 +48,8 @@ public final class BehaviorShare {
 			return null;
 		}, name -> {
 			String n = name.trim();
-			Dialogs.choose(c, Tr.t("bhv_new_for", "Works on"), new String[] {Tr.t("bhv_f_all", "UI and physical"), Tr.t("bhv_f_ui", "UI"), Tr.t("bhv_f_physics", "Physical")}, i -> {
-				String t = i == 1 ? "UI" : (i == 2 ? "PHYSICS" : "BOTH");
+			Dialogs.choose(c, Tr.t("bhv_new_for", "Works on"), new String[] {Tr.t("bhv_f_all", "UI and physical"), Tr.t("bhv_f_ui", "UI"), Tr.t("bhv_f_physics", "Physical"), Tr.t("bhv_f_3d", "3D")}, i -> {
+				String t = i == 1 ? "UI" : (i == 2 ? "PHYSICS" : (i == 3 ? "THREE_D" : "BOTH"));
 				try {
 					File f = new File(BehaviorCatalog.projectDir(projectPath), n + ".java");
 					f.getParentFile().mkdirs();

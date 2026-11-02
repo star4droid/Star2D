@@ -384,7 +384,10 @@ public class EditorShell extends FrameLayout implements ControlLayer.NativeUi, T
         color.setImageTintList(ColorStateList.valueOf(0xFFFFB74D));
         Tut.tag(color, "tool:color");
         into.addView(color);
-        ImageView light = Ui.iconButton(c, R.drawable.ic_s2_light, Tr.t("lightSettings", "Light settings"), v -> LightSettings.show(activity));
+        ImageView light = Ui.iconButton(c, R.drawable.ic_s2_light, Tr.t("lightSettings", "Light settings"), v -> Bridge.query(() -> Bridge.editor().is3DScene(), is3d -> {
+            if (is3d) Scene3DSettings.show(activity);
+            else LightSettings.show(activity);
+        }));
         light.setImageTintList(ColorStateList.valueOf(0xFFFFEE58));
         into.addView(light);
         ImageView rot = Ui.iconButton(c, R.drawable.ic_s2_screen_rotation, Tr.t("changeOrienation", "Switch portrait / landscape"), v ->
@@ -503,6 +506,9 @@ public class EditorShell extends FrameLayout implements ControlLayer.NativeUi, T
         del.setImageTintList(ColorStateList.valueOf(0xFFFF8A80));
         t.addView(del);
         t.addView(Ui.iconButton(c, R.drawable.ic_s2_camera, Tr.t("ui_center_camera", "Center camera"), v -> Bridge.gl(() -> Bridge.editor().centerCamera())));
+        ImageView view3d = Ui.iconButton(c, R.drawable.ic_s2_view3d, Tr.t("s3v_title", "3D view"), v -> Scene3DSettings.viewMenu(activity, v));
+        view3d.setImageTintList(ColorStateList.valueOf(0xFF42A5F5));
+        t.addView(view3d);
         // build errors: only there when the last build failed; opens / closes the console
         consoleBtn = Ui.iconButton(c, R.drawable.ic_s2_bug, Tr.t("console_title", "Errors"), v -> {
             if (console.getVisibility() == VISIBLE) console.hide();
@@ -612,13 +618,25 @@ public class EditorShell extends FrameLayout implements ControlLayer.NativeUi, T
     private void sceneDialog(ControlLayer.SceneAction action, String initial) {
         String title = action == ControlLayer.SceneAction.CREATE ? Tr.t("newScene", "New scene")
                 : action == ControlLayer.SceneAction.COPY ? Tr.t("copyScene", "Copy scene") : Tr.t("renameScene", "Rename scene");
-        Dialogs.input(activity, title, Tr.t("name", "Name") + " (A-Z, 0-9, _)", initial, Dialogs::checkName,
-                name -> Bridge.query(() -> Bridge.controls().applySceneAction(name, action), err -> {
+        Dialogs.input(activity, title, Tr.t("name", "Name") + " (A-Z, 0-9, _)", initial, Dialogs::checkName, name -> {
+            if (action != ControlLayer.SceneAction.CREATE) {
+                Bridge.query(() -> Bridge.controls().applySceneAction(name, action), err -> {
                     if (err != null) {
                         Ui.toast(activity, err);
                         sceneDialog(action, name);
                     }
-                }));
+                });
+                return;
+            }
+            // new scene: 2D or 3D
+            Dialogs.choose(activity, Tr.t("s3_scene_type", "Scene type"), new String[]{Tr.t("s3_scene_2d", "2D scene"), Tr.t("s3_scene_3d", "3D scene")}, which ->
+                    Bridge.query(() -> Bridge.controls().applySceneAction(name, action, null, which == 1 ? "3D" : "2D"), err -> {
+                        if (err != null) {
+                            Ui.toast(activity, err);
+                            sceneDialog(action, name);
+                        }
+                    }));
+        });
     }
 
     // =============================================================== actions

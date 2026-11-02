@@ -32,7 +32,8 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * "Add behavior" dialog: grid or list with icon + description + (i) button, search, filter (All / UI / Physical / Project).
+ * "Add behavior" dialog: grid or list with icon + description + (i) button, search, filter (All / UI / Physical / Project;
+ * a 3D element gets 3D / All / Project and starts on 3D, a 2D element never sees 3D behaviors).
  * The dialog appears at once: the rows live in a RecyclerView (only the visible ones exist), icons come from a cache that is
  * filled in the background, and the catalog is read off the UI thread when it is not ready yet.
  */
@@ -91,9 +92,21 @@ public final class BehaviorPickerDialog {
 
 	public static void show(Context c, BehaviorEnv env, Set<String> already, Pick pick) {
 		final State st = new State(c, env, already, pick);
-		st.filter = env.isUi() ? 1 : 0;
-		final String[] filters = {"all", "ui", "physics", "project"};
-		final String[] titles = {Tr.t("bhv_f_all", "All"), Tr.t("bhv_f_ui", "UI"), Tr.t("bhv_f_physics", "Physical"), Tr.t("bhv_f_project", "Project")};
+		// a 3D element sees the 3D behaviors first (All also lists the 2D ones, flagged); a 2D / UI element never sees 3D ones
+		final String[] filters, titles;
+		if (env.is3D()) {
+			filters = new String[] {"3d", "all", "project"};
+			titles = new String[] {Tr.t("bhv_f_3d", "3D"), Tr.t("bhv_f_all", "All"), Tr.t("bhv_f_project", "Project")};
+			st.filter = 0;
+		} else if (env.elementType == null || env.elementType.isEmpty()) {
+			filters = new String[] {"all", "ui", "physics", "3d", "project"};
+			titles = new String[] {Tr.t("bhv_f_all", "All"), Tr.t("bhv_f_ui", "UI"), Tr.t("bhv_f_physics", "Physical"), Tr.t("bhv_f_3d", "3D"), Tr.t("bhv_f_project", "Project")};
+			st.filter = env.isUi() ? 1 : 0;
+		} else {
+			filters = new String[] {"all", "ui", "physics", "project"};
+			titles = new String[] {Tr.t("bhv_f_all", "All"), Tr.t("bhv_f_ui", "UI"), Tr.t("bhv_f_physics", "Physical"), Tr.t("bhv_f_project", "Project")};
+			st.filter = env.isUi() ? 1 : 0;
+		}
 
 		LinearLayout col = Ui.column(c);
 		col.setLayoutDirection(Ui.isRtl(c) ? View.LAYOUT_DIRECTION_RTL : View.LAYOUT_DIRECTION_LTR);
@@ -240,7 +253,10 @@ public final class BehaviorPickerDialog {
 		}
 		String cat = null;
 		int n = 0;
+		boolean el2d = st.env.elementType != null && !st.env.elementType.isEmpty() && !st.env.is3D();
 		for (BehaviorMeta m : st.all) {
+			if (el2d && m.is3D()) continue; // never offer a 3D behavior to a 2D / UI element
+			if (f.equals("3d") && !m.fits3D(st.env.is3D() ? st.env.elementType : "")) continue;
 			if (f.equals("ui") && !(m.targets.equals(BehaviorMeta.UI) || m.targets.equals(BehaviorMeta.BOTH))) continue;
 			if (f.equals("physics") && !(m.targets.equals(BehaviorMeta.PHYSICS) || m.targets.equals(BehaviorMeta.BOTH))) continue;
 			if (f.equals("project") && m.builtin) continue;
@@ -355,7 +371,7 @@ public final class BehaviorPickerDialog {
 		BehaviorIcons.set(h.icon, m.icon, has ? Ui.TEXT_3 : Ui.ACCENT);
 		h.title.setText(BehaviorText.name(m));
 		h.desc.setText(BehaviorText.desc(m));
-		String why = has ? null : BehaviorText.misfit(m, st.env.bodyType);
+		String why = has ? null : BehaviorText.misfit(m, st.env);
 		if (has) {
 			h.note.setText(Tr.t("bhv_added", "Already added"));
 			h.note.setTextColor(Ui.TEXT_3);

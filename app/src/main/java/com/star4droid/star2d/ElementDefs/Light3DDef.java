@@ -9,7 +9,7 @@ public class Light3DDef extends ItemDef {
 	public static final String TYPE = "LIGHT3D";
 	public String name = "", parentName = "", Script = "", type = "STATIC";
 	/** DIRECTIONAL POINT SPOT */
-	public String Light_Type = "POINT";
+	public String Light_Kind = "POINT";
 	public float x = 0, y = 3, z = 0, Rotation_X = -50, Rotation_Y = 30, Rotation_Z = 0;
 	public String Color = "#FFFFFF";
 	public float Intensity = 1, Range = 10, Cone_Angle = 35, Cone_Softness = 0.3f;

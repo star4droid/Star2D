@@ -927,6 +927,10 @@ public class CodeGenerator {
             case "MAP": return "MapDef";
             case "GROUP": return "GroupDef";
             case "UIHOLDER": return "UIHolderDef";
+            case "OBJ3D": return "Object3DDef";
+            case "LIGHT3D": return "Light3DDef";
+            case "CAMERA3D": return "Camera3DDef";
+            case "CAMERAVIEW": return "CameraViewDef";
             default: return "Unknown";
         }
     }

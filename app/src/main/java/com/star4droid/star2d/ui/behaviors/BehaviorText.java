@@ -228,6 +228,10 @@ public final class BehaviorText {
 			case "UIHOLDER": def = "UI holder"; break;
 			case "GROUP": def = "Group"; break;
 			case "CAMERA": def = "Camera"; break;
+			case "OBJ3D": def = "3D object"; break;
+			case "LIGHT3D": def = "3D light"; break;
+			case "CAMERA3D": def = "3D camera"; break;
+			case "CAMERAVIEW": def = "Camera view"; break;
 			default: def = VarSpec.humanize(type.toLowerCase(Locale.ROOT));
 		}
 		return Tr.t("ui_type_" + type.toLowerCase(Locale.ROOT), def);
@@ -265,9 +269,36 @@ public final class BehaviorText {
 		return sb.toString();
 	}
 
+	/** Why the behavior does not fit the element of env (2D / 3D, UI / physical, body type), or null when it does. */
+	public static String misfit(BehaviorMeta m, BehaviorEnv env) {
+		return env == null ? null : misfit(m, env.bodyType, env.elementType);
+	}
+
+	/**
+	 * Like {@link #misfit(BehaviorMeta, String)} but also knows 3D: 3D behaviors on 2D elements, 2D behaviors on 3D elements,
+	 * and the {@code types} a behavior is made for (Flicker for LIGHT3D...).
+	 * @param bodyType   the "type" property (DYNAMIC / KINEMATIC / STATIC / UI)
+	 * @param editorType the TYPE (BOX, TEXT, OBJ3D, LIGHT3D, CAMERA3D...), "" when unknown
+	 */
+	public static String misfit(BehaviorMeta m, String bodyType, String editorType) {
+		if (editorType != null && editorType.length() > 0) {
+			boolean el3d = com.star4droid.star2d.behaviors.ElementTypes.is3D(editorType);
+			if (m.is3D() && !el3d) return Tr.t("bhv_mf_made_3d", "Made for 3D elements");
+			if (!m.is3D() && el3d) return Tr.t("bhv_mf_made_2d", "Made for 2D elements (this one is 3D)");
+			if (!m.types.isEmpty() && !m.types.contains(editorType)) {
+				StringBuilder sb = new StringBuilder();
+				for (String t : m.types) sb.append(sb.length() > 0 ? ", " : "").append(elementType(t));
+				return String.format(Tr.t("bhv_mf_made_types", "Made for: %1$s"), sb.toString());
+			}
+			if (el3d) return null;
+		}
+		return misfit(m, bodyType);
+	}
+
 	/** Why the behavior does not fit an element (the "type" property: DYNAMIC / KINEMATIC / STATIC / UI), or null when it does. */
 	public static String misfit(BehaviorMeta m, String elementType) {
 		if (elementType == null || elementType.length() == 0) return null;
+		if (m.is3D()) return null; // a 3D behavior: only misfit(m, bodyType, TYPE) can tell
 		boolean ui = elementType.equals("UI");
 		String note = m.reqNote.length() > 0 ? ". " + note(m) : "";
 		if (m.reqUi && !ui) return Tr.t("bhv_mf_need_ui", "Needs a UI element");
@@ -284,6 +315,7 @@ public final class BehaviorText {
 	/** "UI" / "Physical" / "UI + Physical" for the Add dialog's chips and badges. */
 	public static String targets(BehaviorMeta m) {
 		String t = m.effectiveTargets();
+		if (t.equals(BehaviorMeta.THREE_D)) return Tr.t("bhv_f_3d", "3D");
 		if (t.equals(BehaviorMeta.UI)) return Tr.t("bhv_f_ui", "UI");
 		if (t.equals(BehaviorMeta.PHYSICS)) return Tr.t("bhv_f_physics", "Physical");
 		return Tr.t("bhv_f_ui", "UI") + " + " + Tr.t("bhv_f_physics", "Physical");

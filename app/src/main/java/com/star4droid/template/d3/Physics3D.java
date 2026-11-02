@@ -236,7 +236,7 @@ public class Physics3D implements Disposable {
 		b.setUserValue(id);
 		b.setContactCallbackFlag(1);
 		b.setContactCallbackFilter(1);
-		short group = (short) layerBit(d.Collision);
+		short group = (short) layerBit(d.Layer);
 		short mask = (short) ~layerMask(d.Ignore_Layers);
 		world.addRigidBody(b, group, mask);
 		if (dynamic) b.setGravity(new Vector3(gravity).scl(d.Gravity_Scale));

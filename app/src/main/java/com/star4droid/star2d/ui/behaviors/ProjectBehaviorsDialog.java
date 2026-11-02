@@ -104,9 +104,9 @@ public final class ProjectBehaviorsDialog {
 		tg.setBackground(Ui.rounded(0xFF121417, Ui.dp(c, 8), Ui.BORDER, Ui.dp(c, 1)));
 		tg.setCompoundDrawablesRelativeWithIntrinsicBounds(0, 0, R.drawable.ic_s2_expand_more, 0);
 		tg.setCompoundDrawableTintList(android.content.res.ColorStateList.valueOf(Ui.TEXT_2));
-		final String[] codes = {BehaviorMeta.BOTH, BehaviorMeta.UI, BehaviorMeta.PHYSICS};
+		final String[] codes = {BehaviorMeta.BOTH, BehaviorMeta.UI, BehaviorMeta.PHYSICS, BehaviorMeta.THREE_D};
 		tg.setOnClickListener(v -> Dialogs.choose(c, Tr.t("pbh_target", "Works on"),
-				new String[]{targetName(codes[0]), targetName(codes[1]), targetName(codes[2])}, i -> {
+				new String[]{targetName(codes[0]), targetName(codes[1]), targetName(codes[2]), targetName(codes[3])}, i -> {
 					targets[0] = codes[i];
 					tg.setText(targetName(codes[i]));
 				}));
@@ -162,6 +162,7 @@ public final class ProjectBehaviorsDialog {
 	private static String targetName(String t) {
 		if (BehaviorMeta.UI.equals(t)) return Tr.t("pbh_t_ui", "UI elements");
 		if (BehaviorMeta.PHYSICS.equals(t)) return Tr.t("pbh_t_physics", "Physical elements");
+		if (BehaviorMeta.THREE_D.equals(t)) return Tr.t("pbh_t_3d", "3D elements (3D scenes)");
 		return Tr.t("pbh_t_both", "Both");
 	}
 

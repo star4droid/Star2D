@@ -78,7 +78,7 @@ final class BehaviorInfoDialog {
 
 		// does it fit the selected element?
 		if (env != null && env.bodyType != null && env.bodyType.length() > 0) {
-			String why = BehaviorText.misfit(m, env.bodyType);
+			String why = BehaviorText.misfit(m, env);
 			TextView t = Ui.text(c, why != null ? "⚠  " + why : "✓  " + Tr.t("bhv_i_fits", "Fits the selected element"), 12.5f, why != null ? Ui.WARNING : Ui.SUCCESS);
 			t.setPadding(Ui.dp(c, 10), Ui.dp(c, 7), Ui.dp(c, 10), Ui.dp(c, 7));
 			t.setBackground(Ui.rounded(why != null ? 0x22FFB300 : 0x224CAF50, Ui.dp(c, 8)));
@@ -154,7 +154,8 @@ final class BehaviorInfoDialog {
 		section(c, col, Tr.t("bhv_works_on", "Works on"));
 		String t = m.effectiveTargets();
 		String what;
-		if (t.equals(BehaviorMeta.UI)) what = Tr.t("bhv_i_ui_only", "UI elements only");
+		if (t.equals(BehaviorMeta.THREE_D)) what = Tr.t("bhv_i_3d_only", "3D elements only (3D scenes)");
+		else if (t.equals(BehaviorMeta.UI)) what = Tr.t("bhv_i_ui_only", "UI elements only");
 		else if (t.equals(BehaviorMeta.PHYSICS)) what = Tr.t("bhv_i_phys_only", "Physical elements only");
 		else what = Tr.t("bhv_i_both", "Both UI and physical elements");
 		TextView w = Ui.text(c, what, 14.5f, Ui.TEXT);
@@ -163,6 +164,8 @@ final class BehaviorInfoDialog {
 		String[] phys = m.physicalTypes(), ui = m.uiTypes();
 		if (phys.length > 0) typeRow(c, col, Tr.t("bhv_f_physics", "Physical"), Tr.t("bhv_i_phys_hint", "has a physics body (Dynamic, Kinematic or Static)"), phys, 0x334CAF50, 0xFFA5D6A7);
 		if (ui.length > 0) typeRow(c, col, Tr.t("bhv_f_ui", "UI"), Tr.t("bhv_i_ui_hint", "screen-space element (type UI)"), ui, Ui.ACCENT_SOFT, 0xFF90CAF9);
+		String[] d3 = m.threeDTypes();
+		if (d3.length > 0) typeRow(c, col, Tr.t("bhv_f_3d", "3D"), Tr.t("bhv_i_3d_hint", "element of the 3D world (meters, Y up)"), d3, 0x33AB47BC, 0xFFCE93D8);
 	}
 
 	private static void typeRow(Context c, LinearLayout col, String title, String hint, String[] types, int bg, int fg) {

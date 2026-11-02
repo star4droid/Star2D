@@ -33,6 +33,7 @@ public final class ReflectScanner {
 			m.version = info.version();
 			m.author = info.author();
 			m.targets = info.targets().name();
+			for (String t : info.types()) if (t != null && t.trim().length() > 0) m.types.add(t.trim().toUpperCase(java.util.Locale.ROOT));
 			for (String e : info.events()) m.events.add(BehaviorMeta.EventSpec.parse(e));
 		}
 		com.star4droid.template.behaviors.Exclusive ex = c.getAnnotation(com.star4droid.template.behaviors.Exclusive.class);

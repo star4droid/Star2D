@@ -307,6 +307,15 @@ public class ElementsPanel implements PanelHost.Panel {
             case "Group": return R.drawable.ic_s2_container;
             case "UIHolder": return R.drawable.ic_s2_widgets;
             case "Light": return R.drawable.ic_s2_light;
+            case "OBJ3D": case "Cube": case "Obj3d": return R.drawable.ic_s2_cube;
+            case "Sphere": return R.drawable.ic_s2_sphere;
+            case "Cylinder": return R.drawable.ic_s2_cylinder;
+            case "Terrain": return R.drawable.ic_s2_terrain;
+            case "Water": return R.drawable.ic_s2_water;
+            case "Model": return R.drawable.ic_s2_view3d;
+            case "LIGHT3D": case "Light3d": return R.drawable.ic_s2_light;
+            case "CAMERA3D": case "Camera3d": return R.drawable.ic_s2_videocam;
+            case "CAMERAVIEW": case "Cameraview": return R.drawable.ic_s2_camera;
         }
         return R.drawable.ic_s2_square;
     }
@@ -325,6 +334,15 @@ public class ElementsPanel implements PanelHost.Panel {
             case "Group": return 0xFFFFC107;
             case "UIHolder": return 0xFFFF9800;
             case "Light": return 0xFFFFEE58;
+            case "OBJ3D": case "Cube": case "Obj3d": return 0xFF42A5F5;
+            case "Sphere": return 0xFF26A69A;
+            case "Cylinder": return 0xFF7E57C2;
+            case "Terrain": return 0xFF9CCC65;
+            case "Water": return 0xFF29B6F6;
+            case "Model": return 0xFFFF8A65;
+            case "LIGHT3D": case "Light3d": return 0xFFFFD54F;
+            case "CAMERA3D": case "Camera3d": return 0xFFB0BEC5;
+            case "CAMERAVIEW": case "Cameraview": return 0xFF90A4AE;
         }
         return Ui.ACCENT;
     }

@@ -78,6 +78,54 @@ public class LibgdxEditor extends Stage {
 	private ArrayList<String[]> dragKidsStart = new ArrayList<>();
 	float prevDistance = -1,startAngle=0,ratioScale =1,gridSizeX=50,logicalWidth=1600,logicalHeight=720,gridSizeY=50;
 	
+	// ------------------------------------------------------------------ 3D scenes
+	/** 3D viewport of a 3D scene (null in 2D scenes). */
+	com.star4droid.star2d.editor.three.Editor3D e3d;
+
+	public com.star4droid.star2d.editor.three.Editor3D get3D(){
+		return e3d;
+	}
+
+	public boolean is3DScene(){
+		return editorConfig != null && "3D".equalsIgnoreCase(String.valueOf(editorConfig.get("sceneType")));
+	}
+
+	/** MOVE / SCALE / ROTATE / GRID (= camera only). */
+	public String getTouchModeName(){
+		return touch_mode == null ? "GRID" : touch_mode.name();
+	}
+
+	public boolean isLocked3D(){
+		if(com.star4droid.star2d.remote.RemoteSession.isLocked()) return true;
+		if(selectedActor instanceof EditorItem){
+			PropertySet<String,Object> ps = ((EditorItem)selectedActor).getPropertySet();
+			return ps != null && Hierarchy.isLocked(ps);
+		}
+		return false;
+	}
+
+	/** Tap on empty 3D space: nothing selected. */
+	public void deselect3D(){
+		selectedActor = null;
+		if(controlLayer!=null) controlLayer.bodySelected();
+		if(editorListener!=null) editorListener.onBodySelected();
+		try { if(TestApp.nativeHooks != null) TestApp.nativeHooks.onEditorChanged(); } catch(Throwable ignored){}
+	}
+
+	/** After a gizmo edit: undo buttons and auto save. */
+	public void afterEdit3D(){
+		if(controlLayer!=null) controlLayer.updateUndoRedo();
+		if(editorListener!=null) editorListener.onUpdateUndoRedo();
+		if(AUTO_SAVE) project.save(this);
+	}
+
+	private void ensure3D(){
+		if(is3DScene()){
+			if(e3d==null) e3d = new com.star4droid.star2d.editor.three.Editor3D(this);
+			e3d.configure(editorConfig);
+		}
+	}
+
 	public LibgdxEditor(Project project){
 		super();
 		this.project = project;
@@ -205,6 +253,7 @@ public class LibgdxEditor extends Stage {
 	// when the touch of the editor ends
 	@Override
 	public boolean touchUp(int arg0, int arg1, int arg2, int arg3) {
+		if(e3d!=null && !e3d.edit2D && !loadingScene) return e3d.touchUp(arg0,arg1,arg2);
 		if(loadingScene || com.star4droid.star2d.remote.RemoteSession.isLocked()) return true;
 	    // save the end position if touch type is grid and push it to the events for undo redo.. 
 		if(touch_mode!=TOUCHMODE.GRID && getSelectedActor()!=null){
@@ -247,6 +296,7 @@ public class LibgdxEditor extends Stage {
 	// when the editor touch started 
 	@Override
 	public boolean touchDown(int arg0, int arg1, int arg2, int arg3) {
+		if(e3d!=null && !e3d.edit2D && !loadingScene) return e3d.touchDown(arg0,arg1,arg2);
 		if(loadingScene || com.star4droid.star2d.remote.RemoteSession.isLocked()) return true; // locked: an AI is editing, the camera can still be moved
 		if(selectedActor == null){
 		    ArrayList<String> bodies = getBodiesList();
@@ -420,6 +470,8 @@ public class LibgdxEditor extends Stage {
 			case "MAP": return new EditorMapItem(this);
 			case "GROUP": return new EditorGroupItem(this);
 			case "UIHOLDER": return new EditorUIHolderItem(this);
+			case "OBJ3D": case "LIGHT3D": case "CAMERA3D": ensure3D(); return new Editor3DItem(this,propertySet.getString("TYPE"));
+			case "CAMERAVIEW": return new EditorCameraViewItem(this);
 		}
 		return null;
 	}
@@ -555,6 +607,7 @@ public class LibgdxEditor extends Stage {
 	
 	// center the camera ...
 	public void centerCamera(){
+		if(e3d!=null && !e3d.edit2D){ e3d.focusSelected(); return; }
 		cameraController.moveTo(getWidth()*0.5f,getHeight()*0.5f,0.3f);
 	}
 	
@@ -594,6 +647,7 @@ public class LibgdxEditor extends Stage {
 			LANDSCAPE = editorConfig.getString("or").equals("") || editorConfig.getString("or").equals("landscape");
 			if(orienationChangeListener!=null)
 				orienationChangeListener.onChange(LANDSCAPE);
+			ensure3D();
 		} catch(Exception e){
 			toast("update config error : "+e.toString());
 		}
@@ -1164,6 +1218,7 @@ public class LibgdxEditor extends Stage {
 	
 	@Override
 	public boolean touchDragged(int arg0, int arg1, int arg2) {
+		if(e3d!=null && !e3d.edit2D && !loadingScene) return e3d.touchDragged(arg0,arg1,arg2);
 		if(loadingScene) return true;
 		if(com.star4droid.star2d.remote.RemoteSession.isLocked()){
 			handleTouch();
@@ -1303,6 +1358,27 @@ public class LibgdxEditor extends Stage {
 		if(cameraController.isMoving())
 			cameraController.update(Gdx.graphics.getDeltaTime());
 		OrthographicCamera camera = (OrthographicCamera)getCamera();
+		if(e3d!=null){
+			// 3D scene: the 3D viewport, then the 2D layer (HUD / UI elements) on top
+			try { e3d.render(); } catch(Throwable t){ Gdx.app.error("Star2D-3D", "editor render: "+t); }
+			shapeRenderer.setProjectionMatrix(camera.combined);
+			if(e3d.edit2D) drawSceneFrame(camera,getLogicWidth(),getLogicHeight());
+			try { Hierarchy.applyVisibility(this); } catch(Throwable ignored){}
+			getBatch().setColor(1,1,1,e3d.edit2D ? 1f : 0.85f);
+			super.draw();
+			getBatch().setColor(1,1,1,1);
+			updateProperties();
+			if(selectedActor != null && !(selectedActor instanceof Editor3DItem) && e3d.edit2D){
+				Gdx.gl.glLineWidth(3f);
+				shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+				selectedActor.setDebug(true);
+				selectedActor.drawDebug(shapeRenderer);
+				shapeRenderer.end();
+				selectedActor.setDebug(false);
+				Gdx.gl.glLineWidth(1f);
+			}
+			return;
+		}
 		shapeRenderer.setProjectionMatrix(rendererMatrix);
 		//draw background
 		shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
@@ -1489,6 +1565,7 @@ public class LibgdxEditor extends Stage {
 	
 	@Override
 	public void dispose() {
+		if(e3d!=null){ try { e3d.dispose(); } catch(Throwable ignored){} e3d = null; }
 		loadToken++;
 		loadingScene = false;
 		super.dispose();

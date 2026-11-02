@@ -770,6 +770,76 @@ public class ControlLayer extends Table {
 		}
 	}
 
+	/**
+	 * Add a 3D element (3D scenes): kind OBJ3D / LIGHT3D / CAMERA3D, preset = the Mesh (CUBE, SPHERE, MODEL, TERRAIN, WATER...)
+	 * or the Light Kind (POINT, SPOT, DIRECTIONAL). It appears at the point the 3D view looks at.
+	 */
+	public void actionAdd3D(String kind,String preset){
+		try {
+			com.star4droid.star2d.editor.LibgdxEditor ed = app.getEditor();
+			com.star4droid.star2d.editor.items.Editor3DItem item = new com.star4droid.star2d.editor.items.Editor3DItem(ed,kind);
+			String base = "OBJ3D".equals(kind) ? (preset == null ? "Cube" : preset.substring(0,1)+preset.substring(1).toLowerCase()) : ("LIGHT3D".equals(kind) ? "Light" : "Camera");
+			String name = base; int n = 1;
+			java.util.ArrayList<String> used = ed.getBodiesList();
+			while(used.contains(name)) name = base + (n++);
+			item.setName(name);
+			item.setDefault();
+			if(item.getPropertySet()==null){ item.remove(); app.toast("Error : could not create the default properties"); return; }
+			com.star4droid.star2d.Helpers.PropertySet<String,Object> ps = item.getPropertySet();
+			ps.put("name",name);
+			ps.put("Script",name);
+			com.badlogic.gdx.math.Vector3 p = ed.get3D() != null ? ed.get3D().spawnPoint() : new com.badlogic.gdx.math.Vector3();
+			float y = 0.5f;
+			if("OBJ3D".equals(kind)){
+				ps.put("Mesh",preset == null ? "CUBE" : preset);
+				if("PLANE".equals(preset)){ ps.put("Scale X","10"); ps.put("Scale Z","10"); y = 0; }
+				else if("TERRAIN".equals(preset)){ ps.put("Scale X","60"); ps.put("Scale Y","1"); ps.put("Scale Z","60"); ps.put("Terrain Noise","1"); ps.put("Color","#7CB65A"); y = 0; }
+				else if("WATER".equals(preset)){ ps.put("Scale X","60"); ps.put("Scale Z","60"); ps.put("Cast Shadows","false"); y = 0; }
+				else if("MODEL".equals(preset)){ y = 0; }
+				else if("QUAD".equals(preset) || "DISC".equals(preset)) y = 0.5f;
+			} else if("LIGHT3D".equals(kind)){
+				ps.put("Light Kind",preset == null ? "POINT" : preset);
+				y = "DIRECTIONAL".equals(preset) ? 6 : 3;
+				if("SPOT".equals(preset)){ ps.put("Rotation X","-90"); ps.put("Range","15"); }
+			} else if("CAMERA3D".equals(kind)){
+				y = 3; ps.put("z",String.valueOf(p.z + 8));
+				boolean hasActive = false;
+				for(com.badlogic.gdx.scenes.scene2d.Actor a : ed.getActors())
+					if(a instanceof com.star4droid.star2d.editor.items.Editor3DItem && "CAMERA3D".equals(((com.star4droid.star2d.editor.items.Editor3DItem)a).kind) && a != item
+						&& "true".equals(((com.star4droid.star2d.editor.items.Editor3DItem)a).getPropertySet().getString("Active"))) hasActive = true;
+				ps.put("Active",String.valueOf(!hasActive));
+			}
+			ps.put("x",String.valueOf(com.badlogic.gdx.math.MathUtils.round(p.x*100)/100f));
+			ps.put("y",String.valueOf(y));
+			if(!"CAMERA3D".equals(kind)) ps.put("z",String.valueOf(com.badlogic.gdx.math.MathUtils.round(p.z*100)/100f));
+			item.update();
+			ed.selectActor(item);
+			EditorAction.itemAdded(ed,item);
+			ed.getSaveState();
+		} catch(Throwable error){
+			showError("Error :\n"+Utils.getStackTraceString(error));
+		}
+	}
+
+	/** Add a camera view (live picture of a camera) to the 2D layer. */
+	public void actionAddCameraView(){
+		try {
+			com.star4droid.star2d.editor.LibgdxEditor ed = app.getEditor();
+			com.star4droid.star2d.editor.items.EditorCameraViewItem item = new com.star4droid.star2d.editor.items.EditorCameraViewItem(ed);
+			item.setName(ed.getName(item));
+			item.setDefault();
+			if(item.getPropertySet()==null){ item.remove(); return; }
+			item.getPropertySet().put("z",String.valueOf(Math.max(100, ed.getActors().size)));
+			item.getPropertySet().put("x",String.valueOf(ed.getLogicWidth() - 360));
+			item.getPropertySet().put("y",String.valueOf(ed.getLogicHeight() - 220));
+			ed.selectActor(item);
+			EditorAction.itemAdded(ed,item);
+			item.update();
+		} catch(Throwable error){
+			showError("Error :\n"+Utils.getStackTraceString(error));
+		}
+	}
+
 	/** Add a light: 0 point, 1 directional, 2 cone. */
 	public void actionAddLight(int pos){
 		try {
@@ -920,6 +990,22 @@ public class ControlLayer extends Table {
 	 * never depends on a flag of another editor or on the phone screen size.
 	 */
 	public String applySceneAction(String name,SceneAction sceneAction,String orientation){
+		return applySceneAction(name,sceneAction,orientation,"2D");
+	}
+
+	/** CREATE with a scene type: "3D" writes the 3D settings and adds a ground, a cube and a camera. */
+	public String applySceneAction(String name,SceneAction sceneAction,String orientation,String sceneType){
+		pendingSceneType = sceneType;
+		try {
+			return applySceneAction0(name,sceneAction,orientation);
+		} finally {
+			pendingSceneType = null;
+		}
+	}
+
+	private String pendingSceneType;
+
+	private String applySceneAction0(String name,SceneAction sceneAction,String orientation){
 		String path = app.getEditor().getProject().getScenesPath()+name;
 		if (name.equals(""))
 			return getTrans("emptyError");
@@ -949,8 +1035,20 @@ public class ControlLayer extends Table {
 				if(sceneAction == SceneAction.CREATE){
 				    Boolean land = orientation == null || orientation.isEmpty() ? null : Boolean.valueOf(!orientation.equalsIgnoreCase("portrait"));
 				    com.star4droid.star2d.editor.ProjectOrientation.seed(app.getEditor().getProject(),name,land);
+				    if("3D".equals(pendingSceneType)) seed3D(name);
 				}
 				app.openSceneInNewEditor(name);
+				if(sceneAction == SceneAction.CREATE && "3D".equals(pendingSceneType)){
+					final com.star4droid.star2d.editor.LibgdxEditor ne = app.getEditor();
+					ne.whenLoaded(()->{
+						actionAdd3D("OBJ3D","PLANE");
+						actionAdd3D("OBJ3D","CUBE");
+						actionAdd3D("CAMERA3D",null);
+						ne.selectActor(null);
+						ne.getSaveState();
+						try { ne.getProject().save(ne); } catch(Throwable ignored){}
+					});
+				}
 			} else if(sceneAction == SceneAction.DELETE){
 				app.openSceneInNewEditor("scene1");
 			}
@@ -961,6 +1059,20 @@ public class ControlLayer extends Table {
 		return "Failed to create the path..";
 	}
 	
+	/** Writes the 3D settings into the new scene's config. */
+	private void seed3D(String name){
+		try {
+			com.badlogic.gdx.files.FileHandle f = Gdx.files.absolute(app.getEditor().getProject().getConfig(name));
+			String txt = f.exists() ? f.readString() : Gdx.files.internal("scene.json").readString();
+			com.star4droid.star2d.Helpers.PropertySet<String,Object> cfg = com.star4droid.star2d.editor.Utils.getProperty(txt);
+			if(cfg == null) cfg = new com.star4droid.star2d.Helpers.PropertySet<>();
+			com.star4droid.star2d.ui.Scene3DSettings.defaults(cfg);
+			f.writeString(cfg.toString(),false);
+		} catch(Throwable t){
+			Gdx.files.external("logs/scene3d.error.txt").writeString(Utils.getStackTraceString(t)+"\n",true);
+		}
+	}
+
 	public void dialogForScene(SceneAction sceneAction,String initial){
 		new SingleInputDialog(sceneAction.name(),getTrans("name")+" : ",initial,(text)->{
 			editScene(text,sceneAction);

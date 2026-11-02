@@ -19,7 +19,7 @@ public class CameraViewDef extends ItemDef {
 	/** Quality of the picture (0.25..1 of the view size), and how many times per second it is refreshed (0 = every frame). */
 	public float Resolution = 1, Refresh_Rate = 0;
 	public boolean Touch = false, Visible = true, Active = true;
-	public String Border_Color = "#FFFFFF", Background = "#000000";
+	public String Border_Color = "#FFFFFF", Background_Color = "#000000";
 	public float Border_Width = 2, Corner_Radius = 0, Opacity = 1;
 
 	public CameraViewDef() {

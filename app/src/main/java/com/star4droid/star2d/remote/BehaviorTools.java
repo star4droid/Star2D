@@ -47,6 +47,8 @@ final class BehaviorTools {
 
     private static final class Ctx {
         String projectPath, scene, name, type, script;
+        /** the "type" property (DYNAMIC / KINEMATIC / STATIC / UI); type above is the TYPE (BOX, TEXT, OBJ3D...) */
+        String bodyType = "";
         boolean ui;
         String behaviors, scriptVars;
         Project project;
@@ -74,6 +76,7 @@ final class BehaviorTools {
             c.name = el;
             c.type = found.get("TYPE") == null ? "" : found.get("TYPE");
             c.ui = "UI".equals(found.get("type"));
+            c.bodyType = found.get("type") == null ? "" : found.get("type");
             c.script = found.get("Script") == null || found.get("Script").isEmpty() ? el : found.get("Script");
             c.behaviors = found.get("behaviors") == null ? "" : found.get("behaviors");
             c.scriptVars = found.get("scriptVars") == null ? "" : found.get("scriptVars");
@@ -150,7 +153,8 @@ final class BehaviorTools {
         JsonObject o = new JsonObject();
         o.addProperty("id", m.id);
         o.addProperty("what", m.desc);
-        o.addProperty("for", m.targets.equals(BehaviorMeta.UI) ? "ui" : m.targets.equals(BehaviorMeta.PHYSICS) ? "physics" : "both");
+        o.addProperty("for", m.is3D() ? "3d" : m.targets.equals(BehaviorMeta.UI) ? "ui" : m.targets.equals(BehaviorMeta.PHYSICS) ? "physics" : "both");
+        if (!m.types.isEmpty()) o.addProperty("element_types", m.joinTypes());
         o.addProperty("category", m.category);
         if (!m.builtin) o.addProperty("project", true);
         if (!m.exclusive.isEmpty()) o.addProperty("exclusive", m.exclusive);
@@ -191,7 +195,7 @@ final class BehaviorTools {
                 BehaviorMeta m = BehaviorCatalog.find(e.type, c.projectPath);
                 if (m == null) x.addProperty("warning", "behavior not found (deleted project behavior?)");
                 else {
-                    String mis = m.misfit(c.type);
+                    String mis = m.misfit(c.bodyType, c.type);
                     if (mis != null) x.addProperty("warning", mis);
                 }
                 if (!e.params.isEmpty()) x.add("params", BehaviorData.gson().toJsonTree(e.params));
@@ -213,6 +217,8 @@ final class BehaviorTools {
         String q = CoreTools.s(a, "search").toLowerCase(Locale.ROOT);
         JsonArray arr = new JsonArray();
         for (BehaviorMeta m : BehaviorCatalog.all(c.projectPath)) {
+            if ((target.equals("3d") || target.equals("three_d")) && !m.is3D()) continue;
+            if (!target.isEmpty() && !target.equals("3d") && !target.equals("three_d") && !target.equals("all") && m.is3D()) continue;
             if (target.equals("ui") && !m.fits(true)) continue;
             if ((target.equals("physics") || target.equals("physical")) && !m.fits(false)) continue;
             if (!q.isEmpty() && !(m.id + " " + m.desc + " " + m.category).toLowerCase(Locale.ROOT).contains(q)) continue;
@@ -335,7 +341,11 @@ final class BehaviorTools {
         for (BehaviorData.Entry e : entries)
             if (e.type.equals(m.id)) return ToolResult.error("'" + c.name + "' already has " + m.id + ". Use behaviors {action:'set', element, id, params} to change it.");
         ArrayList<String> warnings = new ArrayList<String>(), errors = new ArrayList<String>();
-        String mis = m.misfit(c.type);
+        String mis = m.misfit(c.bodyType, c.type);
+        // 2D behaviors on 3D elements (and 3D ones on 2D elements) never work: refuse unless forced
+        String mis3 = m.misfit3D(c.type);
+        if (mis3 != null && !force && (m.is3D() != com.star4droid.star2d.behaviors.ElementTypes.is3D(c.type)))
+            return ToolResult.error(m.id + " cannot go on '" + c.name + "' (" + c.type + "): " + mis3 + ". Pick a " + (m.is3D() ? "3D element (OBJ3D, LIGHT3D, CAMERA3D)" : "2D element") + ", or behaviors {action:'list', target:'" + (com.star4droid.star2d.behaviors.ElementTypes.is3D(c.type) ? "3d" : "physics") + "'} for the ones that fit.");
         if (mis != null) warnings.add(mis);
 
         // exclusive group: one movement / one weapon at a time

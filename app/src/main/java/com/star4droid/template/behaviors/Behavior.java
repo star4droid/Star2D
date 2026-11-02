@@ -242,6 +242,50 @@ public abstract class Behavior {
 		return body() == null;
 	}
 
+	// ------------------------------------------------------------------ 3D helpers (3D scenes: meters, Y up, degrees, front = local -Z)
+
+	/** The element as a 3D object (OBJ3D), null when it is not one. */
+	protected final com.star4droid.template.d3.Object3D obj() {
+		return item instanceof com.star4droid.template.d3.Object3D ? (com.star4droid.template.d3.Object3D) item : null;
+	}
+
+	/** The element as a 3D camera (CAMERA3D), null when it is not one. */
+	protected final com.star4droid.template.d3.Camera3D camera3d() {
+		return item instanceof com.star4droid.template.d3.Camera3D ? (com.star4droid.template.d3.Camera3D) item : null;
+	}
+
+	/** The element as a 3D light (LIGHT3D), null when it is not one. */
+	protected final com.star4droid.template.d3.Light3D light3d() {
+		return item instanceof com.star4droid.template.d3.Light3D ? (com.star4droid.template.d3.Light3D) item : null;
+	}
+
+	/** True when the element lives in a 3D world (OBJ3D, LIGHT3D, CAMERA3D). */
+	protected final boolean is3D() {
+		return item instanceof com.star4droid.template.d3.Object3D || item instanceof com.star4droid.template.d3.Camera3D
+				|| item instanceof com.star4droid.template.d3.Light3D;
+	}
+
+	/** The 3D world of the scene (null in a 2D scene; never creates one). */
+	protected final com.star4droid.template.d3.World3D world3d() {
+		if (stage != null && stage.hasWorld3D()) return stage.world3d();
+		return com.star4droid.template.d3.World3D.current;
+	}
+
+	/** The main (active) camera of the 3D scene, null when there is none. */
+	protected final com.star4droid.template.d3.Camera3D mainCamera3d() {
+		com.star4droid.template.d3.World3D w = world3d();
+		return w == null ? null : w.activeCamera;
+	}
+
+	/** Position (meters) of any 3D element into out; false (out untouched) for a 2D element or null. */
+	protected static boolean pos3(PlayerItem it, com.badlogic.gdx.math.Vector3 out) {
+		if (it instanceof com.star4droid.template.d3.Object3D) out.set(((com.star4droid.template.d3.Object3D) it).position);
+		else if (it instanceof com.star4droid.template.d3.Camera3D) out.set(((com.star4droid.template.d3.Camera3D) it).position);
+		else if (it instanceof com.star4droid.template.d3.Light3D) out.set(((com.star4droid.template.d3.Light3D) it).position);
+		else return false;
+		return true;
+	}
+
 	public final PlayerItem findItem(String name) {
 		return stage == null ? null : stage.findItem(name);
 	}

@@ -15,6 +15,7 @@ public final class BehaviorTemplate {
 	 */
 	public static String source(String name, String targets) {
 		String t = targets == null ? "BOTH" : targets;
+		if (t.equals("THREE_D")) return source3D(name);
 		boolean body = t.equals("PHYSICS");
 		StringBuilder s = new StringBuilder();
 		s.append("package ").append(BehaviorCatalog.PROJECT_PACKAGE).append(";\n\n");
@@ -52,6 +53,40 @@ public final class BehaviorTemplate {
 		s.append("    @Override\n    public void onTouchStart(com.badlogic.gdx.scenes.scene2d.InputEvent event) {\n    }\n\n");
 		s.append("    @Override\n    public void onCollisionBegin(PlayerItem other) {\n    }\n\n");
 		s.append("    @Override\n    public void onDisable() {\n        // undo what the behavior did to the element: the saved properties are never rewritten\n    }\n}\n");
+		return s.toString();
+	}
+
+	/** Skeleton of a 3D behavior (3D scenes: meters, Y up, degrees, the front of an element is its local -Z). */
+	public static String source3D(String name) {
+		StringBuilder s = new StringBuilder();
+		s.append("package ").append(BehaviorCatalog.PROJECT_PACKAGE).append(";\n\n");
+		s.append("import com.star4droid.template.behaviors.*;\n");
+		s.append("import com.star4droid.template.Utils.PlayerItem;\n");
+		s.append("import com.star4droid.template.d3.*;\n\n");
+		s.append("/**\n * A 3D behavior: attach it to a 3D object, light or camera of a 3D scene.\n");
+		s.append(" * Units are meters and degrees, Y is up, the front of an element is its local -Z.\n");
+		s.append(" * obj() = the element as an Object3D (null for lights / cameras), camera3d(), light3d(), world3d(), mainCamera3d().\n");
+		s.append(" * B3.* has the same helpers as the 3D blocks. Don't use lambdas (the phone compiles Java 1.7).\n */\n");
+		s.append("@BehaviorInfo(\n");
+		s.append("    name = \"").append(VarSpec.humanize(name)).append("\",\n");
+		s.append("    icon = \"cube\",\n");
+		s.append("    desc = \"Describe what it does in one line.\",\n");
+		s.append("    targets = BehaviorInfo.Target.THREE_D,\n");
+		s.append("    types = {\"OBJ3D\"},          // OBJ3D, LIGHT3D, CAMERA3D\n");
+		s.append("    category = \"My behaviors\",\n");
+		s.append("    events = {\"onDone()\"}\n");
+		s.append(")\n");
+		s.append("public class ").append(name).append(" extends Behavior {\n\n");
+		s.append("    @Param(desc = \"Turning speed.\", unit = \"deg/s\", min = -720, max = 720)\n");
+		s.append("    public float speed = 90;\n");
+		s.append("    public PlayerItem target;        // pick an element in the inspector\n\n");
+		s.append("    @Block(label = \"set turning speed\", desc = \"Changes how fast it turns.\", args = {\"speed\"})\n");
+		s.append("    public void setSpeed(float value) {\n        speed = value;\n    }\n\n");
+		s.append("    @Override\n    public void onUpdate(float dt) {\n");
+		s.append("        Object3D o = obj();\n        if (o == null) return;\n");
+		s.append("        o.rotate3(0, speed * dt, 0);\n");
+		s.append("        if (target != null && o.distanceTo(target) < 1.5f) fire(\"onDone\");\n");
+		s.append("    }\n}\n");
 		return s.toString();
 	}
 }

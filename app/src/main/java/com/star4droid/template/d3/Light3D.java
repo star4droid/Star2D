@@ -74,7 +74,7 @@ public class Light3D extends Actor implements PlayerItem {
 
 	/** Reads the definition again (editor). */
 	public void apply() {
-		type = def.Light_Type == null ? "POINT" : def.Light_Type.toUpperCase();
+		type = def.Light_Kind == null ? "POINT" : def.Light_Kind.toUpperCase();
 		position.set(def.x, def.y, def.z);
 		setRotation3(def.Rotation_X, def.Rotation_Y, def.Rotation_Z);
 		color.set(Materials3D.color(def.Color, Color.WHITE));

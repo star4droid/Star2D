@@ -128,7 +128,7 @@ public class Object3D extends Actor implements PlayerItem {
 		water = null;
 		terrain = null;
 		boundsDone = false;
-		String shape = def.Shape == null ? Shapes3D.CUBE : def.Shape.toUpperCase();
+		String shape = def.Mesh == null ? Shapes3D.CUBE : def.Mesh.toUpperCase();
 		int detail = (int) def.Detail;
 		if ("MODEL".equals(shape)) {
 			SceneAsset a = Assets3D.model(def.Model);
@@ -190,7 +190,7 @@ public class Object3D extends Actor implements PlayerItem {
 		look.emissive = Materials3D.color(def.Emissive, Color.BLACK);
 		look.emissiveIntensity = def.Emissive_Intensity;
 		look.shininess = def.Shininess;
-		String shape = def.Shape == null ? "" : def.Shape.toUpperCase();
+		String shape = def.Mesh == null ? "" : def.Mesh.toUpperCase();
 		look.doubleSided = def.Double_Sided || Shapes3D.TORUS.equals(shape) || Shapes3D.QUAD.equals(shape) || Shapes3D.DISC.equals(shape) || Shapes3D.PLANE.equals(shape);
 		boolean model = "MODEL".equals(shape);
 		look.tintModel = model && !"#FFFFFF".equalsIgnoreCase(def.Color) && !"#FFFFFFFF".equalsIgnoreCase(def.Color);
@@ -207,7 +207,7 @@ public class Object3D extends Actor implements PlayerItem {
 	}
 
 	void createBody() {
-		if (world == null || instance == null && !"EMPTY".equals(def.Shape)) {
+		if (world == null || instance == null && !"EMPTY".equals(def.Mesh)) {
 			if (world == null) return;
 		}
 		try {
@@ -655,13 +655,13 @@ public class Object3D extends Actor implements PlayerItem {
 
 	/** Changes the shape (CUBE, SPHERE...) or loads another model ("/car.glb"). */
 	public void setShape(String shape) {
-		def.Shape = shape;
+		def.Mesh = shape;
 		buildModel();
 		if (rigid != null) createBody();
 	}
 
 	public void setModel(String path) {
-		def.Shape = "MODEL";
+		def.Mesh = "MODEL";
 		def.Model = path;
 		buildModel();
 		if (rigid != null) createBody();

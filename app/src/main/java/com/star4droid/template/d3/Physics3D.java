@@ -107,7 +107,7 @@ public class Physics3D implements Disposable {
 		Object3DDef d = o.d();
 		String c = d.Collider;
 		Vector3 s = new Vector3(Math.abs(o.scale.x) * d.Collider_Scale_X, Math.abs(o.scale.y) * d.Collider_Scale_Y, Math.abs(o.scale.z) * d.Collider_Scale_Z);
-		String shape = d.Shape;
+		String shape = d.Mesh;
 		if ("AUTO".equals(c)) {
 			if (Shapes3D.SPHERE.equals(shape) || Shapes3D.HEMISPHERE.equals(shape)) c = "SPHERE";
 			else if (Shapes3D.CAPSULE.equals(shape)) c = "CAPSULE";

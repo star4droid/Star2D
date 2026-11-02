@@ -15,7 +15,7 @@ public class Object3DDef extends ItemDef {
 
 	// ---- what it is
 	/** CUBE SPHERE CYLINDER CAPSULE CONE PLANE TORUS RAMP STAIRS PYRAMID HEMISPHERE TUBE WEDGE QUAD DISC, MODEL, TERRAIN, WATER, EMPTY */
-	public String Shape = "CUBE";
+	public String Mesh = "CUBE";
 	/** MODEL: project path of the .glb / .gltf (e.g. "models/car.glb"). */
 	public String Model = "";
 	/** MODEL: only this node of the model ("" = all). */

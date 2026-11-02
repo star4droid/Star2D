@@ -60,6 +60,8 @@ public class World3D implements Disposable {
 	public static float time;
 	/** World being drawn now (shaders read its sun / ambient). */
 	public static World3D drawing;
+	/** World of the scene running now (blocks without a world argument use it). */
+	public static World3D current;
 
 	public final StageImp stage;
 	public boolean editor;
@@ -105,6 +107,7 @@ public class World3D implements Disposable {
 
 	public World3D(StageImp stage) {
 		this.stage = stage;
+		if (stage != null) current = this;
 		defaultCamera.position.set(0, 4, 10);
 		defaultCamera.lookAt(0, 0.5f, 0);
 		defaultCamera.near = 0.1f;
@@ -320,7 +323,9 @@ public class World3D implements Disposable {
 	/** Logic of a frame (physics, animations, cameras). The scene calls it before {@link #render()}. */
 	public void update(float dt, boolean playing) {
 		this.playing = playing;
+		if (!editor) current = this;
 		time += dt;
+		if (playing && !editor) Tween3D.update(dt);
 		if (playing && physics != null) {
 			buoyancy(dt);
 			physics.step(dt);
@@ -543,7 +548,7 @@ public class World3D implements Disposable {
 			o.sync();
 			if (!o.isVisible() || o.instance == null) continue;
 			o.center(tmp);
-			float maxD = o.def.Draw_Distance > 0 ? o.def.Draw_Distance : (o.water != null || "TERRAIN".equals(o.def.Shape) ? viewDist * 4 : viewDist);
+			float maxD = o.def.Draw_Distance > 0 ? o.def.Draw_Distance : (o.water != null || "TERRAIN".equals(o.def.Mesh) ? viewDist * 4 : viewDist);
 			float dist = tmp.dst(cam.position) - o.radius;
 			if (dist > maxD && !editor) continue;
 			if (!cam.frustum.sphereInFrustum(tmp, o.radius)) continue;
@@ -857,6 +862,8 @@ public class World3D implements Disposable {
 	}
 
 	public void dispose() {
+		if (!editor) Tween3D.clear();
+		if (current == this) current = null;
 		if (physics != null) physics.dispose();
 		physics = null;
 		if (batch != null) batch.dispose();

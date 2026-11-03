@@ -980,6 +980,10 @@ public class Object3D extends Actor implements PlayerItem {
 	public void destroy() {
 		if (destroyed) return;
 		destroyed = true;
+		try {
+			if (getScript() != null) getScript().destroyBehaviors();
+		} catch (Throwable ignored) {
+		}
 		if (world != null) {
 			if (rigid != null) world.physics().removeBody(this);
 			world.remove(this);

@@ -77,10 +77,7 @@ public class CustomColliderEditor extends VisDialog {
 			save();
 			hide();
 		});
-		cancel = button(getTrans("cancel"), GREY, () -> {
-			if (!changed()) { hide(); return; }
-			new ConfirmDialog(getTrans("cancel"), getTrans("cancelConfirm"), ok -> { if (ok) hide(); }).show(getStage());
-		});
+		cancel = button(getTrans("cancel"), GREY, () -> requestCancel());
 		board.addListener(new InputListener() {
 			private int dragging = -1;
 			private float offX, offY;
@@ -352,7 +349,29 @@ public class CustomColliderEditor extends VisDialog {
 	public VisDialog show(Stage stage) {
 		toFront();
 		load();
+		fullscreen(true);
 		return super.show(stage);
+	}
+
+	@Override
+	public void hide(com.badlogic.gdx.scenes.scene2d.Action action) {
+		fullscreen(false);
+		super.hide(action);
+	}
+
+	/** Hides the native editor bars / panels while this editor is open (they were drawn over it). Back = Cancel. */
+	private void fullscreen(boolean open) {
+		try {
+			TestApp.NativeHooks hooks = TestApp.nativeHooks;
+			if (hooks != null) hooks.onFullscreenTool(open, open ? () -> Gdx.app.postRunnable(this::requestCancel) : null);
+		} catch (Throwable ignored) {
+		}
+	}
+
+	private void requestCancel() {
+		if (getStage() == null) return;
+		if (!changed()) { hide(); return; }
+		new ConfirmDialog(getTrans("cancel"), getTrans("cancelConfirm"), ok -> { if (ok) hide(); }).show(getStage());
 	}
 
 	/** "x,y-x,y..." with x, y between 0 and 1 and y measured from the top (the format the game reads). */

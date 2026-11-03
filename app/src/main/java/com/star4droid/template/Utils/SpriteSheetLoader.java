@@ -68,7 +68,8 @@ public class SpriteSheetLoader extends Thread {
 		} catch(Exception exception){}
 		Drawable[] drawables= new Drawable[animsList.size()];
 		int x=0;
-		Drawable def = Utils.getDrawable(Gdx.files.internal("images/logo.png"));
+		// made on the render thread: this loader runs on its own thread, where no texture can be created
+		Drawable def = new LazyDrawable(new LazyDrawable.Maker(){ public Drawable make(){ return Utils.getDrawable(Gdx.files.internal("images/logo.png")); } }, 64, 64);
 		for(HashMap<String,Object> hashMap:animsList){
 			String img = project.getImagesPath()+hashMap.get("name").toString().replace(Utils.seperator,"/");
 			Drawable d = def;

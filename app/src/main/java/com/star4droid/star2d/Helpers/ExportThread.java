@@ -71,23 +71,23 @@ public class ExportThread extends Thread {
 				return;
 			}
             */
-			onProgress("> Preparing the project");
+			onProgress(com.star4droid.star2d.ui.Tr.t("export_p_prepare","Preparing the project..."));
 			
 			FileUtil.deleteFile(export_temp+"/assets");
-			onProgress("Extracting template files");
+			onProgress(com.star4droid.star2d.ui.Tr.t("export_p_extract","Extracting the template files..."));
 			//if(!FileUtil.isExistFile(dataDir+"/export.apk")) {
 				FileUtil.writeFile(dataDir+"/export.apk","");
 				Utils.extractAssetFile(context,"files/template.zip",dataDir+"/export.apk");
                 //Utils.unzipf(dataDir+"/export.apk",export_temp,"");
 			//}
 			
-			onProgress("Preparing the project...");
+			onProgress(com.star4droid.star2d.ui.Tr.t("export_p_prepare","Preparing the project..."));
 			
 			Utils.extractAssetFile(context,"files/empty.zip",export_temp+"/assets/project.zip");
 			String source = project;
 			if(mergeTilesets){
 				// work on a copy: the project itself is never changed
-				onProgress("Merging images into tilesets...");
+				onProgress(com.star4droid.star2d.ui.Tr.t("export_p_merge","Merging images into tilesets..."));
 				// the copy keeps the project's folder name: it is the root folder of the zip and the game looks for it
 				String copyRoot = dataDir+"/exportProject";
 				FileUtil.deleteFile(copyRoot);
@@ -120,25 +120,25 @@ public class ExportThread extends Thread {
 
 			FileUtil.writeFile(export_temp+"/assets/version",""+new Random().nextInt(9999999));
 			addScenesDex();
-			onProgress("Manifest encoding...");
+			onProgress(com.star4droid.star2d.ui.Tr.t("export_p_manifest","Writing the manifest..."));
 			AxmlUtil.encodeFile(export_temp+"/manifest",export_temp+"/AndroidManifest.xml");
 			FileUtil.moveFile(export_temp+"/manifest",dataDir+"/manifest.debug.xml");
-			onProgress("Building APK...");
+			onProgress(com.star4droid.star2d.ui.Tr.t("export_p_build","Building the APK..."));
 			//FileUtil.copyFile(apk_path,dataDir+"/export.apk");
 			
 			Utils.zipFolderContents(export_temp,dataDir+"/export.apk","");
 			stripNatives(dataDir+"/export.apk");
-			onProgress("Signing...");
+			onProgress(com.star4droid.star2d.ui.Tr.t("export_p_sign","Signing..."));
 			
 			FileUtil.writeFile(dataDir+"/export.sign.apk","");
 			SignUtil.sign(context,dataDir+"/export.apk",dataDir+"/export.sign.apk");
-			onProgress("Moving to the selected path...");
+			onProgress(com.star4droid.star2d.ui.Tr.t("export_p_move","Saving to the chosen place..."));
 			//UriUtils.deleteUri(context,export_path);
 			// an existing file chosen to overwrite is emptied first and cut to the new size (no broken APK)
 			UriUtils.copyUriToUriChecked(context,Uri.fromFile(new java.io.File(dataDir+"/export.sign.apk")),export_path);
 			//FileUtil.deleteFile(dataDir+"/export.apk");
 			FileUtil.deleteFile(dataDir+"/export.sign.apk");
-			onSuccess("Done \n path : "+FileUtil.convertUriToFilePath(context,export_path));
+			onSuccess(com.star4droid.star2d.ui.Tr.t("export_p_done","Done")+"\n"+com.star4droid.star2d.ui.Tr.t("export_p_path","Path")+" : "+FileUtil.convertUriToFilePath(context,export_path));
 		} catch(Exception ex){
 			onError(Log.getStackTraceString(ex));
 		}
@@ -197,10 +197,10 @@ public class ExportThread extends Thread {
 			MaterialAlertDialogBuilder alertD=new MaterialAlertDialogBuilder(context);
 			alertD.setMessage(message);
 			alertD.setCancelable(false);
-			alertD.setNegativeButton(context.getString(R.string.cancel),(dl,which)->{
+			alertD.setNegativeButton(com.star4droid.star2d.ui.Tr.t("export_cancel","Cancel"),(dl,which)->{
 				
 			});
-			alertD.setPositiveButton(context.getString(R.string.install),(dl,which)->{
+			alertD.setPositiveButton(com.star4droid.star2d.ui.Tr.t("export_install","Install"),(dl,which)->{
 			    android.os.StrictMode.setVmPolicy(new
 			android.os.StrictMode.VmPolicy.Builder().build());
 			if(android.os.Build.VERSION.SDK_INT>=24){

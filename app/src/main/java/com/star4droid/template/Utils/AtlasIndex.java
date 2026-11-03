@@ -52,7 +52,7 @@ public class AtlasIndex {
 		try {
 			File f = new File(project.get("files") + "/_atlas.json");
 			if (!f.isFile()) return;
-			Map<String, Object> m = new Gson().fromJson(Gdx.files.absolute(f.getAbsolutePath()).readString(), new TypeToken<Map<String, Object>>() {}.getType());
+			Map<String, Object> m = new Gson().fromJson(readText(f) /* plain java.io: this runs before LibGDX starts (Gdx.files is still null) */, new TypeToken<Map<String, Object>>() {}.getType());
 			java.util.List<?> p = (java.util.List<?>) m.get("pages");
 			pages = new String[p.size()];
 			for (int i = 0; i < pages.length; i++) pages[i] = String.valueOf(p.get(i));
@@ -66,6 +66,16 @@ public class AtlasIndex {
 		} catch (Throwable t) {
 			images.clear();
 		}
+	}
+
+	private static String readText(File f) throws java.io.IOException {
+		java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+		try (java.io.FileInputStream in = new java.io.FileInputStream(f)) {
+			byte[] b = new byte[8192];
+			int n;
+			while ((n = in.read(b)) > 0) out.write(b, 0, n);
+		}
+		return out.toString("UTF-8");
 	}
 
 	public static boolean isEmpty() { return images.isEmpty(); }
@@ -87,6 +97,24 @@ public class AtlasIndex {
 	public static Drawable drawable(com.star4droid.template.Utils.ProjectAssetLoader loader, Project project, String path, int[] part) {
 		int[] r = find(path);
 		if (r == null) return null;
+		final String pagePath = (project.getImagesPath() + pages[r[0]]).replace("//", "/");
+		boolean ready = false;
+		try { ready = loader != null && loader.isLoaded(pagePath); } catch (Throwable ignored) {}
+		if (!ready && !pageTextures.containsKey(r[0])) {
+			// not loaded yet (or asked from the animations thread): the page texture is made when it is first drawn
+			if (!new File(pagePath).isFile()) return null;
+			final ProjectAssetLoader l = loader;
+			final Project pr = project;
+			final int[] rr = r, pp = part;
+			return new LazyDrawable(new LazyDrawable.Maker() {
+				public Drawable make() {
+					Texture t = pageTexture(l, pr, rr[0]);
+					if (t == null) return null;
+					return pp != null ? new TextureRegionDrawable(new TextureRegion(t, rr[1] + pp[0], rr[2] + pp[1], pp[2], pp[3]))
+							: new TextureRegionDrawable(new TextureRegion(t, rr[1], rr[2], rr[3], rr[4]));
+				}
+			}, part != null ? part[2] : r[3], part != null ? part[3] : r[4]);
+		}
 		Texture tex = pageTexture(loader, project, r[0]);
 		if (tex == null) return null;
 		if (part != null) return new TextureRegionDrawable(new TextureRegion(tex, r[1] + part[0], r[2] + part[1], part[2], part[3]));

@@ -131,15 +131,15 @@ public class ExportDialog {
 		View armRow = option(context,R.drawable.ic_s2_gamepad,t("export_arm_only","Phones only (ARM): smaller APK, no emulator libraries"),t("export_arm_desc","Leaves out the PC / emulator libraries"),arm);
 
 		LinearLayout form = Ui.column(context);
-		form.addView(label(context,context.getString(R.string.game_name)));
+		form.addView(label(context,t("export_game_name","Game name")));
 		form.addView(name,Ui.matchWrap());
-		form.addView(label(context,context.getString(R.string.package_name)));
+		form.addView(label(context,t("export_package","Package name")));
 		form.addView(pkg,Ui.matchWrap());
 		LinearLayout vr = Ui.row(context);
 		LinearLayout v1 = Ui.column(context), v2 = Ui.column(context);
-		v1.addView(label(context,context.getString(R.string.version_code)));
+		v1.addView(label(context,t("export_version_code","Version code")));
 		v1.addView(version,Ui.matchWrap());
-		v2.addView(label(context,context.getString(R.string.version_name)));
+		v2.addView(label(context,t("export_version_name","Version name")));
 		v2.addView(versionName,Ui.matchWrap());
 		LinearLayout.LayoutParams l1 = Ui.weight(1), l2 = Ui.weight(1);
 		l1.setMarginEnd(Ui.dp(context,6)); l2.setMarginStart(Ui.dp(context,6));
@@ -177,7 +177,7 @@ public class ExportDialog {
 		footer.setPadding(Ui.dp(context,14),Ui.dp(context,10),Ui.dp(context,14),Ui.dp(context,12));
 		footer.setBackgroundColor(Ui.SURFACE_2);
 		LinearLayout cancel = Ui.button(context,0,t("export_cancel","Cancel"),false,v->dialog.dismiss());
-		LinearLayout go = Ui.button(context,R.drawable.ic_s2_export,context.getString(R.string.export),true,v->{
+		LinearLayout go = Ui.button(context,R.drawable.ic_s2_export,t("export_start","Export"),true,v->{
 			String[] data = collect(context,project,portrait[0],version,versionName,pkg,name);
 			if(data==null) return;
 			sh.edit().putBoolean(project+"-arm",arm.isChecked()).putBoolean(project+"-merge",merge.isChecked()).apply();

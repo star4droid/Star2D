@@ -146,13 +146,13 @@ def bhv_statement(fqn_simple, method, args_kinds):
         s = "%%%d$s" % (i + 2)
         parts.append({"num": "(float)(" + s + ")", "bool": "(" + s + ")", "text": "String.valueOf(" + s + ")"}[k])
     call = method + "(" + ", ".join(parts) + ")"
-    return ("{\n    " + fqn + " __bhv = (" + fqn + ") %1$s.getBehavior(\"" + fqn_simple + "\");\n    if (__bhv != null) __bhv." + call +
+    return ("{\n    " + fqn + " __bhv = (" + fqn + ") com.star4droid.template.behaviors.BehaviorOps.of(%1$s, \"" + fqn_simple + "\");\n    if (__bhv != null) __bhv." + call +
             ";\n}\n%" + str(len(args_kinds) + 2) + "$s")
 
 
 def bhv_reporter(fqn_simple, method, default):
     fqn = "com.star4droid.template.behaviors.lib." + fqn_simple
-    get = "((" + fqn + ") %1$s.getBehavior(\"" + fqn_simple + "\"))"
+    get = "((" + fqn + ") com.star4droid.template.behaviors.BehaviorOps.of(%1$s, \"" + fqn_simple + "\"))"
     return "(" + get + " != null ? " + get + "." + method + "() : " + default + ")"
 
 
@@ -586,7 +586,10 @@ def build_city():
     ui_images(proj, ["btn_left.png", "btn_right.png", "pedal_gas.png", "pedal_brake.png", "btn_gear.png", "btn_wide.png", "joystick"])
 
     # ---- ground and roads: a 7 x 7 grid of 8 m cells, roads on rows / columns 0, 3, 6 (a ring and a cross), stubs leaving the town
-    sc.shape("ground", "PLANE", 0, 0, 0, 140, 1, 140, "#6E9E48", body="STATIC", Receive_Shadows=True, Cast_Shadows=False)
+    # the grass is drawn a little below the road tiles (no z-fighting: the roads never look sunk) and an invisible
+    # collider keeps the driving surface at y = 0
+    sc.shape("ground", "PLANE", 0, -0.06, 0, 140, 1, 140, "#6E9E48", Receive_Shadows=True, Cast_Shadows=False)
+    sc.wall("groundCollider", 0, -0.5, 0, 140, 1, 140)
 
     def cell(i, j):
         return (i - 3) * T, (j - 3) * T
@@ -609,9 +612,9 @@ def build_city():
                 r = {(True, False, False, True): 90, (False, True, False, True): 0, (False, True, True, False): 270, (True, False, True, False): 180}[(ex, wx, sz_, nz)]
                 m = "road-bend"
             n += 1
-            sc.model("road%d" % n, m + ".glb", x, 0.002, z, (T, 1, T), ry=r, Cast_Shadows=False)
+            sc.model("road%d" % n, m + ".glb", x, 0.0, z, (T, 1, T), ry=r, Cast_Shadows=False)
     for k, (x, z, r) in enumerate([(0, -32, 90), (0, -40, 90), (0, 32, 90), (0, 40, 90), (-32, 0, 0), (-40, 0, 0), (32, 0, 0), (40, 0, 0)]):
-        sc.model("stub%d" % (k + 1), "road-straight.glb", x, 0.002, z, (T, 1, T), ry=r, Cast_Shadows=False)
+        sc.model("stub%d" % (k + 1), "road-straight.glb", x, 0.0, z, (T, 1, T), ry=r, Cast_Shadows=False)
 
     # ---- buildings: 4 blocks of 2 x 2 cells, each building faces the row road next to it
     kinds = [("building-a.glb", 7.0), ("building-skyscraper-a.glb", 5.4), ("building-c.glb", 7.0), ("building-type-a.glb", 5.6),
@@ -1464,6 +1467,15 @@ def validate():
         cls = os.path.join(tmp, folder, "out")
         os.makedirs(cls, exist_ok=True)
         r = subprocess.run(["javac", "-nowarn", "--release", "8", "-encoding", "UTF-8", "-d", cls, "-cp", cp, gen], capture_output=True, text=True)
+        if r.returncode == 0:
+            # the phone's own compiler (com.sun.tools.javac of app/libs/lib_10.jar, -source 7) with its class path
+            phone_jar = os.path.join(ROOT, "app/libs/lib_10.jar")
+            if os.path.exists(phone_jar):
+                cls7 = os.path.join(tmp, folder, "out7")
+                os.makedirs(cls7, exist_ok=True)
+                pcp = os.path.join(ROOT, "app/src/main/assets/cp.zip") + os.pathsep + os.path.join(ROOT, "app/src/main/assets/java/game.zip")
+                r = subprocess.run(["java", "--limit-modules", "java.base,java.logging,java.xml,java.desktop,java.management,java.naming,java.compiler", "-cp", phone_jar, "com.sun.tools.javac.Main", "-nowarn", "-source", "7", "-target", "7", "-encoding", "UTF-8",
+                                    "-bootclasspath", pcp, "-d", cls7, "-cp", pcp, gen], capture_output=True, text=True)
         if r.returncode != 0:
             P(pre + "the generated scene does not compile:\n" + r.stdout + r.stderr)
         elif re.search(r"->|::", open(gen, encoding="utf-8").read()):

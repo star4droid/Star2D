@@ -22,7 +22,7 @@
     "next": "null",
     "next_id": "null",
     "else_id": "",
-    "nf": "[{\"name\": \"ui(Body)\", \"value\": \"speedText\"}, {\"name\": \"text\", \"value\": \"\", \"block\": {\"template\": \"(((com.star4droid.template.behaviors.lib.Car3D) %1$s.getBehavior(\\\"Car3D\\\")) != null ? ((com.star4droid.template.behaviors.lib.Car3D) %1$s.getBehavior(\\\"Car3D\\\")).getSpeedText() : \\\"\\\")\", \"displayTemplate\": \"speed text ___\", \"innerFields\": [{\"name\": \"___\", \"value\": \"playerCar\"}]}}]",
+    "nf": "[{\"name\": \"ui(Body)\", \"value\": \"speedText\"}, {\"name\": \"text\", \"value\": \"\", \"block\": {\"template\": \"(((com.star4droid.template.behaviors.lib.Car3D) com.star4droid.template.behaviors.BehaviorOps.of(%1$s, \\\"Car3D\\\")) != null ? ((com.star4droid.template.behaviors.lib.Car3D) com.star4droid.template.behaviors.BehaviorOps.of(%1$s, \\\"Car3D\\\")).getSpeedText() : \\\"\\\")\", \"displayTemplate\": \"speed text ___\", \"innerFields\": [{\"name\": \"___\", \"value\": \"playerCar\"}]}}]",
     "code": "%1$s.setItemText(String.valueOf(%2$s));\n%3$s",
     "color": -8708190,
     "close": "true"

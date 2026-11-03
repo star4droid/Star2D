@@ -615,7 +615,58 @@ public class EditorShell extends FrameLayout implements ControlLayer.NativeUi, T
         });
     }
 
+    /** New scene: name + 2D / 3D choice in one dialog. */
+    private void newSceneDialog(String initial, boolean threeD) {
+        LinearLayout col = Ui.column(activity);
+        col.setPadding(Ui.dp(activity, 20), Ui.dp(activity, 8), Ui.dp(activity, 20), 0);
+        col.addView(Ui.text(activity, Tr.t("name", "Name") + " (A-Z, 0-9, _)", 13, Ui.TEXT_3));
+        android.widget.EditText name = Ui.input(activity, initial, "Scene");
+        col.addView(name, Ui.matchWrap());
+        col.addView(Ui.sectionLabel(activity, Tr.t("s3_scene_type", "Scene type")));
+        LinearLayout row = Ui.row(activity);
+        final boolean[] is3d = {threeD};
+        TextView b2 = Ui.text(activity, Tr.t("s3_scene_2d", "2D scene"), 15, Ui.TEXT);
+        TextView b3 = Ui.text(activity, Tr.t("s3_scene_3d", "3D scene"), 15, Ui.TEXT);
+        for (TextView b : new TextView[]{b2, b3}) {
+            b.setGravity(Gravity.CENTER);
+            b.setTypeface(Typeface.DEFAULT_BOLD);
+            b.setPadding(0, Ui.dp(activity, 14), 0, Ui.dp(activity, 14));
+        }
+        Runnable paint = () -> {
+            b2.setBackground(Ui.rounded(is3d[0] ? Ui.SURFACE_2 : 0xFF2B4A66, Ui.dp(activity, 10), is3d[0] ? Ui.BORDER : Ui.ACCENT, Ui.dp(activity, 2)));
+            b3.setBackground(Ui.rounded(is3d[0] ? 0xFF2B4A66 : Ui.SURFACE_2, Ui.dp(activity, 10), is3d[0] ? Ui.ACCENT : Ui.BORDER, Ui.dp(activity, 2)));
+        };
+        paint.run();
+        b2.setOnClickListener(v -> { is3d[0] = false; paint.run(); });
+        b3.setOnClickListener(v -> { is3d[0] = true; paint.run(); });
+        row.addView(b2, Ui.margins(Ui.weight(1), activity, 0, 0, 6, 0));
+        row.addView(b3, Ui.margins(Ui.weight(1), activity, 6, 0, 0, 0));
+        col.addView(row, Ui.matchWrap());
+        new android.app.AlertDialog.Builder(activity).setTitle(Tr.t("newScene", "New scene")).setView(col)
+                .setPositiveButton(Tr.t("ok", "OK"), (d, w) -> {
+                    String n = name.getText().toString().trim();
+                    String err = Dialogs.checkName(n);
+                    if (err != null) {
+                        Ui.toast(activity, err);
+                        newSceneDialog(n, is3d[0]);
+                        return;
+                    }
+                    Bridge.query(() -> Bridge.controls().applySceneAction(n, ControlLayer.SceneAction.CREATE, null, is3d[0] ? "3D" : "2D"), e -> {
+                        if (e != null) {
+                            Ui.toast(activity, e);
+                            newSceneDialog(n, is3d[0]);
+                        }
+                    });
+                })
+                .setNegativeButton(Tr.t("cancel", "Cancel"), null)
+                .show();
+    }
+
     private void sceneDialog(ControlLayer.SceneAction action, String initial) {
+        if (action == ControlLayer.SceneAction.CREATE) {
+            newSceneDialog(initial, false);
+            return;
+        }
         String title = action == ControlLayer.SceneAction.CREATE ? Tr.t("newScene", "New scene")
                 : action == ControlLayer.SceneAction.COPY ? Tr.t("copyScene", "Copy scene") : Tr.t("renameScene", "Rename scene");
         Dialogs.input(activity, title, Tr.t("name", "Name") + " (A-Z, 0-9, _)", initial, Dialogs::checkName, name -> {
@@ -628,14 +679,7 @@ public class EditorShell extends FrameLayout implements ControlLayer.NativeUi, T
                 });
                 return;
             }
-            // new scene: 2D or 3D
-            Dialogs.choose(activity, Tr.t("s3_scene_type", "Scene type"), new String[]{Tr.t("s3_scene_2d", "2D scene"), Tr.t("s3_scene_3d", "3D scene")}, which ->
-                    Bridge.query(() -> Bridge.controls().applySceneAction(name, action, null, which == 1 ? "3D" : "2D"), err -> {
-                        if (err != null) {
-                            Ui.toast(activity, err);
-                            sceneDialog(action, name);
-                        }
-                    }));
+            // (CREATE is handled by newSceneDialog)
         });
     }
 

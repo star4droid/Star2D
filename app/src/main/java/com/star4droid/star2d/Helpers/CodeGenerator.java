@@ -480,7 +480,7 @@ public class CodeGenerator {
                         }
                         
                         // Add variable declarations
-                        if (!propertySet.getString("TYPE").contains("LIGHT")) {
+                        if (!propertySet.getString("TYPE").equals("LIGHT")) {
                             vars += (vars.equals("") ? "PlayerItem " : ",") + name;
                         } else {
                             lightsVar += (lightsVar.equals("") ? "Light " : ",") + name;

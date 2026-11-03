@@ -81,7 +81,8 @@ public class PanelHost extends FrameLayout {
         ImageView more = Ui.smallIcon(c, R.drawable.ic_s2_expand_more, Ui.TEXT_3, 18);
         header.addView(more);
         View spacer = new View(c);
-        header.addView(spacer, Ui.weight(1));
+        // a plain View wraps to the whole available height: give the spacer a 1px height (only its width matters)
+        header.addView(spacer, new LinearLayout.LayoutParams(0, 1, 1f));
         View.OnClickListener navToggle = v -> toggleNav();
         for (View tap : new View[]{titleIcon, titleView, more}) {
             tap.setOnClickListener(navToggle);

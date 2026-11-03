@@ -148,7 +148,7 @@ public class BlocksTest {
 			gen.println("// " + s.title);
 			if (!s.isValue()) {
 				String code = String.format(s.statementCode(), args);
-				check(code.contains("getBehavior(\"" + s.behaviorId + "\")"), s.title + " calls getBehavior");
+				check(code.contains("BehaviorOps.of(") && code.contains("\"" + s.behaviorId + "\")"), s.title + " calls BehaviorOps.of");
 				gen.println(code);
 			} else {
 				String expr = String.format(s.reporterTemplate(), args);

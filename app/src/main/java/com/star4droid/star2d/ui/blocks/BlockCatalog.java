@@ -381,12 +381,12 @@ public final class BlockCatalog {
 
         // Behaviors (always shown): attach / detach / turn on-off / settings of a behavior of an element
         int beh = 0xFF6A1B9A;
-        def("Behaviors", beh, "addBehavior", "body(Body) behavior(behavior)", "current|", false, "%1$s.addBehavior(\"%2$s\");\n%3$s");
-        def("Behaviors", beh, "removeBehavior", "body(Body) behavior(behavior)", "current|", false, "%1$s.removeBehavior(\"%2$s\");\n%3$s");
-        def("Behaviors", beh, "enableBehavior", "body(Body) behavior(behavior)", "current|", false, "%1$s.setBehaviorEnabled(\"%2$s\", true);\n%3$s");
-        def("Behaviors", beh, "disableBehavior", "body(Body) behavior(behavior)", "current|", false, "%1$s.setBehaviorEnabled(\"%2$s\", false);\n%3$s");
-        def("Behaviors", beh, "setBehaviorEnabled", "body(Body) behavior(behavior) on(Boolean)", "current||true", false, "%1$s.setBehaviorEnabled(\"%2$s\", %3$s);\n%4$s");
-        def("Behaviors", beh, "setBehaviorParam", "body(Body) behavior(behavior) setting value", "current|||0", false, "%1$s.setBehaviorParam(\"%2$s\", \"%3$s\", %4$s);\n%5$s");
+        def("Behaviors", beh, "addBehavior", "body(Body) behavior(behavior)", "current|", false, "com.star4droid.template.behaviors.BehaviorOps.add(%1$s, \"%2$s\");\n%3$s");
+        def("Behaviors", beh, "removeBehavior", "body(Body) behavior(behavior)", "current|", false, "com.star4droid.template.behaviors.BehaviorOps.remove(%1$s, \"%2$s\");\n%3$s");
+        def("Behaviors", beh, "enableBehavior", "body(Body) behavior(behavior)", "current|", false, "com.star4droid.template.behaviors.BehaviorOps.setEnabled(%1$s, \"%2$s\", true);\n%3$s");
+        def("Behaviors", beh, "disableBehavior", "body(Body) behavior(behavior)", "current|", false, "com.star4droid.template.behaviors.BehaviorOps.setEnabled(%1$s, \"%2$s\", false);\n%3$s");
+        def("Behaviors", beh, "setBehaviorEnabled", "body(Body) behavior(behavior) on(Boolean)", "current||true", false, "com.star4droid.template.behaviors.BehaviorOps.setEnabled(%1$s, \"%2$s\", %3$s);\n%4$s");
+        def("Behaviors", beh, "setBehaviorParam", "body(Body) behavior(behavior) setting value", "current|||0", false, "com.star4droid.template.behaviors.BehaviorOps.setParam(%1$s, \"%2$s\", \"%3$s\", %4$s);\n%5$s");
 
         // UI holders: change the inner elements of a .ui (by their id) and where the holder sits on the screen
         int uic = 0xFF88213B;
@@ -509,17 +509,17 @@ public final class BlockCatalog {
         r("Ui Nodes", "node ___ in ___ is enabled", "UIHolder.ref(%2$s,\"%1$s\").isEnabled()");
         shape("UIHolder.ref(%2$s,\"%1$s\").isEnabled()", 'b');
         // behaviors
-        r("Behaviors", "___ has behavior ___", "%1$s.hasBehavior(\"%2$s\")");
-        shape("%1$s.hasBehavior(\"%2$s\")", 'b');
-        r("Behaviors", "___ has behavior ___ turned on", "%1$s.isBehaviorEnabled(\"%2$s\")");
-        shape("%1$s.isBehaviorEnabled(\"%2$s\")", 'b');
-        r("Behaviors", "number setting ___ of behavior ___ on ___", "com.star4droid.template.behaviors.BehaviorOps.num(%3$s.getBehaviorParam(\"%2$s\", \"%1$s\"))");
-        shape("com.star4droid.template.behaviors.BehaviorOps.num(%3$s.getBehaviorParam(\"%2$s\", \"%1$s\"))", 'n');
-        r("Behaviors", "text setting ___ of behavior ___ on ___", "com.star4droid.template.behaviors.BehaviorOps.text(%3$s.getBehaviorParam(\"%2$s\", \"%1$s\"))");
-        shape("com.star4droid.template.behaviors.BehaviorOps.text(%3$s.getBehaviorParam(\"%2$s\", \"%1$s\"))", 't');
-        r("Behaviors", "yes/no setting ___ of behavior ___ on ___", "com.star4droid.template.behaviors.BehaviorOps.bool(%3$s.getBehaviorParam(\"%2$s\", \"%1$s\"))");
-        shape("com.star4droid.template.behaviors.BehaviorOps.bool(%3$s.getBehaviorParam(\"%2$s\", \"%1$s\"))", 'b');
-        r("Behaviors", "behavior ___ of ___", "%2$s.getBehavior(\"%1$s\")");
+        r("Behaviors", "___ has behavior ___", "com.star4droid.template.behaviors.BehaviorOps.has(%1$s, \"%2$s\")");
+        shape("com.star4droid.template.behaviors.BehaviorOps.has(%1$s, \"%2$s\")", 'b');
+        r("Behaviors", "___ has behavior ___ turned on", "com.star4droid.template.behaviors.BehaviorOps.enabled(%1$s, \"%2$s\")");
+        shape("com.star4droid.template.behaviors.BehaviorOps.enabled(%1$s, \"%2$s\")", 'b');
+        r("Behaviors", "number setting ___ of behavior ___ on ___", "com.star4droid.template.behaviors.BehaviorOps.num(com.star4droid.template.behaviors.BehaviorOps.param(%3$s, \"%2$s\", \"%1$s\"))");
+        shape("com.star4droid.template.behaviors.BehaviorOps.num(com.star4droid.template.behaviors.BehaviorOps.param(%3$s, \"%2$s\", \"%1$s\"))", 'n');
+        r("Behaviors", "text setting ___ of behavior ___ on ___", "com.star4droid.template.behaviors.BehaviorOps.text(com.star4droid.template.behaviors.BehaviorOps.param(%3$s, \"%2$s\", \"%1$s\"))");
+        shape("com.star4droid.template.behaviors.BehaviorOps.text(com.star4droid.template.behaviors.BehaviorOps.param(%3$s, \"%2$s\", \"%1$s\"))", 't');
+        r("Behaviors", "yes/no setting ___ of behavior ___ on ___", "com.star4droid.template.behaviors.BehaviorOps.bool(com.star4droid.template.behaviors.BehaviorOps.param(%3$s, \"%2$s\", \"%1$s\"))");
+        shape("com.star4droid.template.behaviors.BehaviorOps.bool(com.star4droid.template.behaviors.BehaviorOps.param(%3$s, \"%2$s\", \"%1$s\"))", 'b');
+        r("Behaviors", "behavior ___ of ___", "com.star4droid.template.behaviors.BehaviorOps.of(%2$s, \"%1$s\")");
         r("Logic", "true", "true");
         r("Logic", "___ is named ___", "%1$s.getName().equals(\"%2$s\")");
         r("Logic", "___ equals ___", "String.valueOf(%1$s).equals(String.valueOf(%2$s))");

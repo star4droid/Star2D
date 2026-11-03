@@ -20,6 +20,7 @@ public class MainActivity extends AndroidApplication {
 			}
 		}
 		AndroidApplicationConfiguration configuration= new AndroidApplicationConfiguration();
+		configuration.depth = 24; // 3D scenes: no z-fighting between close surfaces
 		StageImp dex = StageImp.getFromDex((getIntent().hasExtra("path")&&(!getIntent().getStringExtra("path").equals("")))?getIntent().getStringExtra("path"):firstGameDir(),
 		(getIntent().hasExtra("scene")&&(!getIntent().getStringExtra("scene").equals("")))?getIntent().getStringExtra("scene"):"scene1",null,null);
 		if(dex != null)

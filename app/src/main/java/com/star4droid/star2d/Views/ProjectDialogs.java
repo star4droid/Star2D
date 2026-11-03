@@ -63,6 +63,72 @@ public final class ProjectDialogs {
         return land;
     }
 
+    /** 2D / 3D chooser of the first scene. Returns the selected state holder (true = 3D). */
+    private static boolean[] typePicker(Activity a, LinearLayout parent) {
+        final boolean[] three = {false};
+        parent.addView(Ui.sectionLabel(a, T("s3_scene_type", "Scene type")));
+        LinearLayout row = Ui.row(a);
+        LinearLayout[] cards = new LinearLayout[2];
+        for (int i = 0; i < 2; i++) {
+            final boolean is3 = i == 1;
+            LinearLayout c = Ui.column(a);
+            c.setGravity(Gravity.CENTER);
+            c.setPadding(Ui.dp(a, 8), Ui.dp(a, 12), Ui.dp(a, 8), Ui.dp(a, 10));
+            c.addView(Ui.smallIcon(a, is3 ? com.star4droid.star2d.evo.R.drawable.ic_s2_cube : com.star4droid.star2d.evo.R.drawable.ic_s2_square, Ui.TEXT_2, 30));
+            TextView t = Ui.text(a, is3 ? T("s3_scene_3d", "3D scene") : T("s3_scene_2d", "2D scene"), 13.5f, Ui.TEXT);
+            t.setPadding(0, Ui.dp(a, 8), 0, 0);
+            c.addView(t);
+            c.setOnClickListener(v -> {
+                three[0] = is3;
+                for (int k = 0; k < 2; k++) cards[k].setSelected((k == 1) == three[0]);
+            });
+            c.setBackground(Ui.toggleBg(a));
+            cards[i] = c;
+            LinearLayout.LayoutParams lp = Ui.weight(1);
+            lp.setMargins(Ui.dp(a, 4), 0, Ui.dp(a, 4), 0);
+            row.addView(c, lp);
+        }
+        cards[0].setSelected(true);
+        parent.addView(row, Ui.matchWrap());
+        return three;
+    }
+
+    /** First scene of a new 3D project: 3D settings + a ground, a cube, a sun-lit camera view. */
+    static void write3D(Activity a, File project) {
+        try {
+            File cfg = new File(project, "configs/scene1.json");
+            JsonObject o = JsonParser.parseString(BlockModel.read(cfg)).getAsJsonObject();
+            o.addProperty("sceneType", "3D");
+            for (String[] f : com.star4droid.star2d.ui.Scene3DSettings.FIELDS) if (!o.has(f[0])) o.addProperty(f[0], f[2]);
+            BlockModel.write(cfg, o.toString());
+            String def = asset(a, "items/default.json");
+            com.google.gson.JsonArray arr = new com.google.gson.JsonArray();
+            arr.add(item(def, asset(a, "items/obj3d.json"), "ground", new String[]{"Mesh", "PLANE", "Scale X", "20", "Scale Z", "20", "Color", "#7CB65A", "Body", "STATIC"}));
+            arr.add(item(def, asset(a, "items/obj3d.json"), "cube", new String[]{"Mesh", "CUBE", "y", "0.5", "Color", "#4FA3F7", "Body", "DYNAMIC"}));
+            arr.add(item(def, asset(a, "items/camera3d.json"), "camera", new String[]{"y", "4", "z", "9", "Rotation X", "-20", "Active", "true"}));
+            File scene = new File(project, "scenes/scene1");
+            scene.getParentFile().mkdirs();
+            BlockModel.write(scene, arr.toString());
+        } catch (Exception ignored) {
+        }
+    }
+
+    private static String asset(Activity a, String name) throws java.io.IOException {
+        try (InputStream in = a.getAssets().open(name)) {
+            java.io.ByteArrayOutputStream bo = new java.io.ByteArrayOutputStream();
+            byte[] b = new byte[4096];
+            int r;
+            while ((r = in.read(b)) > 0) bo.write(b, 0, r);
+            return bo.toString("UTF-8");
+        }
+    }
+
+    private static JsonObject item(String def, String other, String name, String[] kv) {
+        JsonObject o = JsonParser.parseString(def.replace("--other--", "," + other).replace("ItemName", name)).getAsJsonObject();
+        for (int i = 0; i + 1 < kv.length; i += 2) o.addProperty(kv[i], kv[i + 1]);
+        return o;
+    }
+
     public static void create(Activity a, File projectsDir, OnProject done) {
         LinearLayout col = Ui.column(a);
         col.setPadding(Ui.dp(a, 20), Ui.dp(a, 6), Ui.dp(a, 20), 0);
@@ -74,6 +140,7 @@ public final class ProjectDialogs {
         name.selectAll();
         col.addView(name, Ui.matchWrap());
         boolean[] land = orientationPicker(a, col, false);
+        boolean[] three = typePicker(a, col);
         TextView tip = Ui.text(a, T("home_orientation_tip", "You can change it later from Edit project."), 11.5f, Ui.TEXT_3);
         tip.setPadding(0, Ui.dp(a, 8), 0, 0);
         col.addView(tip);
@@ -113,6 +180,7 @@ public final class ProjectDialogs {
             }
             for (String p : new String[]{"sounds", "anims", "images", "files", "icon"}) new File(dir, p).mkdirs();
             writeOrientation(a, dir, land[0]);
+            if (three[0]) write3D(a, dir);
             d.dismiss();
             if (!upload.enabled()) {
                 done.on(dir);

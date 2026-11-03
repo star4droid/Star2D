@@ -87,12 +87,12 @@ public final class BehaviorBlocks {
 		/** Template of an action block, ready for String.format (the last placeholder is "the blocks below"). */
 		public String statementCode() {
 			String b = "__bhv";
-			return "{\n    " + fqn + " " + b + " = " + cast() + " %1$s.getBehavior(\"" + behaviorId + "\");\n    if (" + b + " != null) " + b + "." + call() + ";\n}\n%" + (params.size() + 2) + "$s";
+			return "{\n    " + fqn + " " + b + " = " + cast() + " com.star4droid.template.behaviors.BehaviorOps.of(%1$s, \"" + behaviorId + "\");\n    if (" + b + " != null) " + b + "." + call() + ";\n}\n%" + (params.size() + 2) + "$s";
 		}
 
 		/** Template of a value block. */
 		public String reporterTemplate() {
-			String get = "(" + cast() + " %1$s.getBehavior(\"" + behaviorId + "\"))";
+			String get = "(" + cast() + " com.star4droid.template.behaviors.BehaviorOps.of(%1$s, \"" + behaviorId + "\"))";
 			return "(" + get + " != null ? " + get + "." + call() + " : " + defaultReturn() + ")";
 		}
 

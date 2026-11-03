@@ -32,7 +32,10 @@ public class LibgdxFragment extends AndroidFragmentApplication implements Androi
     @Override
     public View onCreateView(android.view.LayoutInflater inflater, @Nullable android.view.ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
-		View view = initializeForView(applicationListener);
+		// 24-bit depth: the 3D view (editor + play) has no z-fighting between close surfaces
+		com.badlogic.gdx.backends.android.AndroidApplicationConfiguration cfg = new com.badlogic.gdx.backends.android.AndroidApplicationConfiguration();
+		cfg.depth = 24;
+		View view = initializeForView(applicationListener, cfg);
 		//FileUtil.writeFile("logs/check.txt","listener : "+(applicationListener!=null)+", view : "+(view!=null));
 		return view;
     }

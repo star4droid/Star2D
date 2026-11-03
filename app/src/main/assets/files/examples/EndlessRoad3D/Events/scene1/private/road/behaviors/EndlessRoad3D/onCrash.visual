@@ -93,7 +93,7 @@
     "next_id": "null",
     "else_id": "",
     "nf": "[{\"name\": \"body(Body)\", \"value\": \"playerCar\"}, {\"name\": \"amount\", \"value\": \"-0.005\"}]",
-    "code": "{\n    com.star4droid.template.behaviors.lib.Car3D __bhv = (com.star4droid.template.behaviors.lib.Car3D) %1$s.getBehavior(\"Car3D\");\n    if (__bhv != null) __bhv.setGas((float)(%2$s));\n}\n%3$s",
+    "code": "{\n    com.star4droid.template.behaviors.lib.Car3D __bhv = (com.star4droid.template.behaviors.lib.Car3D) com.star4droid.template.behaviors.BehaviorOps.of(%1$s, \"Car3D\");\n    if (__bhv != null) __bhv.setGas((float)(%2$s));\n}\n%3$s",
     "color": -10453621,
     "close": "true"
   },
@@ -107,7 +107,7 @@
     "next_id": "null",
     "else_id": "",
     "nf": "[{\"name\": \"body(Body)\", \"value\": \"playerCar\"}, {\"name\": \"on(Boolean)\", \"value\": \"true\"}]",
-    "code": "{\n    com.star4droid.template.behaviors.lib.Car3D __bhv = (com.star4droid.template.behaviors.lib.Car3D) %1$s.getBehavior(\"Car3D\");\n    if (__bhv != null) __bhv.setHandbrake((%2$s));\n}\n%3$s",
+    "code": "{\n    com.star4droid.template.behaviors.lib.Car3D __bhv = (com.star4droid.template.behaviors.lib.Car3D) com.star4droid.template.behaviors.BehaviorOps.of(%1$s, \"Car3D\");\n    if (__bhv != null) __bhv.setHandbrake((%2$s));\n}\n%3$s",
     "color": -10453621,
     "close": "true"
   },
@@ -121,7 +121,7 @@
     "next_id": "null",
     "else_id": "",
     "nf": "[{\"name\": \"body(Body)\", \"value\": \"road\"}, {\"name\": \"paused(Boolean)\", \"value\": \"true\"}]",
-    "code": "{\n    com.star4droid.template.behaviors.lib.EndlessRoad3D __bhv = (com.star4droid.template.behaviors.lib.EndlessRoad3D) %1$s.getBehavior(\"EndlessRoad3D\");\n    if (__bhv != null) __bhv.setPaused((%2$s));\n}\n%3$s",
+    "code": "{\n    com.star4droid.template.behaviors.lib.EndlessRoad3D __bhv = (com.star4droid.template.behaviors.lib.EndlessRoad3D) com.star4droid.template.behaviors.BehaviorOps.of(%1$s, \"EndlessRoad3D\");\n    if (__bhv != null) __bhv.setPaused((%2$s));\n}\n%3$s",
     "color": -10453621,
     "close": "true"
   },

@@ -46,6 +46,8 @@ public class AtlasIndex {
 		images.clear();
 		for (Texture t : standalone.values()) try { t.dispose(); } catch (Throwable ignored) {}
 		standalone.clear();
+		for (Texture t : pageTextures.values()) try { t.dispose(); } catch (Throwable ignored) {}
+		pageTextures.clear();
 		pages = new String[0];
 		try {
 			File f = new File(project.get("files") + "/_atlas.json");
@@ -85,11 +87,32 @@ public class AtlasIndex {
 	public static Drawable drawable(com.star4droid.template.Utils.ProjectAssetLoader loader, Project project, String path, int[] part) {
 		int[] r = find(path);
 		if (r == null) return null;
-		String page = project.getImagesPath() + pages[r[0]];
-		if (!loader.isLoaded(page)) return null;
-		Texture tex = loader.get(page, Texture.class);
+		Texture tex = pageTexture(loader, project, r[0]);
+		if (tex == null) return null;
 		if (part != null) return new TextureRegionDrawable(new TextureRegion(tex, r[1] + part[0], r[2] + part[1], part[2], part[3]));
 		return new TextureRegionDrawable(new TextureRegion(tex, r[1], r[2], r[3], r[4]));
+	}
+
+	private static final Map<Integer, Texture> pageTextures = new HashMap<>();
+
+	/** Texture of a tileset page: from the game's loader when it has it (path normalised), otherwise read straight from the file and cached. */
+	private static Texture pageTexture(ProjectAssetLoader loader, Project project, int index) {
+		if (index < 0 || index >= pages.length) return null;
+		String page = (project.getImagesPath() + pages[index]).replace("//", "/");
+		try {
+			if (loader != null && loader.isLoaded(page)) return loader.get(page, Texture.class);
+		} catch (Throwable ignored) {}
+		Texture t = pageTextures.get(index);
+		if (t != null) return t;
+		try {
+			com.badlogic.gdx.files.FileHandle fh = Gdx.files.absolute(page);
+			if (!fh.exists()) return null;
+			t = new Texture(fh);
+			pageTextures.put(index, t);
+			return t;
+		} catch (Throwable e) {
+			return null;
+		}
 	}
 
 	/** The picture of a merged image through the game's loader, or null (not merged / not loaded yet). */
@@ -127,7 +150,7 @@ public class AtlasIndex {
 		try {
 			com.badlogic.gdx.graphics.Pixmap page = pagePixmaps.get(r[0]);
 			if (page == null) {
-				page = new com.badlogic.gdx.graphics.Pixmap(Gdx.files.absolute(gameProject.getImagesPath() + pages[r[0]]));
+				page = new com.badlogic.gdx.graphics.Pixmap(Gdx.files.absolute((gameProject.getImagesPath() + pages[r[0]]).replace("//", "/")));
 				pagePixmaps.put(r[0], page);
 				if (!releasePosted && Gdx.app != null) {
 					releasePosted = true;

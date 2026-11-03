@@ -88,13 +88,15 @@ public class ExportThread extends Thread {
 			if(mergeTilesets){
 				// work on a copy: the project itself is never changed
 				onProgress("Merging images into tilesets...");
-				String copy = dataDir+"/exportProject";
-				FileUtil.deleteFile(copy);
+				// the copy keeps the project's folder name: it is the root folder of the zip and the game looks for it
+				String copyRoot = dataDir+"/exportProject";
+				FileUtil.deleteFile(copyRoot);
+				String copy = copyRoot+"/"+new java.io.File(project).getName();
 				FileUtil.copyDir(project,copy);
 				try { TilesetPacker.pack(new java.io.File(copy),null); source = copy; } catch(Throwable t){ source = project; }
 			}
 			Utils.zipf(source,export_temp+"/assets/project.zip","tulsgskdiensl626__Xxmoishs");
-			if(!source.equals(project)) FileUtil.deleteFile(source);
+			if(!source.equals(project)) FileUtil.deleteFile(dataDir+"/exportProject");
 			try {
 				ZipFile zipFile=new ZipFile(export_temp+"/assets/project.zip","tulsgskdiensl626__Xxmoishs".toCharArray());
 				zipFile.removeFile("Events");

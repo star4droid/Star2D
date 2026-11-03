@@ -41,8 +41,13 @@ public class ExamplesDialog extends VisDialog {
 	
 	private void addExampleTable(FileHandle fileHandle){
 		VisTable table = new VisTable();
-		VisImage exImg = new VisImage(VisUI.getSkin().getDrawable(fileHandle.name()));
-		VisLabel label = new VisLabel(fileHandle.sibling(fileHandle.name()+isArabic+".txt").readString());
+		// examples without their own picture in the skin (the 3D ones...) get a neutral one instead of crashing
+		com.badlogic.gdx.scenes.scene2d.ui.Skin skin = VisUI.getSkin();
+		String pic = skin.has(fileHandle.name(), com.badlogic.gdx.scenes.scene2d.utils.Drawable.class) || skin.has(fileHandle.name(), com.badlogic.gdx.graphics.g2d.TextureRegion.class) ? fileHandle.name() : "white";
+		VisImage exImg = skin.has(pic, com.badlogic.gdx.scenes.scene2d.utils.Drawable.class) || skin.has(pic, com.badlogic.gdx.graphics.g2d.TextureRegion.class) ? new VisImage(skin.getDrawable(pic)) : new VisImage();
+		FileHandle txt = fileHandle.sibling(fileHandle.name()+isArabic+".txt");
+		if(!txt.exists()) txt = fileHandle.sibling(fileHandle.name()+".txt");
+		VisLabel label = new VisLabel(txt.exists() ? txt.readString() : fileHandle.name());
 		if(isArabic.equals("")){
 			VisLabel.LabelStyle style = new VisLabel.LabelStyle(label.getStyle());
 			style.font = VisUI.getSkin().get("no-rtl",BitmapFont.class);;

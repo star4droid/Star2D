@@ -9,7 +9,7 @@ import com.star4droid.template.behaviors.Param;
 import com.star4droid.template.behaviors.Support3D;
 import com.star4droid.template.d3.Object3D;
 
-@BehaviorInfo(name = "Character Animator 3D", icon = "human", category = "Animation", targets = BehaviorInfo.Target.THREE_D,
+@BehaviorInfo(name = "Character Animator 3D", icon = "human-handsup", category = "Animation", targets = BehaviorInfo.Target.THREE_D,
 		types = {"OBJ3D"}, events = {"onClipChanged(String clip)"},
 		desc = "Plays the idle, walk, run, jump and fall clips of a model from how fast it really moves, with smooth blending. Works with any movement (your blocks, AI, physics). Clip names may be a part of the name (\"walk\").")
 public class CharacterAnimator3D extends Behavior {

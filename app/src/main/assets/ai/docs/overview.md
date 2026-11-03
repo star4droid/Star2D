@@ -2,7 +2,7 @@
 
 ## The pieces
 
-A Star2D **project** is a folder on the phone. It holds **scenes** (levels/screens). A scene has **elements** (sprites, text, joysticks...), **events** (logic, as visual blocks or Java), optional **joints** and **variables**. When you build, the app generates one Java class per scene, compiles all of it on the phone and runs it with LibGDX + Box2D.
+A Star2D **project** is a folder on the phone. It holds **scenes** (levels/screens). A scene has **elements** (sprites, text, joysticks...), **events** (logic, as visual blocks or Java), optional **joints** and **variables**. When you build, the app generates one Java class per scene, compiles all of it on the phone and runs it with LibGDX + Box2D. A scene can also be **3D** (`scenes create {type:'3D'}`): 3D elements OBJ3D / LIGHT3D / CAMERA3D in meters with Bullet physics and glTF models, drawn under the normal 2D layer (HUD, UI holders). See `scenes`, section "3D scenes".
 
 ## Folders on disk (relative to the project root; the `files` tool uses these paths)
 
@@ -20,6 +20,8 @@ A Star2D **project** is a folder on the phone. It holds **scenes** (levels/scree
 | `sounds/` | Sound effects and music (wav/mp3/ogg). Referred to by file name. |
 | `anims/<animation>` | Sprite animations (JSON, no extension). See `assets`. |
 | `files/` | Particle `.p` files and other data. |
+| `models/` | 3D models `.glb` / `.gltf` (3D scenes). Referred to as `/name.glb` in an OBJ3D's `Model`. |
+| `shaders/` | Shader snippets `NAME.glsl` of 3D objects (`Shader` = `shaders/NAME`). |
 
 Do NOT edit by hand (generated): `java/com/star4droid/Game/<scene>.java`, `dex/`, `bin/`, `logs/`, `Events/JavaChanges.json`, `Events/*/UndoRedo.json`. Prefer the dedicated tools (`elements`, `events`, `scenes`, `variables`, `joints`) over `files` for anything they cover; they keep the editor in sync. After you change files with `files`, the app refreshes.
 
@@ -53,4 +55,5 @@ A new project has one scene, `scene1` (the main scene, the game starts there), a
 
 - Game cameras show the scene's logic screen: x from 0 to logic width, y from 0 to logic height (pixels), origin bottom-left.
 - Elements with `type` UI live on a separate screen-fixed layer (HUD, joystick, background); all other elements live in the physics world.
+- 3D scenes: the 3D world (Bullet physics, meters, y up) is drawn first, then the 2D world and UI layers on top in pixels as above.
 - `openScene("name")` (block `OpenScene`) switches scene; variables of the old scene are gone, use `saveData` / `setValue` to keep data (see `variables`).

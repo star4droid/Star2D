@@ -15,7 +15,7 @@ import com.star4droid.template.d3.Camera3D;
 import com.star4droid.template.d3.Object3D;
 import com.star4droid.template.d3.World3D;
 
-@BehaviorInfo(name = "Third Person Controller 3D", icon = "run", category = "Movement", targets = BehaviorInfo.Target.THREE_D,
+@BehaviorInfo(name = "Third Person Controller 3D", icon = "human", category = "Movement", targets = BehaviorInfo.Target.THREE_D,
 		types = {"OBJ3D"}, events = {"onJump()", "onLand()"},
 		desc = "A character seen from behind: the joystick moves it relative to the camera, it turns to where it walks, jumps, runs and plays its idle / walk / run / jump clips. Drag the screen to orbit the camera, pinch to zoom.")
 @Exclusive("movement")
@@ -173,7 +173,7 @@ public class ThirdPersonController3D extends Behavior {
 			c.follow(item, "THIRD_PERSON");
 			c.height = cameraHeight;
 			c.lookHeight = cameraHeight * 0.6f;
-			c.angle = modelYawOffset;
+			c.angle = -modelYawOffset;
 		}
 	}
 

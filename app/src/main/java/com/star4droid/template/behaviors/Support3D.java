@@ -309,6 +309,71 @@ public final class Support3D {
 		}
 	}
 
+	/**
+	 * Goes toward a point: on the ground (gravity, steps, walls through {@link Mover}) or flying straight in 3D, turning
+	 * smoothly to where it goes. Used by path followers, patrols, chasers, tap-to-move.
+	 */
+	public static final class Walker {
+		public final Mover mover = new Mover();
+		public float yaw, speedNow;
+		private boolean init;
+		private float vx, vz;
+		private final Vector3 p = new Vector3();
+
+		/** Turns the heading at once (start, teleports). */
+		public void setYaw(float y) {
+			yaw = y;
+			init = true;
+		}
+
+		/**
+		 * One frame toward target. Returns the distance left (horizontal on the ground). speed in m/s, accel in 1/s (0 = at
+		 * once), turnSpeed in deg/s (0 = never turn the element), yawOffset added to the element's heading (models facing +Z: 180).
+		 */
+		public float toward(World3D w, PlayerItem it, Vector3 target, float speed, float accel, float turnSpeed, float dt, boolean ground,
+				float stopDistance, float yawOffset, float radius) {
+			if (!Behavior.pos3(it, p)) return 0;
+			if (!init) {
+				init = true;
+				yaw = yawOfItem(it) - yawOffset;
+			}
+			float dx = target.x - p.x, dy = ground ? 0 : target.y - p.y, dz = target.z - p.z;
+			float dist = (float) Math.sqrt(dx * dx + dy * dy + dz * dz);
+			float want = dist <= stopDistance ? 0 : speed;
+			// slow down at the end instead of overshooting
+			if (dist - stopDistance < want * 0.25f) want = Math.max(0, (dist - stopDistance) * 4f);
+			float k = smooth(accel, dt);
+			float tx = dist > 0.0001f ? dx / dist * want : 0, tz = dist > 0.0001f ? dz / dist * want : 0;
+			vx += (tx - vx) * k;
+			vz += (tz - vz) * k;
+			speedNow = (float) Math.sqrt(vx * vx + vz * vz);
+			if (turnSpeed > 0 && speedNow > 0.05f) {
+				yaw = approachAngle(yaw, yawOf(vx, vz), turnSpeed * dt);
+				Object3D o = o(it);
+				if (o != null) o.setYaw3(yaw + yawOffset);
+				else if (it instanceof Camera3D) ((Camera3D) it).yaw = yaw;
+			}
+			if (ground) mover.step(w, it, vx, vz, dt, Mover.feetOffset(it, 1.6f), radius, true);
+			else {
+				float ty = dist > 0.0001f ? dy / dist * want : 0;
+				Object3D o = o(it);
+				if (o != null && o.isDynamic()) o.setVelocity3(vx, ty, vz);
+				else setPos(it, p.x + vx * dt, p.y + ty * dt, p.z + vz * dt);
+				speedNow = (float) Math.sqrt(vx * vx + vz * vz + ty * ty);
+			}
+			return dist;
+		}
+
+		/** Stops (keeps falling when on the ground). */
+		public void stop(World3D w, PlayerItem it, float dt, boolean ground, float radius) {
+			vx = vz = 0;
+			speedNow = 0;
+			Object3D o = o(it);
+			if (ground) mover.step(w, it, 0, 0, dt, Mover.feetOffset(it, 1.6f), radius, false);
+			else if (o != null && o.isDynamic()) o.setVelocity3(0, 0, 0);
+		}
+	}
+
 	public static void setPos(PlayerItem it, float x, float y, float z) {
 		if (it instanceof Object3D) ((Object3D) it).setPosition3(x, y, z);
 		else if (it instanceof Camera3D) ((Camera3D) it).position.set(x, y, z);
@@ -438,49 +503,101 @@ public final class Support3D {
 
 	// ------------------------------------------------------------------ prompts ("Tap to open")
 
-	/** A 2D button / text that appears while the player is near (and looks at) something; one tap = one action. */
+	/**
+	 * A 2D button / text that appears while the player is near (and looks at) something; one tap = one action. Several
+	 * prompts may share one button ("USE"): the nearest one that wants it owns it, the others wait.
+	 */
 	public static final class Prompt {
-		private PlayerItem button, label;
+		private static final java.util.HashMap<PlayerItem, Prompt> OWNERS = new java.util.HashMap<PlayerItem, Prompt>();
+		private PlayerItem button, label, key;
 		private EventListener listener;
-		private boolean shown, tapped;
-		private boolean init;
+		private boolean showing, tapped, init;
+		private float score = Float.MAX_VALUE;
+		private long frame;
+		private String lastText = null;
 
-		/** Call every frame. Returns true once per tap of the button while it is shown. */
-		public boolean update(PlayerItem button, PlayerItem label, String text, boolean show) {
+		private static long frameId() {
+			return Gdx.graphics == null ? 0 : Gdx.graphics.getFrameId();
+		}
+
+		private boolean live() {
+			return showing && frameId() - frame <= 2;
+		}
+
+		/**
+		 * Call every frame. score = distance (the smallest score wins a shared button). Returns true once per tap of the
+		 * button while this prompt owns it.
+		 */
+		public boolean update(PlayerItem button, PlayerItem label, String text, boolean show, float score) {
 			if (button != this.button) {
 				Support3D.removeListener(this.button, listener);
 				this.button = button;
 				listener = Support3D.onTap(button, new Runnable() {
 					@Override
 					public void run() {
-						if (shown) tapped = true;
+						if (owner() == Prompt.this && showing) tapped = true;
 					}
 				});
-				init = false;
 			}
 			this.label = label;
-			if (!init || show != shown) {
+			key = button != null ? button : label;
+			frame = frameId();
+			this.score = score;
+			showing = show;
+			if (key == null) {
+				boolean t = tapped;
+				tapped = false;
+				return t;
+			}
+			Prompt owner = OWNERS.get(key);
+			if (show) {
+				if (owner == null || owner == this || !owner.live() || score < owner.score) {
+					OWNERS.put(key, this);
+					owner = this;
+				}
+			} else if (owner == this) {
+				OWNERS.remove(key);
+				Support3D.show(button, false);
+				Support3D.show(label, false);
+				lastText = null;
+				owner = null;
+			}
+			if (!init) {
 				init = true;
-				shown = show;
-				Support3D.show(button, show);
-				Support3D.show(label, show);
-				if (show && label != null && text != null && text.length() > 0) label.setItemText(text);
+				if (owner == null) {
+					Support3D.show(button, false);
+					Support3D.show(label, false);
+				}
+			}
+			if (owner == this) {
+				Support3D.show(button, true);
+				Support3D.show(label, true);
+				if (label != null && text != null && text.length() > 0 && !text.equals(lastText)) {
+					label.setItemText(text);
+					lastText = text;
+				}
 			}
 			boolean t = tapped;
 			tapped = false;
-			return t && show;
+			return t && owner == this;
+		}
+
+		private Prompt owner() {
+			return key == null ? this : OWNERS.get(key);
 		}
 
 		public boolean isShown() {
-			return shown;
+			return key != null && OWNERS.get(key) == this;
 		}
 
 		public void hide() {
-			if (shown) {
+			showing = false;
+			if (key != null && OWNERS.get(key) == this) {
+				OWNERS.remove(key);
 				Support3D.show(button, false);
 				Support3D.show(label, false);
 			}
-			shown = false;
+			lastText = null;
 		}
 
 		public void dispose() {
@@ -489,6 +606,25 @@ public final class Support3D {
 			button = null;
 			listener = null;
 		}
+	}
+
+	/**
+	 * "Can the player use it now?": distance from the player (empty = the main camera) to a point, and, when needLook, the
+	 * camera must look at it. Returns the distance, or -1 when out of reach.
+	 */
+	public static float reach(World3D w, PlayerItem player, Vector3 point, float range, boolean needLook, float lookAngle) {
+		Vector3 pp = new Vector3();
+		if (!posOr(player, w, pp)) return -1;
+		float d = pp.dst(point);
+		if (player instanceof Object3D) {
+			// a character: measure from its middle, not its feet
+			Object3D o = (Object3D) player;
+			float mid = (o.getBottomY() + o.position.y + o.getSizeY() * 0.5f) * 0.5f;
+			d = Math.min(d, Vector3.dst(pp.x, mid, pp.z, point.x, point.y, point.z));
+		}
+		if (d > range) return -1;
+		if (needLook && w != null && !looksAt(w.activeCamera, point, lookAngle)) return -1;
+		return d;
 	}
 
 	/** Is the camera looking at the point (within maxAngle degrees of its view direction)? */

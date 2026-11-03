@@ -110,17 +110,31 @@ final class EditTools {
                 if (!asked.isEmpty() && !asked.equals("landscape") && !asked.equals("portrait"))
                     return ToolResult.error("orientation must be 'landscape' or 'portrait' (got '" + asked + "')");
                 final String wantOr = asked;
+                // scene kind of a NEW scene: type "3D" (also scene_type / config.sceneType / 3d:true), default 2D
+                String kind = CoreTools.s(a, "type");
+                if (kind.isEmpty()) kind = CoreTools.s(a, "scene_type");
+                if (kind.isEmpty()) kind = CoreTools.s(a, "sceneType");
+                if (kind.isEmpty() && config != null) kind = CoreTools.s(config, "sceneType");
+                if (kind.isEmpty() && CoreTools.b(a, "3d", false)) kind = "3D";
+                kind = kind.trim().toUpperCase(Locale.ROOT);
+                if (!kind.isEmpty() && !kind.equals("2D") && !kind.equals("3D"))
+                    return ToolResult.error("type must be '2D' or '3D' (got '" + kind + "')");
+                if (kind.equals("3D") && !action.equals("create"))
+                    return ToolResult.error("type '3D' is only for create (copy keeps the kind of the copied scene)");
+                final String sceneKind = kind.isEmpty() ? "2D" : kind;
+                if (config != null) config.remove("sceneType");
                 final String projectOr = action.equals("create") ? Gl.run(() -> Proj.projectOrientation(target)) : null;
                 String err = Gl.run(() -> {
                     ControlLayer cl = Bridge.controls();
                     ControlLayer.SceneAction sa = action.equals("create") ? ControlLayer.SceneAction.CREATE
                             : action.equals("copy") ? ControlLayer.SceneAction.COPY : ControlLayer.SceneAction.RENAME;
                     Proj.editor().getProject().save(Proj.editor());
-                    return cl.applySceneAction(target, sa, action.equals("create") && !wantOr.isEmpty() ? wantOr : null);
+                    return cl.applySceneAction(target, sa, action.equals("create") && !wantOr.isEmpty() ? wantOr : null, sceneKind);
                 });
                 if (err != null) return ToolResult.error(err);
                 Proj.waitLoaded(20_000);
-                if (config != null) configure(config);
+                if (sceneKind.equals("3D")) Gl.sleep(400); // the starter ground, cube and camera are added right after loading
+                if (config != null && config.size() > 0) configure(config);
                 String extra = "";
                 if (action.equals("create")) {
                     // verify: the config FILE and the live flag must say what was asked (or what the project is)
@@ -139,6 +153,8 @@ final class EditTools {
                         String note = "";
                         if (!wantOr.isEmpty() && !wantOr.equals(projectOr))
                             note = " NOTE: the other scenes are " + projectOr.toUpperCase(Locale.ROOT) + "; an exported game has ONE screen orientation, keep all scenes the same unless you really mean it.";
+                        if (sceneKind.equals("3D"))
+                            note += " 3D scene: it starts with a ground PLANE, a CUBE and an active CAMERA3D (rename/replace them, see scene_dump). 3D elements: OBJ3D, LIGHT3D, CAMERA3D in METERS (y up); settings via configure (Render Mode, Lighting Preset, Sky, Fog, Gravity Y, Quality, Post Effect...). read_docs {topic:'scenes', section:'3D scenes'}.";
                         return fixed + note;
                     });
                 }
@@ -159,7 +175,7 @@ final class EditTools {
                 return ToolResult.text(configure(config) + " " + Gl.run(() -> SceneInfo.describe(Proj.editor(), Proj.project(), Proj.editor().getScene())));
             }
             default:
-                return ToolResult.error("Unknown action '" + action + "'. Use list|open|create|rename|copy|delete|configure.");
+                return ToolResult.error("Unknown action '" + action + "'. Use list|open|create|rename|copy|delete|configure (create {type:'3D'} makes a 3D scene).");
         }
     }
 
@@ -168,10 +184,32 @@ final class EditTools {
             LibgdxEditor ed = Proj.editor();
             StringBuilder sb = new StringBuilder();
             float lw = -1, lh = -1;
-            boolean swap = false;
+            boolean swap = false, changed3D = false;
+            boolean is3D = ed.is3DScene();
             for (Map.Entry<String, JsonElement> e : c.entrySet()) {
                 String k = e.getKey(), v = str(e.getValue());
+                String[] f3 = field3D(k);
+                if (f3 != null) {
+                    if (!is3D) {
+                        sb.append("'").append(k).append("' is a 3D setting and this scene is 2D (ignored); ");
+                        continue;
+                    }
+                    String err = check3D(f3, v);
+                    if (err != null) {
+                        sb.append(err).append("; ");
+                        continue;
+                    }
+                    if (f3[1].equals("choice")) v = v.trim().toUpperCase(Locale.ROOT);
+                    if (f3[1].equals("color") && !v.startsWith("#")) v = "#" + v;
+                    ed.getConfig().put(f3[0], v);
+                    changed3D = true;
+                    continue;
+                }
                 switch (k) {
+                    case "sceneType":
+                        if (!v.equalsIgnoreCase(is3D ? "3D" : "2D"))
+                            sb.append("sceneType cannot be changed (make a new scene with scenes create {type:'").append(is3D ? "2D" : "3D").append("'}); ");
+                        break;
                     case "sceneColor": ed.setSceneColor(v.startsWith("#") ? v : "#" + v); break;
                     case "Ambient Light":
                     case "ambient":
@@ -199,6 +237,23 @@ final class EditTools {
                 ed.setLogicalWH(longSide, shortSide);
                 ed.saveConfig();
             }
+            if (changed3D) {
+                ed.getConfig().put("sceneType", "3D");
+                ed.saveConfig();
+                try {
+                    if (ed.get3D() != null) ed.get3D().configure(ed.getConfig());
+                } catch (Throwable ignored) {
+                }
+                if (!"CUSTOM".equalsIgnoreCase(String.valueOf(ed.getConfig().get("Lighting Preset")))) {
+                    for (String k : c.keySet()) {
+                        String[] f3 = field3D(k);
+                        if (f3 != null && CUSTOM_ONLY.contains(f3[0])) {
+                            sb.append("NOTE: Ambient / Sun / Sky Top / Sky Bottom / Fog values only apply with \"Lighting Preset\":\"CUSTOM\" (the other presets set them); ");
+                            break;
+                        }
+                    }
+                }
+            }
             if (swap) {
                 ed.swapLogicSize();
                 sb.append("sizes swapped (logicWidth now ").append((int) ed.getRawLogicWidth()).append(", logicHeight ").append((int) ed.getRawLogicHeight()).append("); ");
@@ -208,9 +263,98 @@ final class EditTools {
         });
     }
 
+    /** 3D scene settings that only apply with Lighting Preset CUSTOM. */
+    private static final java.util.Set<String> CUSTOM_ONLY = new java.util.HashSet<>(java.util.Arrays.asList(
+            "Ambient Color", "Ambient Intensity", "Sun", "Sun Color", "Sun Intensity", "Sun Pitch", "Sun Yaw", "Sky Top", "Sky Bottom", "Fog", "Fog Color", "Fog Near", "Fog Far"));
+    /** Settings read by the 3D world but not shown in the settings dialog. */
+    private static final String[][] EXTRA_3D = {{"Post Params", "text", "", ""}, {"Exposure", "float", "1", ""}};
+
+    /** {key, kind, default, options} of a 3D scene setting (case-insensitive name), null = not one. */
+    static String[] field3D(String key) {
+        for (String[] f : com.star4droid.star2d.ui.Scene3DSettings.FIELDS) if (f[0].equalsIgnoreCase(key)) return f;
+        for (String[] f : EXTRA_3D) if (f[0].equalsIgnoreCase(key)) return f;
+        return null;
+    }
+
+    private static String check3D(String[] f, String v) {
+        switch (f[1]) {
+            case "choice":
+                for (String o : f[3].split(",")) if (o.equalsIgnoreCase(v.trim())) return null;
+                return f[0] + ": '" + v + "' is not one of " + f[3].replace(",", "|") + " (ignored)";
+            case "float":
+                try {
+                    Float.parseFloat(v);
+                    return null;
+                } catch (Exception e) {
+                    return f[0] + ": not a number (ignored)";
+                }
+            case "bool":
+                return v.equalsIgnoreCase("true") || v.equalsIgnoreCase("false") ? null : f[0] + ": use true or false (ignored)";
+            default:
+                return null;
+        }
+    }
+
     // ================================================================== elements
 
     private static final String[] KINDS = {"BOX", "CIRCLE", "TEXT", "JOYSTICK", "PROGRESS", "CUSTOM", "PARTICLE", "CAMERA", "MAP", "GROUP", "UIHOLDER"};
+
+    private static final String[] MESHES = {"CUBE", "SPHERE", "CYLINDER", "CAPSULE", "CONE", "PLANE", "TORUS", "RAMP", "STAIRS", "PYRAMID", "HEMISPHERE",
+            "TUBE", "WEDGE", "QUAD", "DISC", "MODEL", "TERRAIN", "WATER", "EMPTY"};
+
+    private static String upper(String s) {
+        return s == null ? "" : s.trim().toUpperCase(Locale.ROOT);
+    }
+
+    /**
+     * 3D kinds: {TYPE, preset} where TYPE is OBJ3D / LIGHT3D / CAMERA3D / CAMERAVIEW and preset the Mesh / Light Kind; null = a 2D type.
+     * Accepts the TYPE itself, shape names ("cube", "sphere", "model", "terrain", "water"...), "light3d", "spot", "sun", "camera3d",
+     * "cameraview"; in a 3D scene "LIGHT" and "CAMERA" mean the 3D ones and "EMPTY" an empty 3D object.
+     */
+    static String[] kind3D(String type, JsonObject props, boolean scene3D) {
+        String t = upper(type).replace(" ", "").replace("_", "").replace("-", "");
+        String mesh = props != null && props.has("Mesh") ? upper(str(props.get("Mesh"))) : "";
+        if (t.equals("CAMERAVIEW") || t.equals("CAMVIEW") || t.equals("MINIMAP") || t.equals("MIRROR")) return new String[]{"CAMERAVIEW", null};
+        if (t.equals("CAMERA3D") || t.equals("3DCAMERA") || (scene3D && t.equals("CAMERA"))) return new String[]{"CAMERA3D", null};
+        if (t.equals("LIGHT3D") || t.equals("3DLIGHT") || t.endsWith("LIGHT3D") || t.equals("SUN") || t.equals("SPOT") || t.equals("SPOTLIGHT")
+                || (scene3D && t.contains("LIGHT"))) {
+            String k = props != null && props.has("Light Kind") ? upper(str(props.get("Light Kind")))
+                    : props != null && props.has("Light Type") ? upper(str(props.get("Light Type"))) : t;
+            if (k.contains("SPOT") || k.contains("CONE")) k = "SPOT";
+            else if (k.contains("DIRECTIONAL") || k.contains("SUN")) k = "DIRECTIONAL";
+            else k = "POINT";
+            return new String[]{"LIGHT3D", k};
+        }
+        if (t.equals("OBJ3D") || t.equals("OBJECT3D") || t.equals("3D") || t.equals("SHAPE3D") || t.equals("MESH")) {
+            if (mesh.isEmpty() && props != null && props.has("Model") && !str(props.get("Model")).isEmpty()) mesh = "MODEL";
+            return new String[]{"OBJ3D", mesh.isEmpty() ? "CUBE" : mesh};
+        }
+        if (t.equals("GLB") || t.equals("GLTF") || t.equals("MODEL3D") || t.equals("3DMODEL")) return new String[]{"OBJ3D", "MODEL"};
+        if (t.equals("BALL") && scene3D) return new String[]{"OBJ3D", "SPHERE"};
+        if (t.equals("GROUND") && scene3D) return new String[]{"OBJ3D", "PLANE"};
+        for (String m : MESHES) {
+            if (!t.equals(m)) continue;
+            if (m.equals("EMPTY") && !scene3D) return null; // 2D: EMPTY = GROUP
+            return new String[]{"OBJ3D", m};
+        }
+        return null;
+    }
+
+    /** Adds a 3D element ({TYPE, preset} from {@link #kind3D}) or a CAMERAVIEW; it is selected afterwards. Error text or null. GL thread. */
+    static String add3D(TestApp app, LibgdxEditor ed, String[] k3) {
+        Actor before = ed.getSelectedActor();
+        if (k3[0].equals("CAMERAVIEW")) app.getControlLayer().actionAddCameraView();
+        else {
+            if (!ed.is3DScene())
+                return k3[0] + " is a 3D element and scene '" + ed.getScene() + "' is 2D. Make a 3D scene first: scenes {action:'create', name:'...', type:'3D'}";
+            if (k3[0].equals("OBJ3D") && !java.util.Arrays.asList(MESHES).contains(k3[1]))
+                return "unknown Mesh '" + k3[1] + "'. Use " + String.join(", ", MESHES);
+            app.getControlLayer().actionAdd3D(k3[0], k3[1]);
+        }
+        Actor now = ed.getSelectedActor();
+        if (now == null || now == before) return "the editor did not create the " + k3[0] + " element";
+        return null;
+    }
 
     private static int kindIndex(String type) {
         String t = type.toUpperCase(Locale.ROOT).replace(" ", "");
@@ -259,7 +403,7 @@ final class EditTools {
                 continue;
             }
             String v = str(props.get(raw));
-            if (key.equals("z")) {
+            if (key.equals("z") && !SceneInfo.is3DType(type)) { // 3D: z is a depth in meters, may be negative
                 try {
                     if (Float.parseFloat(v) < 0) {
                         v = "0";
@@ -352,17 +496,29 @@ final class EditTools {
             switch (op) {
                 case "add": {
                     String type = CoreTools.s(o, "type");
-                    if (type.isEmpty()) return res(op, name, false, "type is required (BOX, CIRCLE, TEXT, JOYSTICK, PROGRESS, CUSTOM, PARTICLE, CAMERA, MAP, GROUP, LIGHT)");
+                    if (type.isEmpty()) return res(op, name, false, "type is required (BOX, CIRCLE, TEXT, JOYSTICK, PROGRESS, CUSTOM, PARTICLE, CAMERA, MAP, GROUP, UIHOLDER, LIGHT, CAMERAVIEW; 3D scenes: OBJ3D, LIGHT3D, CAMERA3D)");
                     if (!name.isEmpty() && ed.getBodiesList().contains(name)) return res(op, name, false, "an element named '" + name + "' already exists (use set)");
                     if (!name.isEmpty() && !name.matches("[A-Za-z_][A-Za-z0-9_]*")) return res(op, name, false, "name must be letters, digits and _ (not starting with a digit)");
                     String t = type.toUpperCase(Locale.ROOT).replace(" ", "");
-                    if (t.equals("LIGHT") || t.contains("LIGHT")) {
+                    boolean scene3D = ed.is3DScene();
+                    String[] k3 = kind3D(type, props, scene3D);
+                    String note3D = "";
+                    if (k3 != null) {
+                        String err = add3D(app, ed, k3);
+                        if (err != null) return res(op, name, false, err);
+                        if (!t.equals(k3[0])) note3D = " as " + k3[0] + (k3[1] == null ? "" : " " + k3[1]);
+                        props = props.deepCopy();
+                        props.remove("Light Type");
+                        if (k3[0].equals("OBJ3D")) props.remove("Mesh");
+                        if (k3[0].equals("LIGHT3D")) props.remove("Light Kind");
+                    } else if (t.equals("LIGHT") || t.contains("LIGHT")) {
                         String lt = props.has("Light Type") ? str(props.get("Light Type")).toLowerCase() : (t.contains("CONE") ? "cone" : t.contains("DIRECTIONAL") ? "directional" : "point");
                         int idx = lt.equals("directional") ? 1 : lt.equals("cone") ? 2 : 0;
                         app.getControlLayer().actionAddLight(idx);
                     } else {
                         int idx = kindIndex(type);
-                        if (idx < 0) return res(op, name, false, "unknown type '" + type + "'. Use BOX, CIRCLE, TEXT, JOYSTICK, PROGRESS, CUSTOM, PARTICLE, CAMERA, MAP, GROUP or LIGHT");
+                        if (idx < 0) return res(op, name, false, "unknown type '" + type + "'. Use BOX, CIRCLE, TEXT, JOYSTICK, PROGRESS, CUSTOM, PARTICLE, CAMERA, MAP, GROUP, UIHOLDER, LIGHT or CAMERAVIEW"
+                                + (scene3D ? "; 3D: OBJ3D (or a shape: CUBE, SPHERE, CAPSULE, PLANE, MODEL, TERRAIN, WATER...), LIGHT3D, CAMERA3D" : "; 3D elements need a 3D scene (scenes create {type:'3D'})"));
                         app.getControlLayer().actionAddBody(idx);
                     }
                     Actor actor = ed.getSelectedActor();
@@ -381,7 +537,7 @@ final class EditTools {
                     all.remove("Light Type"); // chosen at creation
                     List<String> problems = applyProps(app, actor, all);
                     String zNote = ZPolicy.applyOnAdd(app, ed, actor, props);
-                    String made = "created" + (zNote.isEmpty() ? "" : " (" + zNote + ")");
+                    String made = "created" + note3D + (zNote.isEmpty() ? "" : " (" + zNote + ")");
                     return problems.isEmpty() ? res(op, created, true, made) : res(op, created, true, made + ", but: " + String.join("; ", problems));
                 }
                 case "set": {
@@ -435,6 +591,8 @@ final class EditTools {
                 case "order": {
                     Actor actor = Bridge.actor(name);
                     if (actor == null) return res(op, name, false, "no element named '" + name + "'");
+                    if (SceneInfo.is3DType(String.valueOf(PropertySet.getPropertySet(actor).get("TYPE"))))
+                        return res(op, name, false, "a 3D element has no draw order: its z is a depth in meters (use set {z}); Render Order orders transparent 3D objects");
                     ed.selectActor(actor);
                     int oz = CoreTools.i(o, "z", 0);
                     PropertyEditing.applyFloat(app, "z", Math.max(0, oz));

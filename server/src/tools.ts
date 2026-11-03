@@ -132,14 +132,15 @@ export const TOOLS: ToolDef[] = [
   {
     name: "scenes",
     description:
-      "Manage scenes: list, open, create (orientation: landscape|portrait, default = the project's), rename, copy, delete, configure (sceneColor, Ambient Light, or=landscape|portrait, logicWidth, logicHeight, swap_size). Every reply states the scene frame in plain words (orientation, width x height, y up).",
+      "Manage scenes: list, open, create (orientation: landscape|portrait, default = the project's; type:'3D' = a 3D scene), rename, copy, delete, configure (sceneColor, Ambient Light, or=landscape|portrait, logicWidth, logicHeight, swap_size; 3D scenes also Render Mode, Lighting Preset, Sky, Fog, Gravity Y, Quality, Post Effect...). Every reply states the scene frame in plain words (orientation, width x height, y up) and sceneType.",
     inputSchema: obj(
       {
         action: str("list|open|create|rename|copy|delete|configure", { enum: ["list", "open", "create", "rename", "copy", "delete", "configure"] }),
         name: str("scene name"),
         new_name: str("for rename/copy"),
         orientation: str("create: landscape|portrait. Omit = same as the project (read from its config files). Say portrait whenever the user wants a vertical game.", { enum: ["landscape", "portrait"] }),
-        config: anyObj("for configure/create: {sceneColor:'#263238', 'Ambient Light':'#FFFFFF', or:'landscape', logicWidth:1280, logicHeight:720}"),
+        type: str("create: 2D (default) or 3D. A 3D scene has OBJ3D/LIGHT3D/CAMERA3D elements in meters (Bullet physics, glTF models) under the normal 2D layer; it starts with a ground, a cube and a camera. read_docs scenes section '3D scenes'.", { enum: ["2D", "3D"] }),
+        config: anyObj("for configure/create: {sceneColor:'#263238', 'Ambient Light':'#FFFFFF', or:'landscape', logicWidth:1280, logicHeight:720}; 3D: {'Render Mode':'SOFT', 'Lighting Preset':'SUNSET', 'Post Effect':'VIGNETTE', 'Gravity Y':-9.81, Quality:'MEDIUM'}"),
       },
       ["action"],
     ),
@@ -147,7 +148,7 @@ export const TOOLS: ToolDef[] = [
   {
     name: "elements",
     description:
-      "Batch edit the open scene's elements in ONE call (cheap): add (type BOX|CIRCLE|CUSTOM|TEXT|PROGRESS|JOYSTICK|PARTICLE|CAMERA|MAP|LIGHT with props), set (props by name), delete, duplicate, rename, select, order (z). Property names/values: see read_docs('elements'). Units are editor pixels.",
+      "Batch edit the open scene's elements in ONE call (cheap): add (type BOX|CIRCLE|CUSTOM|TEXT|PROGRESS|JOYSTICK|PARTICLE|CAMERA|MAP|GROUP|UIHOLDER|LIGHT|CAMERAVIEW with props; 3D scenes: OBJ3D (or a shape: CUBE, SPHERE, CAPSULE, PLANE, MODEL, TERRAIN, WATER...), LIGHT3D, CAMERA3D), set (props by name), delete, duplicate, rename, select, order (z, 2D only). Property names/values: see read_docs('elements'). Units are editor pixels; 3D elements use meters (y up, z = depth).",
     inputSchema: opsOf(
       "operations, run in order",
       ["add", "set", "delete", "duplicate", "rename", "select", "order"],
@@ -532,7 +533,7 @@ export const TOOLS: ToolDef[] = [
   {
     name: "physics_info",
     description:
-      "Arithmetic for jumps and speeds in pixels, so you never guess: the scene frame, gravity (read from the scene), jump height / air time / horizontal reach, the jump_speed needed for a wanted jump_height, and whether platform gaps (gap px, rise px) can be crossed. Call it BEFORE choosing gravity, jump power, speeds or platform spacing. Y is up: positive vertical velocity moves UP.",
+      "Arithmetic for jumps and speeds in pixels (in a 3D scene: meters and m/s, gravity from Gravity Y), so you never guess: the scene frame, gravity (read from the scene), jump height / air time / horizontal reach, the jump_speed needed for a wanted jump_height, and whether platform gaps (gap px, rise px) can be crossed. Call it BEFORE choosing gravity, jump power, speeds or platform spacing. Y is up: positive vertical velocity moves UP.",
     inputSchema: obj({
       scene: str("scene, default = the open one"),
       gravity: num("px/s2, default = the scene's setWorldGravity or 800"),
@@ -639,8 +640,9 @@ Rules:
 3. Never rewrite a script to change a part: files search / read from_line,to_line / edit, or events edit.
 4. Units: editor px, origin BOTTOM-LEFT, y UP, x/y = element's bottom-left corner (Box2D/Java world = px * 0.25); keep every element inside the frame. Names: letters, digits, _.
 4b. Draw order: higher z = drawn on top, UI is NOT automatically above the world. Background 0, ground 10, actors 20, effects 40, UI box 100, TEXT/PROGRESS 110, JOYSTICK 120, never negative (elements add sets these when you give no z).
+4c. 3D scenes (status.sceneType 3D, scenes create type:'3D'): rules 4, 4b and 6 are 2D-only. OBJ3D/LIGHT3D/CAMERA3D are in METERS, y UP, z = depth (not a draw order), Rotation X/Y/Z degrees, Scale = size in m; physics is Bullet (Body STATIC|DYNAMIC|KINEMATIC|TRIGGER, gravity = setting Gravity Y -9.81, no setWorldGravity); models: import_asset models/x.glb then Mesh MODEL, Model '/x.glb'. The 2D layer (HUD, JOYSTICK, UIHOLDER, CAMERAVIEW) stays px on top. read_docs scenes section '3D scenes' first.
 5. Events. Scene: OnCreate OnStep onCollisionStart onCollisionEnd OnPause OnResume. Element: onClick onTouchStart onTouchEnd OnBodyCreated OnBodyUpdate onBodyCollided onBodyCollideEnd.
-6. Physics: first block of a physical scene's OnCreate is setWorldGravity (about 800 platformer, 0 top-down); positive velocity Y moves UP (jump = positive power); speeds <= 450 px/s; call physics_info before choosing jump power, gravity, speeds or platform gaps; scene collision events, isSensor pickups, hide + destroyLater to remove.
+6. Physics (2D scenes): first block of a physical scene's OnCreate is setWorldGravity (about 800 platformer, 0 top-down); positive velocity Y moves UP (jump = positive power); speeds <= 450 px/s; call physics_info before choosing jump power, gravity, speeds or platform gaps; scene collision events, isSensor pickups, hide + destroyLater to remove.
 7. Images: create_image name.png -> element image "/name.png". TEXT wraps if narrower than its content (about 10 px per letter x Font Scale): resize with elements set (the reply warns). A TEXT/PROGRESS without touch events is click-through: put onClick/onTouchStart on the BOX button only.
 7b. In-world button/panel art only (not menus, see rule 8): buttons {action:'list'}, then buttons create (a 9-patch image for a BOX; no text inside).
 7c. Small icons (heart, star, coin, sound, arrows...): icons search {query}, then icons import {id}; do not draw them with create_image. Styled text (outline, shadow, Arabic): fonts {action:'list'}.

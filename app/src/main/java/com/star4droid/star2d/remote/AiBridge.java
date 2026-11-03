@@ -35,6 +35,16 @@ public final class AiBridge {
         }
     }
 
+    /** {TYPE, preset} when an add_element type means a 3D element or a CAMERAVIEW (cube, sphere, model, light3d, camera3d...), null = 2D. GL thread. */
+    public static String[] kind3D(LibgdxEditor ed, String type, JsonObject props) {
+        return EditTools.kind3D(type, props, ed != null && ed.is3DScene());
+    }
+
+    /** Creates the element of {@link #kind3D} (selected afterwards). Error text or null. GL thread. */
+    public static String add3D(TestApp app, LibgdxEditor ed, String[] kind) {
+        return EditTools.add3D(app, ed, kind);
+    }
+
     /** Warnings about elements outside the scene frame / absurd sizes (null names = all). GL thread. */
     public static List<String> bounds(LibgdxEditor ed, Collection<String> names) {
         return Warnings.bounds(ed, names);

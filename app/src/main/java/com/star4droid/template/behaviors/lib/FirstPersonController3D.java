@@ -16,7 +16,7 @@ import com.star4droid.template.d3.Camera3D;
 import com.star4droid.template.d3.Object3D;
 import com.star4droid.template.d3.World3D;
 
-@BehaviorInfo(name = "First Person Controller 3D", icon = "walk", category = "Movement", targets = BehaviorInfo.Target.THREE_D,
+@BehaviorInfo(name = "First Person Controller 3D", icon = "eye-circle", category = "Movement", targets = BehaviorInfo.Target.THREE_D,
 		types = {"OBJ3D", "CAMERA3D"}, events = {"onJump()", "onLand()", "onStep()"},
 		desc = "Walk with a joystick and look around by dragging the screen, seen through the eyes of the player. Jump, run, head bob and footstep sounds. Give the player a capsule with a DYNAMIC body (rotation locked for you) or put it on a 3D camera.")
 @Exclusive("movement")
@@ -150,6 +150,12 @@ public class FirstPersonController3D extends Behavior {
 	@Block(label = "walking speed now", desc = "Current horizontal speed (m/s).", labelAr = "سرعة المشي الحالية", descAr = "السرعة الأفقية الحالية (م/ث).", category = "First person", args = {})
 	public float getSpeed() {
 		return (float) Math.sqrt(vx * vx + vz * vz);
+	}
+
+	/** Throws the player up (jump pads), on the ground or not. */
+	public void launch(float upSpeed) {
+		mover.grounded = true;
+		mover.jump(item, upSpeed);
 	}
 
 	// ------------------------------------------------------------ engine

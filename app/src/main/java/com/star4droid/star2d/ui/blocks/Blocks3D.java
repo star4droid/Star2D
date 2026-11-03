@@ -392,7 +392,7 @@ public final class Blocks3D {
 		st("fog3D", "on(Boolean) color near far", "true|#C7DBF2|40|160", B + "setFog(%1$s, " + q(2) + ", " + fl(3, 4) + ");", "Fog", "الضباب", "Fog starts at near and hides everything after far (meters).", "يبدأ الضباب عند «قريب» ويخفي كل شيء بعد «بعيد» (بالأمتار).");
 		st("fogOff3D", "", "", X + "fogOff();", "No fog", "بلا ضباب", "Removes the fog.", "يزيل الضباب.");
 		st("sky3D", "top bottom", "#5C9EF2|#C7E0FA", B + "setSky(" + q(1) + ", " + q(2) + ");", "Sky colors", "ألوان السماء", "Sky gradient from the top color to the horizon color.", "تدرج السماء من لون الأعلى إلى لون الأفق.");
-		st("skyImage3D", "pic(image)", "", B + "setSkyImage(" + q(1) + ");", "Sky picture", "صورة السماء", "Uses a picture (panorama) of the project as the sky.", "يستخدم صورة (بانوراما) من المشروع كسماء.");
+		st("skyImage3D", "pic(image)", "sky.png", B + "setSkyImage(" + q(1) + ");", "Sky picture", "صورة السماء", "Uses a picture (panorama) of the project as the sky.", "يستخدم صورة (بانوراما) من المشروع كسماء.");
 		st("renderMode3D", "mode(renderMode)", "SIMPLE", B + "setRenderMode(" + q(1) + ");", "Render style", "نمط الرسم", "SIMPLE, SOFT, TOON (cartoon), PBR (realistic) or UNLIT.", "SIMPLE أو SOFT أو TOON (كرتوني) أو PBR (واقعي) أو UNLIT.");
 		st("shadows3D", "on(Boolean)", "true", B + "setShadows(%1$s);", "Shadows on / off", "تشغيل / إيقاف الظلال", "Sun shadows.", "ظلال الشمس.");
 		st("shadowDistance3D", "distance", "40", X + "setShadowDistance(" + f(1) + ");", "Shadow distance", "مسافة الظلال", "Shadows are drawn up to this far from the camera.", "تُرسم الظلال حتى هذه المسافة من الكاميرا.");
@@ -410,7 +410,7 @@ public final class Blocks3D {
 		st("postEffectOff3D", "", "", X + "postEffectOff();", "No screen effect", "بلا تأثير شاشة", "Removes the screen effect.", "يزيل تأثير الشاشة.");
 		st("postCode3D", "code(glsl)", "vec4 post(vec4 c, vec2 uv){ return vec4(1.0 - c.rgb, 1.0); }", B + "setPostCode(" + q(1) + ");",
 				"Screen effect code", "كود تأثير الشاشة", "Your own effect: vec4 post(vec4 color, vec2 uv). u_time, u_texture, u_resolution and u_amount are ready.", "تأثيرك الخاص: vec4 post(vec4 color, vec2 uv). المتغيرات u_time و u_texture و u_resolution و u_amount جاهزة.");
-		st("setShader3D", "body(Body) shader(shader) params", "current|builtin:glow|", B + "setShader(%1$s, " + q(2) + ", " + q(3) + ");",
+		st("setShader3D", "body(Body) shader(shader) params", "current|builtin:glow|speed=1", B + "setShader(%1$s, " + q(2) + ", " + q(3) + ");",
 				"Element shader", "شيدر العنصر", "builtin:glow, builtin:hologram... or a file of the shaders folder (shaders/name). Params: speed=2;tint=#ff0000", "builtin:glow أو builtin:hologram... أو ملف من مجلد shaders (shaders/name). المعاملات: speed=2;tint=#ff0000");
 		st("shaderCode3D", "body(Body) code(glsl)", "current|vec4 effect(vec4 color, vec2 uv, vec3 normal, vec3 worldPos){ return vec4(color.rgb * lambert(normal), color.a); }",
 				B + "setShaderCode(%1$s, " + q(2) + ");",

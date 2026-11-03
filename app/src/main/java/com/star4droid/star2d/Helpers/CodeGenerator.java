@@ -423,7 +423,8 @@ public class CodeGenerator {
                                    );
                         
                         // Add Z-index fixing code for non-light objects
-                        if (!isLight) {
+                        // (3D elements: z is a position in meters, not a drawing order)
+                        if (!isLight && !java.util.Arrays.asList("OBJ3D", "LIGHT3D", "CAMERA3D").contains(propertySet.getString("TYPE"))) {
                             fixZ = fixZ + String.format(fixZIndexDefault, name);
                         }
 

@@ -35,7 +35,7 @@ public class KeyDump {
         for (String t : UiKit.SCREENS.keySet()) { UiTr.templateName(t); UiTr.templateDesc(t); }
         for (String e : new String[]{"the root cannot move","already first","already last","there is no node above to move into","already at the top level","cannot move a node into itself","the root cannot be wrapped","id cannot be empty","no parent"}) UiTr.err(e);
         // behaviors
-        Set<String> types = new LinkedHashSet<String>(Arrays.asList("BOX","CIRCLE","CUSTOM","MAP","TEXT","PROGRESS","JOYSTICK","PARTICLE","UIHOLDER","GROUP","CAMERA"));
+        Set<String> types = new LinkedHashSet<String>(Arrays.asList("BOX","CIRCLE","CUSTOM","MAP","TEXT","PROGRESS","JOYSTICK","PARTICLE","UIHOLDER","GROUP","CAMERA","OBJ3D","LIGHT3D","CAMERA3D","CAMERAVIEW"));
         for (String t : types) BehaviorText.elementType(t);
         for (BehaviorMeta m : BehaviorCatalog.builtIns()) {
             BehaviorText.name(m); BehaviorText.desc(m); BehaviorText.category(m); BehaviorText.note(m); BehaviorText.vars(m);

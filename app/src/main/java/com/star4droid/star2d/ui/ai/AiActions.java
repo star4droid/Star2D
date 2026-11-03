@@ -358,8 +358,14 @@ public final class AiActions {
                 }
                 case "add_element": {
                     String type = s(a, "type").toLowerCase(Locale.ROOT).replace(" ", "");
-                    int light = type.contains("point") ? 0 : type.contains("directional") ? 1 : type.contains("cone") ? 2 : -1;
-                    if (light >= 0) app.getControlLayer().actionAddLight(light);
+                    JsonObject props0 = a.has("properties") && a.get("properties").isJsonObject() ? a.getAsJsonObject("properties") : new JsonObject();
+                    // 3D scenes: OBJ3D (or a shape name: cube, sphere, model, terrain, water...), LIGHT3D, CAMERA3D; CAMERAVIEW in both kinds
+                    String[] k3 = com.star4droid.star2d.remote.AiBridge.kind3D(ed, s(a, "type"), props0);
+                    int light = k3 != null ? -1 : type.contains("point") ? 0 : type.contains("directional") ? 1 : type.contains("cone") ? 2 : -1;
+                    if (k3 != null) {
+                        String err3 = com.star4droid.star2d.remote.AiBridge.add3D(app, ed, k3);
+                        if (err3 != null) return "Error: " + err3;
+                    } else if (light >= 0) app.getControlLayer().actionAddLight(light);
                     else {
                         String[] kinds = {"box", "circle", "text", "joystick", "progress", "custom", "particle", "camera", "map", "group", "uiholder"};
                         int pos = 0;
@@ -375,6 +381,7 @@ public final class AiActions {
                     }
                     JsonObject props = a.has("properties") && a.get("properties").isJsonObject() ? a.getAsJsonObject("properties") : new JsonObject();
                     for (Map.Entry<String, JsonElement> e : props.entrySet()) {
+                        if (k3 != null && (e.getKey().equals("Light Type") || e.getKey().equals("Mesh") || e.getKey().equals("Light Kind"))) continue; // chosen at creation
                         String err = applyProperty(app, e.getKey(), e.getValue().isJsonPrimitive() ? e.getValue().getAsString() : e.getValue().toString());
                         if (err != null) res.append("; ").append(e.getKey()).append(": ").append(err);
                     }

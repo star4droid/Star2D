@@ -17,7 +17,7 @@ Star2D is a 2D game-engine editor on an Android phone (LibGDX + Box2D). Do NOT r
 
 ## Topics (read when)
 - `overview`: folders on disk, how scenes/events become a game, what `build` does. First project contact.
-- `scenes`: scene files, orientation, logic size, colors, several scenes. Before creating scenes.
+- `scenes`: scene files, orientation, logic size, colors, several scenes; section `3D scenes` (OBJ3D/LIGHT3D/CAMERA3D in meters, settings, Bullet physics, glTF models, terrain, water, shaders, quality). Before creating scenes, and before ANY 3D work.
 - `elements`: EVERY element type with every property, default and allowed values. Use `section:'<TYPE>'`.
 - `physics`: body types, friction, sensors, filtering, gravity, speeds, units, signs, jump formulas, platformer checklist and "when it goes wrong". Before anything that moves.
 - `events`: every event, exact names, when it fires. Before writing logic.

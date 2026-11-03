@@ -14,7 +14,7 @@ An element is one object in a scene. You create and change them with the `elemen
 ]}
 ```
 
-Rules of the tool: property names are matched case-insensitively but spelled EXACTLY as in the tables below (`Fixed Rotation`, `Gravity Scale`, `Collider Width`...). Values may be JSON numbers/booleans or strings. Unknown properties are reported as errors. `TYPE` (BOX, CIRCLE...) and `Points` cannot be set. `type` and `Shape` are applied first. To add a light use `"type":"LIGHT"` with `"Light Type":"point|cone|directional"` in props. Use `get_elements` or `scene_dump` to read back what you set.
+Rules of the tool: property names are matched case-insensitively but spelled EXACTLY as in the tables below (`Fixed Rotation`, `Gravity Scale`, `Collider Width`...). Values may be JSON numbers/booleans or strings. Unknown properties are reported as errors. `TYPE` (BOX, CIRCLE...) and `Points` cannot be set. `type` and `Shape` are applied first. To add a light use `"type":"LIGHT"` with `"Light Type":"point|cone|directional"` in props (2D scenes; 3D scenes: LIGHT3D, see below). Use `get_elements` or `scene_dump` to read back what you set.
 
 ## Position, size, rotation (all element types)
 
@@ -87,6 +87,22 @@ The CAMERA element is not applied by this engine version (its settings have no e
 ## LIGHT (point, cone, directional)
 
 Needs a dark `Ambient Light` in the scene config to be seen. `Distance` (px), `rays` (quality), `color`, `Soft`/`Softness Length`, `Static Light`, `X Ray`, `attach To` (element name to follow), `Offset X/Y`, `Cone Degree` (cone only), `x`,`y` position.
+
+## 3D elements: OBJ3D, LIGHT3D, CAMERA3D (3D scenes only) and CAMERAVIEW
+
+Only in a scene made with `scenes create {type:'3D'}` (adding one to a 2D scene is refused). Units are **meters**, y UP, `z` = depth (may be negative), `Rotation X/Y/Z` degrees, `Scale X/Y/Z` = size of primitives in m; `width`/`height`/`rotation`/`type`/`Pivot` are not used by them, and their `z` is not a draw order (no z policy, no `order` op).
+```json
+{"ops":[
+ {"op":"add","type":"PLANE","name":"ground","props":{"Scale X":40,"Scale Z":40,"Color":"#6FA35A","Body":"STATIC"}},
+ {"op":"add","type":"CAPSULE","name":"player","props":{"x":0,"y":1,"z":0,"Scale X":0.6,"Scale Y":0.9,"Scale Z":0.6,"Body":"DYNAMIC","Lock Rotation X":true,"Lock Rotation Z":true}},
+ {"op":"add","type":"OBJ3D","name":"car","props":{"Mesh":"MODEL","Model":"/car.glb","x":4,"Body":"DYNAMIC","Collider":"BOX"}},
+ {"op":"add","type":"LIGHT3D","name":"lamp","props":{"Light Kind":"POINT","x":0,"y":3,"z":-2,"Range":8,"Color":"#FFD27F"}},
+ {"op":"set","name":"Camera","props":{"Follow":"player","Follow Mode":"THIRD_PERSON","Follow Distance":6}},
+ {"op":"add","type":"CAMERA3D","name":"topCam","props":{"y":30,"Rotation X":-90,"Follow":"player","Follow Mode":"TOP_DOWN"}},
+ {"op":"add","type":"CAMERAVIEW","name":"minimap","props":{"Camera":"topCam","width":240,"height":240,"x":20,"y":20}}
+]}
+```
+The type may be a shape name (CUBE, SPHERE, CYLINDER, CAPSULE, CONE, PLANE, TORUS, RAMP, STAIRS, PYRAMID, HEMISPHERE, TUBE, WEDGE, QUAD, DISC, EMPTY, MODEL, TERRAIN, WATER) = OBJ3D with that `Mesh`; `LIGHT`/`SPOT`/`SUN` and `CAMERA` in a 3D scene = LIGHT3D / CAMERA3D. CAMERAVIEW is a 2D element (px, both scene kinds). Meaning of every 3D property, scene settings, physics, models, terrain, water, shaders: read_docs `scenes`, section `3D scenes`.
 
 ## All properties, defaults and allowed values (generated from the app)
 

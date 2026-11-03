@@ -48,7 +48,11 @@ public final class AiContext {
             "getBody() (Box2D Body: setLinearVelocity, applyLinearImpulse, applyForceToCenter, setTransform, getPosition, getLinearVelocity, setGravityScale...),\n" +
             "getActor() (scene2d Actor: setVisible, setColor, setScale, toFront...), getBodyX(), getBodyY(), distTo(PlayerItem), angleTo(PlayerItem) (radians, from the other item toward this one),\n" +
             "getName(), setItemText(String) (Text items), setProgress(int)/setMax(int) (Progress), getJoyStickX()/getJoyStickY()/getPower()/getAngleDegrees() (Joystick), getClone(String newName), destroy().\n" +
-            "Units: element properties (x, y, width, height, radius, z) are editor PIXELS (origin bottom-left, y up). In raw Java Box2D world units = pixels * 0.25 (velocities in world units per second). Default gravity is 6 physics steps per frame: set `setSteps(1); setGravity(0f,-800f*0.25f);` first in the scene OnCreate (platformer; 0 for top-down).\n\n" +
+            "Units: element properties (x, y, width, height, radius, z) are editor PIXELS (origin bottom-left, y up). In raw Java Box2D world units = pixels * 0.25 (velocities in world units per second). Default gravity is 6 physics steps per frame: set `setSteps(1); setGravity(0f,-800f*0.25f);` first in the scene OnCreate (platformer; 0 for top-down).\n" +
+            "## 3D scenes (config \"sceneType\":\"3D\", made with create_scene {type:\"3D\"})\n" +
+            "Element types OBJ3D (Mesh CUBE SPHERE CYLINDER CAPSULE CONE PLANE TORUS RAMP STAIRS PYRAMID HEMISPHERE TUBE WEDGE QUAD DISC EMPTY, MODEL with Model \"/car.glb\" from models/, TERRAIN, WATER), LIGHT3D (Light Kind POINT SPOT DIRECTIONAL), CAMERA3D (Active = main camera, Follow + Follow Mode THIRD_PERSON FIRST_PERSON ORBIT TOP_DOWN SIDE LOOK_AT) and CAMERAVIEW (2D element showing a camera live, both scene kinds).\n" +
+            "3D units are METERS: x right, y UP, z depth (default camera at z +8 looks toward -z), Rotation X/Y/Z degrees, Scale X/Y/Z = size of primitives in m; their z is NOT a draw order. Physics is Bullet: Body NONE STATIC DYNAMIC KINEMATIC TRIGGER, Collider AUTO BOX SPHERE CAPSULE CYLINDER CONE MESH CONVEX, Mass, Friction; gravity = scene setting Gravity Y (-9.81), never setWorldGravity / Box2D calls. Java helpers: com.star4droid.template.d3.B3 (B3.move, B3.setVelocity, B3.applyImpulse, B3.isGrounded, B3.playAnimation(item,\"Run\",true,1), B3.follow(cam,target,\"THIRD_PERSON\"), B3.raycastScreen, B3.spawn, B3.destroy, B3.addItem inventory...).\n" +
+            "Scene settings: Render Mode SIMPLE SOFT TOON PBR UNLIT, Lighting Preset DAY SUNSET NIGHT OVERCAST STUDIO HORROR INDOOR CARTOON CUSTOM (Ambient/Sun/Sky/Fog values apply only with CUSTOM), Sky GRADIENT COLOR IMAGE, Shadows, Gravity X/Y/Z, Quality LOW MEDIUM HIGH ULTRA, Post Effect NONE VIGNETTE NIGHT_VISION GRAYSCALE SEPIA HORROR CHROMATIC PIXELATE BLOOM_LITE UNDERWATER DREAM. Shader of an OBJ3D: builtin:glow|hologram|dissolve|wave|rim|toon|gradient|pulse|xray|flag|lava|ghost or shaders/NAME (file shaders/NAME.glsl with vec4 effect(vec4 color, vec2 uv, vec3 normal, vec3 worldPos)). The 2D layer (HUD, JOYSTICK, UIHOLDER) stays in pixels on top of the 3D picture.\n\n" +
             "## Taking actions in the editor\n" +
             "You can change the project by adding ONE fenced block with language `star2d-actions` containing a JSON array. The user reviews and taps Apply. ALWAYS put the JSON inside that fenced block (three backticks + star2d-actions), never as bare text, and never say you applied something: the user applies it.\n" +
             "Read-only actions (read_file, list_files, get_element) run automatically and their results are sent back to you; use them when you need more information.\n" +
@@ -58,6 +62,7 @@ public final class AiContext {
             "- {\"action\":\"get_element\",\"name\":\"player\"}\n" +
             "- {\"action\":\"set_event_code\",\"event\":\"onClick\",\"element\":\"jumpBtn\",\"code\":\"player.getBody().setLinearVelocity(0,8);\"}  (omit element for scene events; replaces that event's code and blocks)\n" +
             "- {\"action\":\"add_element\",\"type\":\"Box\",\"name\":\"wall\",\"properties\":{\"x\":\"600\",\"y\":\"0\",\"width\":\"40\",\"height\":\"300\",\"type\":\"STATIC\",\"z\":\"10\"}}  (pixels; the result may add z and bounds warnings: read them)\n" +
+            "- {\"action\":\"add_element\",\"type\":\"SPHERE\",\"name\":\"ball\",\"properties\":{\"x\":\"0\",\"y\":\"3\",\"z\":\"0\",\"Body\":\"DYNAMIC\"}}  (3D scenes only, meters: types OBJ3D or a Mesh name, MODEL, TERRAIN, WATER, LIGHT3D, CAMERA3D; CAMERAVIEW in any scene)\n" +
             "- {\"action\":\"set_property\",\"element\":\"player\",\"property\":\"Fixed Rotation\",\"value\":\"true\"}\n" +
             "- {\"action\":\"delete_element\",\"element\":\"enemy3\"}\n" +
             "- {\"action\":\"add_variable\",\"name\":\"score\",\"type\":\"int\",\"value\":\"0\"}\n" +
@@ -74,7 +79,7 @@ public final class AiContext {
             "- {\"action\":\"behavior_info\",\"id\":\"Shooter\"} (every param with range + what element it needs) / {\"action\":\"set_behavior\",\"element\":\"hero\",\"id\":\"Shooter\",\"params\":{\"fireRate\":4},\"enabled\":true} / {\"action\":\"remove_behavior\",\"element\":\"hero\",\"id\":\"Shooter\"}\n" +
             "- {\"action\":\"get_script_vars\",\"element\":\"hero\"} / {\"action\":\"set_script_vars\",\"element\":\"hero\",\"values\":{\"speed\":420,\"enemies\":[\"e1\",\"e2\"]}}  (public / package-private / static / @Expose fields of the element's script or, without element, of the scene script, lists included; the editor also lists new fields by itself when the code editor closes)\n" +
             "- {\"action\":\"describe_ui\",\"type\":\"Button\"} (all properties of a widget; property \"theme\" gives ONE element its own look) / {\"action\":\"ui_event\",\"scene\":\"level1\",\"holder\":\"pause_ui\",\"node\":\"btnResume\",\"event\":\"onClick\",\"code\":\"...\"}  (Java for a button inside an UIHOLDER; UI names may have a folder: \"menus/pause\")\n" +
-            "- {\"action\":\"create_scene\",\"name\":\"level2\",\"orientation\":\"portrait\"}  (keeps the project orientation when omitted) and {\"action\":\"layout_check\"}\n" +
+            "- {\"action\":\"create_scene\",\"name\":\"level2\",\"orientation\":\"portrait\"}  (keeps the project orientation when omitted; add \"type\":\"3D\" for a 3D scene) and {\"action\":\"layout_check\"}\n" +
             "Paths are relative to the project root. Only use element names that exist (see the snapshot) unless you add them first.\n" +
             "When you give code for an event, prefer set_event_code. Keep explanations short and use Markdown (headings, lists, code blocks).\n";
 
@@ -109,7 +114,7 @@ public final class AiContext {
         Project p = ed.getProject();
         sb.append("## Current project\n");
         sb.append("Project: ").append(new File(p.getPath()).getName()).append("\n");
-        sb.append("Current scene: ").append(ed.getScene()).append(ed.isLandscape() ? " (landscape)" : " (portrait)").append("\n");
+        sb.append("Current scene: ").append(ed.getScene()).append(ed.isLandscape() ? " (landscape)" : " (portrait)").append(ed.is3DScene() ? " [3D scene]" : "").append("\n");
         String frame = AiBridge.frame(ed, p, ed.getScene());
         if (!frame.isEmpty()) sb.append("Frame: ").append(frame).append(". Design inside this frame; never assume 1280x720.\n");
         sb.append("Scenes: ");
@@ -132,6 +137,10 @@ public final class AiContext {
                     .append(" | ").append(r(ps.getString("width"))).append("x").append(r(ps.getString("height")))
                     .append(" | z").append(r(ps.getString("z").isEmpty() ? "0" : ps.getString("z")));
             if (ps.containsKey("radius")) sb.append(" r=").append(r(ps.getString("radius")));
+            if ("OBJ3D".equals(kind) || "LIGHT3D".equals(kind) || "CAMERA3D".equals(kind)) // 3D: meters, z = depth
+                sb.append(" | 3D @").append(ps.getString("x")).append(",").append(ps.getString("y")).append(",").append(ps.getString("z")).append(" m")
+                        .append(ps.containsKey("Mesh") ? " " + ps.getString("Mesh") : "").append(ps.containsKey("Light Kind") ? " " + ps.getString("Light Kind") : "")
+                        .append(ps.containsKey("Body") && !"NONE".equals(ps.getString("Body")) ? " body " + ps.getString("Body") : "");
             String img = ps.getString("image");
             if (!img.isEmpty()) sb.append(" | ").append(img);
             if (!ps.getString("parent").isEmpty()) sb.append(" | parent=").append(ps.getString("parent"));

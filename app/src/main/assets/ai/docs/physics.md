@@ -1,5 +1,7 @@
 # Physics (Box2D): bodies, units, collisions, typical numbers
 
+This page is about 2D scenes (Box2D, pixels). 3D scenes use Bullet in meters with y up (`Body`, `Collider`, `Mass`, gravity = scene setting `Gravity Y`): read `scenes`, section `3D scenes` > `Physics`.
+
 ## Signs and formulas (verified in the engine code; the `physics_info` tool does the arithmetic for you)
 
 - **Y is UP.** `setVelocityY` and `jump` with a POSITIVE number move the element UP, negative moves it DOWN. `setVelocityX`: positive = right, negative = left. `setWorldGravity` strength: a positive number pulls DOWN (never pass a negative one).

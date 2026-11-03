@@ -300,6 +300,10 @@ public final class RemoteDocs {
             {"LIGHT point", "Lights/point.json", "Point light (needs a dark Ambient Light in the scene config to be visible)"},
             {"LIGHT cone", "Lights/cone.json", "Cone light"},
             {"LIGHT directional", "Lights/directional.json", "Directional light"},
+            {"CAMERAVIEW", "cameraview.json", "CAMERAVIEW (2D element, both scene kinds, px like any UI element): live picture of a camera on the screen (mirror, minimap, rear view, security cam). Camera = name of a CAMERA3D or CAMERA element (\"\" = the main camera), Zoom, Resolution 0.25..1, Refresh Rate per second (0 = every frame), Touch = touches go through to the picture. type UI = fixed on screen"},
+            {"OBJ3D", "obj3d.json", "3D SCENES ONLY. A 3D object in METERS (x right, y UP, z depth, ground at y 0; Rotation X/Y/Z degrees; Scale X/Y/Z = size in m for primitives, a CUBE of scale 1 is 1x1x1 m). Mesh = the shape (CUBE SPHERE CYLINDER CAPSULE CONE PLANE TORUS RAMP STAIRS PYRAMID HEMISPHERE TUBE WEDGE QUAD DISC EMPTY), MODEL (Model = /car.glb in models/, with its animations), TERRAIN (hills: Terrain Noise / Heightmap) or WATER (waves, things float). Body NONE|STATIC|DYNAMIC|KINEMATIC|TRIGGER = Bullet physics, Collider AUTO fits the shape. You may also give the shape as the type: {\"op\":\"add\",\"type\":\"SPHERE\"}. See topic scenes, section 3D scenes"},
+            {"LIGHT3D", "light3d.json", "3D SCENES ONLY. A 3D light (the scene already has a sun from its Lighting Preset): Light Kind POINT (bulb, Range m), SPOT (cone: Cone Angle, aims along its rotation, Rotation X -90 = down) or DIRECTIONAL (extra sun: only the rotation matters). Intensity, Color, Cast Shadows (costly, use few), Flicker, Attach To = follow an element"},
+            {"CAMERA3D", "camera3d.json", "3D SCENES ONLY. A 3D camera; the one with Active true is the main camera. FOV degrees, Near/Far m, Orthographic + Ortho Size. Follow = element to follow with Follow Mode THIRD_PERSON|FIRST_PERSON|ORBIT|TOP_DOWN|SIDE|LOOK_AT (Follow Distance, Follow Height, Follow Smooth, Look Height, Follow Angle); Touch Look = drag to turn (orbit / first person)"},
     };
 
     private static String tablesCache;
@@ -324,7 +328,8 @@ public final class RemoteDocs {
             Map<String, String> kinds = kinds(a);
             JsonObject spinners = JsonParser.parseString(a.read("spinners.json")).getAsJsonObject();
             for (String[] t : TYPES) {
-                String typeName = t[0].startsWith("LIGHT") ? "LIGHT" : t[0];
+                boolean light2d = t[0].startsWith("LIGHT "); // "LIGHT point"...; LIGHT3D is its own type
+                String typeName = light2d ? "LIGHT" : t[0];
                 String own = "";
                 try {
                     own = a.read("items/" + t[1]).trim();
@@ -332,13 +337,16 @@ public final class RemoteDocs {
                 }
                 JsonObject o = JsonParser.parseString(defaults.replace("--other--", own.isEmpty() ? "" : "," + own)).getAsJsonObject();
                 sb.append("### ").append(t[0]).append("\n").append(t[2]).append("\n\n");
-                if (t[0].startsWith("LIGHT"))
+                if (light2d)
                     sb.append("Add it with {\"op\":\"add\",\"type\":\"LIGHT\",\"props\":{\"Light Type\":\"").append(t[0].substring(6)).append("\"}}.\n\n");
                 else
                     sb.append("Add it with {\"op\":\"add\",\"type\":\"").append(typeName).append("\",\"name\":\"...\",\"props\":{...}}.\n\n");
                 sb.append("| name | kind | default | allowed values |\n|---|---|---|---|\n");
+                boolean el3d = t[0].equals("OBJ3D") || t[0].equals("LIGHT3D") || t[0].equals("CAMERA3D");
                 for (Map.Entry<String, JsonElement> e : o.entrySet()) {
                     String k = e.getKey();
+                    // 2D-only keys a 3D element carries but never uses (2D body type, 2D angle, 2D pivot)
+                    if (el3d && (k.equals("type") || k.equals("rotation") || k.startsWith("Pivot"))) continue;
                     String v = e.getValue().isJsonPrimitive() ? e.getValue().getAsString() : e.getValue().toString();
                     if (v.equals("ItemName")) v = "<element name>";
                     String kind = kinds.get(k);
@@ -376,6 +384,8 @@ public final class RemoteDocs {
             case "body": return key.equals("Collision") ? "e.g. (a)(b): names of elements that do not collide" : "element name";
             case "script": return "name of the event script";
             case "points": return "read-only in the elements tool";
+            case "model": return "/name.glb or /name.gltf (a file of the models/ folder); sets Mesh MODEL";
+            case "shader": return "\"\" (the scene's Render Mode), builtin:glow|hologram|dissolve|wave|rim|toon|gradient|pulse|xray|flag|lava|ghost, or shaders/NAME (file shaders/NAME.glsl)";
             case "static": return "read-only (fixed when the element is added)";
             default: return "";
         }

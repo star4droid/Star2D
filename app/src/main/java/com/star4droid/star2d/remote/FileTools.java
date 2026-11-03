@@ -454,7 +454,7 @@ final class FileTools {
     static ToolResult importAsset(JsonObject a) throws Exception {
         Project p = project();
         String path = CoreTools.s(a, "path");
-        File f = assetTarget(p, path, "images", "sounds", "anims", "files", "scripts", "java");
+        File f = assetTarget(p, path, "images", "sounds", "anims", "files", "scripts", "java", "models", "shaders");
         byte[] data;
         if (!CoreTools.s(a, "url").isEmpty()) {
             String url = CoreTools.s(a, "url");
@@ -502,6 +502,15 @@ final class FileTools {
             out.write(data);
         }
         refreshAssets();
-        return ToolResult.text("saved " + Proj.rel(p, f) + " (" + data.length + " bytes)");
+        final String rel = Proj.rel(p, f);
+        if (rel.startsWith("models/")) {
+            // 3D model: drop a cached older copy; OBJ3D elements refer to it as "/name.glb" (Mesh MODEL)
+            Gl.run(() -> {
+                com.star4droid.template.d3.Assets3D.reload("/" + rel.substring(7));
+                return null;
+            });
+            return ToolResult.text("saved " + rel + " (" + data.length + " bytes). Use it on an OBJ3D: props {\"Mesh\":\"MODEL\",\"Model\":\"/" + rel.substring(7) + "\"}");
+        }
+        return ToolResult.text("saved " + rel + " (" + data.length + " bytes)");
     }
 }

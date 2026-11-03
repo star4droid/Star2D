@@ -65,5 +65,16 @@ Never send a whole script again to change a few lines (slow, costs shared quota,
 37. The game runs only on the phone; never run or compile anything yourself. Keep the app visible. Stop the running game (`stop_game`) before editing again.
 38. Call `finish_work` when done (it unlocks the editor for the user).
 
+## 3D scenes
+
+39. **2D rules on 3D elements.** OBJ3D/LIGHT3D/CAMERA3D are in METERS (y up, z depth): a cube at `x:400` is 400 m away. Typical sizes 0.5-10, a level 20-200 m. Pixels stay for the 2D layer only (HUD, JOYSTICK, UIHOLDER, CAMERAVIEW).
+40. **No setWorldGravity / Box2D blocks in 3D.** Gravity is the scene setting `Gravity Y` (-9.81); move 3D bodies with the 3D Physics / 3D Motion blocks (m/s). `jump`, `setVelocityX`, `goTo` act on 2D bodies only.
+41. **Nothing moves or collides.** `Body` is NONE by default: set STATIC for floors/walls (the ground PLANE too), DYNAMIC for things that fall, TRIGGER for pickups. A DYNAMIC object placed inside the ground (`y` < half its height) jumps out or falls through.
+42. **Black or invisible scene.** No CAMERA3D with `Active` true, the camera inside an object, or the object behind the camera (default camera at z +8 looks toward -z). `layout_check` reports a missing active camera; check with `screenshot`.
+43. **Fog / ambient / sky colors ignored.** They only apply with `"Lighting Preset":"CUSTOM"`; the other presets set them.
+44. **Characters tip over.** DYNAMIC CAPSULE + `Lock Rotation X` and `Lock Rotation Z` true; turn it with Rotation Y (blocks), not torque.
+45. **Slow game.** Many shadow-casting lights, PBR, huge models, MESH colliders on moving bodies. Prefer SIMPLE/SOFT, one sun, `Static Object` for scenery, low-poly GLB, Quality MEDIUM.
+46. **Model not found.** The file must be in `models/` and `Model` written "/name.glb" (Mesh MODEL); FBX/OBJ are not supported.
+
 ## build vs run_game
 `run_game` compiles AND starts the game in one call. Do not call `build` and then `run_game`: that compiles twice. Use `build` alone only to check compile errors when you do not want the game to open.

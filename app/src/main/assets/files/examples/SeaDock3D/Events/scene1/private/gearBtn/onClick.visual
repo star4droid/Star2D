@@ -1,0 +1,30 @@
+[
+  {
+    "id": "0",
+    "title": "First >",
+    "x": "40.0",
+    "y": "0.0",
+    "else": "false",
+    "next": "1",
+    "next_id": "null",
+    "else_id": "",
+    "nf": "[]",
+    "code": "%1$s",
+    "color": -16678317,
+    "close": "false"
+  },
+  {
+    "id": "1",
+    "title": "showGraphicsMenu3D",
+    "x": "40.0",
+    "y": "-233.33",
+    "else": "false",
+    "next": "null",
+    "next_id": "null",
+    "else_id": "",
+    "nf": "[{\"name\": \"arabic(Boolean)\", \"value\": \"false\"}]",
+    "code": "com.star4droid.template.d3.GraphicsMenu3D.show(activeStage(), %1$s);\n%2$s",
+    "color": -11243910,
+    "close": "true"
+  }
+]

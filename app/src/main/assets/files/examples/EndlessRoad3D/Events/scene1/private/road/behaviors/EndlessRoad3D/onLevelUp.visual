@@ -1,0 +1,58 @@
+[
+  {
+    "id": "0",
+    "title": "First >",
+    "x": "40.0",
+    "y": "0.0",
+    "else": "false",
+    "next": "1",
+    "next_id": "null",
+    "else_id": "",
+    "nf": "[]",
+    "code": "%1$s",
+    "color": -16678317,
+    "close": "false"
+  },
+  {
+    "id": "1",
+    "title": "showText",
+    "x": "40.0",
+    "y": "-233.33",
+    "else": "false",
+    "next": "2",
+    "next_id": "null",
+    "else_id": "",
+    "nf": "[{\"name\": \"ui(Body)\", \"value\": \"levelText\"}, {\"name\": \"text\", \"value\": \"\", \"block\": {\"template\": \"(String.valueOf(%1$s) + String.valueOf(%2$s))\", \"displayTemplate\": \"join ___ ___\", \"innerFields\": [{\"name\": \"___\", \"value\": \"\\\"Level \\\"\"}, {\"name\": \"___\", \"value\": \"level\"}]}}]",
+    "code": "%1$s.setItemText(String.valueOf(%2$s));\n%3$s",
+    "color": -8708190,
+    "close": "true"
+  },
+  {
+    "id": "2",
+    "title": "waitSeconds",
+    "x": "40.0",
+    "y": "-466.66",
+    "else": "true",
+    "next": "3",
+    "next_id": "null",
+    "else_id": "",
+    "nf": "[{\"name\": \"seconds\", \"value\": \"2\"}]",
+    "code": "Timer.schedule(new Timer.Task(){\n    public void run(){\n        %2$s\n    }\n},(float)(%1$s));\n%4$s",
+    "color": -1662720,
+    "close": "true"
+  },
+  {
+    "id": "3",
+    "title": "showText",
+    "x": "40.0",
+    "y": "-699.99",
+    "else": "false",
+    "next": "null",
+    "next_id": "null",
+    "else_id": "",
+    "nf": "[{\"name\": \"ui(Body)\", \"value\": \"levelText\"}, {\"name\": \"text\", \"value\": \"\\\"\\\"\"}]",
+    "code": "%1$s.setItemText(String.valueOf(%2$s));\n%3$s",
+    "color": -8708190,
+    "close": "true"
+  }
+]

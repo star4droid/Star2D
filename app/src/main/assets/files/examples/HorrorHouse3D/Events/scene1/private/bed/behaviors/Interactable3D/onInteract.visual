@@ -1,0 +1,72 @@
+[
+  {
+    "id": "0",
+    "title": "First >",
+    "x": "40.0",
+    "y": "0.0",
+    "else": "false",
+    "next": "1",
+    "next_id": "null",
+    "else_id": "",
+    "nf": "[]",
+    "code": "%1$s",
+    "color": -16678317,
+    "close": "false"
+  },
+  {
+    "id": "1",
+    "title": "showText",
+    "x": "40.0",
+    "y": "-233.33",
+    "else": "false",
+    "next": "2",
+    "next_id": "null",
+    "else_id": "",
+    "nf": "[{\"name\": \"ui(Body)\", \"value\": \"msgText\"}, {\"name\": \"text\", \"value\": \"\\\"Scratches under the bed... from the inside.\\\"\"}]",
+    "code": "%1$s.setItemText(String.valueOf(%2$s));\n%3$s",
+    "color": -8708190,
+    "close": "true"
+  },
+  {
+    "id": "2",
+    "title": "show",
+    "x": "40.0",
+    "y": "-466.66",
+    "else": "false",
+    "next": "3",
+    "next_id": "null",
+    "else_id": "",
+    "nf": "[{\"name\": \"body(Body)\", \"value\": \"msgText\"}]",
+    "code": "%1$s.getActor().setVisible(true);\n%2$s",
+    "color": -8708190,
+    "close": "true"
+  },
+  {
+    "id": "3",
+    "title": "waitSeconds",
+    "x": "40.0",
+    "y": "-699.99",
+    "else": "true",
+    "next": "4",
+    "next_id": "null",
+    "else_id": "",
+    "nf": "[{\"name\": \"seconds\", \"value\": \"3.5\"}]",
+    "code": "Timer.schedule(new Timer.Task(){\n    public void run(){\n        %2$s\n    }\n},(float)(%1$s));\n%4$s",
+    "color": -1662720,
+    "close": "true"
+  },
+  {
+    "id": "4",
+    "title": "hide",
+    "x": "40.0",
+    "y": "-933.32",
+    "else": "false",
+    "next": "null",
+    "next_id": "null",
+    "else_id": "",
+    "nf": "[{\"name\": \"body(Body)\", \"value\": \"msgText\"}]",
+    "code": "%1$s.getActor().setVisible(false);\n%2$s",
+    "color": -8708190,
+    "close": "true"
+  }
+]

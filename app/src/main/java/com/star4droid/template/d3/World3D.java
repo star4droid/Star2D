@@ -226,6 +226,16 @@ public class World3D implements Disposable {
 		if (physics != null) physics.setGravity(gravity.x, gravity.y, gravity.z);
 		postEffect = str(p, "Post Effect", "NONE").toUpperCase();
 		postParams = str(p, "Post Params", "");
+		PostFx3D.amount = 1f; // every scene starts at full strength ("amount=0.5" in Post Params)
+		for (String part : postParams.split(";")) {
+			int eq = part.indexOf('=');
+			if (eq > 0 && "amount".equalsIgnoreCase(part.substring(0, eq).trim())) {
+				try {
+					PostFx3D.amount = Float.parseFloat(part.substring(eq + 1).trim());
+				} catch (Exception ignored) {
+				}
+			}
+		}
 		Shaders3D.toonBands = num(p, "Toon Bands", 3);
 		exposure = num(p, "Exposure", 1f);
 		defaultQuality = str(p, "Quality", "MEDIUM");

@@ -1,0 +1,4 @@
+com.star4droid.template.d3.B3x.setZ(sand, (float)(com.star4droid.template.d3.B3.z(playerCar)));
+scoreText.setItemText(String.valueOf((String.valueOf("Score ") + String.valueOf((((com.star4droid.template.behaviors.lib.EndlessRoad3D) road.getBehavior("EndlessRoad3D")) != null ? ((com.star4droid.template.behaviors.lib.EndlessRoad3D) road.getBehavior("EndlessRoad3D")).getScore() : 0)))));
+distText.setItemText(String.valueOf((String.valueOf(Math.round((((com.star4droid.template.behaviors.lib.EndlessRoad3D) road.getBehavior("EndlessRoad3D")) != null ? ((com.star4droid.template.behaviors.lib.EndlessRoad3D) road.getBehavior("EndlessRoad3D")).getDistance() : 0f))) + String.valueOf(" m"))));
+speedText.setItemText(String.valueOf((((com.star4droid.template.behaviors.lib.Car3D) playerCar.getBehavior("Car3D")) != null ? ((com.star4droid.template.behaviors.lib.Car3D) playerCar.getBehavior("Car3D")).getSpeedText() : "")));

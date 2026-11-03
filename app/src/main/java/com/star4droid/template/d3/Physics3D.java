@@ -359,7 +359,7 @@ public class Physics3D implements Disposable {
 			if (!cb.hasHit()) return false;
 			btCollisionObject co = cb.getCollisionObject();
 			Object3D o = objectOf(co);
-			if (o != null && o == ignore) {
+			if (o != null && (o == ignore || "TRIGGER".equals(o.def.Body))) { // triggers are not solid for rays
 				// try again from just after the ignored element
 				Vector3 p = new Vector3();
 				cb.getHitPointWorld(p);

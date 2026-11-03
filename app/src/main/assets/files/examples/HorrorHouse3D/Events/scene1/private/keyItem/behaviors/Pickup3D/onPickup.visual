@@ -1,0 +1,44 @@
+[
+  {
+    "id": "0",
+    "title": "First >",
+    "x": "40.0",
+    "y": "0.0",
+    "else": "false",
+    "next": "1",
+    "next_id": "null",
+    "else_id": "",
+    "nf": "[]",
+    "code": "%1$s",
+    "color": -16678317,
+    "close": "false"
+  },
+  {
+    "id": "1",
+    "title": "showText",
+    "x": "40.0",
+    "y": "-233.33",
+    "else": "false",
+    "next": "2",
+    "next_id": "null",
+    "else_id": "",
+    "nf": "[{\"name\": \"ui(Body)\", \"value\": \"invText\"}, {\"name\": \"text\", \"value\": \"\\\"Inventory: old key\\\"\"}]",
+    "code": "%1$s.setItemText(String.valueOf(%2$s));\n%3$s",
+    "color": -8708190,
+    "close": "true"
+  },
+  {
+    "id": "2",
+    "title": "showText",
+    "x": "40.0",
+    "y": "-466.66",
+    "else": "false",
+    "next": "null",
+    "next_id": "null",
+    "else_id": "",
+    "nf": "[{\"name\": \"ui(Body)\", \"value\": \"goalText\"}, {\"name\": \"text\", \"value\": \"\\\"Open the front door\\\"\"}]",
+    "code": "%1$s.setItemText(String.valueOf(%2$s));\n%3$s",
+    "color": -8708190,
+    "close": "true"
+  }
+]

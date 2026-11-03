@@ -1,0 +1,1 @@
+hintText.setItemText(String.valueOf(""));

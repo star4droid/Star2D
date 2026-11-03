@@ -1,0 +1,1 @@
+Endless 3D desert highway: dodge the traffic, collect coins, the speed grows with the distance. Score, distance and speed HUD.

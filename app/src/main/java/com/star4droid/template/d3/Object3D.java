@@ -268,6 +268,8 @@ public class Object3D extends Actor implements PlayerItem {
 
 	/** Called by the world before drawing: transform, parent, animation. */
 	void sync() {
+		// Static Object: scenery that never moves keeps its matrices (no work per frame) until something moves it
+		if (started && !transformDirty && def.Static_Object && parent3d == null && (rigid == null || isStaticBody())) return;
 		if (!started && world != null) {
 			started = true;
 			PlayerItem p = getParentItem();

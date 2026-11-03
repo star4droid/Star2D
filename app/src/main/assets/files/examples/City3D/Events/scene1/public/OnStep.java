@@ -1,0 +1,1 @@
+speedText.setItemText(String.valueOf((((com.star4droid.template.behaviors.lib.Car3D) playerCar.getBehavior("Car3D")) != null ? ((com.star4droid.template.behaviors.lib.Car3D) playerCar.getBehavior("Car3D")).getSpeedText() : "")));

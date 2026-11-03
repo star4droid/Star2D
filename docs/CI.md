@@ -15,3 +15,7 @@ Signing: without secrets a throw-away key is used. For a stable key add the secr
 The token used to push needs the `workflow` scope, otherwise GitHub refuses the push of `.github/workflows`.
 
 Not available: web (no browser backend in the engine) and iOS (needs a Mac toolchain and a different runtime).
+
+## Release notes
+
+`RELEASE_NOTES.md` (English + Arabic) is the body of the GitHub release made by **build-aab.yml** (GitHub adds its generated list of changes under it). Google Play "What's new" texts are `whatsNewDirectory/whatsnew-en-US` and `whatsnew-ar` (500 characters max each). Update both before a release.

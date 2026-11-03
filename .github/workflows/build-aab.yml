@@ -146,6 +146,7 @@ jobs:
         with:
           tag_name: v${{ env.VERSION_NAME }}
           name: Star2D ${{ env.VERSION_NAME }}
+          body_path: RELEASE_NOTES.md
           generate_release_notes: true
           files: Star2D-${{ env.VERSION_NAME }}.apk
 

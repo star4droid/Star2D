@@ -31,7 +31,7 @@ public class TapToMove extends Behavior {
 	public PlayerItem marker;
 
 	@Header("Movement")
-	@Param(desc = "Walking speed (no upper limit).", unit = "px/s", min = 0)
+	@Param(desc = "Walking speed (no practical upper limit).", unit = "px/s", min = 0, max = 100000)
 	public float speed = 220;
 	@Param(desc = "Counts as arrived when this close.", unit = "px", min = 0, max = 500)
 	public float stopDistance = 4;

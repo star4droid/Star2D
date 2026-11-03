@@ -171,7 +171,7 @@ public class Door3D extends Behavior {
 	}
 
 	private void chooseSide() {
-		sign = 1;
+		sign = openAngle < 0 ? -1 : 1;
 		if (kind != Kind.HINGE || !openAwayFromPlayer) return;
 		Vector3 pp = new Vector3();
 		if (!Support3D.posOr(player, world3d(), pp)) return;
@@ -181,7 +181,7 @@ public class Door3D extends Behavior {
 		boolean playerInFront = pp.z < 0;
 		// +angle swings a LEFT-hinged door toward its front: open away = toward the back
 		float s = hinge == Side.RIGHT ? -1 : 1;
-		sign = (playerInFront ? -1 : 1) * s * Math.signum(openAngle == 0 ? 1 : openAngle);
+		sign = (playerInFront ? -1 : 1) * s;
 	}
 
 	@Override
@@ -197,6 +197,7 @@ public class Door3D extends Behavior {
 		if (keyItem != null && keyItem.length() > 0 && !startOpen) locked = true;
 		has = true;
 		if (startOpen) {
+			chooseSide();
 			open = true;
 			amount = target = 1;
 			apply(o);

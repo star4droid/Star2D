@@ -23,7 +23,7 @@ def find(pattern):
 def main():
     cache = os.path.expanduser("~/.gradle/caches/modules-2/files-2.1")
     jars = [find(cache + "/com.badlogicgames.gdx/gdx/1.14.2/*/gdx-1.14.2.jar"),
-            find(cache + "/com.badlogicgames.gdx/gdx-box2d/1.14.2/*/gdx-box2d-1.14.2.jar"),
+            find(cache + "/com.badlogicgames.gdx/gdx-box2d/1.14.2/*/gdx-box2d-1.14.2.jar"), find(cache + "/com.badlogicgames.gdx/gdx-bullet/*/*/gdx-bullet-1*.jar"), find(cache + "/com.github.mgsx-dev.gdx-gltf/gltf/*/*/gltf-*.jar"),
             find(cache + "/com.badlogicgames.gdx/gdx-box2d-platform/1.14.2/*/gdx-box2d-platform-1.14.2-natives-desktop.jar"),
             find(cache + "/com.badlogicgames.gdx/gdx-platform/1.14.2/*/gdx-platform-1.14.2-natives-desktop.jar"),
             find(cache + "/com.badlogicgames.gdx/gdx-jnigen-loader/*/*/gdx-jnigen-loader-*.jar"),

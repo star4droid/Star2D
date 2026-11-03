@@ -375,6 +375,10 @@ public class CodeGenerator {
                             } catch (NoSuchFieldException nsf) {
                                 continue; // key this element type doesn't have (e.g. Collider* on a GROUP): ignore
                             }
+                            // constants of a definition (CameraDef.type is "static final"): the property can't be assigned in code
+                            if (java.lang.reflect.Modifier.isFinal(field.getModifiers()) || java.lang.reflect.Modifier.isStatic(field.getModifiers())) {
+                                continue;
+                            }
                             String fieldType = field.getType().getName().replace("java.lang.", "");
                             
                             // Skip unsupported field types

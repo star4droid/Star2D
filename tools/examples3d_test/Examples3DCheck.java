@@ -174,6 +174,7 @@ public class Examples3DCheck {
 				} catch (NoSuchFieldException nsf) {
 					continue;
 				}
+				if (java.lang.reflect.Modifier.isFinal(f.getModifiers()) || java.lang.reflect.Modifier.isStatic(f.getModifiers())) continue;
 				String ft = f.getType().getName().replace("java.lang.", "");
 				String v = String.valueOf(p.getValue());
 				if (ft.equals("float")) {

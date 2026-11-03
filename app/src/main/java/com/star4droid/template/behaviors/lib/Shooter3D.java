@@ -56,7 +56,7 @@ public class Shooter3D extends Behavior {
 	public float range = 80;
 	@Param(desc = "Bullet template copied for each shot (PROJECTILE). It is hidden at start.")
 	public PlayerItem bulletTemplate;
-	@Param(desc = "Bullet speed (PROJECTILE).", unit = "m/s", min = 0, max = 1000, step = 1)
+	@Param(desc = "Bullet speed (PROJECTILE).", unit = "m/s", min = 0, max = 100000, step = 1)
 	public float bulletSpeed = 40;
 	@Param(desc = "Element copied at the hit point (HITSCAN: sparks, holes; removed after 2 s).")
 	public PlayerItem impactEffect;

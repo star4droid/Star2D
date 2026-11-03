@@ -41,6 +41,10 @@ public class Flashlight3D extends Behavior {
 	@Param(desc = "Click sound of the switch.")
 	@Sound
 	public String clickSound = "";
+	@Param(desc = "Inventory item to find first: while a Pickup 3D of the scene still gives it, the light and its button stay off; picking it up shows the button (empty = always usable).")
+	public String requiredItem = "flashlight";
+	@Param(desc = "Switches on by itself when the required item is picked up.")
+	public boolean onWhenPicked = true;
 
 	@Header("Battery")
 	@Param(desc = "Battery used per second while on (0 = endless).", unit = "%/s", min = 0, max = 100, step = 0.1)
@@ -54,11 +58,14 @@ public class Flashlight3D extends Behavior {
 
 	private float intensity = -1, battery = 100, flick = 1, flickT;
 	private boolean on, lowFired, started3;
+	/** -1 = not checked yet, 0 = no item needed, 1 = waiting for the item, 2 = item found. */
+	private int need = -1;
 	private EventListener tapL;
 	private final Vector3 dir = new Vector3(), pos = new Vector3(), right = new Vector3();
 
 	@Block(label = "switch flashlight", desc = "true = on, false = off.", labelAr = "شغّل المصباح", descAr = "صح = تشغيل، خطأ = إطفاء.", category = "Flashlight 3D", args = {"on"})
 	public void setOn(boolean v) {
+		if (v && need == 1) v = false; // not found yet
 		if (v && battery <= 0 && !refill()) v = false;
 		if (v == on) return;
 		on = v;
@@ -120,6 +127,39 @@ public class Flashlight3D extends Behavior {
 		showBar();
 	}
 
+	@Block(label = "flashlight found", desc = "True when it can be used (the required item was picked up, or none is needed).", labelAr = "تم العثور على المصباح", descAr = "صح عندما يمكن استخدامه (أُخذ العنصر المطلوب أو لا يلزم عنصر).", category = "Flashlight 3D", args = {})
+	public boolean isFound() {
+		return need != 1;
+	}
+
+	/** Is the required item still lying in the scene (a Pickup 3D not taken yet gives it)? */
+	private boolean pickupWaiting() {
+		com.star4droid.template.d3.World3D w = world3d();
+		if (w == null) return false;
+		for (int i = 0; i < w.objects.size; i++) {
+			com.star4droid.template.d3.Object3D o = w.objects.get(i);
+			if (o == null || o.isDestroyed()) continue;
+			Behavior b = o.getBehavior("Pickup3D");
+			if (b instanceof Pickup3D && requiredItem.equals(((Pickup3D) b).itemId) && !((Pickup3D) b).isTaken()) return true;
+		}
+		return false;
+	}
+
+	private void checkItem() {
+		boolean req = requiredItem != null && requiredItem.length() > 0;
+		if (need == -1) {
+			need = !req ? 0 : Inventory.has(requiredItem) ? 2 : pickupWaiting() ? 1 : 0;
+			if (need == 1) {
+				on = false;
+				Support3D.show(toggleButton, false);
+			}
+		} else if (need == 1 && Inventory.has(requiredItem)) {
+			need = 2;
+			Support3D.show(toggleButton, true);
+			if (onWhenPicked) setOn(true);
+		}
+	}
+
 	@Override
 	public void onDisable() {
 		Light3D l = light3d();
@@ -139,6 +179,7 @@ public class Flashlight3D extends Behavior {
 		Light3D l = light3d();
 		Camera3D c = Support3D.cameraOr(camera, world3d());
 		if (l == null || c == null || intensity < 0) return;
+		checkItem();
 		if (useKeyboard && Support3D.keyJust(Input.Keys.F)) toggle();
 		// follow the eyes
 		Vector3 cd = c.cam.direction;

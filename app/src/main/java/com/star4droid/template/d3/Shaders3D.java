@@ -39,8 +39,11 @@ public final class Shaders3D {
 		v = v.replace("float fog = dot(flen, flen) * u_cameraPosition.w;\n        v_fog = min(fog, 1.0);",
 				"float fd = length(flen);\n        v_fog = clamp((fd - u_fogRange.x) / max(u_fogRange.y - u_fogRange.x, 0.001), 0.0, 1.0);");
 		v = v.replace("uniform vec4 u_cameraPosition;", "uniform vec4 u_cameraPosition;\nuniform vec2 u_fogRange;");
+		// spot lights (flashlights, lamps): the default shader binds u_spotLights but its GLSL never uses them -> lit per pixel here
+		v = v.replace("void main() {", "#if defined(lightingFlag) && defined(normalFlag)\nvarying vec3 v_spotPos;\n#endif\nvoid main() {");
+		v = v.replace("gl_Position = u_projViewTrans * pos;", "gl_Position = u_projViewTrans * pos;\n\t#if defined(lightingFlag) && defined(normalFlag)\n\t\tv_spotPos = pos.xyz;\n\t#endif");
 		vertexSrc = v;
-		String f = DefaultShader.getDefaultFragmentShader();
+		String f = spotFragment(DefaultShader.getDefaultFragmentShader());
 		fragmentSimple = f;
 		String fn = "\nuniform float u_toonBands;\nvec3 toon(vec3 l){ float i = max(max(l.r, l.g), l.b); if (i <= 0.0) return l; float q = (floor(i * u_toonBands) + 0.5) / u_toonBands; return l * (min(q, 1.0) / i); }\n";
 		String t = f.replace("void main()", fn + "void main()");
@@ -53,6 +56,43 @@ public final class Shaders3D {
 		String s = f.replace("void main()", sfn + "void main()");
 		s = s.replace("v_lightDiffuse)", "softL(v_lightDiffuse))").replace("* v_lightDiffuse", "* softL(v_lightDiffuse)").replace("(v_lightDiffuse +", "(softL(v_lightDiffuse) +");
 		fragmentSoft = s;
+	}
+
+	/** Number of spot lights of the SIMPLE / SOFT / TOON shaders (= DefaultShader.Config.numSpotLights). */
+	static final int NUM_SPOTS = 3;
+
+	/** Adds per-pixel spot lights to the default fragment shader: color * intensity / (1 + d^2) like the point lights, a soft cone edge
+	 *  (exponent from the softness), not darkened by the sun's shadow (a flashlight lights the inside of a house). */
+	static String spotFragment(String f) {
+		String decl = "\n#if defined(lightingFlag) && defined(normalFlag)\n#define spotFlag\n"
+				+ "struct SpotLight { vec3 color; vec3 position; vec3 direction; float cutoffAngle; float exponent; };\n"
+				+ "uniform SpotLight u_spotLights[" + NUM_SPOTS + "];\n"
+				+ "varying vec3 v_spotPos;\n"
+				+ "vec3 spotLighting(vec3 n) {\n"
+				+ "\tvec3 sum = vec3(0.0);\n"
+				+ "\tfor (int i = 0; i < " + NUM_SPOTS + "; i++) {\n"
+				+ "\t\tvec3 dir = u_spotLights[i].direction;\n"
+				+ "\t\tfloat dl = dot(dir, dir);\n"
+				+ "\t\tvec3 c = u_spotLights[i].color;\n"
+				+ "\t\tif (dl < 0.000001 || dot(c, c) <= 0.0) continue;\n"
+				+ "\t\tvec3 L = u_spotLights[i].position - v_spotPos;\n"
+				+ "\t\tfloat d2 = max(dot(L, L), 0.0001);\n"
+				+ "\t\tL *= inversesqrt(d2);\n"
+				+ "\t\tfloat cosA = dot(-L, dir * inversesqrt(dl));\n"
+				+ "\t\tfloat cosOut = cos(radians(clamp(u_spotLights[i].cutoffAngle, 1.0, 89.0)));\n"
+				+ "\t\tfloat t = clamp((cosA - cosOut) / max(1.0 - cosOut, 0.0001), 0.0, 1.0);\n"
+				+ "\t\tfloat cone = pow(t, 1.0 / max(u_spotLights[i].exponent, 0.5));\n"
+				+ "\t\tfloat ndl = clamp(dot(n, L), 0.0, 1.0) * 0.85 + 0.15;\n"
+				+ "\t\tsum += c * (cone * ndl / (1.0 + d2));\n"
+				+ "\t}\n"
+				+ "\treturn sum;\n"
+				+ "}\n#endif\n";
+		f = f.replace("void main() {", decl + "void main() {");
+		int mix = f.indexOf("gl_FragColor.rgb = mix(gl_FragColor.rgb, u_fogColor.rgb, v_fog);");
+		int at = mix < 0 ? -1 : f.lastIndexOf("#ifdef fogFlag", mix);
+		String add = "\t#ifdef spotFlag\n\t\tgl_FragColor.rgb += diffuse.rgb * spotLighting(normalize(v_normal));\n\t#endif\n\t";
+		if (at > 0) f = f.substring(0, at) + add + f.substring(at);
+		return f;
 	}
 
 	/** Default shader + fog range (+ toon / soft fragment). */
@@ -78,7 +118,7 @@ public final class Shaders3D {
 		DefaultShader.Config c = new DefaultShader.Config();
 		c.numDirectionalLights = 2;
 		c.numPointLights = pixel ? 6 : 4;
-		c.numSpotLights = 3;
+		c.numSpotLights = NUM_SPOTS;
 		c.numBones = NUM_BONES;
 		c.vertexShader = vertexSrc;
 		c.fragmentShader = TOON.equals(mode) ? fragmentToon : (SOFT.equals(mode) ? fragmentSoft : fragmentSimple);

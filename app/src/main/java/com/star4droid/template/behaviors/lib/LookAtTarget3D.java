@@ -26,7 +26,7 @@ public class LookAtTarget3D extends Behavior {
 	@Header("Turning")
 	@Param(desc = "Only turn around Y (stays upright).")
 	public boolean yawOnly = true;
-	@Param(desc = "Turning speed (0 = at once).", unit = "deg/s", min = 0, max = 3600, step = 5)
+	@Param(desc = "Turning speed (0 = at once).", unit = "deg/s", min = 0, max = 100000, step = 5)
 	public float turnSpeed = 180;
 	@Param(desc = "Extra heading when the model faces +Z instead of -Z.", unit = "deg", min = -180, max = 180)
 	public float yawOffset = 0;

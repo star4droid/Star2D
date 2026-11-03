@@ -3,7 +3,7 @@
 Built-in behaviors in `app/src/main/java/com/star4droid/template/behaviors/lib/` (see `docs/BEHAVIORS.md` for how behaviors work).
 All of them follow the same conventions:
 
-* Units are editor **pixels**, `y` up, origin bottom-left. Speeds are px/s (keep physical speeds <= 450 px/s), angles are degrees,
+* Units are editor **pixels**, `y` up, origin bottom-left. Speeds are px/s (no upper limit; very fast physical bodies may need `Bullet` true / CCD against tunneling), angles are degrees,
   counter-clockwise positive, `0` = right, `90` = up. World = px x 0.25.
 * Every public field is a parameter shown in the inspector (`@Param` with description, range, unit). Every behavior has blocks
   (`@Block`, English + Arabic) that appear only when the scene uses the behavior, and events (`@BehaviorInfo(events=...)`).
@@ -124,7 +124,7 @@ scene size), CUSTOM = `customLeft/Bottom/Right/Top`. `LimitToScreen.keepFullyIns
 
 **Orbit.** Around `center` (the starting distance is kept when `radius` is 0) or, without a center element, around a point chosen so that
 the start position lies on the circle. `ovalRatio`, `spiral` (px/s) and `faceMovement` shape the path. Physical elements follow the path
-with a velocity (`distance / dt`): a large radius with a high speed can exceed 450 px/s, so prefer kinematic bodies or UI for fast orbits.
+with a velocity (`distance / dt`): a large radius with a high speed gives a very fast body, so prefer kinematic bodies or UI for fast orbits (or `Bullet` true).
 
 **TapToMove.** `ignoreTouchesOn` lists buttons / joysticks whose touches must not move the element. TAP shows an optional `marker`
 element at the tapped point and hides it on arrival. `horizontalOnly` keeps gravity and only runs left / right. DRAG_ITEM needs the

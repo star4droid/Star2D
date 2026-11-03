@@ -174,7 +174,8 @@ public class BoxBody extends Image implements PlayerItem {
 		
 		if((tileX!=1||tileY!=1) && getDrawable() instanceof TextureRegionDrawable){
 		try {
-		    Texture texture = ((TextureRegionDrawable)getDrawable()).getRegion().getTexture();
+		    // a picture merged into a tileset page cannot repeat inside the page: it gets its own texture
+		    Texture texture = com.star4droid.template.Utils.AtlasIndex.repeatable((stage.getProject().getImagesPath()+boxDef.image).replace("//","/"),((TextureRegionDrawable)getDrawable()).getRegion());
 		    texture.setWrap(Texture.TextureWrap.MirroredRepeat, Texture.TextureWrap.MirroredRepeat);
 		    TextureRegion textureRegion = new TextureRegion(texture);
 		    textureRegion.setRegion(0,0,texture.getWidth()*tileX,texture.getHeight()*tileY);

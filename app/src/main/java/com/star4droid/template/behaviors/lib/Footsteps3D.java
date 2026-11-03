@@ -31,9 +31,9 @@ public class Footsteps3D extends Behavior {
 	@Header("Steps")
 	@Param(desc = "Distance walked between two steps.", unit = "m", min = 0.1, max = 10, step = 0.05)
 	public float stepLength = 0.7f;
-	@Param(desc = "Slower than this counts as standing.", unit = "m/s", min = 0, max = 10, step = 0.05)
+	@Param(desc = "Slower than this counts as standing.", unit = "m/s", min = 0, max = 100000, step = 0.05)
 	public float minSpeed = 0.4f;
-	@Param(desc = "No steps while it moves up or down faster than this (jumping, falling).", unit = "m/s", min = 0.1, max = 50, step = 0.1)
+	@Param(desc = "No steps while it moves up or down faster than this (jumping, falling).", unit = "m/s", min = 0.1, max = 100000, step = 0.1)
 	public float airSpeed = 1.5f;
 
 	private final Vector3 last = new Vector3(), p = new Vector3();

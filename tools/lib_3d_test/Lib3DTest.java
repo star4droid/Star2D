@@ -50,6 +50,8 @@ public class Lib3DTest {
 		List<String> ids = metadata(root);
 		fitRules();
 		simulate();
+		if (a.length > 1 && "bullet".equals(a[1])) vehicle();
+		else System.out.println("SKIP Car3D Bullet drive test (gdx-bullet-platform natives-desktop jar not found in ~/.gradle)");
 		System.out.println(ids.size() + " 3D behaviors, " + checks + " checks, " + failures + " failures");
 		System.exit(failures == 0 ? 0 : 1);
 	}
@@ -428,5 +430,108 @@ public class Lib3DTest {
 		seat.stand();
 		run(w, 30);
 		check(!seat.isSitting() && fp.enabled, "Seat3D: standing resumes the controller");
+	}
+
+	// ================================================================= part 4: Car 3D on real Bullet physics (desktop natives)
+
+	static Object3D body(World3D w, String name, String type, float mass, float x, float y, float z, float sx, float sy, float sz) {
+		Object3DDef d = new Object3DDef();
+		d.name = name;
+		d.Mesh = "EMPTY";
+		d.Body = type;
+		d.Collider = "BOX";
+		d.Mass = mass;
+		d.x = x;
+		d.y = y;
+		d.z = z;
+		d.Scale_X = sx;
+		d.Scale_Y = sy;
+		d.Scale_Z = sz;
+		return Object3D.forWorld(w, d);
+	}
+
+	static float drive(World3D w, Car3D car, float seconds) {
+		float best = 0;
+		for (int i = 0; i < (int) (seconds / DT); i++) {
+			run(w, 1);
+			best = Math.max(best, car.getSpeedKmh());
+		}
+		return best;
+	}
+
+	static void vehicle() {
+		World3D old = World3D.current;
+		World3D w = new World3D(null);
+		World3D.current = w;
+		w.setGravity(0, -9.81f, 0);
+		Camera3DDef cd = new Camera3DDef();
+		cd.name = "carCam";
+		cd.Active = true;
+		Camera3D cam = Camera3D.forWorld(w, cd);
+		w.setActiveCamera(cam);
+		body(w, "ground", "STATIC", 0, 0, -0.5f, -500, 60, 1, 1400); // a huge static box: Physics3D makes it a triangle box (exact rays)
+		// a 1200 kg sedan-sized box; its front is local -Z, like every 3D element
+		Object3D o = body(w, "car", "DYNAMIC", 1200, 0, 0.6f, 0, 1.8f, 1.1f, 4.2f);
+		Car3D car = new Car3D();
+		car.useKeyboard = false;
+		car.followCamera = false;
+		car.wheelMode = Car3D.WheelMode.INVISIBLE;
+		o.addBehavior(car);
+		run(w, 90); // settle on the springs
+		check(w.hasPhysics(), "Car3D: physics world running");
+		check(car.isGrounded(), "Car3D: wheels touch the ground (" + o.position + ")");
+		float z0 = o.position.z, x0 = o.position.x, yaw0 = o.getYaw3();
+		car.setGas(1);
+		float t100 = -1, t = 0;
+		for (int i = 0; i < (int) (6f / DT); i++) {
+			run(w, 1);
+			t += DT;
+			if (t100 < 0 && car.getSpeedKmh() >= 100) t100 = t;
+		}
+		float v6 = car.getSpeedKmh();
+		System.out.println("  Car3D defaults: " + Math.round(v6) + " km/h after 6 s, 0-100 km/h in " + (t100 < 0 ? "never" : String.format(Locale.US, "%.1f s", t100)));
+		check(v6 > 80, "Car3D: default car reaches more than 80 km/h in 6 s (" + v6 + ")");
+		check(z0 - o.position.z > 50, "Car3D: gas drives toward the visible front (-Z) (" + (z0 - o.position.z) + " m)");
+		check(Math.abs(o.getYaw3() - yaw0) < 1.5f, "Car3D: drives straight without steering (heading " + yaw0 + " -> " + o.getYaw3() + ")");
+		float fz = o.forward(new com.badlogic.gdx.math.Vector3()).z;
+		check(fz < -0.95f, "Car3D: still faces -Z (" + fz + ")");
+		check(car.isGrounded(), "Car3D: all wheels stay on the road at full gas");
+		// top speed param
+		car.setMaxSpeed(60);
+		run(w, 300);
+		float v = car.getSpeedKmh();
+		check(v > 52 && v < 68, "Car3D: top speed param holds 60 km/h (" + v + ")");
+		car.setMaxSpeed(250);
+		car.setAcceleration(14);
+		float best = 0;
+		for (int k = 0; k < 12; k++) {
+			best = Math.max(best, drive(w, car, 1));
+		}
+		check(best > 200, "Car3D: no speed cap: top speed 250 km/h is reachable (" + best + ")");
+		// steering: right input turns right (from -Z toward +X)
+		car.setMaxSpeed(60);
+		car.setAcceleration(5.5f);
+		car.setGas(0);
+		car.setBrake(true);
+		float tb = 0;
+		while (car.getSpeedKmh() > 5 && tb < 15) {
+			run(w, 1);
+			tb += DT;
+		}
+		car.setBrake(false);
+		check(tb < 9, "Car3D: brakes from 250 km/h to a stop (" + tb + " s)");
+		car.setGas(1);
+		drive(w, car, 3);
+		float xs = o.position.x;
+		car.setSteering(1);
+		drive(w, car, 1.2f);
+		check(o.position.x - xs > 1f, "Car3D: steering right turns right (+X) (" + (o.position.x - xs) + ")");
+		car.setSteering(0);
+		// reverse
+		car.setGas(-1);
+		drive(w, car, 8);
+		check(car.getSpeedKmh() < -5, "Car3D: brake / reverse goes backwards (" + car.getSpeedKmh() + ")");
+		w.dispose();
+		World3D.current = old;
 	}
 }

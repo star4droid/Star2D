@@ -250,12 +250,6 @@ public class TapToMove extends Behavior {
 			setCenter(wx, wy);
 		} else {
 			float vx = (wx - centerX()) * dragStiffness, vy = (wy - centerY()) * dragStiffness;
-			float m = (float) Math.sqrt(vx * vx + vy * vy);
-			float cap = Math.max(450f, speed); // the follow speed grows with the element speed, never below the old safety value
-			if (m > cap) {
-				vx *= cap / m;
-				vy *= cap / m;
-			}
 			if (horizontalOnly) setVelocityX(vx);
 			else setVelocity(vx, vy);
 		}

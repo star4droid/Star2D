@@ -1,5 +1,4 @@
-flashBtn.getActor().setVisible(true);
-msgText.setItemText(String.valueOf("Flashlight found: tap the light button"));
+msgText.setItemText(String.valueOf("Flashlight found: the light button switches it"));
 msgText.getActor().setVisible(true);
 Timer.schedule(new Timer.Task(){
     public void run(){

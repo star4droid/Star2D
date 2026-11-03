@@ -36,7 +36,7 @@ public class CameraFollow extends Behavior {
 	public float deadZoneHeight = 0;
 	@Param(desc = "The camera looks this far ahead in the direction the target moves (physical targets).", unit = "px", min = 0, max = 2000)
 	public float lookAhead = 0;
-	@Param(desc = "Target speed at which the look-ahead is complete.", unit = "px/s", min = 10, max = 5000)
+	@Param(desc = "Target speed at which the look-ahead is complete.", unit = "px/s", min = 10, max = 100000)
 	public float lookAheadSpeed = 300;
 
 	@Header("Zoom")

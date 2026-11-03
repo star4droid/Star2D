@@ -264,12 +264,48 @@ public class Object3D extends Actor implements PlayerItem {
 		return bounds;
 	}
 
+	/** Collider shape after AUTO: BOX, SPHERE, CAPSULE, CYLINDER, CONE, MESH or CONVEX (same rule as the physics). */
+	public String colliderKind() {
+		String c = def.Collider == null ? "AUTO" : def.Collider;
+		if (!"AUTO".equals(c)) return c;
+		String shape = def.Mesh;
+		if (Shapes3D.SPHERE.equals(shape) || Shapes3D.HEMISPHERE.equals(shape)) return "SPHERE";
+		if (Shapes3D.CAPSULE.equals(shape)) return "CAPSULE";
+		if (Shapes3D.CYLINDER.equals(shape) || Shapes3D.DISC.equals(shape) || Shapes3D.TUBE.equals(shape)) return "CYLINDER";
+		if (Shapes3D.CONE.equals(shape)) return "CONE";
+		if (Shapes3D.RAMP.equals(shape) || Shapes3D.STAIRS.equals(shape) || Shapes3D.PYRAMID.equals(shape) || Shapes3D.WEDGE.equals(shape) || Shapes3D.TORUS.equals(shape))
+			return isStaticBody() ? "MESH" : "CONVEX";
+		if ("TERRAIN".equals(shape)) return "MESH";
+		if ("MODEL".equals(shape)) return isStaticBody() ? "MESH" : "BOX";
+		return "BOX";
+	}
+
+	/**
+	 * Collider box in the element's local (rotated, unscaled) space, meters: half sizes and center. Spheres / capsules /
+	 * cylinders / cones fill it the way the physics builds them (editor drawing and the collider editor).
+	 */
+	public void colliderBox(Vector3 half, Vector3 center) {
+		BoundingBox bb = localBounds();
+		float sx = Math.abs(scale.x) * def.Collider_Scale_X, sy = Math.abs(scale.y) * def.Collider_Scale_Y, sz = Math.abs(scale.z) * def.Collider_Scale_Z;
+		half.set(bb.getWidth() * sx * 0.5f, bb.getHeight() * sy * 0.5f, bb.getDepth() * sz * 0.5f);
+		bb.getCenter(center);
+		center.scl(sx, sy, sz);
+		center.add(def.Collider_Offset_X, def.Collider_Offset_Y, def.Collider_Offset_Z);
+	}
+
 	private final Vector3 tmp = new Vector3();
 
 	/** Called by the world before drawing: transform, parent, animation. */
 	void sync() {
 		// Static Object: scenery that never moves keeps its matrices (no work per frame) until something moves it
-		if (started && !transformDirty && def.Static_Object && parent3d == null && (rigid == null || isStaticBody())) return;
+		if (started && !transformDirty && def.Static_Object && (rigid == null || isStaticBody())) {
+			if (parent3d == null) return;
+			// static scenery in a static group: only when the group itself moved
+			if (!parent3d.destroyed && parent3d.def.Static_Object) {
+				parent3d.sync();
+				if (parent3d.syncVersion == seenParentVersion) return;
+			}
+		}
 		if (!started && world != null) {
 			started = true;
 			PlayerItem p = getParentItem();
@@ -277,6 +313,7 @@ public class Object3D extends Actor implements PlayerItem {
 		}
 		if (parent3d != null && !parent3d.destroyed) {
 			parent3d.sync();
+			seenParentVersion = parent3d.syncVersion;
 			transform.set(parent3d.transform).mul(offsetFromParent);
 			transform.getTranslation(position);
 			transform.getRotation(rotation, true);
@@ -296,7 +333,11 @@ public class Object3D extends Actor implements PlayerItem {
 		float sx = Math.abs(scale.x), sy = Math.abs(scale.y), sz = Math.abs(scale.z);
 		radius = 0.5f * b.getDimensions(tmp).scl(sx, sy, sz).len() + 0.01f;
 		transformDirty = false;
+		syncVersion++;
 	}
+
+	/** Grows each time the matrices were recomputed; children of a static group compare it to skip their own work. */
+	private int syncVersion, seenParentVersion = -1;
 
 	private final Matrix4 tmpM = new Matrix4();
 	private final Vector3 tmpScale = new Vector3();

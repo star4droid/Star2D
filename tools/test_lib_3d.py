@@ -5,6 +5,8 @@
      no android.*), no Bullet types, text scanner == reflection (types included), listed in BuiltIns.
   2. the editor's 2D / 3D fit rules (BehaviorMeta.misfit / fits3D / type lists) and the scanner reading THREE_D + types.
   3. a headless smoke run (no GL, no Bullet): rotator, oscillator, path follower, trigger, door, first person walk, patrol.
+  4. Car3D on real Bullet physics (needs gdx-bullet-platform-1.14.2-natives-desktop.jar in ~/.gradle, else skipped): 0-100 km/h,
+     drives toward its front (-Z), top speed, no speed cap, brake, steering sign, reverse.
 Needs the template classes compiled once:  bash gradlew :template:compileDebugJavaWithJavac
 Usage: python3 tools/test_lib_3d.py
 """
@@ -42,7 +44,10 @@ def main():
     if r.returncode != 0:
         print(r.stdout + "\n".join(l for l in r.stderr.splitlines() if "Picked up" not in l))
         return 1
-    r = subprocess.run(["java", "-cp", os.pathsep.join([out, cp]), "Lib3DTest", ROOT], capture_output=True, text=True)
+    # Car3D on real Bullet physics needs the desktop natives of gdx-bullet (skipped when the jar is not in ~/.gradle)
+    natives = jar("com.badlogicgames.gdx/gdx-bullet-platform/1.14.2/*/gdx-bullet-platform-1.14.2-natives-desktop.jar")
+    run_cp = os.pathsep.join([out, cp] + ([natives] if natives else []))
+    r = subprocess.run(["java", "-cp", run_cp, "Lib3DTest", ROOT] + (["bullet"] if natives else []), capture_output=True, text=True)
     print("\n".join(l for l in (r.stdout + r.stderr).splitlines() if "Picked up" not in l))
     return r.returncode
 

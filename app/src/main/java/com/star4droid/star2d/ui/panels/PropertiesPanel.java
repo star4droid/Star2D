@@ -232,7 +232,8 @@ public class PropertiesPanel implements PanelHost.Panel {
     private void pollValues() {
         if (root == null || !shell.panels.isShowing(this)) return;
         if (Bridge.ready()) Bridge.query(this::snapshot, snap -> {
-            if (snap == null || selectedName == null || fieldsSignature.isEmpty() || !selectedName.equals(snap[0])) render(snap);
+            if (snap == null || selectedName == null || fieldsSignature.isEmpty() || !selectedName.equals(snap[0])
+                    || !fieldsSignature.endsWith("|" + shapeSignature((LinkedHashMap<String, String>) snap[1]))) render(snap);
             else updateValues((LinkedHashMap<String, String>) snap[1]);
         });
         root.postDelayed(poll, 450);
@@ -269,7 +270,7 @@ public class PropertiesPanel implements PanelHost.Panel {
         }
         String name = (String) snap[0];
         LinkedHashMap<String, String> v = (LinkedHashMap<String, String>) snap[1];
-        String sig = name + "|" + android.text.TextUtils.join(",", v.keySet());
+        String sig = name + "|" + android.text.TextUtils.join(",", v.keySet()) + "|" + shapeSignature(v);
         selectedName = name;
         updateInstanceBar(name, v, (String) snap[2]);
         if (sig.equals(fieldsSignature)) {
@@ -290,7 +291,7 @@ public class PropertiesPanel implements PanelHost.Panel {
         LinkedHashMap<String, String[]> secs = is3dType(type) && sections3d != null && !sections3d.isEmpty() ? sections3d : sections;
         for (Map.Entry<String, String[]> sec : secs.entrySet()) {
             ArrayList<String> present = new ArrayList<>();
-            for (String f : sec.getValue()) if (v.containsKey(f)) present.add(f);
+            for (String f : sec.getValue()) if (v.containsKey(f) && (secs != sections3d || shows3d(type, f, v))) present.add(f);
             if (present.isEmpty()) continue;
             addSection(c, sec.getKey(), present);
         }
@@ -363,6 +364,25 @@ public class PropertiesPanel implements PanelHost.Panel {
                 sec.texts.add(searchText(f));
             }
         }
+        if ("Physics 3D".equals(title) && "OBJ3D".equals(values.get("TYPE")) && values.get("Body") != null && !"NONE".equalsIgnoreCase(values.get("Body"))
+                && !"EMPTY".equalsIgnoreCase(String.valueOf(values.get("Mesh")))) {
+            // collider editor: handles on the collider faces in the 3D view
+            LinearLayout b = Ui.button(c, R.drawable.ic_s2_collider, Tr.t("col3d_edit", "Edit collider"), true, null);
+            b.setOnClickListener(x -> Bridge.query(() -> {
+                com.star4droid.star2d.editor.three.Editor3D e = Bridge.editor().get3D();
+                if (e == null) return null;
+                if (e.edit2D) e.setEdit2D(false);
+                return e.toggleColliderEdit();
+            }, on -> {
+                if (on == null) return;
+                Ui.toast(c, on ? Tr.t("col3d_on", "Drag the round handles on the sides of the collider. Tap empty space or this button again when done.")
+                        : Tr.t("col3d_off", "Collider editing finished"));
+                if (on && shell.panels != null) shell.panels.hide();
+            }));
+            body.addView(b, Ui.margins(Ui.matchWrap(), c, 0, 10, 0, 4));
+            sec.rows.add(b);
+            sec.texts.add((Tr.t("col3d_edit", "Edit collider") + " collider").toLowerCase());
+        }
     }
 
     /** What a search matches for a field: its raw name and its (translated) label, lower case. */
@@ -405,6 +425,83 @@ public class PropertiesPanel implements PanelHost.Panel {
             + "}\n\n"
             + "// Optional: move the vertices\n"
             + "// vec3 displace(vec3 pos, vec3 normal) { return pos + normal * sin(u_time + pos.y * 4.0) * 0.03; }\n";
+
+    /** The values that decide which 3D properties are shown: a change rebuilds the panel. */
+    private static String shapeSignature(Map<String, String> v) {
+        return v.get("Mesh") + "," + v.get("Light Kind") + "," + v.get("Orthographic") + "," + v.get("Body") + "," + v.get("Collider")
+                + "," + v.get("Outline") + "," + v.get("Follow Mode") + "," + (num(v.get("Flicker")) != 0) + "," + v.get("Touch Look");
+    }
+
+    private static float num(String s) {
+        try { return Float.parseFloat(s); } catch (Throwable e) { return 0; }
+    }
+
+    private static boolean in(String v, String... list) {
+        for (String s : list) if (s.equalsIgnoreCase(v)) return true;
+        return false;
+    }
+
+    /** Only the properties that mean something for this element (its Mesh, Light Kind, camera kind, body...). */
+    static boolean shows3d(String type, String f, Map<String, String> v) {
+        if ("OBJ3D".equals(type)) {
+            String mesh = v.get("Mesh") == null ? "CUBE" : v.get("Mesh").toUpperCase();
+            boolean model = mesh.equals("MODEL"), empty = mesh.equals("EMPTY");
+            switch (f) {
+                case "Light Kind": return false;
+                case "Model": case "Model Node": case "Keep Model Material":
+                case "Animation": case "Animation Loop": case "Animation Speed": return model;
+                case "Detail": return in(mesh, "SPHERE", "CYLINDER", "CAPSULE", "CONE", "TORUS", "HEMISPHERE", "TUBE", "DISC");
+                case "Steps": return mesh.equals("STAIRS");
+                case "Heightmap": case "Terrain Height": case "Terrain Resolution": case "Terrain Noise": case "Terrain Seed": return mesh.equals("TERRAIN");
+                case "Water Color": case "Water Deep Color": case "Foam Color": case "Wave Height": case "Wave Speed": case "Wave Length":
+                case "Wave Direction": case "Water Clarity": case "Water Resolution": case "Foam": case "Water Quality": case "Buoyancy":
+                    return mesh.equals("WATER");
+                case "Outline Color": case "Outline Width": return !empty && "true".equals(v.get("Outline"));
+            }
+            if (empty) {
+                // a group / pivot: transform, visibility and physics only
+                if (in(f, "Color", "Texture", "Texture Repeat X", "Texture Repeat Y", "Normal Map", "Opacity", "Metallic", "Roughness", "Shininess",
+                        "Emissive", "Emissive Intensity", "Unlit", "Double Sided", "Cast Shadows", "Receive Shadows", "Outline", "Billboard",
+                        "Render Order", "Shader", "Shader Params", "LOD Distance")) return false;
+            }
+            String body = v.get("Body") == null ? "NONE" : v.get("Body").toUpperCase();
+            if (!f.equals("Body") && in(f, "Collider", "Mass", "Friction", "Restitution", "Linear Damping", "Angular Damping", "Gravity Scale",
+                    "Collider Scale X", "Collider Scale Y", "Collider Scale Z", "Collider Offset X", "Collider Offset Y", "Collider Offset Z",
+                    "Lock Move X", "Lock Move Y", "Lock Move Z", "Lock Rotation X", "Lock Rotation Y", "Lock Rotation Z", "Continuous Collision",
+                    "Sleep", "Layer", "Ignore Layers")) {
+                if (body.equals("NONE")) return false;
+                boolean dyn = in(body, "DYNAMIC");
+                if (in(f, "Mass", "Linear Damping", "Angular Damping", "Gravity Scale", "Lock Move X", "Lock Move Y", "Lock Move Z",
+                        "Lock Rotation X", "Lock Rotation Y", "Lock Rotation Z", "Continuous Collision", "Sleep")) return dyn;
+                if (in(f, "Friction", "Restitution")) return !body.equals("TRIGGER");
+            }
+            return true;
+        }
+        if ("LIGHT3D".equals(type)) {
+            String kind = v.get("Light Kind") == null ? "POINT" : v.get("Light Kind").toUpperCase();
+            switch (f) {
+                case "Mesh": case "Model": case "Model Node": case "Detail": case "Steps": return false;
+                case "Cone Angle": case "Cone Softness": return kind.equals("SPOT");
+                case "Range": return !kind.equals("DIRECTIONAL");
+                case "Flicker Speed": return num(v.get("Flicker")) != 0;
+            }
+            return true;
+        }
+        if ("CAMERA3D".equals(type)) {
+            boolean ortho = "true".equals(v.get("Orthographic"));
+            boolean following = !"NONE".equalsIgnoreCase(String.valueOf(v.get("Follow Mode")));
+            switch (f) {
+                case "Mesh": case "Model": case "Model Node": case "Detail": case "Steps": case "Light Kind": return false;
+                case "Ortho Size": return ortho;
+                case "FOV": return !ortho;
+                case "Follow Distance": case "Follow Height": case "Follow Smooth": case "Look Height": case "Follow Angle":
+                    return following;
+                case "Look Sensitivity": return "true".equals(v.get("Touch Look"));
+            }
+            return true;
+        }
+        return true;
+    }
 
     /** Element types of a 3D scene (their own property sections, map3d.json). */
     public static boolean is3dType(String type) {

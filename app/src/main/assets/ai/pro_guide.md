@@ -13,7 +13,7 @@
 ### 3. Physics numbers that work
 - FIRST lines of a physical scene's OnCreate: `setSteps(1); setGravity(0f, -800f*0.25f);` (platformer 700-1000; top-down/space 0). Without setSteps(1) the physics runs 6 steps per frame = 6x too fast.
 - With that: g = G px/s2. Jump height = v^2/(2g). Time to the top = v/g. Air time = 2v/g. Horizontal reach = move_speed * air time. Example G 800, v 450: height 126 px, air 1.1 s, reach 280 px at 250 px/s.
-- Speed cap ~450 px/s (Box2D moves max 8 px per step): keep every speed (walk 250-350, bullets 400-450, falling) below it. For a higher jump keep v 450 and LOWER the gravity (G 500 -> 202 px). Walls/ground at least 20 px thick; Bullet true on fast small bodies.
+- No speed limit in blocks/behaviors. Very high speeds may tunnel: Bullet true (CCD) on fast small bodies, and check real speeds with game_state (Box2D moves at most 2 world units per physics step). Walls/ground at least 20 px thick; Bullet true on fast small bodies.
 - Level design: vertical step <= 70% of the jump height, gap <= 70% of the reach. Ask {"action":"physics_info","jump_height":150,"gravity":800,"move_speed":250,"jumps":[{"gap":200,"rise":80}]} BEFORE building platforms.
 - Properties: player DYNAMIC, Fixed Rotation true, restitution 0, friction 0. Ground/platforms STATIC, restitution 0, friction 0.4. Coins/goals STATIC with isSensor true. Ball: restitution 1, Gravity Scale 0.
 - Spawn the player standing ON the ground (y = ground top), never inside a body or outside the frame (it would be pushed away sideways: "slides left and disappears"). The ground must span the whole frame width.

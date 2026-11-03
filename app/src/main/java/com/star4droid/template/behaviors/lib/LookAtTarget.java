@@ -23,7 +23,7 @@ public class LookAtTarget extends Behavior {
 	public PlayerItem target;
 	@Param(desc = "Angle of the image when it faces right (0 = right, 90 = up...).", unit = "deg", min = -360, max = 360)
 	public float faceOffset = 0;
-	@Param(desc = "How fast it turns. 0 = instantly.", unit = "deg/s", min = 0, max = 3600, step = 10)
+	@Param(desc = "How fast it turns. 0 = instantly.", unit = "deg/s", min = 0, max = 100000, step = 10)
 	public float turnSpeed = 360;
 	@Param(desc = "FINGER only: keep facing the last touch after the finger is lifted.")
 	public boolean keepLastTouch = true;

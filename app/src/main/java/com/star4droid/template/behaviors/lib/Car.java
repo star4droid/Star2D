@@ -53,21 +53,21 @@ public class Car extends Behavior {
 	public float deadZone = 0.15f;
 
 	@Header("Engine and brakes")
-	@Param(desc = "Top speed going forward.", unit = "px/s", min = 0, max = 450)
+	@Param(desc = "Top speed going forward.", unit = "px/s", min = 0, max = 100000)
 	public float maxSpeed = 380;
-	@Param(desc = "Top speed in reverse.", unit = "px/s", min = 0, max = 450)
+	@Param(desc = "Top speed in reverse.", unit = "px/s", min = 0, max = 100000)
 	public float reverseSpeed = 140;
-	@Param(desc = "How fast the engine speeds the car up.", unit = "px/s2", min = 0, max = 5000, step = 10)
+	@Param(desc = "How fast the engine speeds the car up.", unit = "px/s2", min = 0, max = 100000, step = 10)
 	public float acceleration = 300;
-	@Param(desc = "How hard the brake slows the car.", unit = "px/s2", min = 0, max = 5000, step = 10)
+	@Param(desc = "How hard the brake slows the car.", unit = "px/s2", min = 0, max = 100000, step = 10)
 	public float brakeForce = 700;
-	@Param(desc = "Slowing down when nothing is pressed.", unit = "px/s2", min = 0, max = 2000, step = 10)
+	@Param(desc = "Slowing down when nothing is pressed.", unit = "px/s2", min = 0, max = 100000, step = 10)
 	public float rollingResistance = 120;
 
 	@Header("Steering (top-down)")
 	@Param(desc = "Largest angle of the front wheels.", unit = "deg", min = 1, max = 80)
 	public float maxSteerAngle = 35;
-	@Param(desc = "How fast the wheels turn to the wanted angle.", unit = "deg/s", min = 10, max = 1000, step = 10)
+	@Param(desc = "How fast the wheels turn to the wanted angle.", unit = "deg/s", min = 10, max = 100000, step = 10)
 	public float steerSpeed = 160;
 	@Param(desc = "Steers less at high speed (0 = no change, 1 = almost straight at top speed).", min = 0, max = 1, step = 0.05)
 	public float steerReduction = 0.5f;
@@ -83,7 +83,7 @@ public class Car extends Behavior {
 	public float grip = 8;
 	@Param(desc = "Grip while the handbrake is on (small = drift).", unit = "1/s", min = 0, max = 30, step = 0.1)
 	public float handbrakeGrip = 0.8f;
-	@Param(desc = "Sideways speed that counts as a drift (onDriftStart).", unit = "px/s", min = 0, max = 450)
+	@Param(desc = "Sideways speed that counts as a drift (onDriftStart).", unit = "px/s", min = 0, max = 100000)
 	public float driftSpeed = 80;
 
 	@Header("Wheels (side-scroller)")
@@ -99,9 +99,9 @@ public class Car extends Behavior {
 	public String frontJoint = "";
 	@Param(desc = "Saved values of the rear wheel joint (edit with the pencil button).")
 	public String rearJoint = "";
-	@Param(desc = "How fast the wheel motors speed up.", unit = "rad/s2", min = 1, max = 500, step = 1)
+	@Param(desc = "How fast the wheel motors speed up.", unit = "rad/s2", min = 1, max = 100000, step = 1)
 	public float wheelAcceleration = 40;
-	@Param(desc = "Rotation speed of the car body in the air while left/right is held.", unit = "deg/s", min = 0, max = 720, step = 10)
+	@Param(desc = "Rotation speed of the car body in the air while left/right is held.", unit = "deg/s", min = 0, max = 100000, step = 10)
 	public float airSpin = 120;
 
 	/** The wheel joint settings: key=value pairs split by ';'. A missing key keeps the default. */

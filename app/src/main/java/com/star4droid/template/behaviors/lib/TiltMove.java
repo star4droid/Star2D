@@ -42,9 +42,9 @@ public class TiltMove extends Behavior {
 	public boolean invertX = false;
 	@Param(desc = "Swap up and down.")
 	public boolean invertY = false;
-	@Param(desc = "Top speed.", unit = "px/s", min = 0, max = 450)
+	@Param(desc = "Top speed.", unit = "px/s", min = 0, max = 100000)
 	public float speed = 250;
-	@Param(desc = "ROLL only: acceleration at full tilt.", unit = "px/s2", min = 0, max = 5000, step = 50)
+	@Param(desc = "ROLL only: acceleration at full tilt.", unit = "px/s2", min = 0, max = 100000, step = 50)
 	public float acceleration = 700;
 	@Param(desc = "ROLL only: slows the ball down (0 = never).", unit = "1/s", min = 0, max = 10, step = 0.1)
 	public float damping = 0.6f;

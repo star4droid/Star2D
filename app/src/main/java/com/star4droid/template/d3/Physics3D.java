@@ -152,22 +152,32 @@ public class Physics3D implements Disposable {
 		return shapeFor(o, o.bodyShapes);
 	}
 
+	/** Half size (m) above which a STATIC box collider becomes a triangle box: rays against a huge convex box are imprecise in
+	 *  Bullet (they miss now and then), so ground boxes / big floors made the car wheels and ground checks flicker. */
+	static final float BIG_BOX = 12f;
+
+	private static btCollisionShape bigStaticBox(Vector3 he, Vector3 off, Array<Disposable> own) {
+		com.badlogic.gdx.physics.bullet.collision.btTriangleMesh tm = new com.badlogic.gdx.physics.bullet.collision.btTriangleMesh();
+		Vector3[] c = new Vector3[8];
+		for (int i = 0; i < 8; i++)
+			c[i] = new Vector3((i & 1) == 0 ? -he.x : he.x, (i & 2) == 0 ? -he.y : he.y, (i & 4) == 0 ? -he.z : he.z).add(off);
+		int[][] faces = {{0, 1, 3, 2}, {4, 6, 7, 5}, {0, 4, 5, 1}, {2, 3, 7, 6}, {0, 2, 6, 4}, {1, 5, 7, 3}};
+		for (int[] f : faces) {
+			tm.addTriangle(c[f[0]], c[f[1]], c[f[2]], false);
+			tm.addTriangle(c[f[0]], c[f[2]], c[f[3]], false);
+		}
+		com.badlogic.gdx.physics.bullet.collision.btBvhTriangleMeshShape sh = new com.badlogic.gdx.physics.bullet.collision.btBvhTriangleMeshShape(tm, true);
+		own.add(sh);
+		own.add(tm);
+		return sh;
+	}
+
 	/** The shape and its parts go to {@code own}: freed when the body is removed (bodies are rebuilt on scale / mass changes). */
 	private btCollisionShape shapeFor(Object3D o, Array<Disposable> own) {
 		Object3DDef d = o.d();
 		String c = d.Collider;
 		Vector3 s = new Vector3(Math.abs(o.scale.x) * d.Collider_Scale_X, Math.abs(o.scale.y) * d.Collider_Scale_Y, Math.abs(o.scale.z) * d.Collider_Scale_Z);
-		String shape = d.Mesh;
-		if ("AUTO".equals(c)) {
-			if (Shapes3D.SPHERE.equals(shape) || Shapes3D.HEMISPHERE.equals(shape)) c = "SPHERE";
-			else if (Shapes3D.CAPSULE.equals(shape)) c = "CAPSULE";
-			else if (Shapes3D.CYLINDER.equals(shape) || Shapes3D.DISC.equals(shape) || Shapes3D.TUBE.equals(shape)) c = "CYLINDER";
-			else if (Shapes3D.CONE.equals(shape)) c = "CONE";
-			else if (Shapes3D.RAMP.equals(shape) || Shapes3D.STAIRS.equals(shape) || Shapes3D.PYRAMID.equals(shape) || Shapes3D.WEDGE.equals(shape) || Shapes3D.TORUS.equals(shape)) c = o.isStaticBody() ? "MESH" : "CONVEX";
-			else if ("TERRAIN".equals(shape)) c = "MESH";
-			else if ("MODEL".equals(shape)) c = o.isStaticBody() ? "MESH" : "BOX";
-			else c = "BOX";
-		}
+		c = o.colliderKind();
 		btCollisionShape sh;
 		BoundingBox bb = o.localBounds();
 		Vector3 size = bb.getDimensions(new Vector3());
@@ -191,7 +201,10 @@ public class Physics3D implements Disposable {
 			btConvexHullShape hull = convexHull(o.instance.model, s);
 			sh = hull != null ? hull : new btBoxShape(new Vector3(size.x * s.x * 0.5f, size.y * s.y * 0.5f, size.z * s.z * 0.5f));
 		} else {
-			sh = new btBoxShape(new Vector3(Math.max(0.005f, size.x * s.x * 0.5f), Math.max(0.005f, size.y * s.y * 0.5f), Math.max(0.005f, size.z * s.z * 0.5f)));
+			Vector3 he = new Vector3(Math.max(0.005f, size.x * s.x * 0.5f), Math.max(0.005f, size.y * s.y * 0.5f), Math.max(0.005f, size.z * s.z * 0.5f));
+			Vector3 off0 = new Vector3(center.x * s.x + d.Collider_Offset_X, center.y * s.y + d.Collider_Offset_Y, center.z * s.z + d.Collider_Offset_Z);
+			if (o.isStaticBody() && Math.max(he.x, Math.max(he.y, he.z)) > BIG_BOX) return bigStaticBox(he, off0, own);
+			sh = new btBoxShape(he);
 		}
 		Vector3 off = new Vector3(center.x * s.x + d.Collider_Offset_X, center.y * s.y + d.Collider_Offset_Y, center.z * s.z + d.Collider_Offset_Z);
 		if (!off.isZero(0.0001f)) {

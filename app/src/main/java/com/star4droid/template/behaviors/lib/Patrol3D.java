@@ -29,9 +29,9 @@ public class Patrol3D extends Behavior {
 	public boolean randomOrder = false;
 
 	@Header("How")
-	@Param(desc = "Walking speed.", unit = "m/s", min = 0, max = 50, step = 0.1)
+	@Param(desc = "Walking speed.", unit = "m/s", min = 0, max = 100000, step = 0.1)
 	public float speed = 1.4f;
-	@Param(desc = "Turning speed.", unit = "deg/s", min = 10, max = 2000, step = 10)
+	@Param(desc = "Turning speed.", unit = "deg/s", min = 10, max = 100000, step = 10)
 	public float turnSpeed = 180;
 	@Param(desc = "Shortest stop at a point.", unit = "s", min = 0, max = 60, step = 0.1)
 	public float waitMin = 1;

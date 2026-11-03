@@ -47,11 +47,11 @@ public class SpaceShip extends Behavior {
 	public float deadZone = 0.15f;
 
 	@Header("Flight")
-	@Param(desc = "Forward acceleration.", unit = "px/s2", min = 0, max = 5000, step = 10)
+	@Param(desc = "Forward acceleration.", unit = "px/s2", min = 0, max = 100000, step = 10)
 	public float thrust = 450;
-	@Param(desc = "Speed limit.", unit = "px/s", min = 0, max = 450)
+	@Param(desc = "Speed limit.", unit = "px/s", min = 0, max = 100000)
 	public float maxSpeed = 320;
-	@Param(desc = "Turning speed.", unit = "deg/s", min = 0, max = 1080, step = 10)
+	@Param(desc = "Turning speed.", unit = "deg/s", min = 0, max = 100000, step = 10)
 	public float rotateSpeed = 200;
 	@Param(desc = "Slows the ship down by itself. 0 = keeps drifting forever (space), 1 = stops in about a second.", unit = "1/s", min = 0, max = 10, step = 0.1)
 	public float drag = 0.3f;

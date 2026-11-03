@@ -26,9 +26,9 @@ public class JumpPad3D extends Behavior {
 	public float reach = 0.35f;
 
 	@Header("Launch")
-	@Param(desc = "Upward launch speed.", unit = "m/s", min = 0, max = 100, step = 0.5)
+	@Param(desc = "Upward launch speed.", unit = "m/s", min = 0, max = 100000, step = 0.5)
 	public float upSpeed = 9;
-	@Param(desc = "Forward push along the pad's front (-Z).", unit = "m/s", min = -100, max = 100, step = 0.5)
+	@Param(desc = "Forward push along the pad's front (-Z).", unit = "m/s", min = -100000, max = 100000, step = 0.5)
 	public float forwardSpeed = 0;
 	@Param(desc = "Waits this long before launching the same element again.", unit = "s", min = 0, max = 10, step = 0.05)
 	public float cooldown = 0.6f;

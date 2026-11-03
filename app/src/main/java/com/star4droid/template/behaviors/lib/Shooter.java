@@ -43,7 +43,7 @@ public class Shooter extends Behavior {
 	public Color bulletColor = Color.valueOf("FFD740");
 	@Param(unit = "px", min = 2, max = 300)
 	public float bulletSize = 16;
-	@Param(unit = "px/s", min = 10, max = 3000)
+	@Param(unit = "px/s", min = 10, max = 100000)
 	public float bulletSpeed = 500;
 	@Param(desc = "Shots per second.", min = 0.1, max = 60, step = 0.1)
 	public float fireRate = 3;

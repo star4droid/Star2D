@@ -26,6 +26,11 @@ public class Utils {
 					return NinePatchLoader.drawable(fileHandle);
 				} catch(Throwable ignored){}
 			}
+			if(!fileHandle.exists() && !AtlasIndex.isEmpty()){
+				// merged into a tileset page at export
+				Drawable merged = AtlasIndex.drawable(fileHandle.path());
+				if(merged != null) return merged;
+			}
 			return new TextureRegionDrawable(new TextureRegion(new Texture(fileHandle)));
 		}
 		

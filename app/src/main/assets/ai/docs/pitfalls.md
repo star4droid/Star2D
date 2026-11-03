@@ -9,7 +9,7 @@ Read once before the first build. Each item says what happens and what to do.
 3. **Default `restitution` is 0.5 and `friction` 0.** Characters bounce and ground is icy. Set `restitution: 0` (and `friction` 0.2 to 0.5 for ground) explicitly.
 4. **`Fixed Rotation`** false lets a character tip over on collisions. Set it true for characters.
 5. **Sensors fall.** A DYNAMIC `isSensor` body still has gravity. Use `STATIC` for coins/triggers or `Gravity Scale: 0`.
-6. **Speed limit and tunneling.** Box2D caps movement at 2 world units per step: about 480 px/s at 60 fps, so `jump` power 700 would silently become about 480. Keep all speeds at or below 450 px/s (lower gravity for higher jumps), walls at least 20 px thick, `Bullet: true` for projectiles.
+6. **Tunneling at high speed.** Blocks and behaviors have no speed limit, but very fast small bodies can pass through thin walls: set `Bullet: true` (CCD) on them, make walls at least 20 px thick, and check the real speed with `game_state` 
 7. **`type: UI` boxes have no physics body.** They never collide and body blocks (`goTo`, `setVelocityX`, `x of ___`) on them throw. Use UI only for HUD, buttons, backgrounds.
 
 ## Collisions and destroying things

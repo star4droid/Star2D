@@ -21,7 +21,7 @@ Kenney asks, but does not require, for a credit to "Kenney" / www.kenney.nl).
 | models/delivery.glb | Kenney Car Kit (turned to face -Z) |
 | models/truck-flat.glb | Kenney Car Kit (turned to face -Z) |
 | models/hatchback-sports.glb | Kenney Car Kit (turned to face -Z) |
-| models/road-straight.glb | Kenney City Kit Roads (turned 90 degrees: runs along Z) |
+| models/road-straight-z.glb | Kenney City Kit Roads road-straight (turned 90 degrees: runs along Z, the driving direction) |
 | models/cactus_short.glb | Kenney Nature / Platformer Kit |
 | models/cactus_tall.glb | Kenney Nature / Platformer Kit |
 | models/rock_largeA.glb | Kenney Nature / Platformer Kit |

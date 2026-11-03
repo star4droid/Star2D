@@ -75,6 +75,8 @@ public final class Scene3DSettings {
 				v.put("__local", String.valueOf(e.localAxes));
 				v.put("__grid", String.valueOf(e.showGrid));
 				v.put("__2d", String.valueOf(e.edit2D));
+				v.put("__behind", String.valueOf(e.show3DBehind));
+				v.put("__colliders", String.valueOf(Editor3D.showColliders));
 			}
 			return v;
 		}, v -> build(a, v));
@@ -154,6 +156,10 @@ public final class Scene3DSettings {
 		col.addView(local, Ui.matchWrap());
 		col.addView(grid, Ui.matchWrap());
 		col.addView(two, Ui.matchWrap());
+		final SwitchCompat behind = sw(a, Tr.t("s3cfg_behind", "Show the 3D world behind the 2D layer"), "true".equals(v.get("__behind")));
+		final SwitchCompat colliders = sw(a, Tr.t("s3cfg_colliders", "Show the collider of the selected element"), !"false".equals(v.get("__colliders")));
+		col.addView(behind, Ui.matchWrap());
+		col.addView(colliders, Ui.matchWrap());
 		final String[] eq = {Editor3D.editorQuality};
 		TextView q = Ui.text(a, Tr.t("s3cfg_editor_quality", "Editor quality") + ": " + Tr.t(eq[0], eq[0]), 14, Ui.TEXT);
 		q.setPadding(Ui.dp(a, 10), Ui.dp(a, 10), Ui.dp(a, 10), Ui.dp(a, 10));
@@ -174,7 +180,7 @@ public final class Scene3DSettings {
 					for (java.util.Map.Entry<String, View> e : editors.entrySet())
 						out.put(e.getKey(), ((EditText) e.getValue()).getText().toString().trim());
 					final String old = v.get("__old");
-					final boolean bSnap = snap.isChecked(), bLocal = local.isChecked(), bGrid = grid.isChecked(), b2d = two.isChecked();
+					final boolean bSnap = snap.isChecked(), bLocal = local.isChecked(), bGrid = grid.isChecked(), b2d = two.isChecked(), bBehind = behind.isChecked(), bCol = colliders.isChecked();
 					Bridge.gl(() -> {
 						LibgdxEditor ed = Bridge.editor();
 						PropertySet<String, Object> cfg = ed.getConfig();
@@ -187,9 +193,11 @@ public final class Scene3DSettings {
 							e3.snap = bSnap;
 							e3.localAxes = bLocal;
 							e3.showGrid = bGrid;
-							e3.edit2D = b2d;
+							e3.setEdit2D(b2d);
+							e3.show3DBehind = bBehind;
 						}
 						Editor3D.editorQuality = eq[0];
+						Editor3D.setShowColliders(bCol);
 						try {
 							EditorAction.sceneConfigChanged(ed, old, cfg.toString());
 						} catch (Throwable ignored) {
@@ -210,33 +218,108 @@ public final class Scene3DSettings {
 		return s;
 	}
 
-	/** Quick menu of the 3D view (rail button). */
+	/** Called after the 3D view menu changed the editing layer (the rail button updates its icon). */
+	public static Runnable onLayerChanged;
+
+	/** Quick menu of the 3D view (rail button): a grid of icons; toggles stay open and show their state. */
 	public static void viewMenu(Activity a, View anchor) {
-		String[] items = {Tr.t("s3v_persp", "Perspective view"), Tr.t("s3v_top", "Top view"), Tr.t("s3v_front", "Front view"), Tr.t("s3v_side", "Side view"),
-				Tr.t("s3v_focus", "Focus the selected element"), Tr.t("s3v_layer", "Switch 3D world / 2D layer editing"), Tr.t("s3v_snap", "Snap on / off"),
-				Tr.t("s3v_anim", "Preview animations on / off"), Tr.t("s3cfg_title", "3D scene settings")};
-		Dialogs.choose(a, Tr.t("s3v_title", "3D view"), items, i -> {
-			if (i == 8) {
-				show(a);
+		Bridge.query(() -> {
+			Editor3D e = Bridge.editor().get3D();
+			if (e == null) return null;
+			return new boolean[]{e.snap, e.world.editorAnimate, e.edit2D, e.show3DBehind, e.showGrid, Editor3D.showColliders, e.localAxes};
+		}, st -> {
+			if (st == null) {
+				Ui.toast(a, Tr.t("s3v_only3d", "Only in 3D scenes"));
 				return;
 			}
-			Bridge.query(() -> {
-				Editor3D e = Bridge.editor().get3D();
-				if (e == null) return Tr.t("s3v_only3d", "Only in 3D scenes");
-				switch (i) {
-					case 0: e.viewPerspective(); break;
-					case 1: e.viewTop(); break;
-					case 2: e.viewFront(); break;
-					case 3: e.viewSide(); break;
-					case 4: e.focusSelected(); break;
-					case 5: e.edit2D = !e.edit2D; return e.edit2D ? Tr.t("s3v_layer2d", "Editing the 2D layer") : Tr.t("s3v_layer3d", "Editing the 3D world");
-					case 6: e.snap = !e.snap; return e.snap ? Tr.t("s3v_snap_on", "Snap on") : Tr.t("s3v_snap_off", "Snap off");
-					case 7: e.world.editorAnimate = !e.world.editorAnimate; return e.world.editorAnimate ? Tr.t("s3v_anim_on", "Animations playing") : Tr.t("s3v_anim_off", "Animations stopped");
-				}
-				return null;
-			}, msg -> {
-				if (msg != null) Ui.toast(a, msg);
-			});
+			buildViewMenu(a, st);
 		});
+	}
+
+	private static final int[][] VIEW_ICONS = {
+			// {icon, toggle index or -1}
+			{com.star4droid.star2d.evo.R.drawable.ic_s2_view3d, -1}, {com.star4droid.star2d.evo.R.drawable.ic_s2_arrow_down, -1},
+			{com.star4droid.star2d.evo.R.drawable.ic_s2_square, -1}, {com.star4droid.star2d.evo.R.drawable.ic_s2_arrow_forward, -1},
+			{com.star4droid.star2d.evo.R.drawable.ic_s2_fit, -1}, {com.star4droid.star2d.evo.R.drawable.ic_s2_layers, 2},
+			{com.star4droid.star2d.evo.R.drawable.ic_s2_visible, 3}, {com.star4droid.star2d.evo.R.drawable.ic_s2_grid, 0},
+			{com.star4droid.star2d.evo.R.drawable.ic_s2_animation, 1}, {com.star4droid.star2d.evo.R.drawable.ic_s2_view_grid, 4},
+			{com.star4droid.star2d.evo.R.drawable.ic_s2_collider, 5}, {com.star4droid.star2d.evo.R.drawable.ic_s2_rotate, 6},
+			{com.star4droid.star2d.evo.R.drawable.ic_s2_settings, -1},
+	};
+
+	private static void buildViewMenu(Activity a, boolean[] st) {
+		String[] names = {Tr.t("s3v_persp", "Perspective view"), Tr.t("s3v_top", "Top view"), Tr.t("s3v_front", "Front view"), Tr.t("s3v_side", "Side view"),
+				Tr.t("s3v_focus", "Focus the selected element"), Tr.t("s3v_layer_short", "2D layer"), Tr.t("s3v_behind", "3D behind 2D"),
+				Tr.t("s3v_snap_short", "Snap"), Tr.t("s3v_anim_short", "Animations"), Tr.t("s3v_grid", "Grid"), Tr.t("s3v_colliders", "Colliders"),
+				Tr.t("s3v_local", "Local axes"), Tr.t("s3cfg_title", "3D scene settings")};
+		final boolean[] state = st.clone();
+		LinearLayout col = Ui.column(a);
+		col.setPadding(Ui.dp(a, 12), Ui.dp(a, 8), Ui.dp(a, 12), Ui.dp(a, 4));
+		final AlertDialog[] dlg = {null};
+		final int perRow = 4;
+		LinearLayout row = null;
+		final View[] tiles = new View[VIEW_ICONS.length];
+		for (int i = 0; i < VIEW_ICONS.length; i++) {
+			if (i % perRow == 0) {
+				row = Ui.row(a);
+				col.addView(row, Ui.matchWrap());
+			}
+			final int idx = i, toggle = VIEW_ICONS[i][1];
+			LinearLayout tile = Ui.column(a);
+			tile.setGravity(android.view.Gravity.CENTER);
+			tile.setPadding(Ui.dp(a, 4), Ui.dp(a, 10), Ui.dp(a, 4), Ui.dp(a, 8));
+			tile.setBackground(Ui.toggleBg(a));
+			android.widget.ImageView ic = Ui.smallIcon(a, VIEW_ICONS[i][0], idx == 12 ? 0xFF90CAF9 : Ui.TEXT, 28);
+			tile.addView(ic);
+			TextView l = Ui.text(a, names[i], 11, Ui.TEXT_2);
+			l.setGravity(android.view.Gravity.CENTER);
+			l.setMaxLines(2);
+			l.setPadding(0, Ui.dp(a, 4), 0, 0);
+			tile.addView(l);
+			if (toggle >= 0) tile.setSelected(state[toggle]);
+			tiles[i] = tile;
+			LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, Ui.dp(a, 86), 1f);
+			lp.setMargins(Ui.dp(a, 3), Ui.dp(a, 3), Ui.dp(a, 3), Ui.dp(a, 3));
+			tile.setOnClickListener(x -> {
+				if (idx == 12) {
+					if (dlg[0] != null) dlg[0].dismiss();
+					show(a);
+					return;
+				}
+				if (toggle >= 0) {
+					state[toggle] = !state[toggle];
+					tile.setSelected(state[toggle]);
+				}
+				Bridge.query(() -> {
+					Editor3D e = Bridge.editor().get3D();
+					if (e == null) return null;
+					switch (idx) {
+						case 0: e.viewPerspective(); break;
+						case 1: e.viewTop(); break;
+						case 2: e.viewFront(); break;
+						case 3: e.viewSide(); break;
+						case 4: e.focusSelected(); break;
+						case 5: e.setEdit2D(!e.edit2D); return e.edit2D ? Tr.t("s3v_layer2d", "Editing the 2D layer") : Tr.t("s3v_layer3d", "Editing the 3D world");
+						case 6: e.show3DBehind = !e.show3DBehind; break;
+						case 7: e.snap = !e.snap; return e.snap ? Tr.t("s3v_snap_on", "Snap on") : Tr.t("s3v_snap_off", "Snap off");
+						case 8: e.world.editorAnimate = !e.world.editorAnimate; return e.world.editorAnimate ? Tr.t("s3v_anim_on", "Animations playing") : Tr.t("s3v_anim_off", "Animations stopped");
+						case 9: e.showGrid = !e.showGrid; break;
+						case 10: Editor3D.setShowColliders(!Editor3D.showColliders); break;
+						case 11: e.localAxes = !e.localAxes; break;
+					}
+					return "";
+				}, msg -> {
+					if (msg != null && !msg.isEmpty()) Ui.toast(a, msg);
+					if (idx == 5 && onLayerChanged != null) onLayerChanged.run();
+					// camera views close the menu so the result is visible
+					if (idx <= 4 && dlg[0] != null) dlg[0].dismiss();
+				});
+			});
+			row.addView(tile, lp);
+		}
+		while (row != null && row.getChildCount() % perRow != 0) row.addView(new View(a), new LinearLayout.LayoutParams(0, 1, 1f));
+		ScrollView sv = new ScrollView(a);
+		sv.addView(col);
+		dlg[0] = new AlertDialog.Builder(a).setTitle(Tr.t("s3v_title", "3D view")).setView(sv).setNegativeButton(Tr.t("close", "Close"), null).show();
 	}
 }

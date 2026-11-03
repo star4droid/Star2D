@@ -26,9 +26,9 @@ public class CharacterAnimator3D extends Behavior {
 	public String fallClip = "fall";
 
 	@Header("Speeds")
-	@Param(desc = "Speed of the walk clip as made (walking slower plays it slower).", unit = "m/s", min = 0.1, max = 20, step = 0.1)
+	@Param(desc = "Speed of the walk clip as made (walking slower plays it slower).", unit = "m/s", min = 0.1, max = 100000, step = 0.1)
 	public float walkSpeed = 2f;
-	@Param(desc = "Speed from which the run clip plays.", unit = "m/s", min = 0.1, max = 30, step = 0.1)
+	@Param(desc = "Speed from which the run clip plays.", unit = "m/s", min = 0.1, max = 100000, step = 0.1)
 	public float runSpeed = 4.5f;
 	@Param(desc = "Clip speed follows the moving speed (no sliding feet).")
 	public boolean matchSpeed = true;

@@ -42,9 +42,9 @@ public class Spawner3D extends Behavior {
 	public float areaRadius = 0;
 	@Param(desc = "Copies face the same way as the spawner (else they keep the template's heading).")
 	public boolean useSpawnerRotation = true;
-	@Param(desc = "Throw speed along the spawner's front (DYNAMIC copies; projectiles fly).", unit = "m/s", min = -500, max = 500, step = 0.5)
+	@Param(desc = "Throw speed along the spawner's front (DYNAMIC copies; projectiles fly).", unit = "m/s", min = -100000, max = 100000, step = 0.5)
 	public float launchSpeed = 0;
-	@Param(desc = "Upward throw speed.", unit = "m/s", min = -500, max = 500, step = 0.5)
+	@Param(desc = "Upward throw speed.", unit = "m/s", min = -100000, max = 100000, step = 0.5)
 	public float launchUp = 0;
 	@Param(desc = "Copies are removed after this many seconds (0 = they stay).", unit = "s", min = 0, max = 3600, step = 0.5)
 	public float copyLifetime = 0;

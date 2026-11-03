@@ -50,7 +50,7 @@ public class EndlessRoad3D extends Behavior {
 	public int lanes = 3;
 	@Param(desc = "Width of a lane (0 = road width / lanes).", unit = "m", min = 0, max = 50, step = 0.1)
 	public float laneWidth = 0;
-	@Param(desc = "Speed of the traffic.", unit = "km/h", min = 0, max = 300, step = 1)
+	@Param(desc = "Speed of the traffic.", unit = "km/h", min = 0, max = 100000, step = 1)
 	public float trafficSpeed = 45;
 	@Param(desc = "The left half of the lanes drives toward the player.")
 	public boolean oncoming = false;
@@ -70,7 +70,7 @@ public class EndlessRoad3D extends Behavior {
 	public float levelDistance = 400;
 	@Param(desc = "Traffic chance added per level.", min = 0, max = 1, step = 0.01)
 	public float trafficPerLevel = 0.05f;
-	@Param(desc = "Top speed added to the player's Car 3D per level.", unit = "km/h", min = 0, max = 100, step = 1)
+	@Param(desc = "Top speed added to the player's Car 3D per level.", unit = "km/h", min = 0, max = 100000, step = 1)
 	public float speedPerLevel = 6;
 	@Param(desc = "Score per meter driven.", min = 0, max = 1000, step = 0.1)
 	public float scorePerMeter = 1;
@@ -246,7 +246,13 @@ public class EndlessRoad3D extends Behavior {
 			while (level < lv) {
 				level++;
 				Behavior car = target.getBehavior("Car3D");
-				if (car instanceof Car3D && speedPerLevel > 0) ((Car3D) car).setMaxSpeed(((Car3D) car).maxSpeed + speedPerLevel);
+				if (car instanceof Car3D && speedPerLevel > 0) {
+					// grow from the car's real speed (never below its top speed) and give the engine the power to reach the new top
+					Car3D c3 = (Car3D) car;
+					float old = Math.max(1f, c3.maxSpeed), now = Math.max(old, Math.abs(c3.getSpeedKmh())), top = now + speedPerLevel;
+					c3.setMaxSpeed(top);
+					c3.setAcceleration(c3.acceleration * top / old);
+				}
 				fire("onLevelUp", level + 1);
 			}
 		}

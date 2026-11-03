@@ -29,7 +29,7 @@ public class Follow extends Behavior {
 	@Header("Motion")
 	@Param(desc = "How tightly it follows: higher = catches up faster. 0 = glued to the target (jumps there).", unit = "1/s", min = 0, max = 50, step = 0.5)
 	public float stiffness = 6;
-	@Param(desc = "Speed limit. 0 = no limit (physical elements are limited to 450 px/s).", unit = "px/s", min = 0, max = 5000, step = 10)
+	@Param(desc = "Speed limit. 0 = no limit.", unit = "px/s", min = 0, max = 100000, step = 10)
 	public float maxSpeed = 0;
 	@Param(desc = "Stops moving when closer than this to the wanted spot.", unit = "px", min = 0, max = 2000)
 	public float stopDistance = 2;
@@ -145,8 +145,7 @@ public class Follow extends Behavior {
 			return;
 		}
 		float speed = dist * stiffness;
-		float limit = maxSpeed > 0 ? maxSpeed : (b != null ? 450f : Float.MAX_VALUE);
-		if (b != null && limit > 450f) limit = 450f;
+		float limit = maxSpeed > 0 ? maxSpeed : Float.MAX_VALUE;
 		if (speed > limit) speed = limit;
 		float ux = dx / dist, uy = dy / dist;
 		if (b != null) {

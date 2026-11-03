@@ -12,11 +12,11 @@ import com.star4droid.template.d3.Object3D;
 		desc = "Turns the element forever around X, Y and Z: fans, wheels, coins, windmills, radar dishes. Can speed up smoothly and count full turns.")
 public class Rotator3D extends Behavior {
 	@Header("Speed")
-	@Param(desc = "Turning speed around X (pitch).", unit = "deg/s", min = -3600, max = 3600, step = 5)
+	@Param(desc = "Turning speed around X (pitch).", unit = "deg/s", min = -100000, max = 100000, step = 5)
 	public float speedX = 0;
-	@Param(desc = "Turning speed around Y (heading).", unit = "deg/s", min = -3600, max = 3600, step = 5)
+	@Param(desc = "Turning speed around Y (heading).", unit = "deg/s", min = -100000, max = 100000, step = 5)
 	public float speedY = 90;
-	@Param(desc = "Turning speed around Z (roll).", unit = "deg/s", min = -3600, max = 3600, step = 5)
+	@Param(desc = "Turning speed around Z (roll).", unit = "deg/s", min = -100000, max = 100000, step = 5)
 	public float speedZ = 0;
 	@Param(desc = "Around its own axes (true) or the world axes (false).")
 	public boolean localAxes = true;

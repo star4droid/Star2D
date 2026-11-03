@@ -103,8 +103,17 @@ public class Joystick extends Touchpad implements PlayerItem {
 			bgHandle = Gdx.files.absolute(background);
 		//stageImp.debug("\nbtn : "+btn+"\nbg : "+background+"\n");
 		
-		return create(stageImp,stageImp.getAssets().contains(btn)?new TextureRegionDrawable(new TextureRegion((Texture)stageImp.getAssets().get(btn))) : Utils.getDrawable((btnHandle.exists() && !btnHandle.isDirectory()) ? btnHandle : Utils.internal("images/joybtn.png")),
-								stageImp.getAssets().contains(btn)?new TextureRegionDrawable(new TextureRegion((Texture)stageImp.getAssets().get(background))): Utils.getDrawable((bgHandle.exists() && !bgHandle.isDirectory()) ? bgHandle : Utils.internal("images/joyback.png")));
+		return create(stageImp,picture(stageImp,btn,btnHandle,"images/joybtn.png"),picture(stageImp,background,bgHandle,"images/joyback.png"));
+	}
+
+	/** Loaded texture, else a picture merged into a tileset page, else the file, else the default picture. */
+	private static com.badlogic.gdx.scenes.scene2d.utils.Drawable picture(StageImp stageImp,String path,FileHandle handle,String fallback){
+		if(stageImp.getAssets().contains(path)) return new TextureRegionDrawable(new TextureRegion((Texture)stageImp.getAssets().get(path)));
+		if(!com.star4droid.template.Utils.AtlasIndex.isEmpty()){
+			com.badlogic.gdx.scenes.scene2d.utils.Drawable merged = com.star4droid.template.Utils.AtlasIndex.drawable(path);
+			if(merged != null) return merged;
+		}
+		return Utils.getDrawable((handle.exists() && !handle.isDirectory()) ? handle : Utils.internal(fallback));
 	}
 	
 	@Override

@@ -27,9 +27,9 @@ public class Chase extends Behavior {
 	public boolean needLineOfSight = false;
 
 	@Header("Motion")
-	@Param(desc = "Running speed.", unit = "px/s", min = 0, max = 450)
+	@Param(desc = "Running speed.", unit = "px/s", min = 0, max = 100000)
 	public float speed = 120;
-	@Param(desc = "How fast it reaches the speed. 0 = instantly.", unit = "px/s2", min = 0, max = 20000, step = 50)
+	@Param(desc = "How fast it reaches the speed. 0 = instantly.", unit = "px/s2", min = 0, max = 100000, step = 50)
 	public float acceleration = 0;
 	@Param(desc = "It stops this close to the target (and raises onReachTarget).", unit = "px", min = 0, max = 2000)
 	public float stopDistance = 0;

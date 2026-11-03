@@ -784,6 +784,9 @@ public class TestApp implements ApplicationListener {
 			} else {
 				// this.stageImp is the current playing stage...
 			    if(this.stageImp!=null){
+			        // stop every sound and close the 3D world first: AndroidAudio.pause below would only auto-pause the sounds,
+			        // and the next app resume would start them again (the closed scene "keeps playing")
+			        try { this.stageImp.stopScene(); } catch(Throwable ignored){}
 			        this.stageImp.pause();
 					if(Gdx.app.getAudio() instanceof AndroidAudio)
 						((AndroidAudio)Gdx.app.getAudio()).pause();

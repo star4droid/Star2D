@@ -16,7 +16,7 @@ public class JoystickMovement extends Behavior {
 	@Param(desc = "The joystick element that drives this one.")
 	public Joystick joystick;
 	public Mode mode = Mode.TOP_DOWN;
-	@Param(unit = "px/s", min = 0, max = 450)
+	@Param(unit = "px/s", min = 0, max = 100000)
 	public float speed = 200;
 	@Param(desc = "Ignore tiny joystick movements.", min = 0, max = 0.9, step = 0.05)
 	public float deadZone = 0.1f;

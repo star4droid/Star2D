@@ -14,6 +14,7 @@ import com.star4droid.template.Utils.PlayerItem;
 import com.star4droid.template.d3.Assets3D;
 import com.star4droid.template.d3.Camera3D;
 import com.star4droid.template.d3.Object3D;
+import com.star4droid.template.d3.Sounds3D;
 import com.star4droid.template.d3.World3D;
 
 import java.util.ArrayList;
@@ -426,25 +427,14 @@ public final class Support3D {
 
 	// ------------------------------------------------------------------ sounds
 
-	private static final ObjectMap<String, Sound> SOUNDS = new ObjectMap<String, Sound>();
-
-	/** A project sound (sounds folder; "step.mp3" or "sounds/step.mp3"), cached; null when missing. */
+	/** A project sound (sounds folder; "step.mp3" or "sounds/step.mp3"), cached in {@link Sounds3D} (stopped when the scene ends); null when missing. */
 	public static Sound sound(String path) {
-		if (path == null || path.length() == 0) return null;
-		if (SOUNDS.containsKey(path)) return SOUNDS.get(path);
-		Sound s = null;
-		try {
-			String p = path.startsWith("sounds/") ? path.substring(7) : path;
-			FileHandle f = Assets3D.file(p, "sounds");
-			if (f != null && Gdx.audio != null) s = Gdx.audio.newSound(f);
-		} catch (Throwable ignored) {
-		}
-		SOUNDS.put(path, s);
-		return s;
+		return Sounds3D.get(path);
 	}
 
 	/** Plays once; returns the id (-1 = not played). pitch 1 = normal, pan -1 left .. 1 right. */
 	public static long play(String path, float volume, float pitch, float pan) {
+		if (Sounds3D.isPaused()) return -1;
 		Sound s = sound(path);
 		if (s == null || volume <= 0.001f) return -1;
 		try {
@@ -470,9 +460,17 @@ public final class Support3D {
 		private Sound s;
 		private long id = -1;
 		private String path = "";
+		private int gen = Sounds3D.generation();
 
 		public void update(String sound, boolean on, float volume, float pitch) {
 			if (sound == null) sound = "";
+			if (gen != Sounds3D.generation()) { // the sounds were released (scene closed / new context): start from scratch
+				gen = Sounds3D.generation();
+				s = null;
+				id = -1;
+				path = "";
+			}
+			if (Sounds3D.isPaused()) return;
 			if (!sound.equals(path)) {
 				stop();
 				path = sound;
@@ -491,7 +489,7 @@ public final class Support3D {
 		}
 
 		public void stop() {
-			if (s != null && id >= 0) {
+			if (s != null && id >= 0 && gen == Sounds3D.generation()) {
 				try {
 					s.stop(id);
 				} catch (Throwable ignored) {

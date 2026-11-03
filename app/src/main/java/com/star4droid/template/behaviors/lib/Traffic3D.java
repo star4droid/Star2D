@@ -31,13 +31,13 @@ public class Traffic3D extends Behavior {
 	public boolean followGround = true;
 
 	@Header("Driving")
-	@Param(desc = "Cruising speed.", unit = "km/h", min = 1, max = 300, step = 1)
+	@Param(desc = "Cruising speed.", unit = "km/h", min = 1, max = 100000, step = 1)
 	public float speed = 40;
-	@Param(desc = "Speeding up.", unit = "m/s2", min = 0.2, max = 30, step = 0.1)
+	@Param(desc = "Speeding up.", unit = "m/s2", min = 0.2, max = 100000, step = 0.1)
 	public float acceleration = 2.5f;
-	@Param(desc = "Braking.", unit = "m/s2", min = 0.5, max = 60, step = 0.5)
+	@Param(desc = "Braking.", unit = "m/s2", min = 0.5, max = 100000, step = 0.5)
 	public float braking = 8;
-	@Param(desc = "Largest turning rate at cruising speed.", unit = "deg/s", min = 5, max = 360, step = 1)
+	@Param(desc = "Largest turning rate at cruising speed.", unit = "deg/s", min = 5, max = 100000, step = 1)
 	public float turnRate = 60;
 	@Param(desc = "Extra heading when the model faces +Z instead of -Z.", unit = "deg", min = -180, max = 180)
 	public float modelYawOffset = 0;

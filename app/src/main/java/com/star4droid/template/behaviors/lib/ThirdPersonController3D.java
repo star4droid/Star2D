@@ -49,15 +49,15 @@ public class ThirdPersonController3D extends Behavior {
 	public float cameraPitch = -18;
 
 	@Header("Movement")
-	@Param(desc = "Walking speed.", unit = "m/s", min = 0, max = 20, step = 0.1)
+	@Param(desc = "Walking speed.", unit = "m/s", min = 0, max = 100000, step = 0.1)
 	public float walkSpeed = 2.4f;
-	@Param(desc = "Running speed.", unit = "m/s", min = 0, max = 30, step = 0.1)
+	@Param(desc = "Running speed.", unit = "m/s", min = 0, max = 100000, step = 0.1)
 	public float runSpeed = 5.5f;
 	@Param(desc = "How fast it reaches the wanted speed.", unit = "1/s", min = 0.5, max = 40, step = 0.5)
 	public float acceleration = 10;
-	@Param(desc = "How fast it turns toward where it walks.", unit = "deg/s", min = 30, max = 2000, step = 10)
+	@Param(desc = "How fast it turns toward where it walks.", unit = "deg/s", min = 30, max = 100000, step = 10)
 	public float turnSpeed = 600;
-	@Param(desc = "Jump take-off speed (0 = no jump).", unit = "m/s", min = 0, max = 30, step = 0.1)
+	@Param(desc = "Jump take-off speed (0 = no jump).", unit = "m/s", min = 0, max = 100000, step = 0.1)
 	public float jumpSpeed = 5f;
 	@Param(desc = "Body radius used to stop at walls when it has no DYNAMIC body.", unit = "m", min = 0.05, max = 3, step = 0.05)
 	public float radius = 0.35f;

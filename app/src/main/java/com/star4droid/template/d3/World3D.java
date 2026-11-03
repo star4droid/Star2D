@@ -493,10 +493,14 @@ public class World3D implements Disposable {
 				if (l.spot == null) l.spot = new SpotLightEx();
 				l.spot.position.set(l.position);
 				l.spot.direction.set(l.direction);
-				l.spot.cutoffAngle = l.cone;
-				l.spot.exponent = 1f + (1f - l.softness) * 10f;
+				if (pbr) l.spot.setConeDeg(l.cone, l.cone * (1f - MathUtils.clamp(l.softness, 0f, 0.95f))); // gdx-gltf: angle offset / scale
+				else {
+					l.spot.cutoffAngle = l.cone; // SIMPLE / SOFT / TOON (Shaders3D.spotFragment): half angle in degrees + edge sharpness
+					l.spot.exponent = 1f + (1f - l.softness) * 10f;
+				}
 				l.spot.color.set(l.color);
-				l.spot.intensity = pbr ? inten * 25f * l.range : inten * l.range * 1.2f;
+				// same falloff as the point lights (color * intensity / (1 + d^2)), a bit stronger: a spot lights a small area
+				l.spot.intensity = pbr ? inten * 25f * l.range : inten * l.range * 1.6f;
 				l.spot.range = l.range;
 				spots.lights.add(l.spot);
 			} else {
@@ -527,6 +531,23 @@ public class World3D implements Disposable {
 			return Float.compare(a.position.dst2(cp), b.position.dst2(cp));
 		}
 	};
+
+	private final Vector3 snapRight = new Vector3(), snapUp = new Vector3(), snapDir = new Vector3();
+
+	/** Moves the shadow area center in whole shadow-map texels (seen from the sun): shadow edges no longer swim while the camera moves. */
+	private void snapShadowCenter(Vector3 center) {
+		if (shadowSizeNow <= 0) return;
+		float texel = Math.max(10f, shadowDistance) / shadowSizeNow;
+		snapDir.set(sunDir).nor();
+		if (snapDir.isZero() || Float.isNaN(snapDir.x)) return;
+		snapUp.set(Math.abs(snapDir.y) > 0.99f ? Vector3.X : Vector3.Y);
+		snapRight.set(snapDir).crs(snapUp).nor();
+		snapUp.set(snapRight).crs(snapDir).nor();
+		float a = Math.round(center.dot(snapRight) / texel) * texel;
+		float b = Math.round(center.dot(snapUp) / texel) * texel;
+		float c = center.dot(snapDir);
+		center.set(snapRight).scl(a).mulAdd(snapUp, b).mulAdd(snapDir, c);
+	}
 
 	private boolean useShadows() {
 		return sunEnabled && sunShadows && Quality3D.shadowSize > 0 && !Shaders3D.UNLIT.equals(renderMode);
@@ -578,9 +599,13 @@ public class World3D implements Disposable {
 		// shadows (main picture only: the shadow pass binds its own frame buffer)
 		if (main && useShadows() && shadowLight != null && visible.size > 0) {
 			Vector3 center = tmp2.set(cam.direction).scl(shadowDistance * 0.4f).add(cam.position);
+			snapShadowCenter(center);
 			shadowLight.setCenter(center);
 			shadowLight.direction.set(sunDir);
 			shadowLight.begin();
+			// depth bias: without it lit surfaces shadow themselves in stripes ("shadow acne") that crawl while the camera turns
+			Gdx.gl.glEnable(GL20.GL_POLYGON_OFFSET_FILL);
+			Gdx.gl.glPolygonOffset(2.5f, 10f);
 			shadowBatch.begin(shadowLight.getCamera());
 			for (int i = 0; i < objects.size; i++) {
 				Object3D o = objects.get(i);
@@ -589,6 +614,8 @@ public class World3D implements Disposable {
 				shadowBatch.render(o.instance);
 			}
 			shadowBatch.end();
+			Gdx.gl.glPolygonOffset(0f, 0f);
+			Gdx.gl.glDisable(GL20.GL_POLYGON_OFFSET_FILL);
 			shadowLight.end();
 		}
 		boolean useFbo = main && !editor && !fboFailed && (Quality3D.renderScale < 0.999f || (!"NONE".equals(postEffect) && Quality3D.postEffects));
@@ -786,8 +813,20 @@ public class World3D implements Disposable {
 	private InputProcessor input;
 	private final Object3D[] pressed = new Object3D[10];
 	private final float[] downX = new float[10], downY = new float[10], lastX = new float[10], lastY = new float[10];
+	/** dragCam: this pointer turns the camera (it went down on the 3D view, not on a joystick / 2D control). */
 	private final boolean[] dragCam = new boolean[10];
 	private float pinchStart = -1;
+
+	/** The two camera pointers of a pinch (zoom of an orbit / third person camera), or -1. */
+	private int[] pinchPair() {
+		int a = -1, b = -1;
+		for (int i = 0; i < dragCam.length; i++) {
+			if (!dragCam[i] || !Gdx.input.isTouched(i)) continue;
+			if (a < 0) a = i;
+			else if (b < 0) b = i;
+		}
+		return b < 0 ? null : new int[] {a, b};
+	}
 
 	/** Touches on the 3D elements (events onTouchStart / onTouchEnd / onClick) and the camera's touch look. */
 	public InputProcessor input() {
@@ -820,10 +859,16 @@ public class World3D implements Disposable {
 				lastTouchX = x;
 				lastTouchY = y;
 				if (activeCamera != null && dragCam[pointer]) {
-					if (Gdx.input.isTouched(1) && pointer <= 1) {
-						float d = Vector3.dst(Gdx.input.getX(0), Gdx.input.getY(0), 0, Gdx.input.getX(1), Gdx.input.getY(1), 0);
-						if (pinchStart > 0) activeCamera.pinch(pinchStart / Math.max(1f, d));
-						pinchStart = d;
+					// multi-touch: a finger on the joystick / 2D buttons never reaches here (dragCam false), so a second finger
+					// dragging on the view turns the camera while the first one walks. Pinch only with two fingers on the view.
+					String fm = activeCamera.followMode;
+					int[] pair = "ORBIT".equals(fm) || "THIRD_PERSON".equals(fm) ? pinchPair() : null;
+					if (pair != null) {
+						if (pointer == pair[0] || pointer == pair[1]) {
+							float d = Vector3.dst(Gdx.input.getX(pair[0]), Gdx.input.getY(pair[0]), 0, Gdx.input.getX(pair[1]), Gdx.input.getY(pair[1]), 0);
+							if (pinchStart > 0) activeCamera.pinch(pinchStart / Math.max(1f, d));
+							pinchStart = d;
+						}
 					} else {
 						pinchStart = -1;
 						activeCamera.drag(dx, dy);
@@ -838,6 +883,7 @@ public class World3D implements Disposable {
 				if (pointer >= pressed.length) return false;
 				Object3D o = pressed[pointer];
 				pressed[pointer] = null;
+				dragCam[pointer] = false;
 				pinchStart = -1;
 				touchingScreen = Gdx.input.isTouched();
 				if (o != null) {
@@ -901,7 +947,10 @@ public class World3D implements Disposable {
 	}
 
 	public void dispose() {
-		if (!editor) Tween3D.clear();
+		if (!editor) {
+			Tween3D.clear();
+			Sounds3D.stopAll(); // engine loops, ambient hums, footsteps, B3 sounds: nothing plays after the scene is closed
+		}
 		if (current == this) current = null;
 		if (physics != null) physics.dispose();
 		physics = null;

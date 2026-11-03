@@ -37,9 +37,9 @@ public class Chase3D extends Behavior {
 	public float searchTime = 4;
 
 	@Header("Chase")
-	@Param(desc = "Running speed while chasing.", unit = "m/s", min = 0, max = 50, step = 0.1)
+	@Param(desc = "Running speed while chasing.", unit = "m/s", min = 0, max = 100000, step = 0.1)
 	public float chaseSpeed = 3.6f;
-	@Param(desc = "Turning speed.", unit = "deg/s", min = 30, max = 3000, step = 10)
+	@Param(desc = "Turning speed.", unit = "deg/s", min = 30, max = 100000, step = 10)
 	public float turnSpeed = 360;
 	@Param(desc = "Stops this close to the target.", unit = "m", min = 0, max = 20, step = 0.05)
 	public float stopDistance = 1.1f;

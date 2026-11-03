@@ -33,7 +33,7 @@ public class Turret extends Behavior {
 	public float range = 500;
 
 	@Header("Aim")
-	@Param(desc = "Turns toward the target this fast. 0 = instantly.", unit = "deg/s", min = 0, max = 3600)
+	@Param(desc = "Turns toward the target this fast. 0 = instantly.", unit = "deg/s", min = 0, max = 100000)
 	public float turnSpeed = 240;
 	@Param(desc = "Direction the picture looks at rotation 0: 0 = right, 90 = up, 180 = left, -90 = down.", unit = "deg", min = -360, max = 360)
 	public float imageAngle = 0;
@@ -66,7 +66,7 @@ public class Turret extends Behavior {
 	public Color bulletColor = Color.valueOf("FF5252");
 	@Param(unit = "px", min = 2, max = 300)
 	public float bulletSize = 14;
-	@Param(unit = "px/s", min = 10, max = 3000)
+	@Param(unit = "px/s", min = 10, max = 100000)
 	public float bulletSpeed = 400;
 	@Param(desc = "A bullet that hits nothing disappears after this long.", unit = "s", min = 0.1, max = 30)
 	public float bulletLifetime = 2;
@@ -74,7 +74,7 @@ public class Turret extends Behavior {
 	public float damage = 1;
 	@Param(desc = "Give a target without Health this many hit points (0 = leave it alone).", min = 0, max = 100000)
 	public float autoHealth = 0;
-	@Param(desc = "Push the target along the bullet's direction.", unit = "px/s", min = 0, max = 3000)
+	@Param(desc = "Push the target along the bullet's direction.", unit = "px/s", min = 0, max = 100000)
 	public float knockback = 0;
 	@Sound
 	@Param(desc = "Played at every shot.")

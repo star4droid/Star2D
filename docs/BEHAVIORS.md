@@ -194,7 +194,7 @@ The first block of a behavior event in the block editor ("▶ When hit") and its
 | Shooter3D, Projectile3D | Hitscan or projectile copies, camera aim, spread, rate, inventory ammo, impact effects; bullets that never tunnel |
 | Spawner3D, Lifetime3D | Timed copies of templates (area, limits, throw, lifetime); remove after N s with shrink / fade |
 | Respawn3D | Back to start / checkpoint after a fall or death |
-| Flicker3D, Flashlight3D | Candle / fire / broken / pulse / strobe light (+ glow object); spot light on the camera with toggle button and battery |
+| Flicker3D, Flashlight3D | Candle / fire / broken / pulse / strobe light (+ glow object); spot light on the camera with toggle button and battery; while a Pickup3D still gives its `requiredItem` ("flashlight") it stays off and its button hidden, picking it up shows the button and switches it on |
 | Footsteps3D, Buoyancy3D, CameraOrbitTouch3D | Step sounds from movement; float on WATER (exact or physical rocking); drag-orbit + pinch-zoom camera |
 
 Runtime API added for them: `Object3D.getYaw3/setYaw3/getBottomY/isDynamic/lockRotation3/applyForceAt/applyImpulseAt/velocityAt/

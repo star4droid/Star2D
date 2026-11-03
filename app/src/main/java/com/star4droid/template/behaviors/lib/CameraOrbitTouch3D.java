@@ -40,7 +40,7 @@ public class CameraOrbitTouch3D extends Behavior {
 	@Header("Feel")
 	@Param(desc = "Degrees per dragged pixel.", unit = "deg/px", min = 0.02, max = 2, step = 0.01)
 	public float sensitivity = 0.3f;
-	@Param(desc = "Turns by itself while nobody touches (0 = never).", unit = "deg/s", min = -360, max = 360, step = 1)
+	@Param(desc = "Turns by itself while nobody touches (0 = never).", unit = "deg/s", min = -100000, max = 100000, step = 1)
 	public float autoRotate = 12;
 	@Param(desc = "Seconds without touches before turning by itself.", unit = "s", min = 0, max = 60, step = 0.5)
 	public float idleDelay = 3;

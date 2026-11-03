@@ -127,6 +127,7 @@ public class Examples3DCheck {
 			case "LIGHT3D": return "Light3DDef";
 			case "CAMERA3D": return "Camera3DDef";
 			case "CAMERAVIEW": return "CameraViewDef";
+			case "GROUP": return "GroupDef";
 			default: return null;
 		}
 	}

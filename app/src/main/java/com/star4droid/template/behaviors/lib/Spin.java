@@ -11,7 +11,7 @@ import com.star4droid.template.behaviors.Sets;
 		desc = "Rotates the element continuously (coins, saws, loading icons). Physical elements become kinematic while it runs.")
 @Sets({"type=KINEMATIC"})
 public class Spin extends Behavior {
-	@Param(desc = "Degrees per second.", unit = "deg/s", min = 0, max = 3600)
+	@Param(desc = "Degrees per second.", unit = "deg/s", min = 0, max = 100000)
 	public float speed = 120;
 	public boolean clockwise = true;
 

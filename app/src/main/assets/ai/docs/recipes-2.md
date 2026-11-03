@@ -46,7 +46,7 @@ Launching is a separate event (step 4). The paddle is moved by teleporting a KIN
    {"block":"setVelocityX","fields":{"body":"ball","speed":250}},{"block":"setVelocityY","fields":{"body":"ball","speed":350}},
    {"block":"showText","fields":{"ui":"msg","text":"\"\""}}]}]}
 ```
-Ball speed is about 430 px/s (250 and 350 per axis); stay under about 450 per axis, the physics caps faster movement. A ball that never loses speed needs `restitution` 1 and `friction` 0 on everything it touches (set above). `Bullet` true avoids tunneling.
+Ball speed is about 430 px/s (250 and 350 per axis); faster works too (keep `Bullet` true). A ball that never loses speed needs `restitution` 1 and `friction` 0 on everything it touches (set above). `Bullet` true avoids tunneling.
 
 ## 5. Endless runner "Dash": tap to jump, obstacles come from the right
 

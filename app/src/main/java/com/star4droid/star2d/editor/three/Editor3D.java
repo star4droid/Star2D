@@ -45,6 +45,14 @@ public class Editor3D {
 	/** Touches go to the 2D layer (HUD / UI elements) instead of the 3D world. */
 	public boolean edit2D = false;
 	public boolean showGrid = true;
+	/** While editing the 2D layer: draw the 3D picture behind it (off = a normal 2D canvas with grid and frame). */
+	public boolean show3DBehind = false;
+	/** Draw the collider of the selected element (saved for the editor). */
+	public static boolean showColliders = true;
+	/** Collider editor on: handles on the collider faces instead of the gizmo. */
+	public boolean colliderEdit = false;
+	private Actor colliderTarget;
+	private final ShapeRenderer screen = new ShapeRenderer();
 	/** Editor viewport quality (independent of the game's). */
 	public static String editorQuality = "MEDIUM";
 
@@ -56,7 +64,47 @@ public class Editor3D {
 		cam.near = 0.05f;
 		cam.far = 1000f;
 		Assets3D.projectPath = editor.getProject().getPath();
+		try {
+			showColliders = Gdx.app.getPreferences("star2d_editor3d").getBoolean("showColliders", true);
+		} catch (Throwable ignored) {
+		}
 		updateCamera();
+	}
+
+	public static void setShowColliders(boolean on) {
+		showColliders = on;
+		try {
+			com.badlogic.gdx.Preferences p = Gdx.app.getPreferences("star2d_editor3d");
+			p.putBoolean("showColliders", on);
+			p.flush();
+		} catch (Throwable ignored) {
+		}
+	}
+
+	/** Switches between editing the 3D world and the 2D layer (HUD / UI); a selected element of the other side is released. */
+	public void setEdit2D(boolean on) {
+		if (edit2D == on) return;
+		edit2D = on;
+		colliderEdit = false;
+		Actor sel = editor.getSelectedActor();
+		if (sel != null && ((sel instanceof Editor3DItem) == on)) editor.deselect3D();
+	}
+
+	/** Turns the collider editor on / off for the selected element; false when it has no collider. */
+	public boolean toggleColliderEdit() {
+		Editor3DItem it = selected3D();
+		if (colliderEdit || it == null || !hasCollider(it)) {
+			colliderEdit = false;
+			return false;
+		}
+		colliderEdit = true;
+		colliderTarget = it;
+		return true;
+	}
+
+	public static boolean hasCollider(Editor3DItem it) {
+		return it != null && it.obj != null && it.obj.getDef() != null && it.obj.getDef().Body != null
+				&& !"NONE".equalsIgnoreCase(it.obj.getDef().Body) && it.obj.getDef().Mesh != null && !"EMPTY".equalsIgnoreCase(it.obj.getDef().Mesh);
 	}
 
 	public void configure(PropertySet<String, Object> config) {
@@ -151,14 +199,273 @@ public class Editor3D {
 		if (showGrid) drawGrid();
 		drawIcons();
 		Gdx.gl.glDisable(GL20.GL_DEPTH_TEST);
-		drawGizmo();
+		Editor3DItem sel = selected3D();
+		if (colliderEdit && (sel == null || sel != colliderTarget || !hasCollider(sel))) colliderEdit = false;
+		if ((showColliders || colliderEdit) && hasCollider(sel)) drawCollider(sel);
+		if (colliderEdit) drawColliderHandles(sel);
+		else drawGizmo();
 		Gdx.gl.glEnable(GL20.GL_BLEND);
+	}
+
+	// ------------------------------------------------------------------ collider
+
+	private static final Color COLLIDER = new Color(0.3f, 1f, 0.55f, 0.95f);
+	private static final Color HANDLE_FILL = new Color(1f, 0.6f, 0.1f, 1f);
+	private final Vector3 cHalf = new Vector3(), cCenter = new Vector3(), cw = new Vector3(), cw2 = new Vector3();
+
+	/** Local collider point (meters, rotated with the element) to world. */
+	private Vector3 cwp(Editor3DItem it, float x, float y, float z, Vector3 out) {
+		return out.set(x, y, z).mul(it.obj.rotation).add(it.obj.position);
+	}
+
+	private void cline(Editor3DItem it, float x1, float y1, float z1, float x2, float y2, float z2) {
+		shapes.line(cwp(it, x1, y1, z1, cw), cwp(it, x2, y2, z2, cw2));
+	}
+
+	/** Ring around the local Y axis (axis 1), X axis (0) or Z axis (2). */
+	private void cring(Editor3DItem it, float cx, float cy, float cz, float r, int axis, float from, float to) {
+		int seg = 28;
+		float px = 0, py = 0, pz = 0;
+		for (int i = 0; i <= seg; i++) {
+			float a = from + (to - from) * i / seg;
+			float u = MathUtils.cos(a) * r, v = MathUtils.sin(a) * r;
+			float x = cx, y = cy, z = cz;
+			if (axis == 1) { x += u; z += v; } else if (axis == 0) { y += v; z += u; } else { x += u; y += v; }
+			if (i > 0) cline(it, px, py, pz, x, y, z);
+			px = x; py = y; pz = z;
+		}
+	}
+
+	private void drawCollider(Editor3DItem it) {
+		it.obj.colliderBox(cHalf, cCenter);
+		String k = it.obj.colliderKind();
+		float hx = cHalf.x, hy = cHalf.y, hz = cHalf.z, cx = cCenter.x, cy = cCenter.y, cz = cCenter.z;
+		Gdx.gl.glLineWidth(2.5f);
+		shapes.begin(ShapeRenderer.ShapeType.Line);
+		shapes.setColor(COLLIDER);
+		if ("SPHERE".equals(k)) {
+			float r = Math.max(hx, Math.max(hy, hz));
+			cring(it, cx, cy, cz, r, 0, 0, MathUtils.PI2);
+			cring(it, cx, cy, cz, r, 1, 0, MathUtils.PI2);
+			cring(it, cx, cy, cz, r, 2, 0, MathUtils.PI2);
+		} else if ("CAPSULE".equals(k) || "CYLINDER".equals(k) || "CONE".equals(k)) {
+			float r = "CYLINDER".equals(k) ? hx : Math.max(hx, hz);
+			float h = "CAPSULE".equals(k) ? Math.max(0.005f, hy - r) : hy;
+			if ("CONE".equals(k)) {
+				cring(it, cx, cy - h, cz, r, 1, 0, MathUtils.PI2);
+				cline(it, cx + r, cy - h, cz, cx, cy + h, cz);
+				cline(it, cx - r, cy - h, cz, cx, cy + h, cz);
+				cline(it, cx, cy - h, cz + r, cx, cy + h, cz);
+				cline(it, cx, cy - h, cz - r, cx, cy + h, cz);
+			} else {
+				cring(it, cx, cy - h, cz, r, 1, 0, MathUtils.PI2);
+				cring(it, cx, cy + h, cz, r, 1, 0, MathUtils.PI2);
+				cline(it, cx + r, cy - h, cz, cx + r, cy + h, cz);
+				cline(it, cx - r, cy - h, cz, cx - r, cy + h, cz);
+				cline(it, cx, cy - h, cz + r, cx, cy + h, cz + r);
+				cline(it, cx, cy - h, cz - r, cx, cy + h, cz - r);
+				if ("CAPSULE".equals(k)) {
+					cring(it, cx, cy + h, cz, r, 2, 0, MathUtils.PI);
+					cring(it, cx, cy - h, cz, r, 2, MathUtils.PI, MathUtils.PI2);
+					cring(it, cx, cy + h, cz, r, 0, 0, MathUtils.PI);
+					cring(it, cx, cy - h, cz, r, 0, MathUtils.PI, MathUtils.PI2);
+				}
+			}
+		} else {
+			// BOX, and the bounds of MESH / CONVEX colliders (they follow the model)
+			if (!"BOX".equals(k)) shapes.setColor(COLLIDER.r, COLLIDER.g, COLLIDER.b, 0.55f);
+			for (int sy = -1; sy <= 1; sy += 2) {
+				cline(it, cx - hx, cy + sy * hy, cz - hz, cx + hx, cy + sy * hy, cz - hz);
+				cline(it, cx + hx, cy + sy * hy, cz - hz, cx + hx, cy + sy * hy, cz + hz);
+				cline(it, cx + hx, cy + sy * hy, cz + hz, cx - hx, cy + sy * hy, cz + hz);
+				cline(it, cx - hx, cy + sy * hy, cz + hz, cx - hx, cy + sy * hy, cz - hz);
+			}
+			cline(it, cx - hx, cy - hy, cz - hz, cx - hx, cy + hy, cz - hz);
+			cline(it, cx + hx, cy - hy, cz - hz, cx + hx, cy + hy, cz - hz);
+			cline(it, cx + hx, cy - hy, cz + hz, cx + hx, cy + hy, cz + hz);
+			cline(it, cx - hx, cy - hy, cz + hz, cx - hx, cy + hy, cz + hz);
+		}
+		shapes.end();
+		Gdx.gl.glLineWidth(1f);
+	}
+
+	/** Handle i (0..5 = +X -X +Y -Y +Z -Z) of the collider, local point. */
+	private boolean handleLocal(Editor3DItem it, int i, Vector3 out) {
+		it.obj.colliderBox(cHalf, cCenter);
+		String k = it.obj.colliderKind();
+		float hx = cHalf.x, hy = cHalf.y, hz = cHalf.z;
+		if ("SPHERE".equals(k)) hx = hy = hz = Math.max(hx, Math.max(hy, hz));
+		else if ("CYLINDER".equals(k)) hz = hx;
+		else if ("CAPSULE".equals(k) || "CONE".equals(k)) hx = hz = Math.max(hx, hz);
+		int axis = i / 2;
+		float sign = i % 2 == 0 ? 1 : -1;
+		out.set(cCenter);
+		if (axis == 0) out.x += sign * hx;
+		else if (axis == 1) out.y += sign * hy;
+		else out.z += sign * hz;
+		return true;
+	}
+
+	private int dragHandle = -1;
+	private String[] startCollider;
+	private float handleAccum;
+
+	private float handleRadius() {
+		return Math.max(16f, Gdx.graphics.getWidth() * 0.016f);
+	}
+
+	private void drawColliderHandles(Editor3DItem it) {
+		screen.getProjectionMatrix().setToOrtho2D(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+		float r = handleRadius();
+		Vector3 p = new Vector3();
+		for (int pass = 0; pass < 2; pass++) {
+			screen.begin(ShapeRenderer.ShapeType.Filled);
+			for (int i = 0; i < 6; i++) {
+				handleLocal(it, i, p);
+				cwp(it, p.x, p.y, p.z, p);
+				cam.project(p);
+				if (p.z < 0 || p.z > 1) continue;
+				if (pass == 0) {
+					// stroke: a white ring around the colored center
+					screen.setColor(Color.WHITE);
+					screen.circle(p.x, p.y, r + 4f, 24);
+				} else {
+					screen.setColor(dragHandle == i ? Color.YELLOW : (i / 2 == 0 ? AXIS_COLORS[0] : (i / 2 == 1 ? AXIS_COLORS[1] : AXIS_COLORS[2])));
+					screen.circle(p.x, p.y, r, 24);
+					screen.setColor(HANDLE_FILL);
+					screen.circle(p.x, p.y, r * 0.45f, 16);
+				}
+			}
+			screen.end();
+		}
+	}
+
+	private int hitHandle(float x, float y) {
+		Editor3DItem it = selected3D();
+		if (!colliderEdit || it == null || !hasCollider(it)) return -1;
+		Vector3 p = new Vector3();
+		float best = handleRadius() * 1.9f;
+		int hit = -1;
+		float sy = Gdx.graphics.getHeight() - y;
+		for (int i = 0; i < 6; i++) {
+			handleLocal(it, i, p);
+			cwp(it, p.x, p.y, p.z, p);
+			cam.project(p);
+			if (p.z < 0 || p.z > 1) continue;
+			float d = Vector2.dst(p.x, p.y, x, sy);
+			if (d < best) {
+				best = d;
+				hit = i;
+			}
+		}
+		return hit;
+	}
+
+	private static final String[] COLLIDER_KEYS = {"Collider Scale X", "Collider Scale Y", "Collider Scale Z", "Collider Offset X", "Collider Offset Y", "Collider Offset Z"};
+
+	private static String[] colliderState(PropertySet<String, Object> ps) {
+		String[] r = new String[COLLIDER_KEYS.length * 2];
+		for (int i = 0; i < COLLIDER_KEYS.length; i++) {
+			r[i * 2] = COLLIDER_KEYS[i];
+			r[i * 2 + 1] = ps.getString(COLLIDER_KEYS[i]);
+		}
+		return r;
+	}
+
+	/** Moves handle h of the collider by d meters outwards (keeps the opposite face where it is). */
+	private void moveHandle(Editor3DItem it, int h, float d) {
+		if (Math.abs(d) < 1e-5f) return;
+		com.star4droid.star2d.ElementDefs.Object3DDef def = it.obj.getDef();
+		PropertySet<String, Object> ps = it.getPropertySet();
+		String k = it.obj.colliderKind();
+		com.badlogic.gdx.math.collision.BoundingBox bb = it.obj.localBounds();
+		Vector3 bcv = bb.getCenter(new Vector3());
+		float[] size = {bb.getWidth(), bb.getHeight(), bb.getDepth()};
+		float[] bc = {bcv.x, bcv.y, bcv.z};
+		float[] sc = {Math.max(1e-4f, Math.abs(it.obj.scale.x)), Math.max(1e-4f, Math.abs(it.obj.scale.y)), Math.max(1e-4f, Math.abs(it.obj.scale.z))};
+		float[] cs = {def.Collider_Scale_X, def.Collider_Scale_Y, def.Collider_Scale_Z};
+		float[] off = {def.Collider_Offset_X, def.Collider_Offset_Y, def.Collider_Offset_Z};
+		it.obj.colliderBox(cHalf, cCenter);
+		float[] half = {cHalf.x, cHalf.y, cHalf.z};
+		float[] cen = {cCenter.x, cCenter.y, cCenter.z};
+		int axis = h / 2;
+		float sign = h % 2 == 0 ? 1 : -1;
+		boolean mesh = "MESH".equals(k) || "CONVEX".equals(k);
+		boolean round = "SPHERE".equals(k) || (axis != 1 && ("CAPSULE".equals(k) || "CYLINDER".equals(k) || "CONE".equals(k)));
+		if (round) {
+			// radius: all axes of a sphere, X and Z of a capsule / cylinder / cone, centered
+			float r = "SPHERE".equals(k) ? Math.max(half[0], Math.max(half[1], half[2])) : ("CYLINDER".equals(k) ? half[0] : Math.max(half[0], half[2]));
+			float nr = Math.max(0.01f, r + d);
+			float f = nr / Math.max(1e-4f, r);
+			for (int a = 0; a < 3; a++) {
+				if (!"SPHERE".equals(k) && a == 1) continue;
+				cs[a] = Math.max(0.001f, cs[a] * f);
+			}
+		} else if (mesh) {
+			float nh = Math.max(0.005f, half[axis] + d);
+			cs[axis] = Math.max(0.001f, cs[axis] * nh / Math.max(1e-4f, half[axis]));
+		} else {
+			float nh = Math.max(0.005f, half[axis] + d * 0.5f);
+			cen[axis] += sign * (nh - half[axis]);
+			cs[axis] = Math.max(0.001f, 2f * nh / Math.max(1e-4f, size[axis] * sc[axis]));
+		}
+		if (!mesh) for (int a = 0; a < 3; a++) off[a] = cen[a] - bc[a] * sc[a] * cs[a];
+		for (int a = 0; a < 3; a++) {
+			ps.put(COLLIDER_KEYS[a], String.valueOf(MathUtils.round(cs[a] * 1000f) / 1000f));
+			ps.put(COLLIDER_KEYS[a + 3], String.valueOf(MathUtils.round(off[a] * 1000f) / 1000f));
+		}
+		it.update();
+	}
+
+	private void dragHandleBy(float dx, float dy) {
+		Editor3DItem it = selected3D();
+		if (it == null) return;
+		Vector3 a = new Vector3(), b = new Vector3();
+		handleLocal(it, dragHandle, a);
+		b.set(a);
+		int axis = dragHandle / 2;
+		float sign = dragHandle % 2 == 0 ? 1 : -1;
+		if (axis == 0) b.x += sign; else if (axis == 1) b.y += sign; else b.z += sign;
+		cwp(it, a.x, a.y, a.z, a);
+		cwp(it, b.x, b.y, b.z, b);
+		Vector2 sa = toScreen(a, new Vector2()), sb = toScreen(b, new Vector2());
+		Vector2 dir = new Vector2(sb).sub(sa);
+		float pxPerMeter = Math.max(2f, dir.len());
+		dir.nor();
+		float meters = (dx * dir.x + dy * dir.y) / pxPerMeter;
+		if (snap) {
+			handleAccum += meters;
+			float q = MathUtils.round(handleAccum * 10f) / 10f;
+			if (q == 0) return;
+			handleAccum -= q;
+			meters = q;
+		}
+		moveHandle(it, dragHandle, meters);
+	}
+
+	private void endHandleDrag() {
+		Editor3DItem it = selected3D();
+		if (it != null && startCollider != null) {
+			try {
+				EditorAction a = EditorAction.propertiesChanged(editor, it.getName(), "collider", colliderState(it.getPropertySet()), startCollider);
+				if (a != null) a.updateEditorProperties().updateItemProperties();
+			} catch (Throwable ignored) {
+			}
+			editor.getSaveState();
+			editor.afterEdit3D();
+		}
+		startCollider = null;
+		dragHandle = -1;
 	}
 
 	private void drawGrid() {
 		float step = distance > 60 ? 10 : (distance > 25 ? 2 : 1);
 		int n = 40;
 		float cx = MathUtils.round(target.x / step) * step, cz = MathUtils.round(target.z / step) * step;
+		// a little above y = 0 and without depth writes: the lines no longer fight with a ground / road at 0
+		float gy = Math.min(0.05f, 0.0015f * distance);
+		shapes.translate(0, gy, 0);
+		Gdx.gl.glDepthMask(false);
 		shapes.begin(ShapeRenderer.ShapeType.Line);
 		for (int i = -n; i <= n; i++) {
 			float a = i % 5 == 0 ? 0.35f : 0.16f;
@@ -171,6 +478,8 @@ public class Editor3D {
 		shapes.setColor(0.3f, 0.5f, 0.95f, 0.8f);
 		shapes.line(0, 0, cz - n * step, 0, 0, cz + n * step);
 		shapes.end();
+		shapes.translate(0, -gy, 0);
+		Gdx.gl.glDepthMask(true);
 	}
 
 	private void drawIcons() {
@@ -358,6 +667,7 @@ public class Editor3D {
 		if (pointer == 1) {
 			// second finger: pan + pinch, cancel a gizmo drag
 			cancelDrag();
+			if (dragHandle >= 0) endHandleDrag();
 			orbiting = false;
 			panning = true;
 			pinchDist = Vector2.dst(Gdx.input.getX(0), Gdx.input.getY(0), Gdx.input.getX(1), Gdx.input.getY(1));
@@ -367,7 +677,14 @@ public class Editor3D {
 		if (pointer > 1) return true;
 		lastX = downX = x;
 		lastY = downY = y;
-		dragAxis = editor.isLocked3D() ? -1 : hitGizmo(x, y);
+		dragHandle = editor.isLocked3D() ? -1 : hitHandle(x, y);
+		if (dragHandle >= 0) {
+			startCollider = colliderState(selected3D().getPropertySet());
+			handleAccum = 0;
+			dragAxis = -1;
+			return true;
+		}
+		dragAxis = editor.isLocked3D() || colliderEdit ? -1 : hitGizmo(x, y);
 		if (dragAxis >= 0) beginDrag(x, y);
 		else orbiting = true;
 		return true;
@@ -393,6 +710,10 @@ public class Editor3D {
 		if (Math.abs(x - downX) > 8 || Math.abs(y - downY) > 8) moved = true;
 		lastX = x;
 		lastY = y;
+		if (dragHandle >= 0) {
+			dragHandleBy(dx, dy);
+			return true;
+		}
 		if (dragAxis >= 0) {
 			drag(x, y, dx, dy);
 			return true;
@@ -409,6 +730,10 @@ public class Editor3D {
 		if (pointer == 1 || panning) {
 			if (!Gdx.input.isTouched()) panning = false;
 			pinchDist = -1;
+			return true;
+		}
+		if (dragHandle >= 0) {
+			endHandleDrag();
 			return true;
 		}
 		if (dragAxis >= 0) {
@@ -586,6 +911,7 @@ public class Editor3D {
 	public void dispose() {
 		world.dispose();
 		shapes.dispose();
+		screen.dispose();
 	}
 
 	/** Editor element of a 3D element by name (blocks / lists). */

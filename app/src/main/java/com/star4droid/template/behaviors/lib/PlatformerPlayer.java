@@ -30,15 +30,15 @@ public class PlatformerPlayer extends Behavior {
 	public boolean useKeyboard = true;
 
 	@Header("Movement")
-	@Param(unit = "px/s", min = 0, max = 450)
+	@Param(unit = "px/s", min = 0, max = 100000)
 	public float speed = 220;
-	@Param(desc = "0 = instant, otherwise how fast it reaches the speed.", unit = "px/s2", min = 0, max = 20000)
+	@Param(desc = "0 = instant, otherwise how fast it reaches the speed.", unit = "px/s2", min = 0, max = 100000)
 	public float acceleration = 0;
 	@Param(desc = "Mirror the image when walking left.")
 	public boolean flipToDirection = true;
 
 	@Header("Jump")
-	@Param(unit = "px/s", min = 0, max = 450)
+	@Param(unit = "px/s", min = 0, max = 100000)
 	public float jumpSpeed = 420;
 	@Param(desc = "2 = double jump, 1 = single.", min = 1, max = 10, step = 1)
 	public int maxJumps = 2;

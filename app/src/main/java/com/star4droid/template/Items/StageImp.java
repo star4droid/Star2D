@@ -526,6 +526,7 @@ public class StageImp extends ApplicationAdapter {
 	@Override
 	public final void resume() {
 		super.resume();
+		com.star4droid.template.d3.Sounds3D.resumeAll(); // sounds of the 3D behaviors / B3 blocks paused with the scene
 		if(!loadComplete) return;
 		if(currentStage==null){
 			onResume();
@@ -537,6 +538,7 @@ public class StageImp extends ApplicationAdapter {
 	@Override
 	public final void pause() {
 		super.pause();
+		com.star4droid.template.d3.Sounds3D.pauseAll();
 		if(!loadComplete) return;
 		if(currentStage==null){
 			onPause();
@@ -666,6 +668,41 @@ public class StageImp extends ApplicationAdapter {
 		return world;
 	}
 	
+	private final com.badlogic.gdx.utils.Array<com.badlogic.gdx.physics.box2d.Body> speedBodies = new com.badlogic.gdx.utils.Array<>();
+
+	/** One physics step of the 2D world. Box2D moves a body at most 2 world units and turns it at most 90 degrees per step,
+	 *  so when a body is faster the step is split into smaller ones: high speeds (fast cars, bullets, big jumps) are not cut. */
+	private void stepPhysics(float dt){
+		int n = 1;
+		if(dt > 0 && world.getBodyCount() > 0){
+			world.getBodies(speedBodies);
+			float maxV2 = 0, maxW = 0;
+			for(int i=0;i<speedBodies.size;i++){
+				com.badlogic.gdx.physics.box2d.Body b = speedBodies.get(i);
+				if(b.getType() == com.badlogic.gdx.physics.box2d.BodyDef.BodyType.StaticBody) continue;
+				float v2 = b.getLinearVelocity().len2();
+				if(v2 > maxV2) maxV2 = v2;
+				float w = Math.abs(b.getAngularVelocity());
+				if(w > maxW) maxW = w;
+			}
+			speedBodies.clear();
+			float move = (float)Math.sqrt(maxV2) * dt / 1.8f, turn = maxW * dt / 1.4f;
+			float need = Math.max(move, turn);
+			if(need > 1 && need == need) n = Math.min(32, (int)Math.ceil(need));
+		}
+		if(n <= 1){
+			world.step(dt,8,3);
+			return;
+		}
+		boolean clear = world.getAutoClearForces();
+		world.setAutoClearForces(false); // forces applied this frame act on every part of the split step
+		for(int i=0;i<n;i++) world.step(dt / n,8,3);
+		if(clear){
+			world.clearForces();
+			world.setAutoClearForces(true);
+		}
+	}
+
 	/** Physics sub-steps per frame (6 by default, 1 after setWorldGravity). Velocities in px/s are divided by it so behaviors move at true speed. */
 	public int getSteps(){
 		return steps;
@@ -704,6 +741,7 @@ public class StageImp extends ApplicationAdapter {
 		if(finishFunc!=null){
 			finishFunc.onFinish(this);
 			finished=true;
+			if(world3d!=null) com.star4droid.template.d3.Sounds3D.stopAll(); // a closed 3D scene stays silent
 			GameStage.dispose();
 			UiStage.dispose();
 			return;
@@ -1226,7 +1264,7 @@ public class StageImp extends ApplicationAdapter {
 		    drawDebug();
 		groups().prepare();
 		if(playing) for(int x=0;x<steps;x++)
-						world.step(getDelta(),8,3);
+						stepPhysics(getDelta());
 		if(!is3D()){
 		rayHandler.setCombinedMatrix(GameStage.getViewport().getCamera().combined);
 		GameStage.getViewport().apply();
@@ -1309,11 +1347,33 @@ public class StageImp extends ApplicationAdapter {
         else GameStage.addActor(actor);
 	}
 	
-	public void dispose(){
+	/** The game stops (scene closed, the editor leaves play mode): every sound of the scene stops (3D behaviors, B3 blocks,
+	 *  the 2D music) and the 3D world closes (its behaviors, physics and sounds), also in scenes opened from this one. */
+	public void stopScene(){
+	    stopScene(0);
+	}
+
+	private void stopScene(int depth){
+	    try { com.star4droid.template.d3.Sounds3D.stopAll(); } catch(Throwable ignored){}
+	    try {
+	        if(assetLoader!=null){
+	            Array<Music> musics = new Array<>();
+	            assetLoader.getAll(Music.class, musics);
+	            for(Music m : musics) try { m.stop(); } catch(Throwable ignored){}
+	        }
+	    } catch(Throwable ignored){}
+	    if(depth < 8){
+	        if(currentStage!=null && currentStage!=this) currentStage.stopScene(depth + 1);
+	        for(StageImp st : new ArrayList<>(previousStages)) if(st!=null && st!=this && st!=currentStage) st.stopScene(depth + 1);
+	    }
 	    try {
 	        if(world3d!=null) world3d.dispose();
-	        world3d = null;
-	    } catch(Exception e){}
+	    } catch(Throwable ignored){}
+	    world3d = null;
+	}
+
+	public void dispose(){
+	    stopScene();
 	    try {
 	        com.kotcrab.vis.ui.VisUI.dispose();
 		    UiStage.dispose();

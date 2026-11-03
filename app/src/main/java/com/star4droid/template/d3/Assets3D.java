@@ -49,12 +49,14 @@ public final class Assets3D {
 	/** The model file (null + an error message in {@link #error} when it cannot be read). */
 	public static SceneAsset model(String path) {
 		if (path == null || path.length() == 0) return null;
-		SceneAsset a = MODELS.get(path);
+		// cached per project: two projects (or an example and a game) may have different files with the same name
+		final String k = cacheKey(path);
+		SceneAsset a = MODELS.get(k);
 		if (a != null) return a;
-		if (ERRORS.containsKey(path)) return null;
+		if (ERRORS.containsKey(k)) return null;
 		FileHandle f = file(path, "models");
 		if (f == null) {
-			ERRORS.put(path, "model not found: " + path);
+			ERRORS.put(k, "model not found: " + path);
 			return null;
 		}
 		try {
@@ -62,14 +64,14 @@ public final class Assets3D {
 			if (ext.equals("glb")) a = new GLBLoader().load(f, true);
 			else if (ext.equals("gltf")) a = new GLTFLoader().load(f, true);
 			else {
-				ERRORS.put(path, "unsupported model format: " + ext + " (use .glb or .gltf)");
+				ERRORS.put(k, "unsupported model format: " + ext + " (use .glb or .gltf)");
 				return null;
 			}
 			Materials3D.fixImported(a.scene.model);
-			MODELS.put(path, a);
+			MODELS.put(k, a);
 			return a;
 		} catch (Throwable t) {
-			ERRORS.put(path, "model error " + path + ": " + t);
+			ERRORS.put(k, "model error " + path + ": " + t);
 			return null;
 		}
 	}
@@ -88,19 +90,25 @@ public final class Assets3D {
 		return out;
 	}
 
+	private static String cacheKey(String path) {
+		return (projectPath == null ? "" : projectPath) + "|" + path;
+	}
+
 	public static String error(String path) {
-		return ERRORS.get(path);
+		return ERRORS.get(cacheKey(path));
 	}
 
 	public static Texture texture(String path, boolean repeat) {
 		if (path == null || path.length() == 0) return null;
-		String key = path + (repeat ? "|r" : "");
+		String key = cacheKey(path) + (repeat ? "|r" : "");
 		Texture t = TEXTURES.get(key);
 		if (t != null) return t;
 		FileHandle f = file(path, "images");
-		if (f == null) return null;
+		Pixmap merged = f == null ? mergedPixmap(path) : null;
+		if (f == null && merged == null) return null;
 		try {
-			t = new Texture(f, true);
+			t = merged != null ? new Texture(merged, true) : new Texture(f, true);
+			if (merged != null) merged.dispose();
 			t.setFilter(Texture.TextureFilter.MipMapLinearLinear, Texture.TextureFilter.Linear);
 			if (repeat) t.setWrap(Texture.TextureWrap.Repeat, Texture.TextureWrap.Repeat);
 			TEXTURES.put(key, t);
@@ -110,9 +118,18 @@ public final class Assets3D {
 		}
 	}
 
+	/** A picture merged into a tileset page at export ("Merge images into tilesets"), or null. */
+	private static Pixmap mergedPixmap(String path) {
+		if (com.star4droid.template.Utils.AtlasIndex.isEmpty() || path == null) return null;
+		String rel = path.replace('\\', '/');
+		while (rel.startsWith("/")) rel = rel.substring(1);
+		if (rel.startsWith("images/")) rel = rel.substring(7);
+		return com.star4droid.template.Utils.AtlasIndex.pixmap("images/" + rel);
+	}
+
 	public static Pixmap pixmap(String path) {
 		FileHandle f = file(path, "images");
-		if (f == null) return null;
+		if (f == null) return mergedPixmap(path);
 		try {
 			return new Pixmap(f);
 		} catch (Throwable e) {
@@ -163,8 +180,8 @@ public final class Assets3D {
 
 	/** Forgets one model (the file changed). */
 	public static void reload(String path) {
-		SceneAsset a = MODELS.remove(path);
-		ERRORS.remove(path);
+		SceneAsset a = MODELS.remove(cacheKey(path));
+		ERRORS.remove(cacheKey(path));
 		if (a != null) {
 			try {
 				a.dispose();

@@ -20,7 +20,6 @@ Kenney asks, but does not require, for a credit to "Kenney" / www.kenney.nl).
 |---|---|
 | models/structure-platform-dock.glb | Kenney Pirate / Watercraft / Graveyard Kit |
 | models/platform-planks.glb | Kenney Pirate / Watercraft / Graveyard Kit |
-| models/structure-fence.glb | Kenney Pirate / Watercraft / Graveyard Kit |
 | models/barrel.glb | Kenney Pirate / Watercraft / Graveyard Kit |
 | models/buoy.glb | Kenney Pirate / Watercraft / Graveyard Kit |
 | models/boat-row-small.glb | Kenney Pirate / Watercraft / Graveyard Kit |

@@ -32,7 +32,7 @@ public class PlatformMover3D extends Behavior {
 	public float offsetZ = 0;
 
 	@Header("Timing")
-	@Param(desc = "Travel speed.", unit = "m/s", min = 0.01, max = 100, step = 0.05)
+	@Param(desc = "Travel speed.", unit = "m/s", min = 0.01, max = 100000, step = 0.05)
 	public float speed = 1.5f;
 	@Param(desc = "Wait at each stop.", unit = "s", min = 0, max = 120, step = 0.1)
 	public float waitTime = 1.5f;

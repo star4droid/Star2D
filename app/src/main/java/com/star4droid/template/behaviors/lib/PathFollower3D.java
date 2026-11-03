@@ -29,11 +29,11 @@ public class PathFollower3D extends Behavior {
 	public boolean onGround = true;
 
 	@Header("Motion")
-	@Param(desc = "Moving speed.", unit = "m/s", min = 0, max = 200, step = 0.1)
+	@Param(desc = "Moving speed.", unit = "m/s", min = 0, max = 100000, step = 0.1)
 	public float speed = 2.5f;
 	@Param(desc = "How fast it reaches its speed (0 = at once).", unit = "1/s", min = 0, max = 40, step = 0.5)
 	public float acceleration = 6;
-	@Param(desc = "Turning speed toward the next point (0 = never turns).", unit = "deg/s", min = 0, max = 2000, step = 10)
+	@Param(desc = "Turning speed toward the next point (0 = never turns).", unit = "deg/s", min = 0, max = 100000, step = 10)
 	public float turnSpeed = 240;
 	@Param(desc = "Counts as arrived this close to a point.", unit = "m", min = 0.02, max = 20, step = 0.05)
 	public float arriveDistance = 0.3f;

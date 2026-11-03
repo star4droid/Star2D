@@ -51,13 +51,13 @@ public class Car3D extends Behavior {
 	public float deadZone = 0.12f;
 
 	@Header("Engine and brakes")
-	@Param(desc = "Top speed forward.", unit = "km/h", min = 1, max = 400)
-	public float maxSpeed = 110;
-	@Param(desc = "Top speed in reverse.", unit = "km/h", min = 0, max = 100)
+	@Param(desc = "Top speed forward.", unit = "km/h", min = 1, max = 100000)
+	public float maxSpeed = 140;
+	@Param(desc = "Top speed in reverse.", unit = "km/h", min = 0, max = 100000)
 	public float reverseSpeed = 25;
-	@Param(desc = "How fast the engine speeds the car up.", unit = "m/s2", min = 0.5, max = 40, step = 0.5)
-	public float acceleration = 7;
-	@Param(desc = "How hard the brakes slow it down.", unit = "m/s2", min = 1, max = 60, step = 0.5)
+	@Param(desc = "How fast the engine speeds the car up.", unit = "m/s2", min = 0.5, max = 100000, step = 0.5)
+	public float acceleration = 5.5f;
+	@Param(desc = "How hard the brakes slow it down.", unit = "m/s2", min = 1, max = 100000, step = 0.5)
 	public float brakeStrength = 14;
 	@Param(desc = "Which wheels the engine turns.")
 	public Drive drive = Drive.REAR;
@@ -70,7 +70,7 @@ public class Car3D extends Behavior {
 	@Header("Steering")
 	@Param(desc = "Largest angle of the front wheels.", unit = "deg", min = 5, max = 60)
 	public float maxSteerAngle = 32;
-	@Param(desc = "How fast the wheels turn.", unit = "deg/s", min = 20, max = 600, step = 10)
+	@Param(desc = "How fast the wheels turn.", unit = "deg/s", min = 20, max = 100000, step = 10)
 	public float steerSpeed = 140;
 	@Param(desc = "Steers less at top speed (0 = never, 1 = almost straight).", min = 0, max = 0.95, step = 0.05)
 	public float steerReduction = 0.55f;
@@ -80,14 +80,14 @@ public class Car3D extends Behavior {
 	public float grip = 3.2f;
 	@Param(desc = "Rear grip while the handbrake is held (small = drift).", min = 0.1, max = 10, step = 0.1)
 	public float driftGrip = 0.9f;
-	@Param(desc = "Sideways speed that counts as a drift (events).", unit = "m/s", min = 0.5, max = 20, step = 0.5)
+	@Param(desc = "Sideways speed that counts as a drift (events).", unit = "m/s", min = 0.5, max = 100000, step = 0.5)
 	public float driftSpeed = 3;
 	@Param(desc = "Free length of the springs.", unit = "m", min = 0.05, max = 2, step = 0.01)
 	public float suspensionLength = 0.25f;
 	@Param(desc = "Spring stiffness (higher = harder ride).", min = 5, max = 200, step = 1)
 	public float stiffness = 40;
 	@Param(desc = "Spring damping (higher = less bouncing).", min = 0.1, max = 20, step = 0.1)
-	public float damping = 2.3f;
+	public float damping = 4f;
 	@Param(desc = "How much the body leans in turns (0 = flat, 1 = real, can roll over).", min = 0, max = 1, step = 0.05)
 	public float bodyRoll = 0.15f;
 
@@ -140,7 +140,7 @@ public class Car3D extends Behavior {
 	private boolean extBrake, extHandbrake, drifting, collFitted, camDone;
 	private final float[] in = new float[2], tilt = new float[2];
 	private final Support3D.Loop engine = new Support3D.Loop();
-	private float engineSign = 1, wrongWay;
+	private float engineSign = 1, wrongWay, lastForce, lastKmh;
 
 	// ------------------------------------------------------------ blocks
 
@@ -312,18 +312,22 @@ public class Car3D extends Behavior {
 		if (count == 0 && mode != WheelMode.INVISIBLE) mode = WheelMode.INVISIBLE;
 		// the springs hang the wheel below the attachment point: lift the points so the car rests near the drawn wheels
 		float rest = suspensionLength;
-		float lowest = Float.MAX_VALUE;
+		float lowest = Float.MAX_VALUE, topAttach = -Float.MAX_VALUE;
 		for (int i = 0; i < 4; i++) {
 			cy[i] = pts[i * 3 + 1];
 			lowest = Math.min(lowest, cy[i]);
 			pts[i * 3 + 1] += rest * 0.75f;
+			topAttach = Math.max(topAttach, pts[i * 3 + 1]);
 		}
 		if (fitCollider && !collFitted && o.d() != null) {
 			collFitted = true;
 			String col = o.d().Collider == null ? "AUTO" : o.d().Collider.toUpperCase();
 			if (col.equals("AUTO") || col.equals("BOX")) {
 				float minY = lb.min.y * s.y, maxY = lb.max.y * s.y, h = maxY - minY;
-				float bottom = Math.min(maxY - h * 0.25f, lowest + r * 0.15f);
+				// the wheel rays start at the attachment points: they must start BELOW the body's collider, a ray that starts inside
+				// it hits the car itself now and then (the wheels flicker off the road, the car bounces and drifts)
+				float bottom = Math.max(Math.min(maxY - h * 0.25f, lowest + r * 0.15f), topAttach + 0.03f);
+				if (bottom > maxY - h * 0.15f) bottom = maxY - h * 0.15f;
 				if (h > 0.01f && bottom > minY) {
 					o.d().Collider_Scale_Y = (maxY - bottom) / h;
 					o.d().Collider_Offset_Y = (bottom - minY) * 0.5f;
@@ -349,7 +353,10 @@ public class Car3D extends Behavior {
 		c.angle = 0;
 	}
 
+	/** The body's real mass (Bullet), else the element's Mass: the engine force is acceleration x mass. */
 	private float mass() {
+		float m = vehicle != null ? vehicle.mass() : 0;
+		if (m > 0) return m;
 		Object3D o = obj();
 		return o == null || o.d() == null ? 1 : Math.max(0.001f, o.d().Mass);
 	}
@@ -393,22 +400,36 @@ public class Car3D extends Behavior {
 		float kmh = vehicle.speedKmh();
 		float m = mass();
 		int driven = drive == Drive.ALL ? 4 : 2;
+		// the body's linear damping takes this much speed away every second: the engine gives it back, so the top speed is reached
+		float damp = vehicle.linearDamping();
+		float dampAcc = damp > 0 && damp < 1 ? (float) -Math.log(1 - damp) * Math.abs(kmh) / 3.6f : 0;
 		float force = 0, brake = 0;
-		if (throttle > 0.01f) {
-			if (kmh < -2f) brake = brakeImpulse() * throttle; // rolling back: brake first
-			else if (kmh < maxSpeed) force = acceleration * m * throttle / driven;
-		} else if (throttle < -0.01f) {
-			if (kmh > 2f) brake = brakeImpulse() * -throttle;
-			else if (-kmh < reverseSpeed) force = acceleration * 0.6f * m * throttle / driven;
-		} else brake = brakeImpulse() * 0.06f; // rolling resistance
-		// sanity: if gas makes it go backwards the wheel setup is mirrored -> flip once
-		if (throttle > 0.5f && force > 0 && kmh < -3f && isGrounded()) {
+		// sanity: if the gas makes it roll backwards the wheel setup is mirrored -> flip the engine once (no braking meanwhile)
+		boolean grounded = isGrounded();
+		if (throttle > 0.5f && lastForce > 0 && grounded && kmh < -3f && kmh < lastKmh) {
 			wrongWay += dt;
 			if (wrongWay > 0.8f) {
 				engineSign = -engineSign;
 				wrongWay = 0;
 			}
-		} else wrongWay = 0;
+		} else if (throttle <= 0.5f || kmh >= 0) wrongWay = 0;
+		if (throttle > 0.01f) {
+			if (kmh < -2f && wrongWay <= 0) brake = brakeImpulse() * throttle; // rolling back: brake first
+			else {
+				float room = clamp((maxSpeed - kmh) / 4f, 0, 1); // eases into the top speed instead of hitting it
+				force = (acceleration * throttle + dampAcc) * room * m / driven;
+			}
+		} else if (throttle < -0.01f) {
+			if (kmh > 2f) brake = brakeImpulse() * -throttle;
+			else {
+				float room = clamp((reverseSpeed + kmh) / 3f, 0, 1);
+				force = (acceleration * 0.6f * throttle - dampAcc) * room * m / driven;
+			}
+		} else brake = brakeImpulse() * 0.06f; // rolling resistance
+		if (throttle > 0.01f && kmh > maxSpeed + 1f || throttle < -0.01f && -kmh > reverseSpeed + 1f)
+			brake = Math.max(brake, brakeImpulse() * 0.35f); // over the top speed (lowered by a block, downhill): engine braking
+		lastForce = force > 0 ? force : 0;
+		lastKmh = kmh;
 		float limit = maxSteerAngle * (1f - steerReduction * Math.min(1f, Math.abs(kmh) / Math.max(1f, maxSpeed)));
 		steer = Support3D.approachAngle(steer, -steerIn * limit, steerSpeed * dt);
 		for (int i = 0; i < 4; i++) {

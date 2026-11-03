@@ -8,8 +8,9 @@ import com.badlogic.gdx.physics.bullet.dynamics.btWheelInfo;
 
 /**
  * A Bullet raycast vehicle on a DYNAMIC 3D element (the chassis). Used by the Car3D behavior; no Bullet type in the public
- * API. The chassis' front is its local -Z, wheels hang down (-Y), the axle is local X. Units: meters, Newtons, radians.
- * Positive engine force drives forward (-Z), positive steering turns left.
+ * API. The chassis' front is its local -Z (like every 3D element: Object3D.forward), wheels hang down (-Y), the axle is local +X.
+ * Bullet rolls a wheel along up x axle = (0,1,0) x (1,0,0) = -Z, so a positive engine force drives toward the front and a positive
+ * steering angle turns the wheels left. Units: meters, Newtons, radians.
  */
 public final class Vehicle3D {
 	private final Object3D chassis;
@@ -47,7 +48,7 @@ public final class Vehicle3D {
 			v.vehicle = new btRaycastVehicle(v.tuning, b, v.raycaster);
 			b.setActivationState(4); // DISABLE_DEACTIVATION
 			v.vehicle.setCoordinateSystem(0, 1, 2);
-			Vector3 dir = new Vector3(0, -1, 0), axle = new Vector3(-1, 0, 0), cp = new Vector3();
+			Vector3 dir = new Vector3(0, -1, 0), axle = new Vector3(1, 0, 0), cp = new Vector3(); // axle +X: forward = -Z (see the class doc)
 			int n = points.length / 3;
 			for (int i = 0; i < n; i++) {
 				cp.set(points[i * 3], points[i * 3 + 1], points[i * 3 + 2]);
@@ -75,6 +76,18 @@ public final class Vehicle3D {
 	public boolean valid() {
 		return !disposed && vehicle != null && chassis.world != null && chassis.world.hasPhysics() && chassis.world.physics() == physics
 				&& chassis.rigidBody() == body;
+	}
+
+	/** Mass of the chassis body (kg) as Bullet has it. */
+	public float mass() {
+		if (!valid()) return 0;
+		float im = body.getInvMass();
+		return im > 0 ? 1f / im : 0;
+	}
+
+	/** Linear damping of the chassis body (Bullet slows it by this fraction per second). */
+	public float linearDamping() {
+		return valid() ? body.getLinearDamping() : 0;
 	}
 
 	public int wheelCount() {

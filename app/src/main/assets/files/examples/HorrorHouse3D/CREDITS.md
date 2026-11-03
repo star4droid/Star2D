@@ -37,6 +37,20 @@ Kenney asks, but does not require, for a credit to "Kenney" / www.kenney.nl).
 | models/lantern-candle.glb | see packs above |
 | models/key.glb | see packs above |
 | models/flashlight.glb | see packs above |
+| models/pine.glb | Kenney Graveyard Kit |
+| models/pine-crooked.glb | Kenney Graveyard Kit |
+| models/trunk.glb | Kenney Graveyard Kit |
+| models/trunk-long.glb | Kenney Graveyard Kit |
+| models/iron-fence.glb | Kenney Graveyard Kit |
+| models/gravestone-cross.glb | Kenney Graveyard Kit |
+| models/gravestone-round.glb | Kenney Graveyard Kit |
+| models/gravestone-broken.glb | Kenney Graveyard Kit |
+| models/gravestone-bevel.glb | Kenney Graveyard Kit |
+| models/grave.glb | Kenney Graveyard Kit |
+| models/rocks.glb | Kenney Graveyard Kit |
+| models/pumpkin-carved.glb | Kenney Graveyard Kit |
+| models/debris-wood.glb | Kenney Graveyard Kit |
+| models/cross-wood.glb | Kenney Graveyard Kit |
 | models/door-rotate-square-a.glb | Kenney Building Kit (turned 90 degrees: panel along X) |
 | sounds/door_open_creak.ogg | see packs above |
 | sounds/door_close.ogg | see packs above |

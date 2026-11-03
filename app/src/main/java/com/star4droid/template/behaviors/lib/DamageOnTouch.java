@@ -36,9 +36,9 @@ public class DamageOnTouch extends Behavior {
 	public boolean destroySelfOnHit = false;
 
 	@Header("Reaction")
-	@Param(desc = "Push the target away horizontally, in px/s (0 = none).", unit = "px/s", min = 0, max = 3000)
+	@Param(desc = "Push the target away horizontally, in px/s (0 = none).", unit = "px/s", min = 0, max = 100000)
 	public float knockback = 0;
-	@Param(desc = "Push the target up, in px/s.", unit = "px/s", min = 0, max = 3000)
+	@Param(desc = "Push the target up, in px/s.", unit = "px/s", min = 0, max = 100000)
 	public float knockbackUp = 0;
 	@Param(desc = "The target's movement behaviors stay off for this long so the push is visible (see Health > Stun behaviors).", unit = "s", min = 0, max = 5, step = 0.05)
 	public float stunTime = 0;

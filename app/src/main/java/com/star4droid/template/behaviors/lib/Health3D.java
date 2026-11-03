@@ -42,7 +42,7 @@ public class Health3D extends Behavior implements Damageable {
 	public float hurtShake = 0.6f;
 
 	@Header("Reaction")
-	@Param(desc = "Pushed away from the attacker at this speed (DYNAMIC bodies).", unit = "m/s", min = 0, max = 50, step = 0.5)
+	@Param(desc = "Pushed away from the attacker at this speed (DYNAMIC bodies).", unit = "m/s", min = 0, max = 100000, step = 0.5)
 	public float knockback = 0;
 	@Param(desc = "Clip played once when hurt (empty = none).")
 	public String hurtClip = "";

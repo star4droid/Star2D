@@ -32,7 +32,7 @@ public class Buoyancy3D extends Behavior {
 	public float lift = 1;
 	@Param(desc = "DYNAMIC: water slows it down (drag).", min = 0, max = 10, step = 0.05)
 	public float drag = 1.2f;
-	@Param(desc = "Slow drift along the waves (no body).", unit = "m/s", min = 0, max = 10, step = 0.05)
+	@Param(desc = "Slow drift along the waves (no body).", unit = "m/s", min = 0, max = 100000, step = 0.05)
 	public float drift = 0;
 
 	private final Vector3 v = new Vector3();

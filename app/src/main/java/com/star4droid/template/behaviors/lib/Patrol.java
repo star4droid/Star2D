@@ -40,7 +40,7 @@ public class Patrol extends Behavior {
 	public boolean loopWaypoints = false;
 
 	@Header("Motion")
-	@Param(desc = "Walking speed.", unit = "px/s", min = 0, max = 450)
+	@Param(desc = "Walking speed.", unit = "px/s", min = 0, max = 100000)
 	public float speed = 80;
 	@Param(desc = "How long it waits at each end / waypoint.", unit = "s", min = 0, max = 60, step = 0.1)
 	public float waitTime = 0.5f;

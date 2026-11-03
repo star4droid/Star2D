@@ -32,7 +32,7 @@ public class MovingPlatform extends Behavior {
 	public PlayerItem pointA;
 
 	@Header("Motion")
-	@Param(desc = "Speed along the route.", unit = "px/s", min = 0, max = 450)
+	@Param(desc = "Speed along the route.", unit = "px/s", min = 0, max = 100000)
 	public float speed = 80;
 	@Param(desc = "How long it waits at each end.", unit = "s", min = 0, max = 60, step = 0.1)
 	public float pause = 0.5f;

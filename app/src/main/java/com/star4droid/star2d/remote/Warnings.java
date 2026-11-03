@@ -124,7 +124,7 @@ final class Warnings {
     private static final java.util.Set<String> SPEED_BLOCKS = new java.util.HashSet<>(java.util.Arrays.asList(
             "jump", "setVelocityX", "setVelocityY", "moveToward", "moveWithJoystick", "walkWithJoystick"));
 
-    /** Sign / limit check of the speed blocks of an events "set": jump power must be positive (up), speeds stay <= 450 px/s. */
+    /** Sign check of the speed blocks of an events "set": jump power must be positive (up). */
     static List<String> blocks(com.google.gson.JsonElement tree) {
         ArrayList<String> out = new ArrayList<>();
         scanBlocks(tree, out);
@@ -144,9 +144,7 @@ final class Warnings {
                     if (!f.has(k) || !f.get(k).isJsonPrimitive() || !f.get(k).getAsJsonPrimitive().isNumber()) continue;
                     double v = f.get(k).getAsDouble();
                     if (b.equals("jump") && v <= 0)
-                        out.add("block jump power " + trim((float) v) + ": Y is UP, so the jump power must be POSITIVE (this one moves the element " + (v < 0 ? "DOWN" : "nowhere") + "). Use 400-450; physics_info {jump_height:N} gives the number.");
-                    else if (Math.abs(v) > 450.5)
-                        out.add("block " + b + " " + k + " " + trim((float) v) + " px/s is above 450: Box2D moves a body at most ~8 px per step (about 480 px/s at 60 fps), anything faster is silently cut. Use <= 450 (lower the gravity for a higher jump).");
+                        out.add("block jump power " + trim((float) v) + ": Y is UP, so the jump power must be POSITIVE (this one moves the element " + (v < 0 ? "DOWN" : "nowhere") + "). Use about 400-600; physics_info {jump_height:N} gives the number.");
                 }
             }
             for (java.util.Map.Entry<String, com.google.gson.JsonElement> en : o.entrySet())

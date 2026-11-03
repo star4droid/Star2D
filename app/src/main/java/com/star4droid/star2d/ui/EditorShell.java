@@ -177,6 +177,7 @@ public class EditorShell extends FrameLayout implements ControlLayer.NativeUi, T
             if (loadingBox == null) return;
             if (progress < 0f) {
                 loadingBox.setVisibility(GONE);
+                refresh3DButtons();
                 return;
             }
             int pct = Math.round(progress * 100f);
@@ -506,9 +507,23 @@ public class EditorShell extends FrameLayout implements ControlLayer.NativeUi, T
         del.setImageTintList(ColorStateList.valueOf(0xFFFF8A80));
         t.addView(del);
         t.addView(Ui.iconButton(c, R.drawable.ic_s2_camera, Tr.t("ui_center_camera", "Center camera"), v -> Bridge.gl(() -> Bridge.editor().centerCamera())));
-        ImageView view3d = Ui.iconButton(c, R.drawable.ic_s2_view3d, Tr.t("s3v_title", "3D view"), v -> Scene3DSettings.viewMenu(activity, v));
-        view3d.setImageTintList(ColorStateList.valueOf(0xFF42A5F5));
-        t.addView(view3d);
+        // 3D scenes only: 3D world / 2D layer switch (the icon shows what is being edited) and the 3D view menu
+        layerBtn = Ui.iconButton(c, R.drawable.ic_s2_cube, Tr.t("s3v_layer", "Switch 3D world / 2D layer editing"), v -> Bridge.query(() -> {
+            com.star4droid.star2d.editor.three.Editor3D e = Bridge.editor().get3D();
+            if (e == null) return null;
+            e.setEdit2D(!e.edit2D);
+            return e.edit2D;
+        }, two -> {
+            if (two == null) return;
+            Ui.toast(activity, two ? Tr.t("s3v_layer2d", "Editing the 2D layer") : Tr.t("s3v_layer3d", "Editing the 3D world"));
+            refresh3DButtons();
+        }));
+        t.addView(layerBtn);
+        view3dBtn = Ui.iconButton(c, R.drawable.ic_s2_view3d, Tr.t("s3v_title", "3D view"), v -> Scene3DSettings.viewMenu(activity, v));
+        view3dBtn.setImageTintList(ColorStateList.valueOf(0xFF42A5F5));
+        t.addView(view3dBtn);
+        Scene3DSettings.onLayerChanged = this::refresh3DButtons;
+        refresh3DButtons();
         // build errors: only there when the last build failed; opens / closes the console
         consoleBtn = Ui.iconButton(c, R.drawable.ic_s2_bug, Tr.t("console_title", "Errors"), v -> {
             if (console.getVisibility() == VISIBLE) console.hide();
@@ -518,6 +533,31 @@ public class EditorShell extends FrameLayout implements ControlLayer.NativeUi, T
         t.addView(consoleBtn);
         updateConsoleChip();
         return t;
+    }
+
+    private ImageView layerBtn, view3dBtn;
+
+    /** Shows the 3D buttons only in 3D scenes; the layer button's icon says what is being edited. */
+    public void refresh3DButtons() {
+        if (!Bridge.ready()) return;
+        Bridge.query(() -> {
+            com.star4droid.star2d.editor.three.Editor3D e = Bridge.editor() == null ? null : Bridge.editor().get3D();
+            return e == null ? 0 : (e.edit2D ? 2 : 1);
+        }, st -> {
+            if (layerBtn == null || view3dBtn == null) return;
+            int vis = st == null || st == 0 ? GONE : VISIBLE;
+            layerBtn.setVisibility(vis);
+            view3dBtn.setVisibility(vis);
+            if (st != null && st == 2) {
+                layerBtn.setImageResource(R.drawable.ic_s2_layer2d);
+                layerBtn.setImageTintList(ColorStateList.valueOf(0xFFFFB74D));
+                layerBtn.setSelected(true);
+            } else {
+                layerBtn.setImageResource(R.drawable.ic_s2_cube);
+                layerBtn.setImageTintList(ColorStateList.valueOf(0xFF4DD0E1));
+                layerBtn.setSelected(false);
+            }
+        });
     }
 
     private View gap(Context c, boolean vertical) {

@@ -33,9 +33,9 @@ public class ClickToMove3D extends Behavior {
 	public float tapSlop = 18;
 
 	@Header("Walk")
-	@Param(desc = "Walking speed.", unit = "m/s", min = 0, max = 50, step = 0.1)
+	@Param(desc = "Walking speed.", unit = "m/s", min = 0, max = 100000, step = 0.1)
 	public float speed = 3;
-	@Param(desc = "Turning speed.", unit = "deg/s", min = 30, max = 3000, step = 10)
+	@Param(desc = "Turning speed.", unit = "deg/s", min = 30, max = 100000, step = 10)
 	public float turnSpeed = 540;
 	@Param(desc = "Stops this close to the point.", unit = "m", min = 0.05, max = 10, step = 0.05)
 	public float stopDistance = 0.2f;

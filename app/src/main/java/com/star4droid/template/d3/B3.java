@@ -824,8 +824,6 @@ public final class B3 {
 
 	// ---------------------------------------------------------------- sound in space
 
-	private static final ObjectMap<String, Sound> SOUNDS = new ObjectMap<String, Sound>();
-
 	/** Plays a sound of the project (sounds folder) with a volume that fades with the distance to the camera. */
 	public static void playSoundAt(String sound, Object item, float maxDistance) {
 		World3D w = world();
@@ -850,22 +848,13 @@ public final class B3 {
 
 	/** New audio / GL context (see Assets3D.checkContext). */
 	static void forgetSounds() {
-		SOUNDS.clear();
+		Sounds3D.forget();
 	}
 
+	/** Cached in {@link Sounds3D}: stopped and freed when the 3D scene ends, paused with it. */
 	static Sound sound(String path) {
-		if (path == null || path.length() == 0) return null;
-		Sound s = SOUNDS.get(path);
-		if (s != null) return s;
-		FileHandle f = Assets3D.file(path, "sounds");
-		if (f == null) return null;
-		try {
-			s = Gdx.audio.newSound(f);
-			SOUNDS.put(path, s);
-		} catch (Throwable t) {
-			return null;
-		}
-		return s;
+		if (Sounds3D.isPaused()) return null;
+		return Sounds3D.get(path);
 	}
 
 	// ---------------------------------------------------------------- inventory

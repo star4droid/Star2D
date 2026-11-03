@@ -18,7 +18,7 @@ import com.star4droid.template.d3.World3D;
 		desc = "A bullet, arrow, fireball or thrown ball: flies forward (its -Z) with optional gravity, never tunnels through thin walls, hurts what it hits (Health 3D), shows an impact effect and disappears. Put it on the template that Shooter 3D or Spawner 3D copies.")
 public class Projectile3D extends Behavior {
 	@Header("Flight")
-	@Param(desc = "Speed along its front at start (Shooter 3D sets its own).", unit = "m/s", min = 0, max = 1000, step = 0.5)
+	@Param(desc = "Speed along its front at start (Shooter 3D sets its own).", unit = "m/s", min = 0, max = 100000, step = 0.5)
 	public float speed = 30;
 	@Param(desc = "How much gravity pulls it down (0 = straight, 1 = a thrown ball).", min = 0, max = 10, step = 0.05)
 	public float gravity = 0;

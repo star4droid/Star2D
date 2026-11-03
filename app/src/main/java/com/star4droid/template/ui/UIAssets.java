@@ -127,7 +127,13 @@ public final class UIAssets {
     public static synchronized Drawable image(String projectPath, String image) {
         check();
         FileHandle f = imageFile(projectPath, image);
-        if (f == null) return null;
+        if (f == null) {
+            // merged into a tileset page at export
+            if (com.star4droid.template.Utils.AtlasIndex.isEmpty() || image == null) return null;
+            String rel = clean(image.trim());
+            if (rel.startsWith("/")) rel = rel.substring(1);
+            return com.star4droid.template.Utils.AtlasIndex.drawable(clean(projectPath + "/images/" + rel));
+        }
         try {
             if (NinePatchLoader.is9(f)) return NinePatchLoader.drawable(f);
             String key = f.path() + ":" + f.lastModified() + ":" + f.length();

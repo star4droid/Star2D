@@ -21,7 +21,7 @@ public class Orbit3D extends Behavior {
 	public PlayerItem center;
 	@Param(desc = "Distance from the center (0 = the distance at start).", unit = "m", min = 0, max = 1000, step = 0.1)
 	public float radius = 0;
-	@Param(desc = "Turning speed (negative = the other way).", unit = "deg/s", min = -720, max = 720, step = 1)
+	@Param(desc = "Turning speed (negative = the other way).", unit = "deg/s", min = -100000, max = 100000, step = 1)
 	public float speed = 30;
 	@Param(desc = "Height above the center.", unit = "m", min = -1000, max = 1000, step = 0.1)
 	public float height = 0;

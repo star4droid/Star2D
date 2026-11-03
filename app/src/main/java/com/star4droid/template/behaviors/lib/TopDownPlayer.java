@@ -38,11 +38,11 @@ public class TopDownPlayer extends Behavior {
 	@Header("Movement")
 	@Param(desc = "ANY = smooth joystick directions, EIGHT = snaps to 8 directions, FOUR = up/down/left/right only.")
 	public Directions directions = Directions.ANY;
-	@Param(desc = "Top speed.", unit = "px/s", min = 0, max = 450)
+	@Param(desc = "Top speed.", unit = "px/s", min = 0, max = 100000)
 	public float speed = 200;
-	@Param(desc = "How fast it reaches full speed. 0 = instantly.", unit = "px/s2", min = 0, max = 20000, step = 50)
+	@Param(desc = "How fast it reaches full speed. 0 = instantly.", unit = "px/s2", min = 0, max = 100000, step = 50)
 	public float acceleration = 1500;
-	@Param(desc = "How fast it stops when nothing is pressed. 0 = instantly.", unit = "px/s2", min = 0, max = 20000, step = 50)
+	@Param(desc = "How fast it stops when nothing is pressed. 0 = instantly.", unit = "px/s2", min = 0, max = 100000, step = 50)
 	public float friction = 1500;
 
 	@Header("Facing")
@@ -50,7 +50,7 @@ public class TopDownPlayer extends Behavior {
 	public boolean rotateToDirection = false;
 	@Param(desc = "Angle of the image when it faces right (0 = right, 90 = up...).", unit = "deg", min = -360, max = 360)
 	public float faceOffset = 0;
-	@Param(desc = "How fast it turns. 0 = instantly.", unit = "deg/s", min = 0, max = 3600, step = 10)
+	@Param(desc = "How fast it turns. 0 = instantly.", unit = "deg/s", min = 0, max = 100000, step = 10)
 	public float turnSpeed = 0;
 	@Param(desc = "Mirror the image when moving left (for side views).")
 	public boolean flipToDirection = false;

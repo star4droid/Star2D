@@ -21,7 +21,7 @@ public class Floater3D extends Behavior {
 	public boolean randomStart = true;
 
 	@Header("Spin and sway")
-	@Param(desc = "Turning speed around Y (0 = none).", unit = "deg/s", min = -1440, max = 1440, step = 5)
+	@Param(desc = "Turning speed around Y (0 = none).", unit = "deg/s", min = -100000, max = 100000, step = 5)
 	public float spinSpeed = 60;
 	@Param(desc = "Gentle tilt back and forth (boats, leaves).", unit = "deg", min = 0, max = 45, step = 0.5)
 	public float sway = 0;

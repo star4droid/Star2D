@@ -21,7 +21,7 @@ public class JumpPad extends Behavior {
 	@Header("Launch")
 	@Param(desc = "Launch direction: 90 = up, 0 = right, 180 = left, 270 = down.", unit = "deg", min = -360, max = 360, step = 5)
 	public float angle = 90;
-	@Param(desc = "Launch speed.", unit = "px/s", min = 0, max = 450, step = 10)
+	@Param(desc = "Launch speed.", unit = "px/s", min = 0, max = 100000, step = 10)
 	public float power = 420;
 	@Param(desc = "On: adds to the current speed. Off: replaces it (the same jump every time).")
 	public boolean additive = false;

@@ -39,8 +39,11 @@ public class TilesetPacker {
         File images = new File(project, "images");
         ArrayList<File> files = new ArrayList<>();
         walk(images, files);
+        // pictures read straight from their file by other formats (Tiled maps, particles, bitmap fonts) stay files
+        java.util.HashSet<String> keep = referencedByFiles(project);
         ArrayList<Img> list = new ArrayList<>();
         for (File f : files) {
+            if (keep.contains(f.getName().toLowerCase(Locale.ROOT))) continue;
             String n = f.getName().toLowerCase(Locale.ROOT);
             if (n.endsWith(".9.png") || n.startsWith("_atlas_") || !(n.endsWith(".png") || n.endsWith(".jpg") || n.endsWith(".jpeg") || n.endsWith(".webp"))) continue;
             BitmapFactory.Options o = new BitmapFactory.Options();
@@ -59,8 +62,14 @@ public class TilesetPacker {
         HashMap<String, Img> seen = new HashMap<>();
         ArrayList<Img> unique = new ArrayList<>();
         for (Img im : list) {
-            im.bmp = BitmapFactory.decodeFile(new File(images, im.rel).getAbsolutePath());
+            BitmapFactory.Options full = new BitmapFactory.Options();
+            full.inScaled = false; // exact pixels: no density scaling
+            full.inPreferredConfig = Bitmap.Config.ARGB_8888;
+            im.bmp = BitmapFactory.decodeFile(new File(images, im.rel).getAbsolutePath(), full);
             if (im.bmp == null) { im.w = 0; continue; }
+            im.bmp.setDensity(Bitmap.DENSITY_NONE);
+            im.w = im.bmp.getWidth();
+            im.h = im.bmp.getHeight();
             int[] px = new int[im.w * im.h];
             im.bmp.getPixels(px, 0, im.w, 0, 0, im.w, im.h);
             im.hash = im.w + "x" + im.h + ":" + Arrays.hashCode(px);
@@ -90,9 +99,13 @@ public class TilesetPacker {
         }
         ArrayList<String> pageNames = new ArrayList<>();
         Paint paint = new Paint();
+        paint.setFilterBitmap(false);
+        paint.setXfermode(new android.graphics.PorterDuffXfermode(android.graphics.PorterDuff.Mode.SRC)); // copy alpha as is
         for (int p = 0; p < pages; p++) {
             Bitmap pg = Bitmap.createBitmap(pow2(usedW[p]), pow2(usedH[p]), Bitmap.Config.ARGB_8888);
+            pg.setDensity(Bitmap.DENSITY_NONE); // drawBitmap must not scale between densities
             Canvas cv = new Canvas(pg);
+            cv.setDensity(Bitmap.DENSITY_NONE);
             for (Img im : unique) if (im.page == p) {
                 cv.drawBitmap(im.bmp, im.x, im.y, paint);
                 // 1px edge copy: no bleeding between neighbours when drawn scaled / filtered
@@ -126,6 +139,27 @@ public class TilesetPacker {
         }
         if (log != null) log.on("Merged " + index.size() + " images into " + pages + " page(s)");
         return index.size();
+    }
+
+    /** Lower-case file names mentioned by .tmx / .tsx / .p / .particle / .fnt files anywhere in the project. */
+    private static java.util.HashSet<String> referencedByFiles(File project) {
+        java.util.HashSet<String> out = new java.util.HashSet<>();
+        ArrayList<File> all = new ArrayList<>();
+        walk(project, all);
+        java.util.regex.Pattern name = java.util.regex.Pattern.compile("([^\\s\"'<>=,;:/\\\\]+\\.(?:png|jpg|jpeg|webp))", java.util.regex.Pattern.CASE_INSENSITIVE);
+        for (File f : all) {
+            String n = f.getName().toLowerCase(Locale.ROOT);
+            if (!(n.endsWith(".tmx") || n.endsWith(".tsx") || n.endsWith(".p") || n.endsWith(".particle") || n.endsWith(".fnt"))) continue;
+            if (f.length() > 8 * 1024 * 1024) continue;
+            try {
+                String text = FileUtil.readFile(f.getAbsolutePath());
+                if (text == null) continue;
+                java.util.regex.Matcher m = name.matcher(text);
+                while (m.find()) out.add(m.group(1).toLowerCase(Locale.ROOT));
+            } catch (Throwable ignored) {
+            }
+        }
+        return out;
     }
 
     private static boolean same(Bitmap a, Bitmap b) {

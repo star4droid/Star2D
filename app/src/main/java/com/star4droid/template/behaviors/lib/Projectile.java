@@ -23,9 +23,9 @@ public class Projectile extends Behavior {
 	public float angle = 0;
 	@Param(desc = "Fly where the element points instead (rotate the element or its spawner to aim).")
 	public boolean useElementRotation = false;
-	@Param(unit = "px/s", min = 0, max = 5000)
+	@Param(unit = "px/s", min = 0, max = 100000)
 	public float speed = 500;
-	@Param(desc = "Speeds up (or slows down with a negative value) every second.", unit = "px/s2", min = -5000, max = 5000)
+	@Param(desc = "Speeds up (or slows down with a negative value) every second.", unit = "px/s2", min = -100000, max = 100000)
 	public float acceleration = 0;
 	@Param(desc = "Gravity bends the flight (grenades, arrows). The speed is then only the launch speed.")
 	public boolean gravity = false;
@@ -45,7 +45,7 @@ public class Projectile extends Behavior {
 	public float autoHealth = 0;
 	@Param(desc = "How many extra targets it can pass through before it stops.", min = 0, max = 100)
 	public int pierce = 0;
-	@Param(desc = "Push the hit target along the flight, in px/s.", unit = "px/s", min = 0, max = 3000)
+	@Param(desc = "Push the hit target along the flight, in px/s.", unit = "px/s", min = 0, max = 100000)
 	public float knockback = 0;
 	@Sound
 	@Param(desc = "Played when it hits a target.")

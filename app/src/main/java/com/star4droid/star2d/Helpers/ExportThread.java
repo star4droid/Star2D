@@ -132,7 +132,8 @@ public class ExportThread extends Thread {
 			SignUtil.sign(context,dataDir+"/export.apk",dataDir+"/export.sign.apk");
 			onProgress("Moving to the selected path...");
 			//UriUtils.deleteUri(context,export_path);
-			UriUtils.copyUriToUri(context,Uri.fromFile(new java.io.File(dataDir+"/export.sign.apk")),export_path);
+			// an existing file chosen to overwrite is emptied first and cut to the new size (no broken APK)
+			UriUtils.copyUriToUriChecked(context,Uri.fromFile(new java.io.File(dataDir+"/export.sign.apk")),export_path);
 			//FileUtil.deleteFile(dataDir+"/export.apk");
 			FileUtil.deleteFile(dataDir+"/export.sign.apk");
 			onSuccess("Done \n path : "+FileUtil.convertUriToFilePath(context,export_path));

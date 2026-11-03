@@ -10,8 +10,11 @@ The editor generates and compiles the Java on the first Play (no java/ or dex/ f
 
 Assets come from ASSETS3D (default /home/claude/assets3d, license-checked, see its CREDITS.md). Kenney car models face +Z while the
 engine's vehicles (Car3D, EndlessRoad3D traffic) drive along local -Z, so the car GLBs are re-packed with a 180 degree turn baked into
-their root nodes (geometry untouched); the endless road tile is turned 90 degrees (runs along Z) and the door 90 degrees (panel along X,
-hinge at min X, what Door3D HINGE expects).
+their root nodes (geometry untouched; front = -Z, Object3D.forward(), what Car3D / Traffic3D / EndlessRoad3D drive along); the endless
+road tile is turned 90 degrees (lane lines along Z) and saved as road-straight-z.glb (models are cached by file name for the whole app
+session, so a turned copy must never share the name of an original another example ships), the door 90 degrees (panel along X, hinge
+at min X, what Door3D HINGE expects). Static scenery is put in groups (Scene.grp: EMPTY parents, 2D GROUP for the HUD); moving
+elements (cars, doors, pickups, floating things, the flashlight) stay at the root because a 3D child is carried by its parent.
 
 Validation (no phone): every element has all default keys of its type, unique Java names, behavior parameters exist in the behavior
 class (@Param fields) with values of the right type, element references resolve to elements of the right type, every model / sound /
@@ -35,7 +38,7 @@ MAX_BYTES = int(2.5 * 1024 * 1024)
 # ====================================================================== element defaults
 
 TYPE_FILE = {"OBJ3D": "obj3d", "LIGHT3D": "light3d", "CAMERA3D": "camera3d", "CAMERAVIEW": "cameraview", "BOX": "box", "TEXT": "text",
-             "JOYSTICK": "joystick", "PROGRESS": "progress", "UIHOLDER": "uiholder"}
+             "JOYSTICK": "joystick", "PROGRESS": "progress", "UIHOLDER": "uiholder", "GROUP": "group"}
 
 
 def defaults(tp):
@@ -58,9 +61,56 @@ def num(v):
 
 
 class Scene:
+    """Elements of one scene. Groups: `with sc.grp("Trees"):` makes an empty parent (3D: OBJ3D Mesh EMPTY, 2D: a UI GROUP) and every
+    element added inside gets "parent" = that name (absolute positions, like the editor stores them). Groups come first in the list
+    (a parent exists before its children) and are moved to the middle of their children by finish()."""
+
     def __init__(self):
         self.els = []
         self.names = set()
+        self.group = None
+        self.ngroups = 0
+
+    class _Grp:
+        def __init__(self, sc, name):
+            self.sc, self.name = sc, name
+
+        def __enter__(self):
+            self.prev, self.sc.group = self.sc.group, self.name
+            return self
+
+        def __exit__(self, *a):
+            self.sc.group = self.prev
+
+    def grp(self, name, ui=False):
+        """A group (empty parent). Only for things that never move: a 3D child is carried by its parent every frame."""
+        if name not in self.names:
+            if ui:
+                e = self.add("GROUP", name, x=0, y=0, width=100, height=100, z=100)
+            else:
+                e = self.add("OBJ3D", name, Mesh="EMPTY", Static_Object=True, Cast_Shadows=False, Receive_Shadows=False)
+            e["parent"] = self.group or ""
+            self.els.remove(e)
+            self.els.insert(self.ngroups, e)
+            self.ngroups += 1
+        return Scene._Grp(self, name)
+
+    def finish(self):
+        """Puts every group in the middle of its children (3D: center of the positions, 2D: the box around them)."""
+        for g in self.els[:self.ngroups][::-1]:
+            kids = [e for e in self.els if e.get("parent") == g["name"]]
+            if not kids:
+                continue
+            if g["TYPE"] == "GROUP":
+                x0 = min(float(e["x"]) for e in kids)
+                y0 = min(float(e["y"]) for e in kids)
+                x1 = max(float(e["x"]) + float(e.get("width", 0)) for e in kids)
+                y1 = max(float(e["y"]) + float(e.get("height", 0)) for e in kids)
+                g.update(x=num(x0), y=num(y0), width=num(x1 - x0), height=num(y1 - y0))
+            else:
+                for k in ("x", "y", "z"):
+                    vals = [float(e[k]) for e in kids]
+                    g[k] = num(round(min(vals) if k == "y" else (min(vals) + max(vals)) / 2, 2))
 
     def add(self, tp, name, behaviors=None, **props):
         """props use the property names with '_' for spaces (Rotation_Y) or a dict in props['P'] with the real keys."""
@@ -70,8 +120,10 @@ class Scene:
         e = defaults(tp)
         e["name"] = name
         e["Script"] = name
-        if tp in ("BOX", "TEXT", "JOYSTICK", "PROGRESS", "UIHOLDER", "CAMERAVIEW"):
+        if tp in ("BOX", "TEXT", "JOYSTICK", "PROGRESS", "UIHOLDER", "CAMERAVIEW", "GROUP"):
             e["type"] = "UI"
+        if self.group:
+            e["parent"] = self.group
         real = props.pop("P", {})
         for k, v in props.items():
             real[k.replace("_", " ")] = v
@@ -502,6 +554,7 @@ def scene_config(settings):
 
 
 def write_project(folder, scene, settings, descs, credits):
+    scene.finish()
     proj = os.path.join(EXAMPLES, folder)
     os.makedirs(os.path.join(proj, "configs"), exist_ok=True)
     os.makedirs(os.path.join(proj, "scenes"), exist_ok=True)
@@ -588,14 +641,16 @@ def build_city():
     # ---- ground and roads: a 7 x 7 grid of 8 m cells, roads on rows / columns 0, 3, 6 (a ring and a cross), stubs leaving the town
     # the grass is drawn a little below the road tiles (no z-fighting: the roads never look sunk) and an invisible
     # collider keeps the driving surface at y = 0
-    sc.shape("ground", "PLANE", 0, -0.06, 0, 140, 1, 140, "#6E9E48", Receive_Shadows=True, Cast_Shadows=False)
-    sc.wall("groundCollider", 0, -0.5, 0, 140, 1, 140)
+    with sc.grp("Ground"):
+        sc.shape("ground", "PLANE", 0, -0.06, 0, 140, 1, 140, "#6E9E48", Receive_Shadows=True, Cast_Shadows=False)
+        sc.wall("groundCollider", 0, -0.5, 0, 140, 1, 140)
 
     def cell(i, j):
         return (i - 3) * T, (j - 3) * T
 
     road = lambda i, j: 0 <= i <= 6 and 0 <= j <= 6 and (i in (0, 3, 6) or j in (0, 3, 6))
     n = 0
+    sc.grp("Roads").__enter__()
     for i in range(7):
         for j in range(7):
             if not road(i, j):
@@ -615,11 +670,13 @@ def build_city():
             sc.model("road%d" % n, m + ".glb", x, 0.0, z, (T, 1, T), ry=r, Cast_Shadows=False)
     for k, (x, z, r) in enumerate([(0, -32, 90), (0, -40, 90), (0, 32, 90), (0, 40, 90), (-32, 0, 0), (-40, 0, 0), (32, 0, 0), (40, 0, 0)]):
         sc.model("stub%d" % (k + 1), "road-straight.glb", x, 0.0, z, (T, 1, T), ry=r, Cast_Shadows=False)
+    sc.group = None
 
     # ---- buildings: 4 blocks of 2 x 2 cells, each building faces the row road next to it
     kinds = [("building-a.glb", 7.0), ("building-skyscraper-a.glb", 5.4), ("building-c.glb", 7.0), ("building-type-a.glb", 5.6),
              ("building-type-c.glb", 5.6), ("building-a.glb", 7.0), ("building-c.glb", 7.0), ("building-skyscraper-a.glb", 5.4)]
     k = 0
+    sc.grp("Buildings").__enter__()
     for bi in (1, 4):
         for bj in (1, 4):
             for di in (0, 1):
@@ -630,24 +687,29 @@ def build_city():
                     m, s = kinds[k % len(kinds)]
                     k += 1
                     sc.model("building%d" % k, m, x, 0, z, s, ry=180 if face_neg_z else 0, body="STATIC", collider="BOX")
+    sc.group = None
     # ---- street lamps along the cross (arms over the road), trees outside the ring
     for k, (x, z, r) in enumerate([(3.6, -20, 90), (3.6, -12, 90), (3.6, 12, 90), (3.6, 20, 90), (-20, 3.6, 0), (-12, 3.6, 0), (12, 3.6, 0), (20, 3.6, 0)]):
-        sc.model("lamp%d" % (k + 1), "light-square.glb", x, 0, z, 8, ry=r)
+        with sc.grp("StreetLamps"):
+            sc.model("lamp%d" % (k + 1), "light-square.glb", x, 0, z, 8, ry=r, Cast_Shadows=False, Draw_Distance=90)
     trees = [(-36, -36), (-36, -20), (-36, -10), (-36, 12), (-36, 24), (-36, 36), (36, -36), (36, -22), (36, -10), (36, 10), (36, 22), (36, 36),
              (-22, -36), (-10, -36), (12, -36), (24, -36), (-22, 36), (-10, 36), (12, 36), (24, 36), (-7.5, -40), (7.5, 40)]
     for k, (x, z) in enumerate(trees):
-        sc.model("tree%d" % (k + 1), "tree-large.glb", x, 0, z, 7 + (k % 3) * 0.8, ry=(k * 47) % 360, body="STATIC", collider="CYLINDER",
-                 Collider_Scale_X=0.25, Collider_Scale_Z=0.25)
+        with sc.grp("Trees"):
+            sc.model("tree%d" % (k + 1), "tree-large.glb", x, 0, z, 7 + (k % 3) * 0.8, ry=(k * 47) % 360, body="STATIC", collider="CYLINDER",
+                     Collider_Scale_X=0.25, Collider_Scale_Z=0.25)
     # invisible borders
     for k, (x, z, sx, sz) in enumerate([(0, -46, 92, 1), (0, 46, 92, 1), (-46, 0, 1, 92), (46, 0, 1, 92)]):
-        sc.wall("border%d" % (k + 1), x, 2, z, sx, 4, sz)
+        with sc.grp("Borders"):
+            sc.wall("border%d" % (k + 1), x, 2, z, sx, 4, sz)
 
     # ---- traffic: 4 cars loop around the ring in the right-hand lane (outer lane, 1.6 m from the middle)
     L = 25.6
     pts = [(-L, -12), (-L, 12), (-24, 24), (-12, L), (12, L), (24, 24), (L, 12), (L, -12), (24, -24), (12, -L), (-12, -L), (-24, -24)]
     wps = []
     for k, (x, z) in enumerate(pts):
-        sc.add("OBJ3D", "wp%d" % (k + 1), Mesh="EMPTY", x=x, y=0, z=z, Static_Object=True, Cast_Shadows=False)
+        with sc.grp("Waypoints"):
+            sc.add("OBJ3D", "wp%d" % (k + 1), Mesh="EMPTY", x=x, y=0, z=z, Static_Object=True, Cast_Shadows=False)
         wps.append("wp%d" % (k + 1))
     for name, m, x, z, r in [("taxi", "taxi.glb", -L, 0, 180), ("police", "police.glb", 0, L, 270), ("van", "van.glb", L, 0, 0), ("truck", "truck.glb", 0, -L, 90)]:
         sc.model(name, m, x, 0, z, 1.2, ry=r, static=False, body="KINEMATIC", collider="BOX",
@@ -666,6 +728,7 @@ def build_city():
            Follow_Height=0, Follow_Smooth=8)
 
     # ---- 2D layer (1280 x 720)
+    sc.grp("HUD", ui=True).__enter__()
     sc.add("CAMERAVIEW", "minimap", x=1010, y=500, width=250, height=190, Camera="mapCam", Resolution=0.5, Refresh_Rate=15, Border_Color="#FFFFFF",
            Border_Width=3, Corner_Radius=14, z=100)
     sc.text("speedText", 24, 646, 280, 56, "0 km/h", scale=1.6)
@@ -677,6 +740,7 @@ def build_city():
     sc.add("JOYSTICK", "joy", x=50, y=36, width=250, height=250, Pad_Image="/joy_pad.png", Button_Image="/joy_knob.png", z=120, Visible=False)
     sc.button("brakeBtn", 930, 36, 130, 170, "pedal_brake.png")
     sc.button("gasBtn", 1090, 36, 150, 220, "pedal_gas.png")
+    sc.group = None
 
     # ---- events
     write_variables(proj, [("useJoystick", "boolean", "false")])
@@ -748,10 +812,17 @@ def yaw_to(dx, dz):
 def place(sc, proj, name, model, scale, cx, y, cz, ry=0.0, **kw):
     """Puts a model so the center of its footprint is at (cx, cz) and its bottom at y (whatever its origin)."""
     lo, hi = glb_bounds(os.path.join(proj, "models", model))
-    mx, mz = (lo[0] + hi[0]) / 2 * scale, (lo[2] + hi[2]) / 2 * scale
+    sx, sy, sz = scale if isinstance(scale, (tuple, list)) else (scale, scale, scale)
+    mx, mz = (lo[0] + hi[0]) / 2 * sx, (lo[2] + hi[2]) / 2 * sz
     a = math.radians(ry)
     ox, oz = mx * math.cos(a) + mz * math.sin(a), -mx * math.sin(a) + mz * math.cos(a)
-    return sc.model(name, model, round(cx - ox, 4), round(y - lo[1] * scale, 4), round(cz - oz, 4), scale, ry=ry, **kw)
+    return sc.model(name, model, round(cx - ox, 4), round(y - lo[1] * sy, 4), round(cz - oz, 4), scale, ry=ry, **kw)
+
+
+def top_of(proj, model, scale):
+    """Height of a model (its bottom on 0) at this scale: where to put things on it."""
+    lo, hi = glb_bounds(os.path.join(proj, "models", model))
+    return (hi[1] - lo[1]) * (scale[1] if isinstance(scale, (tuple, list)) else scale)
 
 
 # ====================================================================== 2. HorrorHouse3D
@@ -769,6 +840,10 @@ def build_horror():
               "sideTableDrawers", "lampRoundTable", "candle", "lantern-candle", "key", "flashlight"]:
         copy_asset(proj, "models", "horror/%s.glb" % f)
         files.append(("models/%s.glb" % f, "see packs above"))
+    for f in ["pine", "pine-crooked", "trunk", "trunk-long", "iron-fence", "gravestone-cross", "gravestone-round", "gravestone-broken",
+              "gravestone-bevel", "grave", "rocks", "pumpkin-carved", "debris-wood", "cross-wood"]:
+        copy_asset(proj, "models", "horror/%s.glb" % f)
+        files.append(("models/%s.glb" % f, "Kenney Graveyard Kit"))
     copy_asset(proj, "models", "horror/door-rotate-square-a.glb", turn=90)
     files.append(("models/door-rotate-square-a.glb", "Kenney Building Kit (turned 90 degrees: panel along X)"))
     for f in ["door_open_creak", "door_close", "door_locked_rattle", "door_unlock", "key_pickup", "footstep_1", "footstep_2", "footstep_3",
@@ -779,95 +854,225 @@ def build_horror():
     files.append(("sounds/ui_click.ogg", "Kenney Interface Sounds"))
     ui_images(proj, ["btn_use.png", "btn_flash.png", "btn_run.png", "btn_gear.png", "joystick"])
 
-    # ---- outside
-    sc.shape("ground", "PLANE", 0, 0, 0, 90, 1, 90, "#2F3B2C", body="STATIC", Cast_Shadows=False)
-    sc.shape("path", "CUBE", -1, 0.01, 10, 1.6, 0.02, 12, "#4E463E", Cast_Shadows=False)
-    sc.shape("porch", "CUBE", -1, 0.05, 4.1, 3.0, 0.1, 2.0, "#4A4038", body="STATIC")
-    for k, (x, z, s, r) in enumerate([(-9, -3, 1.0, 0), (7.5, -8, 1.2, 40), (9.5, 5, 0.9, 120), (-10, 9, 1.1, 200), (-5, -12, 1.0, 300), (11, -1, 0.8, 75)]):
-        sc.shape("trunk%d" % (k + 1), "CYLINDER", x, 2.2 * s, z, 0.35 * s, 4.4 * s, 0.35 * s, "#2A211B", body="STATIC")
-        a = math.radians(r)
-        sc.shape("branch%da" % (k + 1), "CYLINDER", x + 0.55 * s * math.cos(a), 3.5 * s, z - 0.55 * s * math.sin(a), 0.14 * s, 2.0 * s, 0.14 * s, "#2A211B",
-                 ry=r, rz=-38)
-        sc.shape("branch%db" % (k + 1), "CYLINDER", x - 0.45 * s * math.cos(a), 2.9 * s, z + 0.45 * s * math.sin(a), 0.12 * s, 1.6 * s, 0.12 * s, "#2A211B",
-                 ry=r, rz=42)
-    for k, (x, z, t) in enumerate([(6.5, 8.5, 6), (7.6, 9.6, -8), (8.8, 8.2, 3), (6.2, 11, -4)]):
-        sc.shape("grave%d" % (k + 1), "CUBE", x, 0.42, z, 0.6, 0.9, 0.14, "#6A6B70", ry=-20 + k * 7, rz=t, body="STATIC")
-    for k, (x, z, s) in enumerate([(-6, 12, 1.0), (4, -10, 1.4), (-12, -6, 1.2), (12, 12, 0.9)]):
-        sc.shape("rock%d" % (k + 1), "SPHERE", x, 0.2 * s, z, 1.2 * s, 0.6 * s, 1.0 * s, "#4A4A50", body="STATIC")
-    for k, (x, z, sx, sz) in enumerate([(0, -24, 50, 1), (0, 24, 50, 1), (-24, 0, 1, 50), (24, 0, 1, 50)]):
-        sc.wall("border%d" % (k + 1), x, 2, z, sx, 4, sz)
+    # ------------------------------------------------------------------ layout (meters)
+    # house: x -5..5, z -4..4 (front = +Z), stone foundation 0..0.3, ground floor walls 0.3..2.7, upper floor slab top 2.8,
+    # upper walls 2.8..5.2, ceiling 5.2..5.35, gabled roof above. Yard x -12..12, z -12..16 (iron fence, gate at x=0, z=16),
+    # a dirt road outside the gate (z 17.5..21.5) where the player starts.
+    Y0, Y1, Y2 = 0.3, 2.8, 5.2
+    WALL_C, WOOD, DARK, STONE = "#B4ADA5", "#5A4030", "#3A2A1E", "#55524D"
+    NO_SHADOW = dict(Cast_Shadows=False)
+    ground_y = 0.0
 
-    # ---- the house: 8 x 6 m, two floors of 2.4 m (Kenney building kit walls, 2 m segments)
+    # ------------------------------------------------------------------ outside ground
+    with sc.grp("Ground"):
+        sc.shape("ground", "PLANE", 0, ground_y, 0, 140, 1, 140, "#26331F", body="STATIC", Cast_Shadows=False)
+        sc.shape("yardGrass", "PLANE", 0, 0.008, 2, 24, 1, 28, "#363D27", Cast_Shadows=False)
+        sc.shape("road", "CUBE", 0, 0, 19.5, 60, 0.03, 4, "#4A4038", Cast_Shadows=False)
+        sc.shape("path", "CUBE", 0, 0, 11.6, 1.6, 0.03, 11.2, "#5C4B3A", Cast_Shadows=False)
+
+    # ------------------------------------------------------------------ fence with a gate (visual segments + 5 long colliders)
+    with sc.grp("Fence"):
+        fence = dict(Cast_Shadows=False, Draw_Distance=60)
+        k = [0]
+
+        def run(x0, z0, x1, z1):
+            ln = math.hypot(x1 - x0, z1 - z0)
+            n = int(math.ceil(ln / 3.2 - 1e-6))
+            ry = 0 if abs(z1 - z0) < 1e-6 else 90
+            for i in range(n):
+                t = (i + 0.5) / n
+                k[0] += 1
+                place(sc, proj, "fence%d" % k[0], "iron-fence.glb", (ln / n, 2.0, 2.0), x0 + (x1 - x0) * t, ground_y, z0 + (z1 - z0) * t, ry=ry,
+                      Color="#7C8890", **fence)
+
+        run(-12, -12, 12, -12)
+        run(-12, -12, -12, 16)
+        run(12, -12, 12, 16)
+        run(-12, 16, -1.9, 16)
+        run(1.9, 16, 12, 16)
+        for side in (-1, 1):
+            sc.shape("gatePillar%s" % ("L" if side < 0 else "R"), "CUBE", side * 1.65, 1.1, 16, 0.5, 2.2, 0.5, STONE, body="STATIC", Cast_Shadows=False)
+        place(sc, proj, "gateLanternL", "lantern-candle.glb", 1.4, -1.65, 2.2, 16, Draw_Distance=60, **NO_SHADOW)
+        place(sc, proj, "gateLanternR", "lantern-candle.glb", 1.4, 1.65, 2.2, 16, Draw_Distance=60, **NO_SHADOW)
+
+    with sc.grp("Borders"):
+        for n, (x, z, sx, sz) in enumerate([(0, -12, 24.4, 0.3), (-12, 2, 0.3, 28.4), (12, 2, 0.3, 28.4), (-7.6, 16, 12.0, 0.3), (7.6, 16, 12.0, 0.3),
+                                            (0, 22.6, 27.4, 0.3), (-13.6, 19.3, 0.3, 6.9), (13.6, 19.3, 0.3, 6.9)]):
+            sc.wall("border%d" % (n + 1), x, 1.2, z, sx, 2.4, sz)
+
+    # ------------------------------------------------------------------ trees: a forest ring outside (out of reach), a few in the yard
+    with sc.grp("Trees"):
+        ring = [(-16, -16), (-6, -17.5), (5, -17), (15, -15.5), (-17.5, -5), (-16.5, 6), (-16, 15), (17, -4), (16.5, 6.5), (16, 15.5),
+                (-17, 26), (-6, 26.5), (6, 26), (17, 25.5)]
+        for n, (x, z) in enumerate(ring):
+            m = "pine-crooked.glb" if n % 3 == 1 else "pine.glb"
+            place(sc, proj, "tree%d" % (n + 1), m, 3.2 + (n * 37 % 11) / 10.0, x, ground_y, z, ry=(n * 53) % 360, Color="#7A8C70")
+        for n, (x, z, s) in enumerate([(-9.2, 9.5, 3.4), (9.4, 11.2, 3.0), (9.0, -8.6, 3.6)]):
+            place(sc, proj, "yardTree%d" % (n + 1), "pine-crooked.glb", s, x, ground_y, z, ry=n * 70, Color="#7A8C70", body="STATIC",
+                  collider="CYLINDER", Collider_Scale_X=0.22, Collider_Scale_Z=0.22)
+        for n, (x, z, r) in enumerate([(-8.6, 3.2, 20), (8.8, 2.0, 150)]):
+            place(sc, proj, "deadTree%d" % (n + 1), "trunk-long.glb", 2.6, x, ground_y, z, ry=r, Color="#76655A", body="STATIC", collider="CYLINDER")
+
+    # ------------------------------------------------------------------ the small graveyard behind the house (left) and props
+    with sc.grp("Graveyard"):
+        stones = [("gravestone-cross.glb", -10.2, -6.4), ("gravestone-round.glb", -8.7, -6.2), ("gravestone-bevel.glb", -7.2, -6.5),
+                  ("gravestone-broken.glb", -10.0, -9.4), ("gravestone-cross.glb", -8.5, -9.6), ("gravestone-round.glb", -6.9, -9.3)]
+        for n, (m, x, z) in enumerate(stones):
+            place(sc, proj, "gravestone%d" % (n + 1), m, 1.5, x, ground_y, z, ry=(n * 7) % 12 - 6, body="STATIC", collider="BOX",
+                  Draw_Distance=45, **NO_SHADOW)
+            if n in (0, 1, 3, 4):
+                place(sc, proj, "grave%d" % (n + 1), "grave.glb", 1.4, x, ground_y, z + 1.05, Color="#6E5C4C", Draw_Distance=40, **NO_SHADOW)
+        place(sc, proj, "woodCross", "cross-wood.glb", 1.6, -5.6, ground_y, -7.6, ry=-15, Draw_Distance=45, **NO_SHADOW)
+        place(sc, proj, "stump", "trunk.glb", 1.7, -5.8, ground_y, -10.6, Color="#76655A", body="STATIC", collider="CYLINDER", **NO_SHADOW)
+        stump_top = top_of(proj, "trunk.glb", 1.7)
+        place(sc, proj, "keyLantern", "lantern-candle.glb", 1.2, -5.0, ground_y, -10.0, Draw_Distance=50, **NO_SHADOW)
+        for n, (x, z, s, r) in enumerate([(-10.8, -11.0, 1.4, 0), (10.6, -10.9, 1.8, 60), (-11, 13.5, 1.5, 130), (10.8, 14.2, 1.3, 200)]):
+            place(sc, proj, "rocks%d" % (n + 1), "rocks.glb", s, x, ground_y, z, ry=r, Draw_Distance=45, **NO_SHADOW)
+        for n, (x, z, r) in enumerate([(-1.6, 5.4, 20), (1.6, 6.3, -30), (-2.4, 15.2, 10)]):
+            place(sc, proj, "pumpkin%d" % (n + 1), "pumpkin-carved.glb", 1.3, x, Y0 if n < 1 else ground_y, z, ry=r, Emissive="#6A3300",
+                  Emissive_Intensity=0.8, Draw_Distance=35, **NO_SHADOW)
+        # two crates by the gate, the flashlight lies on the top one
+        sc.shape("crate1", "CUBE", 2.7, 0.3, 14.4, 0.6, 0.6, 0.6, "#6B5236", ry=12, body="STATIC", Draw_Distance=45, **NO_SHADOW)
+        sc.shape("crate2", "CUBE", 3.35, 0.25, 14.6, 0.5, 0.5, 0.5, "#5E4730", ry=-8, body="STATIC", Draw_Distance=45, **NO_SHADOW)
+
+    # ------------------------------------------------------------------ the house shell (foundation, floors, roof, porch)
+    with sc.grp("House"):
+        sc.shape("foundation", "CUBE", 0, Y0 / 2, 0, 10.4, Y0, 8.4, STONE, body="STATIC", Cast_Shadows=False)
+        sc.shape("floorBoards", "CUBE", 0, Y0 + 0.01, 0, 9.9, 0.02, 7.9, "#4B3626", Cast_Shadows=False)
+        # upper floor, open above the stairs (x 3.6..5, z -1.5..2)
+        for n, (x0, x1, z0, z1) in enumerate([(-5.05, 3.6, -4.05, 4.05), (3.6, 5.05, -4.05, -1.5), (3.6, 5.05, 2.0, 4.05)]):
+            sc.shape("upperFloor%d" % (n + 1), "CUBE", (x0 + x1) / 2, Y1 - 0.075, (z0 + z1) / 2, x1 - x0, 0.15, z1 - z0, "#56402F", body="STATIC",
+                     Cast_Shadows=False)
+        sc.shape("ceiling", "CUBE", 0, Y2 + 0.075, 0, 10.3, 0.15, 8.3, "#2E2A2A", Cast_Shadows=False)
+        # gabled roof: two ramps back to back (ridge along X, gables at the sides) and a chimney
+        sc.shape("roofFront", "RAMP", 0, Y2 + 0.15 + 1.1, 2.25, 10.8, 2.2, 4.5, "#2A2326")
+        sc.shape("roofBack", "RAMP", 0, Y2 + 0.15 + 1.1, -2.25, 10.8, 2.2, 4.5, "#2A2326", ry=180)
+        sc.shape("chimney", "CUBE", -3.0, Y2 + 1.3, -1.6, 0.7, 2.4, 0.7, "#5B3A2E")
+        for n, (x, z) in enumerate([(-5, -4), (5, -4), (-5, 4), (5, 4)]):
+            sc.shape("cornerPost%d" % (n + 1), "CUBE", x, (Y0 + Y2) / 2, z, 0.26, Y2 - Y0, 0.26, DARK, Cast_Shadows=False)
+        # porch: deck, step, two posts, a little roof
+        sc.shape("porch", "CUBE", 0, Y0 / 2, 5.0, 4.0, Y0, 1.6, "#4A3A2C", body="STATIC", Cast_Shadows=False)
+        sc.shape("porchStep", "CUBE", 0, 0.075, 6.0, 2.0, 0.15, 0.4, "#4A3A2C", body="STATIC", Cast_Shadows=False)
+        for side in (-1, 1):
+            sc.shape("porchPost%s" % ("L" if side < 0 else "R"), "CUBE", side * 1.85, Y0 + 1.2, 5.65, 0.14, 2.4, 0.14, DARK, body="STATIC",
+                     Cast_Shadows=False)
+        sc.shape("porchRoof", "CUBE", 0, Y0 + 2.46, 5.0, 4.4, 0.12, 1.9, "#2A2326")
+        place(sc, proj, "porchLantern", "lantern-candle.glb", 1.2, 1.25, Y0, 4.55, Draw_Distance=50, **NO_SHADOW)
+        # boarded-up windows (two crossed planks outside)
+        for n, (x, z, along) in enumerate([(-4, 4.13, "x"), (-5.13, -3, "z"), (2, -4.13, "x")]):
+            for j, t in enumerate((32, -32)):
+                if along == "x":
+                    sc.shape("board%d%s" % (n + 1, "ab"[j]), "CUBE", x, Y0 + 1.3, z, 1.15, 0.13, 0.03, "#6E5640", rz=t, Draw_Distance=50, **NO_SHADOW)
+                else:
+                    sc.shape("board%d%s" % (n + 1, "ab"[j]), "CUBE", x, Y0 + 1.3, z, 0.03, 0.13, 1.15, "#6E5640", rx=t, Draw_Distance=50, **NO_SHADOW)
+
+    # ------------------------------------------------------------------ walls (Kenney building kit: 2 m segments, 2.4 m high)
+    # W plain, N window, D doorway. Every wall has a STATIC BOX collider; a doorway gets two invisible jambs instead (the opening stays free).
     WALLS = {"W": "wall.glb", "N": "wall-window-square.glb", "D": "wall-doorway-square.glb"}
 
-    def segs(prefix, y, line):
-        for k, (kind, along, x, z) in enumerate(line):
-            sc.model("%s%d" % (prefix, k + 1), WALLS[kind], x, y, z, (1, 1, 1.05), ry=90 if along == "x" else 0, body="STATIC",
-                     collider="MESH" if kind == "D" else "BOX", Color="#B4ADA5")
+    def walls(prefix, y, line, outside):
+        sy = (Y1 - Y0) / 2.4 if y == Y0 else 1.0  # ground floor walls reach the upper floor (no slit under the slab)
+        for n, (kind, along, c, d) in enumerate(line):
+            x, z = (c, d) if along == "x" else (d, c)
+            name = "%s%d" % (prefix, n + 1)
+            extra = {} if outside else dict(Cast_Shadows=False)
+            if kind == "D":
+                sc.model(name, WALLS[kind], x, y, z, (1, sy, 1.02), ry=90 if along == "x" else 0, Color=WALL_C, **extra)
+                for j, off in enumerate((-0.725, 0.725)):
+                    jx, jz = (x + off, z) if along == "x" else (x, z + off)
+                    sx, sz = (0.55, 0.2) if along == "x" else (0.2, 0.55)
+                    sc.wall("%sJamb%s" % (name, "LR"[j]), jx, y + 1.2, jz, sx, 2.4, sz)
+            else:
+                sc.model(name, WALLS[kind], x, y, z, (1, sy, 1.02), ry=90 if along == "x" else 0, body="STATIC", collider="BOX", Color=WALL_C, **extra)
 
-    ground_line = [("N", "x", -3, 3), ("D", "x", -1, 3), ("N", "x", 1, 3), ("W", "x", 3, 3),
-                   ("W", "x", -3, -3), ("N", "x", -1, -3), ("W", "x", 1, -3), ("W", "x", 3, -3),
-                   ("N", "z", -4, -2), ("W", "z", -4, 0), ("N", "z", -4, 2), ("W", "z", 4, -2), ("N", "z", 4, 0), ("W", "z", 4, 2),
-                   ("W", "z", 0, -2), ("D", "z", 0, 0), ("W", "z", 0, 2)]
-    upper_line = [("N", "x", -3, 3), ("N", "x", -1, 3), ("N", "x", 1, 3), ("W", "x", 3, 3),
-                  ("N", "x", -3, -3), ("W", "x", -1, -3), ("W", "x", 1, -3), ("W", "x", 3, -3),
-                  ("N", "z", -4, -2), ("W", "z", -4, 0), ("N", "z", -4, 2), ("W", "z", 4, -2), ("N", "z", 4, 0), ("W", "z", 4, 2),
-                  ("D", "z", 0, -2), ("W", "z", 0, 0), ("W", "z", 0, 2)]
-    segs("wallA", 0, ground_line)
-    segs("wallB", 2.4, upper_line)
-    sc.shape("floor1", "CUBE", 0, 0.05, 0, 8.1, 0.1, 6.1, "#4B3626", body="STATIC")
-    # upper floor with the stair hole (x 2.35..4, z -2..3), its rail, the roof
-    sc.shape("floor2a", "CUBE", -0.825, 2.45, 0, 6.35, 0.1, 6.1, "#56402F", body="STATIC")
-    sc.shape("floor2b", "CUBE", 3.175, 2.45, -2.5, 1.65, 0.1, 1.0, "#56402F", body="STATIC")
-    sc.shape("stairRail", "CUBE", 2.35, 3.0, 0.5, 0.08, 1.0, 4.9, "#3A2A1E", body="STATIC")
-    sc.shape("roof", "CUBE", 0, 4.9, 0, 8.5, 0.2, 6.5, "#262022", body="STATIC")
-    # stairs: the model (rising toward +Z, turned to rise toward the back) is only drawn; an invisible RAMP (high side at -Z) under it is
-    # what the player walks on (smooth, no step bumps)
-    sc.model("stairs", "stairs-closed.glb", 3.0, 0, -0.5, 1, ry=180, Color="#A89C90")
-    sc.shape("stairRamp", "RAMP", 3.0, 1.25, -0.25, 1.3, 2.5, 3.5, ry=0, body="STATIC", Visible=False, Cast_Shadows=False)
+    def side(kinds, along, fixed, centers):
+        return [(k, along, c, fixed) for k, c in zip(kinds, centers)]
 
-    # ---- doors (Door3D hinge doors with KINEMATIC colliders; the front one needs the key)
+    XS, ZS = (-4, -2, 0, 2, 4), (-3, -1, 1, 3)
+    with sc.grp("House_Walls"):
+        walls("wallG", Y0, side("NNDNW", "x", 4, XS) + side("WNWNW", "x", -4, XS) + side("NWNW", "z", -5, ZS) + side("WWWN", "z", 5, ZS), True)
+        walls("wallU", Y1, side("NNNNW", "x", 4, XS) + side("NWNWW", "x", -4, XS) + side("NWWN", "z", -5, ZS) + side("WNWW", "z", 5, ZS), True)
+        # ground floor rooms: hall (front), dining room (back left), study (back right); the stairs climb along the right wall
+        walls("wallIn", Y0, side("WDDW", "x", 0, (-4, -2, 0, 2)) + side("WW", "z", -1, (-3, -1)) + side("WW", "z", 3, (-3, -1)), False)
+        sc.shape("wallInFiller", "CUBE", 3.33, (Y0 + Y1) / 2, 0, 0.66, Y1 - Y0, 0.1, WALL_C, body="STATIC", Cast_Shadows=False)
+        # upper floor: the bedroom (back left) with its door
+        walls("wallUp", Y1, side("WD", "x", 0, (-4, -2)) + side("WW", "z", -1, (-3, -1)), False)
+
+    # ------------------------------------------------------------------ stairs: the model is only drawn, an invisible RAMP along the step noses is walked on (its top meets the landing at z -1.5)
+    with sc.grp("Stairs"):
+        sc.model("stairs", "stairs-closed.glb", 4.3, Y0, 0, 1, ry=180, Color="#A89C90", Cast_Shadows=False)
+        sc.shape("stairRamp", "RAMP", 4.3, Y0 + 1.25, 0.49, 1.3, 2.5, 3.98, body="STATIC", Visible=False, Cast_Shadows=False)
+        # railing around the opening upstairs
+        for n, (x0, z0, x1, z1) in enumerate([(3.6, -1.5, 3.6, 2.0), (3.6, 2.0, 4.95, 2.0)]):
+            cx, cz, ln = (x0 + x1) / 2, (z0 + z1) / 2, math.hypot(x1 - x0, z1 - z0)
+            along_x = abs(z1 - z0) < 1e-6
+            dims = lambda t, h: (ln, h, t) if along_x else (t, h, ln)
+            sc.shape("rail%d" % (n + 1), "CUBE", cx, Y1 + 1.0, cz, *dims(0.09, 0.07), color=DARK, Cast_Shadows=False)
+            sc.shape("railMid%d" % (n + 1), "CUBE", cx, Y1 + 0.5, cz, *dims(0.05, 0.05), color=DARK, Cast_Shadows=False)
+            posts = max(2, int(round(ln / 1.75)) + 1)
+            for i in range(posts):
+                t = i / (posts - 1.0)
+                sc.shape("railPost%d_%d" % (n + 1, i + 1), "CUBE", x0 + (x1 - x0) * t, Y1 + 0.5, z0 + (z1 - z0) * t, 0.08, 1.0, 0.08, DARK,
+                         Cast_Shadows=False)
+            sc.wall("railWall%d" % (n + 1), cx, Y1 + 0.55, cz, *dims(0.12, 1.1))
+
+    # ------------------------------------------------------------------ doors (Door3D hinge doors, KINEMATIC colliders; the front one needs the key)
     snd = {"openSound": "/door_open_creak.ogg", "closeSound": "/door_close.ogg", "button": "useBtn", "promptText": "useText"}
-    sc.model("frontDoor", "door-rotate-square-a.glb", -1.45, 0, 3.0, 1, static=False, body="KINEMATIC", collider="BOX", Color="#8E8378",
+    # the door model (turned) spans x -0.025..0.9: centered on a 0.9 m opening its origin is 0.4375 left of the opening's center
+    sc.model("frontDoor", "door-rotate-square-a.glb", -0.4375, Y0, 4.0, 1, static=False, body="KINEMATIC", collider="BOX", Color="#8E8378",
              behaviors=[("Door3D", dict(snd, keyItem="key", lockedText="Locked", lockedSound="/door_locked_rattle.ogg", unlockSound="/door_unlock.ogg",
-                                        range=2.0, openTime=1.1, hinge="LEFT", openText="Open", closeText="Close"))])
-    sc.model("livingDoor", "door-rotate-square-a.glb", 0, 0, -0.45, 1, ry=-90, static=False, body="KINEMATIC", collider="BOX",
-             behaviors=[("Door3D", dict(snd, range=2.0, openTime=1.0, hinge="LEFT"))])
-    sc.model("bedroomDoor", "door-rotate-square-a.glb", 0, 2.4, -2.45, 1, ry=-90, static=False, body="KINEMATIC", collider="BOX",
-             behaviors=[("Door3D", dict(snd, range=2.0, openTime=1.2, hinge="LEFT"))])
+                                        range=2.2, openTime=1.1, hinge="LEFT", openText="Open", closeText="Close"))])
+    sc.model("bedroomDoor", "door-rotate-square-a.glb", -2.4375, Y1, 0.0, 1, static=False, body="KINEMATIC", collider="BOX", Color="#8E8378",
+             Cast_Shadows=False, behaviors=[("Door3D", dict(snd, range=2.0, openTime=1.3, hinge="LEFT"))])
 
-    # ---- furniture (furniture pack: ~10 units per meter, front = -Z)
+    # ------------------------------------------------------------------ furniture (Kenney furniture pack, ~10 units per meter, front = -Z)
     use = {"button": "useBtn", "promptText": "useText", "range": 2.0, "needLook": True, "lookAngle": 30}
-    place(sc, proj, "table", "table.glb", 0.22, -2.3, 0.1, -0.4, body="STATIC", collider="BOX")
-    place(sc, proj, "chairA", "chair.glb", 0.22, -2.7, 0.1, 0.45, ry=0, body="STATIC", collider="BOX")
-    place(sc, proj, "chairB", "chair.glb", 0.22, -1.9, 0.1, -1.25, ry=180, body="STATIC", collider="BOX")
-    place(sc, proj, "candle1", "candle.glb", 1.0, -2.55, 0.82, -0.45, static=False)
-    place(sc, proj, "candle2", "candle.glb", 0.8, -2.15, 0.82, -0.3, static=False)
-    place(sc, proj, "bookcase1", "bookcaseClosedDoors.glb", 0.22, -3.65, 0.1, 0, ry=yaw_to(1, 0), body="STATIC", collider="BOX",
-          behaviors=[("Interactable3D", dict(use, message="Search"))])
-    place(sc, proj, "hallTable", "sideTableDrawers.glb", 0.18, 1.2, 0.1, 2.68, ry=0, body="STATIC", collider="BOX")
-    place(sc, proj, "hallLampModel", "lampRoundTable.glb", 0.18, 1.2, 0.79, 2.68, static=False)
-    place(sc, proj, "hallChair", "chair.glb", 0.22, 0.8, 0.1, -2.3, ry=150, body="STATIC", collider="BOX")
-    place(sc, proj, "bed", "bedSingle.glb", 0.18, -2.6, 2.5, -1.85, ry=180, body="STATIC", collider="BOX",
-          behaviors=[("Interactable3D", dict(use, message="Look under the bed"))])
-    place(sc, proj, "bedTable", "sideTableDrawers.glb", 0.15, -1.25, 2.5, -2.7, ry=180, body="STATIC", collider="BOX")
-    place(sc, proj, "bedLantern", "lantern-candle.glb", 1.0, -1.25, 3.08, -2.7, static=False)
-    place(sc, proj, "diaryShelf", "bookcaseClosedDoors.glb", 0.22, 1.2, 2.5, 2.65, ry=0, body="STATIC", collider="BOX",
-          behaviors=[("Interactable3D", dict(use, message="Read the diary"))])
+    F = dict(Cast_Shadows=False)
+    BOX = dict(body="STATIC", collider="BOX")
+    with sc.grp("Furniture"):
+        # hall
+        place(sc, proj, "hallTable", "sideTableDrawers.glb", 0.18, 2.3, Y0, 3.72, ry=0, **dict(BOX, **F))
+        hall_top = Y0 + top_of(proj, "sideTableDrawers.glb", 0.18)
+        place(sc, proj, "hallLampModel", "lampRoundTable.glb", 0.16, 2.3, hall_top, 3.72, **F)
+        place(sc, proj, "bookcase1", "bookcaseClosedDoors.glb", 0.22, -4.68, Y0, 2.0, ry=yaw_to(1, 0), behaviors=[("Interactable3D", dict(use, message="Search"))],
+              **dict(BOX, **F))
+        place(sc, proj, "hallChair", "chair.glb", 0.22, -3.6, Y0, 0.8, ry=150, **dict(BOX, **F))
+        # dining room
+        place(sc, proj, "diningTable", "table.glb", 0.22, -3.0, Y0, -2.0, **dict(BOX, **F))
+        table_top = Y0 + top_of(proj, "table.glb", 0.22)
+        for n, (x, z, r) in enumerate([(-3.5, -1.15, 0), (-2.5, -1.15, 0), (-3.5, -2.85, 180), (-2.5, -2.85, 180)]):
+            place(sc, proj, "diningChair%d" % (n + 1), "chair.glb", 0.21, x, Y0, z, ry=r + (n * 9) % 14 - 7, **dict(BOX, **F))
+        place(sc, proj, "candle1", "candle.glb", 1.0, -3.3, table_top, -2.05, Draw_Distance=25, **F)
+        place(sc, proj, "candle2", "candle.glb", 0.8, -2.75, table_top, -1.9, Draw_Distance=25, **F)
+        place(sc, proj, "sideboard", "sideTableDrawers.glb", 0.2, -3.0, Y0, -3.75, ry=180, **dict(BOX, **F))
+        # study
+        place(sc, proj, "studyShelf", "bookcaseClosedDoors.glb", 0.22, 1.2, Y0, -3.7, ry=180, **dict(BOX, **F))
+        place(sc, proj, "studyDesk", "sideTableDrawers.glb", 0.2, 2.75, Y0, -1.2, ry=yaw_to(-1, 0), **dict(BOX, **F))
+        place(sc, proj, "studyChair", "chair.glb", 0.22, 2.1, Y0, -1.2, ry=yaw_to(1, 0), **dict(BOX, **F))
+        place(sc, proj, "studyDebris", "debris-wood.glb", 1.6, -0.2, Y0, -2.6, ry=40, Draw_Distance=25, **F)
+        # bedroom (upstairs)
+        place(sc, proj, "bed", "bedSingle.glb", 0.18, -3.6, Y1, -2.95, ry=180, behaviors=[("Interactable3D", dict(use, message="Look under the bed"))],
+              **dict(BOX, **F))
+        place(sc, proj, "bedTable", "sideTableDrawers.glb", 0.15, -2.35, Y1, -3.75, ry=180, **dict(BOX, **F))
+        bed_top = Y1 + top_of(proj, "sideTableDrawers.glb", 0.15)
+        place(sc, proj, "bedLantern", "lantern-candle.glb", 1.0, -2.35, bed_top, -3.75, Draw_Distance=25, **F)
+        place(sc, proj, "diaryShelf", "bookcaseClosedDoors.glb", 0.22, -4.68, Y1, -1.0, ry=yaw_to(1, 0),
+              behaviors=[("Interactable3D", dict(use, message="Read the diary"))], **dict(BOX, **F))
+        # upstairs hall: a lone chair facing the window, old crates
+        place(sc, proj, "windowChair", "chair.glb", 0.22, 0.0, Y1, 3.2, ry=180, **dict(BOX, **F))
+        sc.shape("atticCrate1", "CUBE", 1.0, Y1 + 0.3, -3.55, 0.6, 0.6, 0.6, "#6B5236", ry=8, body="STATIC", Cast_Shadows=False)
+        sc.shape("atticCrate2", "CUBE", 1.05, Y1 + 0.82, -3.55, 0.44, 0.44, 0.44, "#5E4730", ry=-14, body="STATIC", Cast_Shadows=False)
+        sc.shape("atticCrate3", "CUBE", 1.75, Y1 + 0.25, -3.5, 0.5, 0.5, 0.5, "#5E4730", ry=25, body="STATIC", Cast_Shadows=False)
 
-    # ---- outside props: the flashlight on a crate by the path, the key on a stump behind the house
-    sc.shape("crate", "CUBE", 1.6, 0.3, 11, 0.6, 0.6, 0.6, "#5A4632", body="STATIC")
-    sc.model("flashlightItem", "flashlight.glb", 1.6, 0.64, 11, 0.12, rz=90, static=False, Emissive="#202020",
-          behaviors=[("Pickup3D", {"itemId": "flashlight", "range": 1.6, "sound": "/key_pickup.ogg", "flyToPlayer": True})])
-    sc.shape("stump", "CYLINDER", -7, 0.25, -6, 0.7, 0.5, 0.7, "#3B2E24", body="STATIC")
+    # ------------------------------------------------------------------ pickups: the flashlight on the crate by the gate, the key on the stump
+    sc.model("flashlightItem", "flashlight.glb", 2.7, 0.64, 14.4, 0.12, rz=90, static=False, Emissive="#202020", Cast_Shadows=False,
+             behaviors=[("Pickup3D", {"itemId": "flashlight", "range": 1.6, "sound": "/key_pickup.ogg", "flyToPlayer": True})])
     sc.add("OBJ3D", "keyItem", [("Floater3D", {"height": 0.06, "frequency": 0.5, "spinSpeed": 50}),
-                                ("Pickup3D", {"itemId": "key", "range": 1.5, "sound": "/key_pickup.ogg", "flyToPlayer": True})],
-           Mesh="MODEL", Model="/key.glb", Model_Node="key", x=-7, y=0.78, z=-6, Rotation_Z=90, Scale_X=1.1, Scale_Y=1.1, Scale_Z=1.1,
-           Emissive="#6B5212", Emissive_Intensity=0.8)
-    place(sc, proj, "keyLantern", "lantern-candle.glb", 1.0, -6.2, 0, -5.4, static=False)
-    place(sc, proj, "porchLantern", "lantern-candle.glb", 1.0, 0.5, 0.1, 3.7, static=False)
+                                ("Pickup3D", {"itemId": "key", "range": 1.6, "sound": "/key_pickup.ogg", "flyToPlayer": True})],
+           Mesh="MODEL", Model="/key.glb", Model_Node="key", x=-5.8, y=round(stump_top + 0.08, 3), z=-10.6, Rotation_Z=90, Scale_X=1.1, Scale_Y=1.1,
+           Scale_Z=1.1, Emissive="#6B5212", Emissive_Intensity=0.8, Cast_Shadows=False)
 
-    # ---- lights: moonlight comes from the scene (CUSTOM night), warm flickering lamps and candles, the flashlight
+    # ------------------------------------------------------------------ lights: moonlight from the scene (CUSTOM night), warm flickering lamps
     def light(name, x, y, z, color, inten, rng, style, glow=None, **extra):
         p = {"style": style, "amount": 0.3 if style == "CANDLE" else 0.6, "speed": 7}
         if glow:
@@ -876,44 +1081,52 @@ def build_horror():
         p.update(extra)
         sc.add("LIGHT3D", name, [("Flicker3D", p)], Light_Kind="POINT", x=x, y=y, z=z, Color=color, Intensity=inten, Range=rng)
 
-    light("candleLight", -2.35, 1.25, -0.4, "#FF9A40", 1.5, 6, "CANDLE", "candle1")
-    light("hallLight", 1.2, 1.35, 2.5, "#FFD9A0", 1.3, 6.5, "BROKEN", "hallLampModel", outEvery=5)
-    light("bedLight", -1.25, 3.55, -2.55, "#FF9A40", 1.3, 5.5, "CANDLE", "bedLantern")
-    light("upLight", 1.4, 4.4, 0.3, "#C8A070", 0.8, 5.5, "BROKEN", None, outEvery=3)
-    light("porchLight", 0.5, 0.75, 3.7, "#FFA850", 1.4, 7, "CANDLE", "porchLantern")
-    light("keyLight", -6.2, 0.7, -5.4, "#FFA040", 1.6, 6, "CANDLE", "keyLantern")
-    sc.add("LIGHT3D", "flashlight", [("Flashlight3D", {"toggleButton": "flashBtn", "startOn": False, "clickSound": "/ui_click.ogg", "sway": 0.3})],
-           Light_Kind="SPOT", x=-1, y=1.4, z=17, Color="#FFF2D6", Intensity=1.8, Range=16, Cone_Angle=26, Cone_Softness=0.45)
+    with sc.grp("Lights"):
+        light("gateLight", 0, 2.6, 16.3, "#FFA850", 1.4, 8, "CANDLE", "gateLanternR")
+        light("porchLight", 1.25, Y0 + 0.5, 4.55, "#FFA850", 1.4, 7, "CANDLE", "porchLantern")
+        light("hallLight", 2.3, hall_top + 0.5, 3.6, "#FFD9A0", 1.3, 7, "BROKEN", "hallLampModel", outEvery=5)
+        light("candleLight", -3.0, table_top + 0.45, -2.0, "#FF9A40", 1.5, 6, "CANDLE", "candle1")
+        light("bedLight", -2.35, bed_top + 0.5, -3.6, "#FF9A40", 1.3, 6, "CANDLE", "bedLantern")
+        light("upLight", 1.2, Y1 + 2.1, 0.5, "#C8A070", 0.9, 6.5, "BROKEN", None, outEvery=3)
+        light("keyLight", -5.0, 0.7, -10.0, "#FFA040", 1.6, 6.5, "CANDLE", "keyLantern")
+    # the flashlight (moves with the camera: not in a group). Flashlight3D keeps it and its button off while the Pickup3D of
+    # "flashlight" waits on the crate; picking it up shows the button and switches the light on (requiredItem / onWhenPicked).
+    sc.add("LIGHT3D", "flashlight", [("Flashlight3D", {"camera": "cam", "toggleButton": "flashBtn", "startOn": False, "useKeyboard": False,
+                                                       "requiredItem": "flashlight", "onWhenPicked": True,
+                                                       "clickSound": "/ui_click.ogg", "sway": 0.3})],
+           Light_Kind="SPOT", x=0, y=1.4, z=20, Color="#FFF2D6", Intensity=2.2, Range=18, Cone_Angle=26, Cone_Softness=0.45)
 
-    # ---- the player: a first person camera
+    # ------------------------------------------------------------------ the player: a first person camera on the road, facing the gate
     sc.add("CAMERA3D", "cam", [("FirstPersonController3D", {"joystick": "joy", "runButton": "runBtn", "dragToLook": True, "eyeHeight": 1.6,
                                                            "walkSpeed": 2.4, "runSpeed": 4.6, "jumpSpeed": 0, "radius": 0.3, "headBob": 0.04,
                                                            "lookSensitivity": 0.22}),
                                ("Footsteps3D", {"sounds": ["/footstep_1.ogg", "/footstep_2.ogg", "/footstep_3.ogg"], "volume": 0.55, "stepLength": 0.75})],
-           x=-1, y=1.6, z=17, Rotation_X=0, Active=True, FOV=66, Near=0.05, Far=120)
+           x=0, y=1.6, z=20, Rotation_X=0, Active=True, FOV=66, Near=0.05, Far=120)
     # a zone in the bedroom: heartbeat the first time the player walks in
     sc.add("OBJ3D", "bedroomZone", [("Trigger3D", {"once": True, "enterSound": "/heartbeat.ogg", "watchCamera": True})],
-           Mesh="EMPTY", x=-2, y=3.6, z=0, Scale_X=3.6, Scale_Y=2.2, Scale_Z=5.6, Cast_Shadows=False)
+           Mesh="EMPTY", x=-3, y=Y1 + 1.1, z=-2, Scale_X=3.6, Scale_Y=2.2, Scale_Z=3.6, Static_Object=True, Cast_Shadows=False)
 
-    # ---- 2D layer
-    sc.add("JOYSTICK", "joy", x=40, y=30, width=240, height=240, Pad_Image="/joy_pad.png", Button_Image="/joy_knob.png", z=120)
-    sc.button("runBtn", 1150, 36, 110, 110, "btn_run.png")
-    sc.button("useBtn", 1105, 190, 150, 150, "btn_use.png")
-    sc.text("useText", 1000, 350, 260, 46, "Open", scale=1.1)
-    sc.button("flashBtn", 1150, 520, 110, 110, "btn_flash.png")
-    sc.button("gearBtn", 1196, 638, 64, 64, "btn_gear.png")
-    sc.text("invText", 24, 664, 420, 44, "Inventory: empty", scale=1.0, color="#E8DCC8")
-    sc.text("goalText", 24, 618, 520, 44, "Find a way into the house", scale=1.0, color="#FFCF7A")
-    sc.text("msgText", 290, 330, 700, 60, "", scale=1.2, color="#F2E6D8")
+    # ------------------------------------------------------------------ 2D layer
+    with sc.grp("HUD", ui=True):
+        sc.add("JOYSTICK", "joy", x=40, y=30, width=240, height=240, Pad_Image="/joy_pad.png", Button_Image="/joy_knob.png", z=120)
+        sc.button("runBtn", 1150, 36, 110, 110, "btn_run.png")
+        sc.button("useBtn", 1105, 190, 150, 150, "btn_use.png")
+        sc.text("useText", 1000, 350, 260, 46, "Open", scale=1.1)
+        sc.button("flashBtn", 1150, 520, 110, 110, "btn_flash.png")
+        sc.button("gearBtn", 1196, 638, 64, 64, "btn_gear.png")
+        sc.text("invText", 24, 664, 420, 44, "Inventory: empty", scale=1.0, color="#E8DCC8")
+        sc.text("goalText", 24, 618, 520, 44, "Find a way into the house", scale=1.0, color="#FFCF7A")
+        sc.text("msgText", 290, 330, 700, 60, "", scale=1.2, color="#F2E6D8")
 
-    # ---- events
+    # ------------------------------------------------------------------ events
     write_event(proj, "public/OnCreate", [
         B("clearInventory"),
         B("loopSound", "/ambient_wind.ogg", "true"), B("playSound", "/ambient_wind.ogg"),
         B("loopSound", "/ambient_horror_drone.ogg", "true"), B("playSound", "/ambient_horror_drone.ogg"),
         B("postEffect3D", "HORROR", "0.45"),
-        B("hide", "flashBtn"), B("hide", "msgText")])
-    write_event(proj, "private/flashlightItem/behaviors/Pickup3D/onPickup", [B("show", "flashBtn")] + msg("Flashlight found: tap the light button"))
+        B("hide", "msgText")])
+    write_event(proj, "private/flashlightItem/behaviors/Pickup3D/onPickup",
+                msg("Flashlight found: the light button switches it"))
     write_event(proj, "private/keyItem/behaviors/Pickup3D/onPickup", [B("showText", "invText", q("Inventory: old key")),
                                                                       B("showText", "goalText", q("Open the front door"))])
     write_event(proj, "private/frontDoor/behaviors/Door3D/onLocked", msg("Locked. The key must be somewhere outside..."))
@@ -926,10 +1139,10 @@ def build_horror():
 
     write_project(folder, sc, {"Lighting Preset": "CUSTOM", "Render Mode": "SIMPLE", "Ambient Color": "#4A5068", "Ambient Intensity": 1,
                                "Sun": True, "Sun Color": "#9FB0D8", "Sun Intensity": 0.55, "Sun Pitch": -38, "Sun Yaw": -60, "Sky": "GRADIENT",
-                               "Sky Top": "#070A14", "Sky Bottom": "#23293A", "Fog": True, "Fog Color": "#1C2130", "Fog Near": 8, "Fog Far": 45,
-                               "Shadows": True, "Shadow Distance": 25, "Quality": "HIGH", "Post Effect": "HORROR"},
-                  ("3D horror house at night: find the flashlight and the key, open creaking doors, climb the stairs. Inventory, sounds, flickering lights.",
-                   "بيت رعب ثلاثي الأبعاد ليلاً: اعثر على المصباح والمفتاح، افتح الأبواب الصريرة واصعد الدرج. حقيبة أغراض وأصوات وأضواء متراقصة."),
+                               "Sky Top": "#070A14", "Sky Bottom": "#23293A", "Fog": True, "Fog Color": "#1C2130", "Fog Near": 10, "Fog Far": 55,
+                               "Shadows": True, "Shadow Distance": 30, "Quality": "HIGH", "Post Effect": "HORROR"},
+                  ("3D horror house at night: find the flashlight and the key in the fenced yard, open the locked door, climb the stairs. Inventory, sounds, flickering lights.",
+                   "بيت رعب ثلاثي الأبعاد ليلاً: اعثر على المصباح والمفتاح في الفناء المسوّر، افتح الباب المقفل واصعد الدرج. حقيبة أغراض وأصوات وأضواء متراقصة."),
                   credits_md("HorrorHouse3D", ["build", "furn", "grave", "plat", "flash", "creak", "lock", "rpg", "steps", "horror", "wind", "heart", "kui"], files))
     return proj
 
@@ -944,8 +1157,10 @@ def build_endless():
     for f in ["player-race", "suv", "delivery", "truck-flat", "hatchback-sports"]:
         copy_asset(proj, "models", "endless/%s.glb" % f, turn=180)
         files.append(("models/%s.glb" % f, "Kenney Car Kit (turned to face -Z)"))
-    copy_asset(proj, "models", "endless/road-straight.glb", turn=90)
-    files.append(("models/road-straight.glb", "Kenney City Kit Roads (turned 90 degrees: runs along Z)"))
+    # turned copy under its own name: models are cached by file name for the whole app session, and City3D ships the
+    # original road-straight.glb (running along X); the same name here would show City3D's tile, lane lines across the road
+    copy_asset(proj, "models", "endless/road-straight.glb", name="road-straight-z.glb", turn=90)
+    files.append(("models/road-straight-z.glb", "Kenney City Kit Roads road-straight (turned 90 degrees: runs along Z, the driving direction)"))
     for f in ["cactus_short", "cactus_tall", "rock_largeA", "rock_smallA", "fence_simple", "coinGold"]:
         copy_asset(proj, "models", "endless/%s.glb" % f)
         files.append(("models/%s.glb" % f, "Kenney Nature / Platformer Kit"))
@@ -955,7 +1170,7 @@ def build_endless():
     ui_images(proj, ["btn_left.png", "btn_right.png", "btn_gear.png", "btn_wide_red.png"])
 
     # ---- templates (hidden at start; EndlessRoad3D copies and recycles them). They wait far away from the road.
-    sc.model("roadTile", "road-straight.glb", 0, 0.004, 0, (16, 1, 16), static=False, Cast_Shadows=False)
+    sc.model("roadTile", "road-straight-z.glb", 0, 0.004, 0, (16, 1, 16), static=False, Cast_Shadows=False)
     props = []
     for name, m, s in [("cactusTall", "cactus_tall.glb", 4.5), ("cactusShort", "cactus_short.glb", 4.0), ("rockLarge", "rock_largeA.glb", 5.0),
                        ("rockSmall", "rock_smallA.glb", 5.0), ("fence", "fence_simple.glb", 4.0)]:
@@ -985,17 +1200,19 @@ def build_endless():
     sc.add("CAMERA3D", "cam", x=1.6, y=3.2, z=7.5, Rotation_X=-12, Active=True, FOV=64, Near=0.1, Far=320)
 
     # ---- 2D layer
-    sc.button("leftBtn", 36, 36, 170, 170, "btn_left.png")
-    sc.button("rightBtn", 1074, 36, 170, 170, "btn_right.png")
-    sc.button("gearBtn", 1196, 638, 64, 64, "btn_gear.png")
-    sc.text("scoreText", 24, 660, 360, 48, "Score 0", scale=1.4)
-    sc.text("distText", 24, 612, 360, 44, "0 m", scale=1.1)
-    sc.text("crashText", 24, 566, 360, 44, "Crashes 0 / 3", scale=1.0, color="#FFD0C0")
-    sc.text("speedText", 900, 650, 280, 56, "0 km/h", scale=1.5)
-    sc.text("levelText", 440, 560, 400, 60, "", scale=1.4, color="#FFE27A")
-    sc.text("overText", 390, 420, 500, 80, "GAME OVER", scale=2.2, color="#FF5A4A", visible=False)
-    sc.button("restartBtn", 460, 290, 360, 96, "btn_wide_red.png", visible=False)
-    sc.text("restartText", 520, 312, 240, 52, "Play again", scale=1.4, visible=False)
+    with sc.grp("HUD", ui=True):
+        sc.button("leftBtn", 36, 36, 170, 170, "btn_left.png")
+        sc.button("rightBtn", 1074, 36, 170, 170, "btn_right.png")
+        sc.button("gearBtn", 1196, 638, 64, 64, "btn_gear.png")
+        sc.text("scoreText", 24, 660, 360, 48, "Score 0", scale=1.4)
+        sc.text("distText", 24, 612, 360, 44, "0 m", scale=1.1)
+        sc.text("crashText", 24, 566, 360, 44, "Crashes 0 / 3", scale=1.0, color="#FFD0C0")
+        sc.text("speedText", 900, 650, 280, 56, "0 km/h", scale=1.5)
+        sc.text("levelText", 440, 560, 400, 60, "", scale=1.4, color="#FFE27A")
+    with sc.grp("GameOver", ui=True):
+        sc.text("overText", 390, 420, 500, 80, "GAME OVER", scale=2.2, color="#FF5A4A", visible=False)
+        sc.button("restartBtn", 460, 290, 360, 96, "btn_wide_red.png", visible=False)
+        sc.text("restartText", 520, 312, 240, 52, "Play again", scale=1.4, visible=False)
 
     # ---- events
     write_variables(proj, [("crashes", "int", "0")])
@@ -1033,7 +1250,7 @@ def build_sea():
     proj = fresh(folder)
     sc = Scene()
     files = []
-    for f in ["structure-platform-dock", "platform-planks", "structure-fence", "barrel", "buoy", "boat-row-small", "bench"]:
+    for f in ["structure-platform-dock", "platform-planks", "barrel", "buoy", "boat-row-small", "bench"]:
         copy_asset(proj, "models", "sea/%s.glb" % f)
         files.append(("models/%s.glb" % f, "Kenney Pirate / Watercraft / Graveyard Kit"))
     copy_asset(proj, "models", "city/light-curved.glb")
@@ -1052,34 +1269,61 @@ def build_sea():
     sc.add("OBJ3D", "sea", Mesh="WATER", x=0, y=0, z=-40, Scale_X=260, Scale_Y=1, Scale_Z=200, Water_Color="#2E8FD8", Water_Deep_Color="#0B3D6B",
            Foam_Color="#FFFFFF", Wave_Height=0.35, Wave_Speed=0.8, Wave_Length=10, Wave_Direction=20, Water_Clarity=0.6, Water_Resolution=64, Foam=0.45,
            Water_Quality="AUTO", Buoyancy=1, Cast_Shadows=False, Receive_Shadows=True)
-    sc.shape("quay", "CUBE", 0, -0.5, 32, 80, 3, 40, "#9C9486", body="STATIC")
-    sc.shape("quayEdge", "CUBE", 0, 1.05, 12.3, 80, 0.1, 0.6, "#B7AFA0", body="NONE")
-    # pier: Kenney dock modules (stretched down into the water), an invisible walkway box, rails
+    with sc.grp("Quay"):
+        sc.shape("quay", "CUBE", 0, -0.5, 32, 80, 3, 40, "#9C9486", body="STATIC", Cast_Shadows=False)
+        sc.shape("quayEdge", "CUBE", 0, 1.05, 12.3, 80, 0.1, 0.6, "#B7AFA0", Cast_Shadows=False)
+        for k, (x, z) in enumerate([(-6, 16), (6, 16)]):
+            sc.model("quayLamp%d" % (k + 1), "light-curved.glb", x, 1.0, z, 4.5, ry=0, Draw_Distance=80, Cast_Shadows=False)
+    # pier: Kenney dock modules (stretched down into the water) and invisible walkway boxes (one continuous surface at y = 1.0)
     D = 3.0
     mods = [(0, 10.5), (0, 7.5), (0, 4.5), (0, 1.5), (0, -1.5), (-3, -4.5), (0, -4.5), (3, -4.5)]
-    for k, (x, z) in enumerate(mods):
-        sc.model("dock%d" % (k + 1), "structure-platform-dock.glb", x, -0.8, z, (1.2, 2.0, 1.2), ry=(k % 2) * 180)
-    sc.wall("pierWalk", 0, 0.9, 3.0, 2.8, 0.2, 18.5)
-    sc.wall("headWalk", 0, 0.9, -4.5, 8.8, 0.2, 2.8)
+    with sc.grp("Pier"):
+        for k, (x, z) in enumerate(mods):
+            sc.model("dock%d" % (k + 1), "structure-platform-dock.glb", x, -0.8, z, (1.2, 2.0, 1.2), ry=(k % 2) * 180)
+        sc.wall("pierWalk", 0, 0.9, 3.0, 2.8, 0.2, 18.5)
+        sc.wall("headWalk", 0, 0.9, -4.5, 8.8, 0.2, 2.8)
+    # side railings: the top bar of each one is its own STATIC BOX collider (stretched down to the deck), the lower bar is only drawn;
+    # the posts that stand up from the dock modules (0.48 m square, 0.8 m above the deck) get STATIC boxes too (posts closer than 0.7 m merged)
     RAIL, Y = "#6B4A2E", 1.75
-    for k, (x, z, sx, sz) in enumerate([(-1.42, 4.5, 0.09, 15.0), (1.42, 4.5, 0.09, 15.0), (0, -6.0, 9.0, 0.09), (-2.96, -3.0, 3.1, 0.09),
-                                        (2.96, -3.0, 3.1, 0.09), (-4.47, -4.5, 0.09, 3.0), (4.47, -4.5, 0.09, 3.0)]):
-        sc.shape("rail%d" % (k + 1), "CUBE", x, Y, z, sx, 0.09, sz, RAIL)
-        sc.shape("railLow%d" % (k + 1), "CUBE", x, Y - 0.4, z, sx, 0.07, sz, RAIL)
-        sc.wall("railWall%d" % (k + 1), x, 1.6, z, max(sx, 0.2), 1.3, max(sz, 0.2))
-    sc.model("canopy", "structure-fence.glb", 0, 1.0, -4.5, (1.1, 1.15, 1.1))
-    sc.model("planks1", "platform-planks.glb", -3.0, 1.0, -4.6, 0.6, ry=20)
-    sc.model("planks2", "platform-planks.glb", 3.2, 1.0, -4.2, 0.55, ry=-70)
-    sc.model("pierLamp1", "light-curved.glb", -4.2, 1.0, -5.8, 4.2, ry=yaw_to(1, 0))
-    sc.model("pierLamp2", "light-curved.glb", 4.2, 1.0, -5.8, 4.2, ry=yaw_to(-1, 0))
-    # the bench: the player can sit down (Seat3D), the model's front is +Z
-    sc.model("bench", "bench.glb", 0, 1.0, -4.4, 1.6, ry=180, static=True, body="STATIC", collider="BOX",
-             behaviors=[("Seat3D", {"button": "sitBtn", "promptText": "sitText", "sitText": "Sit", "standText": "Stand up", "seatYawOffset": 180,
-                                    "eyeHeight": 1.15, "eyeForward": 0.1, "seatedPitch": -6, "moveTime": 0.8, "range": 2.0, "standDistance": 0.9})])
-    # a lifebuoy on the rail (red torus), barrels on the pier and floating ones, buoys, a moored boat
-    sc.shape("lifebuoy", "TORUS", 1.5, 1.55, 6.0, 0.8, 0.8, 0.8, "#E53935", rz=90, Cast_Shadows=True)
-    for k, (x, z, r) in enumerate([(-1.0, 11.2, 0), (-0.7, 10.3, 40), (3.6, -5.2, 15)]):
-        sc.model("barrel%d" % (k + 1), "barrel.glb", x, 1.0, z, 0.55, ry=r, body="STATIC", collider="CYLINDER")
+    with sc.grp("Railings"):
+        for k, (x, z, sx, sz) in enumerate([(-1.42, 4.5, 0.09, 15.0), (1.42, 4.5, 0.09, 15.0), (0, -6.0, 9.0, 0.09), (-2.96, -3.0, 3.1, 0.09),
+                                            (2.96, -3.0, 3.1, 0.09), (-4.47, -4.5, 0.09, 3.0), (4.47, -4.5, 0.09, 3.0)]):
+            # collider: 0.25 m thick, from the deck (1.0) to 2.3 m: scale = wanted / drawn size, offset moves its center down
+            csx, csz = (0.25 / sx if sx < 0.2 else 1.0), (0.25 / sz if sz < 0.2 else 1.0)
+            sc.shape("rail%d" % (k + 1), "CUBE", x, Y, z, sx, 0.09, sz, RAIL, body="STATIC", Cast_Shadows=False, Collider_Scale_X=csx,
+                     Collider_Scale_Y=round(1.3 / 0.09, 3), Collider_Scale_Z=csz, Collider_Offset_Y=-0.1)
+            sc.shape("railLow%d" % (k + 1), "CUBE", x, Y - 0.4, z, sx, 0.07, sz, RAIL, Cast_Shadows=False)
+        posts = []
+        for (mx, mz) in mods:
+            for dx in (-1.2, 1.2):
+                for dz in (-1.2, 1.2):
+                    posts.append([mx + dx, mz + dz])
+        clusters = []
+        for p_ in posts:
+            for c in clusters:
+                if any(abs(p_[0] - q_[0]) < 0.7 and abs(p_[1] - q_[1]) < 0.7 for q_ in c):
+                    c.append(p_)
+                    break
+            else:
+                clusters.append([p_])
+        for k, c in enumerate(clusters):
+            x0, x1 = min(q_[0] for q_ in c) - 0.24, max(q_[0] for q_ in c) + 0.24
+            z0, z1 = min(q_[1] for q_ in c) - 0.24, max(q_[1] for q_ in c) + 0.24
+            sc.wall("postWall%d" % (k + 1), round((x0 + x1) / 2, 3), 1.45, round((z0 + z1) / 2, 3), round(x1 - x0, 3), 0.9, round(z1 - z0, 3))
+    with sc.grp("Props"):
+        sc.model("planks1", "platform-planks.glb", -3.0, 1.0, -4.6, 0.6, ry=20, body="STATIC", collider="BOX", Cast_Shadows=False)
+        sc.model("planks2", "platform-planks.glb", 3.2, 1.0, -4.2, 0.55, ry=-70, body="STATIC", collider="BOX", Cast_Shadows=False)
+        sc.model("pierLamp1", "light-curved.glb", -4.2, 1.0, -5.8, 4.2, ry=yaw_to(1, 0), Draw_Distance=80, Cast_Shadows=False)
+        sc.model("pierLamp2", "light-curved.glb", 4.2, 1.0, -5.8, 4.2, ry=yaw_to(-1, 0), Draw_Distance=80, Cast_Shadows=False)
+        # the bench: the player can sit down (Seat3D), the model's front is +Z
+        sc.model("bench", "bench.glb", 0, 1.0, -4.4, 1.6, ry=180, static=True, body="STATIC", collider="BOX",
+                 behaviors=[("Seat3D", {"button": "sitBtn", "promptText": "sitText", "sitText": "Sit", "standText": "Stand up", "seatYawOffset": 180,
+                                        "eyeHeight": 1.15, "eyeForward": 0.1, "seatedPitch": -6, "moveTime": 0.8, "range": 2.0, "standDistance": 0.9})])
+        # a lifebuoy on the rail (red torus), barrels on the pier
+        sc.shape("lifebuoy", "TORUS", 1.5, 1.55, 6.0, 0.8, 0.8, 0.8, "#E53935", rz=90, Cast_Shadows=False, Draw_Distance=60)
+        for k, (x, z, r) in enumerate([(-0.9, 11.2, 0), (-0.65, 10.3, 40), (3.6, -5.2, 15)]):
+            sc.model("barrel%d" % (k + 1), "barrel.glb", x, 1.0, z, 0.55, ry=r, body="STATIC", collider="CYLINDER", Draw_Distance=60)
+    # floating things move with the waves: not in a group
     float_ = lambda depth, tilt=1.0: [("Buoyancy3D", {"water": "sea", "sinkDepth": depth, "tilt": tilt, "smoothing": 4})]
     sc.model("floatBarrel1", "barrel.glb", 6.5, 0, -1.0, 0.55, rx=90, static=False, behaviors=float_(0.25))
     sc.model("floatBarrel2", "barrel.glb", -8.0, 0, 3.0, 0.55, rx=90, ry=60, static=False, behaviors=float_(0.25))
@@ -1092,11 +1336,9 @@ def build_sea():
     for k, (x, z, sp) in enumerate([(14, -8, 22), (-12, -6, -18), (0, 8, 26)]):
         sc.shape("gull%d" % (k + 1), "CUBE", x, 13 + k * 1.5, z, 0.9, 0.04, 0.22, "#FAFAFA", static=False, Cast_Shadows=False,
                  behaviors=[("Orbit3D", {"center": "gullCenter", "speed": sp, "height": k * 1.5, "wave": 0.6, "facing": "MOVE_DIRECTION"})])
-    # quay props and borders
-    for k, (x, z) in enumerate([(-6, 16), (6, 16)]):
-        sc.model("quayLamp%d" % (k + 1), "light-curved.glb", x, 1.0, z, 4.5, ry=0)
-    for k, (x, z, sx, sz) in enumerate([(-21, 12.0, 39, 1.0), (21, 12.0, 39, 1.0), (0, 50, 80, 1), (-40, 31, 1, 40), (40, 31, 1, 40)]):
-        sc.wall("border%d" % (k + 1), x, 2.0, z, sx, 2.4, sz)
+    with sc.grp("Borders"):
+        for k, (x, z, sx, sz) in enumerate([(-21, 12.0, 39, 1.0), (21, 12.0, 39, 1.0), (0, 50, 80, 1), (-40, 31, 1, 40), (40, 31, 1, 40)]):
+            sc.wall("border%d" % (k + 1), x, 2.0, z, sx, 2.4, sz)
 
     # ---- the player: first person on a camera
     sc.add("CAMERA3D", "cam", [("FirstPersonController3D", {"joystick": "joy", "dragToLook": True, "eyeHeight": 1.65, "walkSpeed": 2.8, "runSpeed": 5,
@@ -1105,11 +1347,12 @@ def build_sea():
            x=0, y=2.65, z=20, Active=True, FOV=65, Near=0.05, Far=380)
 
     # ---- 2D layer
-    sc.add("JOYSTICK", "joy", x=40, y=30, width=240, height=240, Pad_Image="/joy_pad.png", Button_Image="/joy_knob.png", z=120)
-    sc.button("sitBtn", 1090, 170, 160, 160, "btn_seat.png")
-    sc.text("sitText", 1060, 340, 220, 46, "Sit", scale=1.2)
-    sc.button("gearBtn", 1196, 638, 64, 64, "btn_gear.png")
-    sc.text("hintText", 24, 662, 620, 44, "Walk to the bench at the end of the pier", scale=1.0)
+    with sc.grp("HUD", ui=True):
+        sc.add("JOYSTICK", "joy", x=40, y=30, width=240, height=240, Pad_Image="/joy_pad.png", Button_Image="/joy_knob.png", z=120)
+        sc.button("sitBtn", 1090, 170, 160, 160, "btn_seat.png")
+        sc.text("sitText", 1060, 340, 220, 46, "Sit", scale=1.2)
+        sc.button("gearBtn", 1196, 638, 64, 64, "btn_gear.png")
+        sc.text("hintText", 24, 662, 620, 44, "Walk to the bench at the end of the pier", scale=1.0)
 
     write_event(proj, "public/OnCreate", [
         B("loopSound", "/ocean_waves.ogg", "true"), B("playSound", "/ocean_waves.ogg"),
@@ -1368,6 +1611,18 @@ def validate():
                     P(pre + n + " should be a UI element")
             if e.get("parent") and e["parent"] not in types:
                 P(pre + n + " has a missing parent")
+            elif e.get("parent"):
+                par = next(x for x in els if x["name"] == e["parent"])
+                ui_child = e.get("type") == "UI"
+                if ui_child != (par["TYPE"] == "GROUP"):
+                    P(pre + "%s: a %s element needs a %s group as parent" % (n, "2D" if ui_child else "3D", "2D GROUP" if ui_child else "3D EMPTY"))
+                if par["TYPE"] == "OBJ3D" and (par["Mesh"] != "EMPTY" or par.get("Body", "NONE") != "NONE"):
+                    P(pre + n + ": 3D groups must be EMPTY objects without a body")
+                # a 3D child is carried by its parent every frame: only scenery that never moves may be grouped
+                if e["TYPE"] == "OBJ3D" and (e["Static Object"] != "true" or e["Body"] in ("DYNAMIC", "KINEMATIC")):
+                    P(pre + n + ": only Static Object elements may be inside a 3D group (it would be frozen)")
+                if e["TYPE"] in ("CAMERA3D",) or "Flashlight3D" in e.get("behaviors", ""):
+                    P(pre + n + ": a moving element may not be grouped")
             for key in ("Model", "Texture", "Normal Map", "Heightmap", "image", "Pressed Image", "Touch Start Image", "Touch End Image", "Pad Image", "Button Image"):
                 v = e.get(key, "")
                 if v:

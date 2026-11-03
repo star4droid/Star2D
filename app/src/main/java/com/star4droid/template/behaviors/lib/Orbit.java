@@ -17,13 +17,13 @@ public class Orbit extends Behavior {
 	public PlayerItem center;
 	@Param(desc = "Distance from the center. 0 = the current distance to the center element (100 when there is no center element).", unit = "px", min = 0, max = 10000)
 	public float radius = 0;
-	@Param(desc = "Degrees per second.", unit = "deg/s", min = 0, max = 3600, step = 5)
+	@Param(desc = "Degrees per second.", unit = "deg/s", min = 0, max = 100000, step = 5)
 	public float speed = 90;
 	@Param(desc = "Circle clockwise (off: counter-clockwise).")
 	public boolean clockwise = false;
 	@Param(desc = "Height of the oval compared to its width (1 = circle).", min = 0.1, max = 4, step = 0.05)
 	public float ovalRatio = 1;
-	@Param(desc = "The radius grows (positive) or shrinks (negative) by this much each second: spirals.", unit = "px/s", min = -500, max = 500, step = 1)
+	@Param(desc = "The radius grows (positive) or shrinks (negative) by this much each second: spirals.", unit = "px/s", min = -100000, max = 100000, step = 1)
 	public float spiral = 0;
 	@Param(desc = "Smallest radius when spiralling in.", unit = "px", min = 0, max = 10000)
 	public float minRadius = 0;

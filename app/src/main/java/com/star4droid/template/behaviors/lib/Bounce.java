@@ -18,13 +18,13 @@ import java.util.Random;
 @Sets({"gravityScale=0", "linearDamping=0"})
 public class Bounce extends Behavior {
 	@Header("Ball")
-	@Param(desc = "Speed of the ball.", unit = "px/s", min = 0, max = 450)
+	@Param(desc = "Speed of the ball.", unit = "px/s", min = 0, max = 100000)
 	public float speed = 250;
 	@Param(desc = "Keeps the speed constant after every bounce. Off: normal physics bounciness.")
 	public boolean keepSpeed = true;
-	@Param(desc = "The ball speeds up by this much at every bounce (up to the max speed).", unit = "px/s", min = 0, max = 100, step = 1)
+	@Param(desc = "The ball speeds up by this much at every bounce (up to the max speed).", unit = "px/s", min = 0, max = 100000, step = 1)
 	public float speedGain = 0;
-	@Param(desc = "Speed limit when the ball speeds up.", unit = "px/s", min = 0, max = 450)
+	@Param(desc = "Speed limit when the ball speeds up.", unit = "px/s", min = 0, max = 100000)
 	public float maxSpeed = 450;
 	@Param(desc = "Physical: how much energy a bounce keeps (1 = all).", min = 0, max = 1.5, step = 0.05)
 	public float bounciness = 1;

@@ -46,25 +46,68 @@ public class UriUtils {
 	}
 	
 	public static boolean copyUriToUri(Context context, Uri sourceUri, Uri destinationUri) {
-		writeFile("",convertUriToFilePath(context,destinationUri));
-		checkAndCreateUriFile(destinationUri,context);
 		try {
-			InputStream inputStream = context.getContentResolver().openInputStream(sourceUri);
-			if (inputStream != null) {
-				OutputStream outputStream = context.getContentResolver().openOutputStream(destinationUri);
-				if (outputStream != null) {
-					copyStream(inputStream, outputStream);
-					inputStream.close();
-					outputStream.close();
-				return true;}
-				inputStream.close();
-			}
-			} catch (IOException e) {
+			copyUriToUriChecked(context, sourceUri, destinationUri);
+			return true;
+		} catch (IOException e) {
 			e.printStackTrace();
+			return false;
 		}
-		return false;
 	}
-	
+
+	/**
+	 * Copies and makes the destination exactly the source: an existing longer file (an older APK chosen to overwrite)
+	 * is emptied first and cut to the new length afterwards, otherwise its old tail stays and the APK is broken.
+	 */
+	public static void copyUriToUriChecked(Context context, Uri sourceUri, Uri destinationUri) throws IOException {
+		ContentResolver cr = context.getContentResolver();
+		try { writeFile("", convertUriToFilePath(context, destinationUri)); } catch (Throwable ignored) {}
+		checkAndCreateUriFile(destinationUri, context);
+		long written = 0;
+		InputStream in = cr.openInputStream(sourceUri);
+		if (in == null) throw new IOException("cannot read " + sourceUri);
+		OutputStream out = null;
+		try {
+			try {
+				out = cr.openOutputStream(destinationUri, "wt"); // "w" does not truncate on every provider
+			} catch (Exception notSupported) {
+				out = null;
+			}
+			if (out == null) {
+				android.os.ParcelFileDescriptor pfd = cr.openFileDescriptor(destinationUri, "rw");
+				if (pfd == null) throw new IOException("cannot write " + destinationUri);
+				java.io.FileOutputStream fos = new java.io.FileOutputStream(pfd.getFileDescriptor());
+				fos.getChannel().truncate(0);
+				fos.getChannel().position(0);
+				out = fos;
+			}
+			byte[] buf = new byte[64 * 1024];
+			int n;
+			while ((n = in.read(buf)) > 0) {
+				out.write(buf, 0, n);
+				written += n;
+			}
+			out.flush();
+		} finally {
+			try { in.close(); } catch (IOException ignored) {}
+			if (out != null) try { out.close(); } catch (IOException ignored) {}
+		}
+		// still longer than what was written (provider ignored the truncate): cut the old tail
+		try {
+			android.os.ParcelFileDescriptor pfd = cr.openFileDescriptor(destinationUri, "rw");
+			if (pfd != null) {
+				long size = pfd.getStatSize();
+				if (size > written) {
+					java.io.FileOutputStream fos = new java.io.FileOutputStream(pfd.getFileDescriptor());
+					fos.getChannel().truncate(written);
+					fos.close();
+				}
+				pfd.close();
+			}
+		} catch (Throwable ignored) {
+		}
+	}
+
 	public static boolean deleteUri(Context context, Uri uri) {
 		ContentResolver contentResolver = context.getContentResolver();
 		int deleteCount = contentResolver.delete(uri, null, null);

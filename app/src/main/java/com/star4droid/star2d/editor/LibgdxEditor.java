@@ -123,6 +123,10 @@ public class LibgdxEditor extends Stage {
 		if(is3DScene()){
 			if(e3d==null) e3d = new com.star4droid.star2d.editor.three.Editor3D(this);
 			e3d.configure(editorConfig);
+		} else if(e3d!=null){
+			// the scene became 2D (or another scene opened in this editor): drop the 3D viewport
+			try { e3d.dispose(); } catch(Throwable ignored){}
+			e3d = null;
 		}
 	}
 
@@ -1358,8 +1362,9 @@ public class LibgdxEditor extends Stage {
 		if(cameraController.isMoving())
 			cameraController.update(Gdx.graphics.getDeltaTime());
 		OrthographicCamera camera = (OrthographicCamera)getCamera();
-		if(e3d!=null){
+		if(e3d!=null && !(e3d.edit2D && !e3d.show3DBehind)){
 			// 3D scene: the 3D viewport, then the 2D layer (HUD / UI elements) on top
+			// (editing the 2D layer without "show 3D behind" falls through to the normal 2D canvas: grid, frame)
 			try { e3d.render(); } catch(Throwable t){ Gdx.app.error("Star2D-3D", "editor render: "+t); }
 			shapeRenderer.setProjectionMatrix(camera.combined);
 			if(e3d.edit2D) drawSceneFrame(camera,getLogicWidth(),getLogicHeight());
@@ -1447,7 +1452,7 @@ public class LibgdxEditor extends Stage {
 			Gdx.gl.glLineWidth(1f);
 		}
 		
-		try {
+		if(e3d==null) try {
 			rayHandler.setCombinedMatrix(camera.combined,0,0,1,1);
 			rayHandler.updateAndRender();
 		} catch(Exception e){}

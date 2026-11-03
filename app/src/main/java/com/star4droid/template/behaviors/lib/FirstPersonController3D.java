@@ -44,21 +44,21 @@ public class FirstPersonController3D extends Behavior {
 	public float eyeHeight = 1.6f;
 	@Param(desc = "How fast dragging turns the view.", unit = "deg/px", min = 0.02, max = 2, step = 0.01)
 	public float lookSensitivity = 0.22f;
-	@Param(desc = "Turning speed with the look joystick or Q/E.", unit = "deg/s", min = 10, max = 720, step = 5)
+	@Param(desc = "Turning speed with the look joystick or Q/E.", unit = "deg/s", min = 10, max = 100000, step = 5)
 	public float turnSpeed = 140;
 	@Param(desc = "Field of view of the camera (0 = keep the camera's own).", unit = "deg", min = 0, max = 120)
 	public float fieldOfView = 0;
 
 	@Header("Movement")
-	@Param(desc = "Walking speed.", unit = "m/s", min = 0, max = 20, step = 0.1)
+	@Param(desc = "Walking speed.", unit = "m/s", min = 0, max = 100000, step = 0.1)
 	public float walkSpeed = 3.2f;
-	@Param(desc = "Running speed.", unit = "m/s", min = 0, max = 30, step = 0.1)
+	@Param(desc = "Running speed.", unit = "m/s", min = 0, max = 100000, step = 0.1)
 	public float runSpeed = 6f;
 	@Param(desc = "Runs when the joystick is pushed almost to the edge.")
 	public boolean runAtFullPush = false;
 	@Param(desc = "How fast it reaches the wanted speed (higher = snappier).", unit = "1/s", min = 0.5, max = 40, step = 0.5)
 	public float acceleration = 12;
-	@Param(desc = "Jump take-off speed (0 = no jump).", unit = "m/s", min = 0, max = 30, step = 0.1)
+	@Param(desc = "Jump take-off speed (0 = no jump).", unit = "m/s", min = 0, max = 100000, step = 0.1)
 	public float jumpSpeed = 4.8f;
 	@Param(desc = "Body radius used to stop at walls when it has no DYNAMIC body.", unit = "m", min = 0.05, max = 3, step = 0.05)
 	public float radius = 0.35f;

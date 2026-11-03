@@ -30,7 +30,7 @@ import java.util.regex.Pattern;
 final class PhysicsInfo {
     private PhysicsInfo() {}
 
-    private static final double MAX_SPEED = 450; // px/s: stays below the 8 px per step cap at 60 fps
+    private static final double DEFAULT_JUMP = 450; // px/s: default jump speed when none is given
     private static final Pattern GRAV = Pattern.compile("setGravity\\(\\s*[^,]+,\\s*-\\s*\\(float\\)\\(\\s*([0-9.]+)\\s*\\)");
     private static final Pattern STEPS = Pattern.compile("setSteps\\(\\s*(\\d+)\\s*\\)");
 
@@ -154,15 +154,10 @@ final class PhysicsInfo {
             JsonObject w = new JsonObject();
             w.addProperty("wanted_height_px", jumpHeight);
             w.addProperty("needed_jump_speed_px_s", r1(need));
-            if (need > MAX_SPEED) {
-                double gMax = MAX_SPEED * MAX_SPEED / (2 * jumpHeight);
-                w.addProperty("problem", "needs " + Math.round(need) + " px/s, more than the safe limit " + (int) MAX_SPEED + " (Box2D caps a body at ~8 px per step, faster is silently cut).");
-                w.addProperty("fix", "LOWER the gravity to <= " + Math.round(gMax) + " (setWorldGravity strength), then jump_speed " + (int) MAX_SPEED + " gives " + Math.round(MAX_SPEED * MAX_SPEED / (2 * Math.min(g, gMax))) + " px; or ask for a lower jump_height (max " + Math.round(MAX_SPEED * MAX_SPEED / (2 * g)) + " px at gravity " + Math.round(g) + ").");
-                jumpSpeed = MAX_SPEED;
-            } else jumpSpeed = need;
+            jumpSpeed = need; // no speed limit: the engine splits the physics step for fast bodies
             out.add("for_height", w);
         }
-        if (jumpSpeed <= 0) jumpSpeed = Math.min(MAX_SPEED, 450);
+        if (jumpSpeed <= 0) jumpSpeed = DEFAULT_JUMP;
         JsonObject jump = new JsonObject();
         double height = jumpSpeed * jumpSpeed / (2 * g), tUp = jumpSpeed / g, air = 2 * jumpSpeed / g;
         jump.addProperty("jump_speed_px_s", r1(jumpSpeed));
@@ -171,8 +166,6 @@ final class PhysicsInfo {
         jump.addProperty("air_time_flat_s", r1(air * 100) / 100.0);
         jump.addProperty("max_horizontal_reach_px", r1(move * air));
         jump.addProperty("how", "jump block power / setVelocityY = " + Math.round(jumpSpeed) + " (POSITIVE = UP)");
-        if (jumpSpeed > MAX_SPEED + 0.5)
-            jump.addProperty("warning", "jump_speed above " + (int) MAX_SPEED + " px/s is cut by the physics (max ~8 px per step = 480 px/s at 60 fps, 240 at 30 fps). Lower the gravity instead.");
         out.add("jump", jump);
         if (frameW[0] > 0) {
             out.addProperty("scale", "jump height is " + Math.round(100 * height / frameH[0]) + "% of the scene height; the scene width is crossed in " + cross(frameW[0], move) + " at move_speed " + Math.round(move) + ", the height is fallen in about " + String.format(Locale.US, "%.1f s", Math.sqrt(2 * frameH[0] / g)));
@@ -193,7 +186,7 @@ final class PhysicsInfo {
                 if (disc < 0) {
                     r.addProperty("reachable", false);
                     r.addProperty("why", "too high: the jump only reaches " + Math.round(height) + " px (needs at least " + Math.round(Math.sqrt(2 * g * rise)) + " px/s)");
-                    r.addProperty("fix", "lower the platform to <= " + Math.round(height * 0.8) + " px above the start (80% margin), or lower the gravity, or raise jump_speed up to " + (int) MAX_SPEED);
+                    r.addProperty("fix", "lower the platform to <= " + Math.round(height * 0.8) + " px above the start (80% margin), or lower the gravity, or raise jump_speed");
                 } else {
                     double t = (jumpSpeed + Math.sqrt(disc)) / g; // time to come down onto that height
                     double reach = move * t;
@@ -201,7 +194,7 @@ final class PhysicsInfo {
                     r.addProperty("reach_px", r1(reach));
                     boolean ok = gap <= reach * 0.9;
                     r.addProperty("reachable", ok);
-                    if (!ok) r.addProperty("fix", "gap too wide: max comfortable gap " + Math.round(reach * 0.8) + " px at move_speed " + Math.round(move) + " (or raise move_speed up to " + (int) MAX_SPEED + ")");
+                    if (!ok) r.addProperty("fix", "gap too wide: max comfortable gap " + Math.round(reach * 0.8) + " px at move_speed " + Math.round(move) + " (or raise move_speed)");
                     else if (gap > reach * 0.75) r.addProperty("note", "possible but tight for a player; comfortable gap <= " + Math.round(reach * 0.7) + " px");
                 }
                 jumps.add(r);
@@ -210,11 +203,10 @@ final class PhysicsInfo {
         }
 
         JsonObject safe = new JsonObject();
-        safe.addProperty("speed_limit_px_s", (int) MAX_SPEED);
-        safe.addProperty("max_jump_height_at_this_gravity_px", Math.round(MAX_SPEED * MAX_SPEED / (2 * g)));
+        safe.addProperty("speed_limit", "none (very fast small bodies: Bullet true against tunneling)");
         safe.addProperty("platform_rise_comfortable_px", Math.round(height * 0.7));
         safe.addProperty("platform_gap_comfortable_px", Math.round(move * air * 0.7));
-        safe.addProperty("typical", "gravity 600-1000, walk 200-350, jump 400-450, bullets <= 450, enemies 80-150; walls/ground >= 20 px thick");
+        safe.addProperty("typical", "gravity 600-1000, walk 200-350, jump 400-600, bullets 400-1000, enemies 80-150; walls/ground >= 20 px thick");
         safe.addProperty("units", "everything in px and px/s. Y IS UP. setVelocityY/jump: +up -down. setVelocityX: +right -left. setWorldGravity strength: + = falls down.");
         out.add("safe_ranges", safe);
         return ToolResult.text(out.toString());

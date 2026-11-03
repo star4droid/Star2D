@@ -18,11 +18,16 @@ public class EditorCameraViewItem extends Image implements EditorItem {
 	final LibgdxEditor editor;
 	private final ShapeRenderer shapes;
 	private static Texture icon;
+	private static Object iconApp;
 
 	public EditorCameraViewItem(LibgdxEditor editor) {
 		this.editor = editor;
 		this.shapes = editor.getShapeRenderer();
-		if (icon == null) icon = new Texture(Gdx.files.internal("images/bodies/camera.png"));
+		// static: rebuilt for a new editor activity (its GL context does not know the old texture)
+		if (icon == null || iconApp != Gdx.app) {
+			icon = new Texture(Gdx.files.internal("images/bodies/camera.png"));
+			iconApp = Gdx.app;
+		}
 		setDrawable(new TextureRegionDrawable(icon));
 		setSize(320, 180);
 		editor.addActor(this);

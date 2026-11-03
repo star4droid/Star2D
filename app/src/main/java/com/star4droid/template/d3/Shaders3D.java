@@ -22,6 +22,8 @@ public final class Shaders3D {
 
 	/** Fog range of the scene being drawn (meters), read by every shader of this class. */
 	static float fogNear = 30, fogFar = 120;
+	/** Bones of the skinned (animated) models the shaders are built for; a bigger skeleton gets its own shader. */
+	public static final int NUM_BONES = 40;
 	/** Number of toon bands (2..6). */
 	public static float toonBands = 3;
 
@@ -77,7 +79,7 @@ public final class Shaders3D {
 		c.numDirectionalLights = 2;
 		c.numPointLights = pixel ? 6 : 4;
 		c.numSpotLights = 3;
-		c.numBones = 40;
+		c.numBones = NUM_BONES;
 		c.vertexShader = vertexSrc;
 		c.fragmentShader = TOON.equals(mode) ? fragmentToon : (SOFT.equals(mode) ? fragmentSoft : fragmentSimple);
 		return c;
@@ -96,7 +98,35 @@ public final class Shaders3D {
 		protected Shader createShader(Renderable r) {
 			Shader special = special(r);
 			if (special != null) return special;
-			return new Lit(r, config);
+			DefaultShader.Config c = config;
+			if (r.bones != null && r.bones.length > c.numBones) {
+				// DefaultShader throws "too many bones" for a skeleton bigger than the config
+				DefaultShader.Config big = config(mode, false);
+				big.numPointLights = c.numPointLights;
+				big.numBones = r.bones.length;
+				c = big;
+			}
+			return new Lit(r, c);
+		}
+	}
+
+	/** Shadow pass of SIMPLE / TOON / SOFT (the default depth config has 12 bones only). */
+	public static class DepthProvider extends com.badlogic.gdx.graphics.g3d.utils.DepthShaderProvider {
+		public DepthProvider() {
+			super(depthConfig(NUM_BONES));
+		}
+
+		private static com.badlogic.gdx.graphics.g3d.shaders.DepthShader.Config depthConfig(int bones) {
+			com.badlogic.gdx.graphics.g3d.shaders.DepthShader.Config c = new com.badlogic.gdx.graphics.g3d.shaders.DepthShader.Config();
+			c.numBones = bones;
+			return c;
+		}
+
+		@Override
+		protected Shader createShader(Renderable r) {
+			if (r.bones != null && r.bones.length > config.numBones)
+				return new com.badlogic.gdx.graphics.g3d.shaders.DepthShader(r, depthConfig(r.bones.length));
+			return super.createShader(r);
 		}
 	}
 
@@ -119,7 +149,7 @@ public final class Shaders3D {
 		c.numDirectionalLights = 2;
 		c.numPointLights = 4;
 		c.numSpotLights = 2;
-		c.numBones = 40;
+		c.numBones = NUM_BONES;
 		return new PbrProvider(c);
 	}
 
@@ -130,10 +160,13 @@ public final class Shaders3D {
 			Water3D.WaterShader s = new Water3D.WaterShader(r);
 			return s;
 		}
-		if (r.material.has(UserShader.Attr.Type)) {
+		if (r.material.has(UserShader.Attr.Type) && r.bones == null) {
+			// (skinned meshes keep the normal shader: UserShader has no skinning and refuses them in canRender)
 			UserShader.Attr a = (UserShader.Attr) r.material.get(UserShader.Attr.Type);
 			try {
-				return new UserShader(r, a.program);
+				UserShader us = new UserShader(r, a.program);
+				// compiled now: a broken shader falls back to the normal one instead of throwing inside ModelBatch
+				return us.compile() ? us : null;
 			} catch (Throwable t) {
 				Gdx.app.error("Star2D-3D", "shader " + a.program.name + ": " + t);
 				return null;

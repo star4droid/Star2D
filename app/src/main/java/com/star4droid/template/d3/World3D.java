@@ -90,6 +90,8 @@ public class World3D implements Disposable {
 	private String batchMode = "";
 	private boolean batchPixel;
 	private final Environment env = new Environment();
+	/** Same lights as env without the shadow map (elements with Receive Shadows off). */
+	private final Environment envNoShadow = new Environment();
 	private DirectionalLight sun;
 	private DirectionalShadowLight shadowLight;
 	private int shadowSizeNow = -1;
@@ -98,6 +100,7 @@ public class World3D implements Disposable {
 	private Texture skyTexture;
 	private String skyTextureFor = "";
 	private FrameBuffer fbo;
+	private boolean fboFailed;
 	private PostFx3D post;
 	private final Array<Renderable> outlines = new Array<Renderable>();
 	private final Array<Object3D> visible = new Array<Object3D>();
@@ -107,6 +110,7 @@ public class World3D implements Disposable {
 
 	public World3D(StageImp stage) {
 		this.stage = stage;
+		Assets3D.checkContext();
 		if (stage != null) current = this;
 		defaultCamera.position.set(0, 4, 10);
 		defaultCamera.lookAt(0, 0.5f, 0);
@@ -393,12 +397,14 @@ public class World3D implements Disposable {
 		if (Shaders3D.PBR.equals(renderMode)) {
 			batch = new ModelBatch(Shaders3D.pbr());
 			if (shadowBatch != null) shadowBatch.dispose();
-			shadowBatch = new ModelBatch(new PBRDepthShaderProvider(PBRDepthShaderProvider.createDefaultConfig()));
+			com.badlogic.gdx.graphics.g3d.shaders.DepthShader.Config dc = PBRDepthShaderProvider.createDefaultConfig();
+			dc.numBones = Shaders3D.NUM_BONES; // default 12: animated characters would throw "too many bones" in the shadow pass
+			shadowBatch = new ModelBatch(new PBRDepthShaderProvider(dc));
 			buildIbl();
 		} else {
 			batch = new ModelBatch(new Shaders3D.Provider(renderMode, pixel));
 			if (shadowBatch != null) shadowBatch.dispose();
-			shadowBatch = new ModelBatch(new DepthShaderProvider());
+			shadowBatch = new ModelBatch(new Shaders3D.DepthProvider());
 		}
 		if (unlitBatch == null) unlitBatch = new ModelBatch(new Shaders3D.Provider(Shaders3D.UNLIT, false));
 		if (outlineBatch == null) outlineBatch = new ModelBatch(new Shaders3D.Provider(Shaders3D.SIMPLE, false));
@@ -468,13 +474,7 @@ public class World3D implements Disposable {
 				if (dirs.lights.size < 2) dirs.lights.add(l.dir);
 			} else lightsTmp.add(l);
 		}
-		final Vector3 cp = camera.position;
-		lightsTmp.sort(new java.util.Comparator<Light3D>() {
-			@Override
-			public int compare(Light3D a, Light3D b) {
-				return Float.compare(a.position.dst2(cp), b.position.dst2(cp));
-			}
-		});
+		lightsTmp.sort(byCameraDistance);
 		int maxPoint = Quality3D.pixelLighting ? 6 : 4, maxSpot = 3;
 		for (Light3D l : lightsTmp) {
 			float inten = l.frame(0);
@@ -504,9 +504,19 @@ public class World3D implements Disposable {
 		if (spots.lights.size > 0) env.set(spots);
 		if (useShadows() && shadowLight != null) env.shadowMap = shadowLight;
 		else env.shadowMap = null;
+		envNoShadow.clear();
+		envNoShadow.set(env);
+		envNoShadow.shadowMap = null;
 	}
 
 	private final Array<Light3D> lightsTmp = new Array<Light3D>();
+	private final java.util.Comparator<Light3D> byCameraDistance = new java.util.Comparator<Light3D>() {
+		@Override
+		public int compare(Light3D a, Light3D b) {
+			Vector3 cp = camera.position;
+			return Float.compare(a.position.dst2(cp), b.position.dst2(cp));
+		}
+	};
 
 	private boolean useShadows() {
 		return sunEnabled && sunShadows && Quality3D.shadowSize > 0 && !Shaders3D.UNLIT.equals(renderMode);
@@ -571,21 +581,35 @@ public class World3D implements Disposable {
 			shadowBatch.end();
 			shadowLight.end();
 		}
-		boolean useFbo = main && !editor && (Quality3D.renderScale < 0.999f || (!"NONE".equals(postEffect) && Quality3D.postEffects));
+		boolean useFbo = main && !editor && !fboFailed && (Quality3D.renderScale < 0.999f || (!"NONE".equals(postEffect) && Quality3D.postEffects));
 		int fw = w, fh = h;
 		if (useFbo) {
 			fw = Math.max(16, (int) (w * Quality3D.renderScale));
 			fh = Math.max(16, (int) (h * Quality3D.renderScale));
 			if (fbo == null || fbo.getWidth() != fw || fbo.getHeight() != fh) {
 				if (fbo != null) fbo.dispose();
-				fbo = new FrameBuffer(Pixmap.Format.RGB888, fw, fh, true);
-				fbo.getColorBufferTexture().setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
+				fbo = null;
+				try {
+					fbo = new FrameBuffer(Pixmap.Format.RGB888, fw, fh, true);
+					fbo.getColorBufferTexture().setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
+				} catch (Throwable t) {
+					// a GPU that can't render into this frame buffer: draw straight to the screen (no scale / post effect)
+					Gdx.app.error("Star2D-3D", "frame buffer: " + t);
+					fboFailed = true;
+					fbo = null;
+				}
 			}
-			fbo.begin();
+			if (fbo == null) {
+				useFbo = false;
+				fw = w;
+				fh = h;
+			} else fbo.begin();
 		}
 		if (main) Gdx.gl.glViewport(0, 0, fw, fh);
 		// sky
 		Gdx.gl.glClearColor(skyBottom.r, skyBottom.g, skyBottom.b, 1f);
+		Gdx.gl.glDepthMask(true); // a depth clear needs depth writes on
+		Gdx.gl.glDisable(GL20.GL_DEPTH_TEST); // the gradient sky is a 2D picture behind everything
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
 		drawSky(cam, fw, fh);
 		boolean unlitScene = Shaders3D.UNLIT.equals(renderMode);
@@ -594,13 +618,8 @@ public class World3D implements Disposable {
 			ModelInstance mi = o.instance;
 			if (o.lowInstance != null && o.def.LOD_Distance > 0 && tmp.set(o.position).dst(cam.position) > o.def.LOD_Distance * Quality3D.lodBias) mi = o.lowInstance;
 			if (unlitScene || o.def.Unlit) continue;
-			if (!o.def.Receive_Shadows && env.shadowMap != null) {
-				com.badlogic.gdx.graphics.g3d.environment.ShadowMap sm = env.shadowMap;
-				env.shadowMap = null;
-				batch.render(mi, env);
-				batch.flush();
-				env.shadowMap = sm;
-			} else batch.render(mi, env);
+			// the environment is read when the batch flushes: elements without shadows use their own copy
+			batch.render(mi, !o.def.Receive_Shadows && env.shadowMap != null ? envNoShadow : env);
 		}
 		batch.end();
 		// unlit elements
@@ -641,7 +660,7 @@ public class World3D implements Disposable {
 					for (com.badlogic.gdx.graphics.g3d.Material m : skyDome.materials) {
 						m.clear();
 						m.set(TextureAttribute.createDiffuse(skyTexture));
-						m.set(IntAttribute.createCullFace(GL20.GL_FRONT));
+						m.set(IntAttribute.createCullFace(0)); // seen from inside and mirrored on X: draw both sides
 						m.set(new DepthTestAttribute(0, false));
 					}
 				}
@@ -861,11 +880,22 @@ public class World3D implements Disposable {
 		return v;
 	}
 
+	private static void disposeCubemap(com.badlogic.gdx.graphics.g3d.Attribute a) {
+		try {
+			if (a instanceof com.badlogic.gdx.graphics.g3d.attributes.CubemapAttribute) {
+				com.badlogic.gdx.graphics.GLTexture t = ((com.badlogic.gdx.graphics.g3d.attributes.CubemapAttribute) a).textureDescription.texture;
+				if (t != null) t.dispose();
+			}
+		} catch (Throwable ignored) {
+		}
+	}
+
 	public void dispose() {
 		if (!editor) Tween3D.clear();
 		if (current == this) current = null;
 		if (physics != null) physics.dispose();
 		physics = null;
+		for (int i = 0; i < objects.size; i++) objects.get(i).disposeOwned();
 		if (batch != null) batch.dispose();
 		if (unlitBatch != null) unlitBatch.dispose();
 		if (shadowBatch != null) shadowBatch.dispose();
@@ -875,6 +905,10 @@ public class World3D implements Disposable {
 		if (fbo != null) fbo.dispose();
 		if (post != null) post.dispose();
 		if (brdfLut != null) brdfLut.dispose();
+		disposeCubemap(iblDiffuse);
+		disposeCubemap(iblSpecular);
+		iblDiffuse = iblSpecular = null;
+		brdfLut = null;
 		batch = unlitBatch = shadowBatch = outlineBatch = null;
 	}
 }

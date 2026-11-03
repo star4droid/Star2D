@@ -43,6 +43,11 @@ public final class Shapes3D {
 		return m;
 	}
 
+	/** New GL context: the cached models belong to the old one (see Assets3D.checkContext). */
+	static void forgetGL() {
+		CACHE.clear();
+	}
+
 	public static void disposeAll() {
 		for (Model m : CACHE.values()) {
 			try {

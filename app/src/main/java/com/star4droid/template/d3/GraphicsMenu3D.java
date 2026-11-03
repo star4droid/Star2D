@@ -49,8 +49,12 @@ public final class GraphicsMenu3D {
 		final VisCheckBox water = new VisCheckBox(t(ar, "Detailed water", "ماء مفصل"));
 		final VisCheckBox effects = new VisCheckBox(t(ar, "Screen effects", "تأثيرات الشاشة"));
 		final VisCheckBox fps = new VisCheckBox(t(ar, "Limit to 30 FPS (saves battery)", "حد 30 إطاراً (يوفر البطارية)"));
+		// setValue / setChecked fire change events: without this flag a preset button turned itself into CUSTOM
+		// (and LOW's flat water became 1) through the listener below
+		final boolean[] refreshing = {false};
 		final Runnable refresh = new Runnable() {
 			public void run() {
+				refreshing[0] = true;
 				level.setText(t(ar, "Quality: ", "الجودة: ") + Quality3D.level);
 				scale.setValue(Quality3D.renderScale);
 				dist.setValue(Quality3D.viewDistance);
@@ -58,6 +62,7 @@ public final class GraphicsMenu3D {
 				water.setChecked(Quality3D.waterLevel >= 2);
 				effects.setChecked(Quality3D.postEffects);
 				fps.setChecked(Quality3D.fpsLimit == 30);
+				refreshing[0] = false;
 			}
 		};
 		for (int i = 0; i < levels.length; i++) {
@@ -86,6 +91,7 @@ public final class GraphicsMenu3D {
 		ChangeListener custom = new ChangeListener() {
 			@Override
 			public void changed(ChangeEvent event, Actor actor) {
+				if (refreshing[0]) return;
 				if (actor == scale) Quality3D.renderScale = scale.getValue();
 				else if (actor == dist) Quality3D.viewDistance = dist.getValue();
 				else if (actor == shadows) Quality3D.shadowSize = shadows.isChecked() ? Math.max(1024, Quality3D.shadowSize) : 0;

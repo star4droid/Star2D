@@ -62,6 +62,7 @@ public final class Vehicle3D {
 			}
 			v.wheels = n;
 			p.world.addVehicle(v.vehicle);
+			p.vehicles.add(v);
 			return v;
 		} catch (Throwable t) {
 			com.badlogic.gdx.Gdx.app.error("Star2D-3D", "vehicle of " + chassis.getName() + ": " + t);
@@ -121,9 +122,15 @@ public final class Vehicle3D {
 		return v.dot(f) * 3.6f;
 	}
 
+	/** Physics3D: this body is being removed (rebuilt or deleted); the vehicle can't outlive it. */
+	void bodyRemoved(btRigidBody b) {
+		if (b == body) dispose();
+	}
+
 	public void dispose() {
 		if (disposed) return;
 		disposed = true;
+		physics.vehicles.removeValue(this, true);
 		try {
 			if (vehicle != null && chassis.world != null && chassis.world.hasPhysics() && chassis.world.physics() == physics) physics.world.removeVehicle(vehicle);
 		} catch (Throwable ignored) {

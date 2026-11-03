@@ -183,6 +183,8 @@ public class UserShader implements Shader {
 		SNIPPETS.remove(name);
 	}
 
+	static final String PRECISION = "#ifdef GL_ES\n#ifdef GL_FRAGMENT_PRECISION_HIGH\nprecision highp float;\n#else\nprecision mediump float;\n#endif\n#endif\n";
+
 	static String vertexSource(Program p, boolean tex) {
 		boolean disp = p.snippet.contains("displace(");
 		StringBuilder sb = new StringBuilder();
@@ -204,7 +206,9 @@ public class UserShader implements Shader {
 
 	static String fragmentSource(Program p) {
 		StringBuilder sb = new StringBuilder();
-		sb.append("#ifdef GL_ES\nprecision mediump float;\n#endif\n");
+		// highp when the GPU has it: u_time (and the uniforms of displace) are also in the vertex shader (highp there),
+		// and a uniform declared in both shaders with two precisions makes the link fail on many phones
+		sb.append(PRECISION);
 		sb.append("uniform float u_time;\nuniform vec4 u_color;\nuniform sampler2D u_texture;\nuniform float u_hasTexture;\n");
 		sb.append("uniform vec3 u_lightDir;\nuniform vec3 u_lightColor;\nuniform vec3 u_ambient;\nuniform vec3 u_cameraPos;\nuniform vec2 u_resolution;\n");
 		sb.append("varying vec2 v_uv;\nvarying vec3 v_normal;\nvarying vec3 v_worldPos;\n");
@@ -278,15 +282,25 @@ public class UserShader implements Shader {
 		this.textured = r.meshPart.mesh.getVertexAttribute(VertexAttributes.Usage.TextureCoordinates) != null;
 	}
 
+	/** Compiles the program; false (and {@link Program#error}) when the code does not compile. */
+	boolean compile() {
+		if (sp != null) return true;
+		ShaderProgram.pedantic = false;
+		ShaderProgram p = new ShaderProgram(vertexSource(program, textured), fragmentSource(program));
+		if (!p.isCompiled()) {
+			program.error = p.getLog();
+			Gdx.app.error("Star2D-3D", "shader " + program.name + ":\n" + p.getLog());
+			p.dispose();
+			return false;
+		}
+		program.error = null;
+		sp = p;
+		return true;
+	}
+
 	@Override
 	public void init() {
-		ShaderProgram.pedantic = false;
-		sp = new ShaderProgram(vertexSource(program, textured), fragmentSource(program));
-		if (!sp.isCompiled()) {
-			program.error = sp.getLog();
-			Gdx.app.error("Star2D-3D", "shader " + program.name + ":\n" + sp.getLog());
-			throw new GdxRuntimeException("shader " + program.name + ": " + sp.getLog());
-		}
+		if (!compile()) throw new GdxRuntimeException("shader " + program.name + ": " + program.error);
 	}
 
 	@Override

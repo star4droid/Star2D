@@ -47,17 +47,20 @@ public class Terrain3D {
 		ModelBuilder mb = new ModelBuilder();
 		mb.begin();
 		MeshPartBuilder b = mb.part("terrain", GL20.GL_TRIANGLES, VertexAttributes.Usage.Position | VertexAttributes.Usage.Normal | VertexAttributes.Usage.TextureCoordinates, new Material());
-		MeshPartBuilder.VertexInfo[] vs = new MeshPartBuilder.VertexInfo[n * n];
+		// shared vertices: rect(VertexInfo...) adds 4 per cell and the builder throws "Too many vertices used" over 128 x 128
+		short[] idx = new short[n * n];
+		MeshPartBuilder.VertexInfo vi = new MeshPartBuilder.VertexInfo();
 		Vector3 nor = new Vector3();
 		for (int j = 0; j < n; j++)
 			for (int i = 0; i < n; i++) {
 				float hl = t.at(i - 1, j), hr = t.at(i + 1, j), hd = t.at(i, j - 1), hu = t.at(i, j + 1);
 				nor.set((hl - hr) * t.maxHeight * t.res, 2f, (hd - hu) * t.maxHeight * t.res).nor();
-				vs[j * n + i] = new MeshPartBuilder.VertexInfo().setPos((float) i / t.res - 0.5f, t.h[j * n + i] * t.maxHeight, (float) j / t.res - 0.5f).setNor(nor).setUV((float) i / t.res, (float) j / t.res);
+				idx[j * n + i] = b.vertex(vi.setPos((float) i / t.res - 0.5f, t.h[j * n + i] * t.maxHeight, (float) j / t.res - 0.5f).setNor(nor).setUV((float) i / t.res, (float) j / t.res));
 			}
+		b.ensureRectangleIndices(t.res * t.res);
 		for (int j = 0; j < t.res; j++)
 			for (int i = 0; i < t.res; i++)
-				b.rect(vs[(j + 1) * n + i], vs[(j + 1) * n + i + 1], vs[j * n + i + 1], vs[j * n + i]);
+				b.rect(idx[(j + 1) * n + i], idx[(j + 1) * n + i + 1], idx[j * n + i + 1], idx[j * n + i]);
 		t.model = mb.end();
 		return t;
 	}

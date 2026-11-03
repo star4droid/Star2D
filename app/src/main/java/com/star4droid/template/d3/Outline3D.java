@@ -80,7 +80,7 @@ public final class Outline3D {
 	}
 
 	public static class OutlineShader implements Shader {
-		private static ShaderProgram program;
+		static ShaderProgram program;
 		private RenderContext context;
 		private final boolean skinned;
 

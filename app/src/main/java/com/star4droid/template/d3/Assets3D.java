@@ -120,6 +120,28 @@ public final class Assets3D {
 		}
 	}
 
+	private static Object glOwner;
+
+	/**
+	 * The caches here (and the shared shapes / water grids / shader programs) hold GL objects of one GL context. A new
+	 * activity (editor reopened, the game started again in the same process) has a new context where those handles mean
+	 * nothing: forget them (no dispose, their context is gone) and build again.
+	 */
+	public static void checkContext() {
+		Object app = Gdx.app;
+		if (app == null || app == glOwner) return;
+		boolean first = glOwner == null;
+		glOwner = app;
+		if (first) return;
+		MODELS.clear();
+		TEXTURES.clear();
+		ERRORS.clear();
+		Shapes3D.forgetGL();
+		Water3D.forgetGL();
+		Outline3D.OutlineShader.program = null;
+		B3.forgetSounds();
+	}
+
 	/** Frees everything (game exit / editor project change). */
 	public static void disposeAll() {
 		for (SceneAsset a : MODELS.values()) {

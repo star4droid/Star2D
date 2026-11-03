@@ -50,6 +50,8 @@ public class Object3D extends Actor implements PlayerItem {
 	boolean transformDirty = true;
 	btRigidBody rigid;
 	Physics3D.Motion motion;
+	/** Collision shapes made for the current body (freed with it). */
+	final com.badlogic.gdx.utils.Array<com.badlogic.gdx.utils.Disposable> bodyShapes = new com.badlogic.gdx.utils.Array<com.badlogic.gdx.utils.Disposable>();
 	int bodyId;
 	Water3D.WaterAttribute water;
 	UserShader.Program program;
@@ -122,6 +124,7 @@ public class Object3D extends Actor implements PlayerItem {
 
 	/** (Re)builds the model and its look from the definition (editor: after a property change). */
 	public void buildModel() {
+		Terrain3D oldTerrain = terrain;
 		instance = null;
 		lowInstance = null;
 		anim = null;
@@ -172,10 +175,26 @@ public class Object3D extends Actor implements PlayerItem {
 			instance = new ModelInstance(Shapes3D.get(shape, detail, (int) def.Steps));
 			if (def.LOD_Distance > 0 && detail > 0) lowInstance = new ModelInstance(Shapes3D.get(shape, 0, (int) def.Steps));
 		}
+		if (oldTerrain != null && oldTerrain.model != null) {
+			// a MESH body reads the old terrain's vertices: remove it before freeing them (setShape / setModel rebuild it)
+			if (rigid != null && world != null) world.physics().removeBody(this);
+			oldTerrain.model.dispose();
+		}
 		applyLook();
 		if (anim != null && def.Animation != null && def.Animation.length() > 0)
 			playAnimation(def.Animation, def.Animation_Loop, def.Animation_Speed);
 		transformDirty = true;
+	}
+
+	/** Frees what this element owns alone (the terrain mesh). Its body must be gone already. */
+	void disposeOwned() {
+		if (terrain != null && terrain.model != null) {
+			try {
+				terrain.model.dispose();
+			} catch (Throwable ignored) {
+			}
+			terrain.model = null;
+		}
 	}
 
 	/** Material from the definition (color, texture, opacity...). */
@@ -265,7 +284,9 @@ public class Object3D extends Actor implements PlayerItem {
 				rigid.activate();
 			}
 		} else {
-			transform.set(position, rotation, scale);
+			// a 0 scale (pop-in tweens, a flat 0 axis) makes the matrix singular: the shaders' normal matrix and
+			// inv() throw "Can't invert a singular matrix" / "non-invertible matrix"
+			transform.set(position, rotation, safeScale(scale, tmpScale));
 		}
 		if (instance != null) instance.transform.set(transform);
 		if (lowInstance != null) lowInstance.transform.set(transform);
@@ -276,6 +297,15 @@ public class Object3D extends Actor implements PlayerItem {
 	}
 
 	private final Matrix4 tmpM = new Matrix4();
+	private final Vector3 tmpScale = new Vector3();
+
+	static Vector3 safeScale(Vector3 s, Vector3 out) {
+		return out.set(safe(s.x), safe(s.y), safe(s.z));
+	}
+
+	private static float safe(float v) {
+		return Math.abs(v) >= 1e-4f ? v : (v < 0 ? -1e-4f : 1e-4f);
+	}
 
 	/** Keeps following another element (keeping the current offset). null = stop. */
 	public void attachTo(Object3D parent) {
@@ -284,7 +314,7 @@ public class Object3D extends Actor implements PlayerItem {
 			return;
 		}
 		parent.sync();
-		transform.set(position, rotation, scale);
+		transform.set(position, rotation, safeScale(scale, tmpScale));
 		offsetFromParent.set(parent.transform).inv().mul(transform);
 		parent3d = parent;
 	}
@@ -536,7 +566,8 @@ public class Object3D extends Actor implements PlayerItem {
 		Vector3 dir = new Vector3(x, y, z).sub(position);
 		if (dir.isZero(0.0001f)) return;
 		dir.nor();
-		Matrix4 m = new Matrix4().setToLookAt(dir, Vector3.Y);
+		// straight up / down: Y can't be the up vector (NaN rotation)
+		Matrix4 m = new Matrix4().setToLookAt(dir, Math.abs(dir.y) > 0.999f ? Vector3.Z : Vector3.Y);
 		m.inv();
 		m.getRotation(rotation, true);
 		syncEulerFromRotation();
@@ -659,15 +690,17 @@ public class Object3D extends Actor implements PlayerItem {
 	/** Changes the shape (CUBE, SPHERE...) or loads another model ("/car.glb"). */
 	public void setShape(String shape) {
 		def.Mesh = shape;
+		boolean hadBody = rigid != null;
 		buildModel();
-		if (rigid != null) createBody();
+		if (hadBody) createBody();
 	}
 
 	public void setModel(String path) {
 		def.Mesh = "MODEL";
 		def.Model = path;
+		boolean hadBody = rigid != null;
 		buildModel();
-		if (rigid != null) createBody();
+		if (hadBody) createBody();
 	}
 
 	/** Project shader ("shaders/x" or "builtin:glow"), "" = none. */
@@ -988,6 +1021,7 @@ public class Object3D extends Actor implements PlayerItem {
 			if (rigid != null) world.physics().removeBody(this);
 			world.remove(this);
 		}
+		disposeOwned();
 		remove();
 	}
 

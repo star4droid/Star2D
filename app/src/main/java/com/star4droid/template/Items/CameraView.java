@@ -102,8 +102,9 @@ public class CameraView extends Actor implements PlayerItem {
 		if (src instanceof Camera3D && stage.hasWorld3D()) {
 			World3D w = stage.world3d();
 			prepare3d((Camera3D) src);
-			// pick ray in view pixels (y down)
-			Object3D o = w.pick(cam3d, u * cam3d.viewportWidth, (1 - v) * cam3d.viewportHeight, 0, 0, cam3d.viewportWidth, cam3d.viewportHeight, null);
+			// pick ray: Camera.unproject flips y with the SCREEN height (Gdx.graphics), not the viewport's, so pass
+			// screenHeight - (pixels from the bottom of the view)
+			Object3D o = w.pick(cam3d, u * cam3d.viewportWidth, Gdx.graphics.getHeight() - v * cam3d.viewportHeight, 0, 0, cam3d.viewportWidth, cam3d.viewportHeight, null);
 			if (down) {
 				pressed3d = o;
 				if (o != null) w.touchStart(o, x, y, pointer);

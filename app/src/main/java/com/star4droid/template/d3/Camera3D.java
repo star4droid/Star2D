@@ -173,9 +173,12 @@ public class Camera3D extends Actor implements PlayerItem {
 		}
 		cam.position.set(position);
 		if (lookAtTarget && t != null) {
-			look.set(t.position.x, t.position.y + lookHeight, t.position.z);
-			cam.up.set(Vector3.Y);
-			cam.direction.set(look).sub(cam.position).nor();
+			look.set(t.position.x, t.position.y + lookHeight, t.position.z).sub(cam.position);
+			// camera on the look point: keep the last direction (a zero direction makes a NaN view)
+			if (!look.isZero(0.0001f)) cam.direction.set(look).nor();
+			// straight down / up: Y can't be the up vector
+			if (Math.abs(cam.direction.y) > 0.999f) cam.up.set(0, 0, cam.direction.y > 0 ? 1 : -1);
+			else cam.up.set(Vector3.Y);
 			if (!"ORBIT".equals(followMode)) {
 				// keep the angles in step so a later free camera continues from here
 				pitch = MathUtils.asin(MathUtils.clamp(cam.direction.y, -1, 1)) * MathUtils.radiansToDegrees;

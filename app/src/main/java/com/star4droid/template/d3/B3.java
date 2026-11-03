@@ -848,6 +848,11 @@ public final class B3 {
 		if (s != null) s.play(volume);
 	}
 
+	/** New audio / GL context (see Assets3D.checkContext). */
+	static void forgetSounds() {
+		SOUNDS.clear();
+	}
+
 	static Sound sound(String path) {
 		if (path == null || path.length() == 0) return null;
 		Sound s = SOUNDS.get(path);

@@ -68,6 +68,12 @@ public final class Water3D {
 
 	private static final ObjectMap<Integer, Model> GRIDS = new ObjectMap<Integer, Model>();
 
+	/** A new GL context (new activity): the cached meshes / program belong to the old one. */
+	static void forgetGL() {
+		GRIDS.clear();
+		WaterShader.program = null;
+	}
+
 	/** A 1 x 1 grid (scaled by the element) with res x res cells. */
 	public static Model grid(int res) {
 		res = MathUtils.clamp(res, 2, 160);
@@ -76,15 +82,16 @@ public final class Water3D {
 		ModelBuilder mb = new ModelBuilder();
 		mb.begin();
 		MeshPartBuilder b = mb.part("water", GL20.GL_TRIANGLES, VertexAttributes.Usage.Position | VertexAttributes.Usage.Normal | VertexAttributes.Usage.TextureCoordinates, new Material());
-		MeshPartBuilder.VertexInfo[] row0 = new MeshPartBuilder.VertexInfo[res + 1], row1 = new MeshPartBuilder.VertexInfo[res + 1];
-		for (int j = 0; j < res; j++) {
-			for (int i = 0; i <= res; i++) {
-				float x = (float) i / res - 0.5f;
-				row0[i] = new MeshPartBuilder.VertexInfo().setPos(x, 0, (float) j / res - 0.5f).setNor(0, 1, 0).setUV((float) i / res, (float) j / res);
-				row1[i] = new MeshPartBuilder.VertexInfo().setPos(x, 0, (float) (j + 1) / res - 0.5f).setNor(0, 1, 0).setUV((float) i / res, (float) (j + 1) / res);
-			}
-			for (int i = 0; i < res; i++) b.rect(row1[i], row1[i + 1], row0[i + 1], row0[i]);
-		}
+		// shared vertices (rect(VertexInfo...) adds 4 per cell: over 128 x 128 the builder throws "Too many vertices used")
+		int n = res + 1;
+		short[] idx = new short[n * n];
+		MeshPartBuilder.VertexInfo vi = new MeshPartBuilder.VertexInfo();
+		for (int j = 0; j <= res; j++)
+			for (int i = 0; i <= res; i++)
+				idx[j * n + i] = b.vertex(vi.setPos((float) i / res - 0.5f, 0, (float) j / res - 0.5f).setNor(0, 1, 0).setUV((float) i / res, (float) j / res));
+		b.ensureRectangleIndices(res * res);
+		for (int j = 0; j < res; j++)
+			for (int i = 0; i < res; i++) b.rect(idx[(j + 1) * n + i], idx[(j + 1) * n + i + 1], idx[j * n + i + 1], idx[j * n + i]);
 		m = mb.end();
 		GRIDS.put(res, m);
 		return m;
@@ -122,7 +129,8 @@ public final class Water3D {
 				+ "void main(){ vec4 wp = u_worldTrans * vec4(a_position, 1.0); float h = height(wp.xz); float e = 0.15; float hx = height(wp.xz + vec2(e, 0.0)) - h; float hz = height(wp.xz + vec2(0.0, e)) - h;"
 				+ " v_normal = normalize(vec3(-hx / e, 1.0, -hz / e)); wp.y += h; v_world = wp.xyz; v_crest = clamp(h / max(u_wave.x, 0.001), 0.0, 1.0); v_uv = a_texCoord0; gl_Position = u_projViewTrans * wp; }";
 
-		static final String F = "#ifdef GL_ES\nprecision mediump float;\n#endif\n"
+		// highp when available: u_time / u_level are in both shaders and must have the same precision to link
+		static final String F = UserShader.PRECISION
 				+ "uniform vec4 u_shallow;\nuniform vec4 u_deep;\nuniform vec4 u_foam;\nuniform vec4 u_sky;\nuniform vec3 u_sunDir;\nuniform vec3 u_sunColor;\nuniform vec3 u_cameraPos;\nuniform float u_time;\nuniform float u_clarity;\nuniform float u_foamAmount;\nuniform float u_level;\nuniform vec3 u_fogColor;\nuniform vec2 u_fogRange;\n"
 				+ "varying vec3 v_world;\nvarying vec3 v_normal;\nvarying float v_crest;\nvarying vec2 v_uv;\n"
 				+ "float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }\n"

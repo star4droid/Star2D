@@ -81,11 +81,56 @@ public class Physics3D implements Disposable {
 	public void setGravity(float x, float y, float z) {
 		gravity.set(x, y, z);
 		world.setGravity(gravity);
+		// btDiscreteDynamicsWorld.setGravity gives every body the plain gravity: put the Gravity Scale back
+		for (IntMap.Entry<Object3D> e : byId) {
+			Object3D o = e.value;
+			if (o.rigid != null && "DYNAMIC".equals(o.d().Body)) {
+				o.rigid.setGravity(tmpG.set(gravity).scl(o.d().Gravity_Scale));
+				o.rigid.activate();
+			}
+		}
 	}
+
+	private final Vector3 tmpG = new Vector3();
 
 	public void step(float dt) {
 		if (dt <= 0) return;
-		world.stepSimulation(Math.min(dt, 0.1f), maxSubSteps, fixedStep);
+		stepping = true;
+		try {
+			world.stepSimulation(Math.min(dt, 0.1f), maxSubSteps, fixedStep);
+		} finally {
+			stepping = false;
+		}
+		dispatchContacts();
+	}
+
+	// Contact callbacks come from inside stepSimulation (native code). Running the game's collision events there would let a
+	// script destroy / create / move bodies in the middle of Bullet's step (native crash), so they wait until the step ends.
+	private boolean stepping;
+	private final com.badlogic.gdx.utils.IntArray pending = new com.badlogic.gdx.utils.IntArray();
+
+	private boolean disposing;
+
+	void contact(int idA, int idB, boolean begin) {
+		if (disposing) return; // scene closing: no collision events from the bodies being removed
+		if (stepping) {
+			pending.add(idA);
+			pending.add(idB);
+			pending.add(begin ? 1 : 0);
+			return;
+		}
+		Object3D a = byId.get(idA), b = byId.get(idB);
+		if (a != null && b != null) {
+			if (begin) world3d.contactBegin(a, b);
+			else world3d.contactEnd(a, b);
+		}
+	}
+
+	private void dispatchContacts() {
+		if (pending.size == 0) return;
+		int[] list = pending.toArray();
+		pending.clear();
+		for (int i = 0; i + 2 < list.length; i += 3) contact(list[i], list[i + 1], list[i + 2] == 1);
 	}
 
 	int register(Object3D o) {
@@ -104,6 +149,11 @@ public class Physics3D implements Disposable {
 
 	/** Collision shape of an element (size from its scale). */
 	public btCollisionShape shapeFor(Object3D o) {
+		return shapeFor(o, o.bodyShapes);
+	}
+
+	/** The shape and its parts go to {@code own}: freed when the body is removed (bodies are rebuilt on scale / mass changes). */
+	private btCollisionShape shapeFor(Object3D o, Array<Disposable> own) {
 		Object3DDef d = o.d();
 		String c = d.Collider;
 		Vector3 s = new Vector3(Math.abs(o.scale.x) * d.Collider_Scale_X, Math.abs(o.scale.y) * d.Collider_Scale_Y, Math.abs(o.scale.z) * d.Collider_Scale_Z);
@@ -135,8 +185,7 @@ public class Physics3D implements Disposable {
 			btCollisionShape ms = Bullet.obtainStaticNodeShape(o.instance.nodes);
 			if (ms == null) return new btBoxShape(new Vector3(Math.max(0.005f, size.x * s.x * 0.5f), Math.max(0.005f, size.y * s.y * 0.5f), Math.max(0.005f, size.z * s.z * 0.5f)));
 			ms.setLocalScaling(s);
-			sh = ms;
-			owned.add(ms);
+			own.add(ms);
 			return ms;
 		} else if ("CONVEX".equals(c) && o.instance != null) {
 			btConvexHullShape hull = convexHull(o.instance.model, s);
@@ -148,10 +197,10 @@ public class Physics3D implements Disposable {
 		if (!off.isZero(0.0001f)) {
 			btCompoundShape comp = new btCompoundShape();
 			comp.addChildShape(new Matrix4().setToTranslation(off), sh);
-			owned.add(sh);
+			own.add(sh);
 			sh = comp;
 		}
-		owned.add(sh);
+		own.add(sh);
 		return sh;
 	}
 
@@ -199,7 +248,8 @@ public class Physics3D implements Disposable {
 
 	public btRigidBody createBody(Object3D o) {
 		Object3DDef d = o.d();
-		btCollisionShape shape = shapeFor(o);
+		freeShapes(o);
+		btCollisionShape shape = shapeFor(o, o.bodyShapes);
 		boolean dynamic = "DYNAMIC".equals(d.Body);
 		float mass = dynamic ? Math.max(0.001f, d.Mass) : 0f;
 		Vector3 inertia = new Vector3();
@@ -245,14 +295,31 @@ public class Physics3D implements Disposable {
 		return b;
 	}
 
+	/** Raycast vehicles of this world (a vehicle must leave the world before its chassis body is deleted). */
+	final Array<Vehicle3D> vehicles = new Array<Vehicle3D>();
+
 	public void removeBody(Object3D o) {
 		if (o.rigid == null) return;
+		// a vehicle on this body would keep updating a deleted chassis in the next step (native crash)
+		for (int i = vehicles.size - 1; i >= 0; i--) if (i < vehicles.size) vehicles.get(i).bodyRemoved(o.rigid);
 		world.removeRigidBody(o.rigid);
 		unregister(o.bodyId);
 		o.rigid.dispose();
 		if (o.motion != null) o.motion.dispose();
 		o.rigid = null;
 		o.motion = null;
+		freeShapes(o);
+	}
+
+	/** Children first (a compound does not delete its children). */
+	private static void freeShapes(Object3D o) {
+		for (int i = 0; i < o.bodyShapes.size; i++) {
+			try {
+				o.bodyShapes.get(i).dispose();
+			} catch (Throwable ignored) {
+			}
+		}
+		o.bodyShapes.clear();
 	}
 
 	// ------------------------------------------------------------------ layers
@@ -327,14 +394,12 @@ public class Physics3D implements Disposable {
 
 		@Override
 		public void onContactStarted(int userValue0, boolean match0, int userValue1, boolean match1) {
-			Object3D a = p.byId.get(userValue0), b = p.byId.get(userValue1);
-			if (a != null && b != null) p.world3d.contactBegin(a, b);
+			p.contact(userValue0, userValue1, true);
 		}
 
 		@Override
 		public void onContactEnded(int userValue0, boolean match0, int userValue1, boolean match1) {
-			Object3D a = p.byId.get(userValue0), b = p.byId.get(userValue1);
-			if (a != null && b != null) p.world3d.contactEnd(a, b);
+			p.contact(userValue0, userValue1, false);
 		}
 	}
 
@@ -352,6 +417,17 @@ public class Physics3D implements Disposable {
 			}
 		}
 		constraints.clear();
+		disposing = true;
+		// the bodies too: an element destroyed later must not reach a deleted world (its rigid is null after this)
+		Array<Object3D> withBodies = new Array<Object3D>();
+		for (IntMap.Entry<Object3D> e : byId) withBodies.add(e.value);
+		for (Object3D o : withBodies) {
+			try {
+				removeBody(o);
+			} catch (Throwable ignored) {
+			}
+		}
+		pending.clear();
 		if (contacts != null) contacts.dispose();
 		world.dispose();
 		solver.dispose();

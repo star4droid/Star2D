@@ -51,7 +51,7 @@
  },
  {
   "x": "0",
-  "y": "0.004",
+  "y": "0",
   "z": "0",
   "Script": "roadTile",
   "rotation": "0",
@@ -79,7 +79,7 @@
   "Rotation Y": "0",
   "Rotation Z": "0",
   "Scale X": "16",
-  "Scale Y": "1",
+  "Scale Y": "1.5",
   "Scale Z": "16",
   "Active": "true",
   "Color": "#FFFFFF",
@@ -1299,7 +1299,7 @@
  },
  {
   "x": "0",
-  "y": "-0.03",
+  "y": "-0.05",
   "z": "0",
   "Script": "sand",
   "rotation": "0",

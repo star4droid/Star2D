@@ -93,6 +93,8 @@ public class AddItemPanel implements PanelHost.Panel {
         if (ed != null && ed.is3DScene()) {
             col.addView(Ui.sectionLabel(c, Tr.t("s3_shapes", "3D shapes")));
             col.addView(grid3d(c, SHAPES_3D, ar));
+            LinearLayout imp = Ui.button(c, R.drawable.ic_s2_download, Tr.t("s3_import_glb", "Import 3D models (.glb / .gltf)"), true, v -> importModels(c));
+            col.addView(imp, Ui.margins(new LinearLayout.LayoutParams(-1, Ui.dp(c, 44)), c, 4, 4, 4, 6));
             col.addView(Ui.sectionLabel(c, Tr.t("s3_special", "Models, terrain and water")));
             col.addView(grid3d(c, SPECIAL_3D, ar));
             col.addView(Ui.sectionLabel(c, Tr.t("s3_lights", "3D lights")));
@@ -131,6 +133,50 @@ public class AddItemPanel implements PanelHost.Panel {
         ScrollView s = new ScrollView(c);
         s.addView(col);
         return s;
+    }
+
+    /**
+     * Imports .glb / .gltf files from the phone into the project's models folder (a .gltf with its .bin and pictures) and
+     * adds a MODEL element for each model file chosen.
+     */
+    private void importModels(Context c) {
+        final String project = shell.projectPath();
+        if (project == null) return;
+        final java.io.File tmp = new java.io.File(project, ".glb_import");
+        tmp.mkdirs();
+        shell.host().importFiles(tmp.getAbsolutePath(), () -> {
+            final java.util.ArrayList<String> models = new java.util.ArrayList<>();
+            try {
+                java.io.File dest = new java.io.File(project, "models");
+                dest.mkdirs();
+                java.io.File[] chosen = tmp.listFiles();
+                if (chosen != null) for (java.io.File f : chosen) {
+                    String n = f.getName();
+                    String low = n.toLowerCase();
+                    boolean model = low.endsWith(".glb") || low.endsWith(".gltf");
+                    boolean part = low.endsWith(".bin") || low.endsWith(".png") || low.endsWith(".jpg") || low.endsWith(".jpeg") || low.endsWith(".webp");
+                    if (!model && !part) continue; // anything else is ignored
+                    java.io.File to = new java.io.File(dest, n.replace(' ', '_'));
+                    if (to.exists()) to.delete();
+                    if (!f.renameTo(to)) {
+                        com.star4droid.star2d.Helpers.FileUtil.copyFile(f.getAbsolutePath(), to.getAbsolutePath());
+                    }
+                    if (model) models.add("/" + to.getName());
+                }
+            } catch (Throwable t) {
+                Ui.toast(c, String.valueOf(t));
+            }
+            com.star4droid.star2d.Helpers.FileUtil.deleteFile(tmp.getAbsolutePath());
+            if (models.isEmpty()) {
+                Ui.toast(c, Tr.t("s3_import_none", "No .glb / .gltf model was chosen"));
+                return;
+            }
+            shell.panels.hide();
+            Bridge.gl(() -> {
+                for (String m : models) Bridge.controls().actionAdd3D("OBJ3D", "MODEL", m);
+            });
+            Ui.toast(c, Tr.t("s3_import_done", "Imported") + ": " + models.size());
+        });
     }
 
     private GridLayout grid3d(Context c, String[][] items, boolean ar) {

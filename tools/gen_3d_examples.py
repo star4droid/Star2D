@@ -642,7 +642,7 @@ def build_city():
     # the grass is drawn a little below the road tiles (no z-fighting: the roads never look sunk) and an invisible
     # collider keeps the driving surface at y = 0
     with sc.grp("Ground"):
-        sc.shape("ground", "PLANE", 0, -0.06, 0, 140, 1, 140, "#6E9E48", Receive_Shadows=True, Cast_Shadows=False)
+        sc.shape("ground", "PLANE", 0, -0.08, 0, 140, 1, 140, "#6E9E48", Receive_Shadows=True, Cast_Shadows=False)
         sc.wall("groundCollider", 0, -0.5, 0, 140, 1, 140)
 
     def cell(i, j):
@@ -667,9 +667,9 @@ def build_city():
                 r = {(True, False, False, True): 90, (False, True, False, True): 0, (False, True, True, False): 270, (True, False, True, False): 180}[(ex, wx, sz_, nz)]
                 m = "road-bend"
             n += 1
-            sc.model("road%d" % n, m + ".glb", x, 0.0, z, (T, 1, T), ry=r, Cast_Shadows=False)
+            sc.model("road%d" % n, m + ".glb", x, 0.0, z, (T, 2, T), ry=r, Cast_Shadows=False)
     for k, (x, z, r) in enumerate([(0, -32, 90), (0, -40, 90), (0, 32, 90), (0, 40, 90), (-32, 0, 0), (-40, 0, 0), (32, 0, 0), (40, 0, 0)]):
-        sc.model("stub%d" % (k + 1), "road-straight.glb", x, 0.0, z, (T, 1, T), ry=r, Cast_Shadows=False)
+        sc.model("stub%d" % (k + 1), "road-straight.glb", x, 0.0, z, (T, 2, T), ry=r, Cast_Shadows=False)
     sc.group = None
 
     # ---- buildings: 4 blocks of 2 x 2 cells, each building faces the row road next to it
@@ -722,7 +722,7 @@ def build_city():
                                    "maxSpeed": 90, "reverseSpeed": 22, "acceleration": 7, "brakeStrength": 16, "drive": "REAR", "engineSound": "/engine_loop.ogg",
                                    "engineVolume": 0.35, "maxSteerAngle": 32, "steerSpeed": 150, "wheelMode": "MODEL_NODES", "followCamera": True,
                                    "camera": "cam", "cameraDistance": 7, "cameraHeight": 2.6, "flipResetTime": 2.5})])
-    sc.add("CAMERA3D", "cam", x=1.6, y=3.2, z=21.5, Rotation_X=-12, Active=True, FOV=62, Near=0.1, Far=300)
+    sc.add("CAMERA3D", "cam", x=1.6, y=3.2, z=21.5, Rotation_X=-12, Active=True, FOV=62, Near=0.3, Far=300)
     # minimap: a second camera high above the car, shown by a CAMERAVIEW in the corner
     sc.add("CAMERA3D", "mapCam", x=1.6, y=55, z=30, Rotation_X=-75, FOV=50, Far=200, Follow="playerCar", Follow_Mode="TOP_DOWN", Follow_Distance=55,
            Follow_Height=0, Follow_Smooth=8)
@@ -1170,7 +1170,7 @@ def build_endless():
     ui_images(proj, ["btn_left.png", "btn_right.png", "btn_gear.png", "btn_wide_red.png"])
 
     # ---- templates (hidden at start; EndlessRoad3D copies and recycles them). They wait far away from the road.
-    sc.model("roadTile", "road-straight-z.glb", 0, 0.004, 0, (16, 1, 16), static=False, Cast_Shadows=False)
+    sc.model("roadTile", "road-straight-z.glb", 0, 0.0, 0, (16, 1.5, 16), static=False, Cast_Shadows=False)
     props = []
     for name, m, s in [("cactusTall", "cactus_tall.glb", 4.5), ("cactusShort", "cactus_short.glb", 4.0), ("rockLarge", "rock_largeA.glb", 5.0),
                        ("rockSmall", "rock_smallA.glb", 5.0), ("fence", "fence_simple.glb", 4.0)]:
@@ -1189,7 +1189,7 @@ def build_endless():
                                                 "speedPerLevel": 8, "scorePerMeter": 1, "pickupScore": 25})],
            Mesh="EMPTY", x=0, y=0, z=0, Cast_Shadows=False)
     # desert floor: one big plane that follows the car (OnStep), physics included
-    sc.shape("sand", "PLANE", 0, -0.03, 0, 600, 1, 600, "#D8B47A", static=False, body="STATIC", Cast_Shadows=False)
+    sc.shape("sand", "PLANE", 0, -0.05, 0, 600, 1, 600, "#D8B47A", static=False, body="STATIC", Cast_Shadows=False)
 
     # ---- the player's race car, always on the gas: steer with the two buttons
     sc.model("playerCar", "player-race.glb", 1.6, 0.4, 0, 1.35, static=False, body="DYNAMIC", collider="BOX", Mass=900,

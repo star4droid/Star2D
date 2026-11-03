@@ -150,6 +150,9 @@ public final class Shaders3D {
 		}
 	}
 
+	/** Added to the stored shadow depth (shadow camera range is 3x the shadow distance: 0.0015 is about 0.2 m at 45 m). */
+	static final String SHADOW_BIAS = "0.0016";
+
 	/** Shadow pass of SIMPLE / TOON / SOFT (the default depth config has 12 bones only). */
 	public static class DepthProvider extends com.badlogic.gdx.graphics.g3d.utils.DepthShaderProvider {
 		public DepthProvider() {
@@ -159,6 +162,14 @@ public final class Shaders3D {
 		private static com.badlogic.gdx.graphics.g3d.shaders.DepthShader.Config depthConfig(int bones) {
 			com.badlogic.gdx.graphics.g3d.shaders.DepthShader.Config c = new com.badlogic.gdx.graphics.g3d.shaders.DepthShader.Config();
 			c.numBones = bones;
+			// depth bias: libGDX's receiver compares with no bias at all, so lit surfaces shadowed themselves in stripes
+			// ("shadow acne"). The stored depth is pushed away from the sun a little (0..1 over the shadow range).
+			try {
+				String f = com.badlogic.gdx.graphics.g3d.shaders.DepthShader.getDefaultFragmentShader();
+				if (f != null && f.contains("HIGH float depth = v_depth;"))
+					c.fragmentShader = f.replace("HIGH float depth = v_depth;", "HIGH float depth = min(v_depth + " + SHADOW_BIAS + ", 0.9995);");
+			} catch (Throwable ignored) {
+			}
 			return c;
 		}
 

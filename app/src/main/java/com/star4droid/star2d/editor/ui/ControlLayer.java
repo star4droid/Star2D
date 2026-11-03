@@ -775,10 +775,23 @@ public class ControlLayer extends Table {
 	 * or the Light Kind (POINT, SPOT, DIRECTIONAL). It appears at the point the 3D view looks at.
 	 */
 	public void actionAdd3D(String kind,String preset){
+		actionAdd3D(kind,preset,null);
+	}
+
+	/** model: project path of a .glb / .gltf ("/name.glb"): a MODEL element showing it (named after the file). */
+	public void actionAdd3D(String kind,String preset,String model){
 		try {
 			com.star4droid.star2d.editor.LibgdxEditor ed = app.getEditor();
 			com.star4droid.star2d.editor.items.Editor3DItem item = new com.star4droid.star2d.editor.items.Editor3DItem(ed,kind);
 			String base = "OBJ3D".equals(kind) ? (preset == null ? "Cube" : preset.substring(0,1)+preset.substring(1).toLowerCase()) : ("LIGHT3D".equals(kind) ? "Light" : "Camera");
+			if(model != null){
+				String fn = model.substring(model.lastIndexOf('/')+1);
+				int dot = fn.lastIndexOf('.');
+				if(dot > 0) fn = fn.substring(0,dot);
+				fn = fn.replaceAll("[^A-Za-z0-9_]","_");
+				if(fn.isEmpty() || Character.isDigit(fn.charAt(0))) fn = "Model_" + fn;
+				base = fn;
+			}
 			String name = base; int n = 1;
 			java.util.ArrayList<String> used = ed.getBodiesList();
 			while(used.contains(name)) name = base + (n++);
@@ -795,7 +808,7 @@ public class ControlLayer extends Table {
 				if("PLANE".equals(preset)){ ps.put("Scale X","10"); ps.put("Scale Z","10"); y = 0; }
 				else if("TERRAIN".equals(preset)){ ps.put("Scale X","60"); ps.put("Scale Y","1"); ps.put("Scale Z","60"); ps.put("Terrain Noise","1"); ps.put("Color","#7CB65A"); y = 0; }
 				else if("WATER".equals(preset)){ ps.put("Scale X","60"); ps.put("Scale Z","60"); ps.put("Cast Shadows","false"); y = 0; }
-				else if("MODEL".equals(preset)){ y = 0; }
+				else if("MODEL".equals(preset)){ y = 0; if(model != null){ ps.put("Model",model); com.star4droid.template.d3.Assets3D.reload(model); } }
 				else if("QUAD".equals(preset) || "DISC".equals(preset)) y = 0.5f;
 			} else if("LIGHT3D".equals(kind)){
 				ps.put("Light Kind",preset == null ? "POINT" : preset);

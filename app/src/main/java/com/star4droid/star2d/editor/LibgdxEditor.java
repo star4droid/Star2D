@@ -1369,9 +1369,12 @@ public class LibgdxEditor extends Stage {
 			shapeRenderer.setProjectionMatrix(camera.combined);
 			if(e3d.edit2D) drawSceneFrame(camera,getLogicWidth(),getLogicHeight());
 			try { Hierarchy.applyVisibility(this); } catch(Throwable ignored){}
-			getBatch().setColor(1,1,1,e3d.edit2D ? 1f : 0.85f);
-			super.draw();
-			getBatch().setColor(1,1,1,1);
+			// the HUD / UI elements (2D layer) are hidden while the 3D world is edited: they only get in the way
+			// (they are drawn, with a grid-less frame, when "2D layer" editing is on and the 3D world is shown behind)
+			if(e3d.edit2D){
+				getBatch().setColor(1,1,1,1);
+				super.draw();
+			}
 			updateProperties();
 			if(selectedActor != null && !(selectedActor instanceof Editor3DItem) && e3d.edit2D){
 				Gdx.gl.glLineWidth(3f);

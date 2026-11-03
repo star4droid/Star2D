@@ -127,6 +127,8 @@ public class Editor3D {
 		cam.viewportWidth = Math.max(1, Gdx.graphics.getWidth());
 		cam.viewportHeight = Math.max(1, Gdx.graphics.getHeight());
 		cam.far = Math.max(200f, distance * 20f);
+		// a farther near plane = much finer depth: close surfaces (a road on the grass) no longer flicker
+		cam.near = MathUtils.clamp(distance * 0.02f, 0.05f, 0.6f);
 		cam.update();
 	}
 
@@ -611,7 +613,8 @@ public class Editor3D {
 	private int dragAxis = -1; // 0..2 axis, 3 = center (free), -1 none
 	private boolean orbiting, panning, moved;
 	private float lastX, lastY, downX, downY, pinchDist = -1;
-	private final Vector2 lastMid = new Vector2();
+	private final Vector2 lastF0 = new Vector2(), lastF1 = new Vector2();
+	private float pinchStartDist = -1, pinchStartZoom = 1;
 	private long lastTap;
 	private String[] startTransform;
 	private final Vector3 dragStartWorld = new Vector3(), startPos = new Vector3(), startScale = new Vector3(), startRot = new Vector3();
@@ -670,8 +673,12 @@ public class Editor3D {
 			if (dragHandle >= 0) endHandleDrag();
 			orbiting = false;
 			panning = true;
+			// a new two-finger gesture starts from the zoom the camera has NOW
 			pinchDist = Vector2.dst(Gdx.input.getX(0), Gdx.input.getY(0), Gdx.input.getX(1), Gdx.input.getY(1));
-			lastMid.set((Gdx.input.getX(0) + Gdx.input.getX(1)) * 0.5f, (Gdx.input.getY(0) + Gdx.input.getY(1)) * 0.5f);
+			pinchStartDist = pinchDist;
+			pinchStartZoom = distance;
+			lastF0.set(Gdx.input.getX(0), Gdx.input.getY(0));
+			lastF1.set(Gdx.input.getX(1), Gdx.input.getY(1));
 			return true;
 		}
 		if (pointer > 1) return true;
@@ -691,16 +698,22 @@ public class Editor3D {
 	}
 
 	public boolean touchDragged(int x, int y, int pointer) {
-		if (Gdx.input.isTouched(1) && panning) {
-			float d = Vector2.dst(Gdx.input.getX(0), Gdx.input.getY(0), Gdx.input.getX(1), Gdx.input.getY(1));
-			if (pinchDist > 0 && d > 0) distance *= pinchDist / d;
-			pinchDist = d;
-			float mx = (Gdx.input.getX(0) + Gdx.input.getX(1)) * 0.5f, my = (Gdx.input.getY(0) + Gdx.input.getY(1)) * 0.5f;
-			float k = distance / Math.max(1, Gdx.graphics.getHeight()) * 1.1f;
-			Vector3 right = new Vector3(cam.direction).crs(cam.up).nor();
-			Vector3 up = new Vector3(right).crs(cam.direction).nor();
-			target.add(right.scl(-(mx - lastMid.x) * k)).add(up.scl((my - lastMid.y) * k));
-			lastMid.set(mx, my);
+		if (Gdx.input.isTouched(1) && Gdx.input.isTouched(0) && panning) {
+			float x0 = Gdx.input.getX(0), y0 = Gdx.input.getY(0), x1 = Gdx.input.getX(1), y1 = Gdx.input.getY(1);
+			float d = Vector2.dst(x0, y0, x1, y1);
+			// zoom: the finger distance now against the distance when this gesture began (applied to the zoom of that moment)
+			if (pinchStartDist > 1f && d > 1f) distance = MathUtils.clamp(pinchStartZoom * pinchStartDist / d, 0.5f, 600f);
+			// pan: only the movement both fingers share; one finger moving alone (held finger + dragging finger) is a pure zoom
+			float d0x = x0 - lastF0.x, d0y = y0 - lastF0.y, d1x = x1 - lastF1.x, d1y = y1 - lastF1.y;
+			if (d0x * d1x + d0y * d1y > 0) {
+				float mx = Math.abs(d0x) < Math.abs(d1x) ? d0x : d1x, my = Math.abs(d0y) < Math.abs(d1y) ? d0y : d1y;
+				float k = distance / Math.max(1, Gdx.graphics.getHeight()) * 1.1f;
+				Vector3 right = new Vector3(cam.direction).crs(cam.up).nor();
+				Vector3 up = new Vector3(right).crs(cam.direction).nor();
+				target.add(right.scl(-mx * k)).add(up.scl(my * k));
+			}
+			lastF0.set(x0, y0);
+			lastF1.set(x1, y1);
 			moved = true;
 			updateCamera();
 			return true;
@@ -728,8 +741,11 @@ public class Editor3D {
 
 	public boolean touchUp(int x, int y, int pointer) {
 		if (pointer == 1 || panning) {
-			if (!Gdx.input.isTouched()) panning = false;
+			// any finger up ends the two-finger gesture (the other finger does not orbit by accident)
+			panning = false;
 			pinchDist = -1;
+			pinchStartDist = -1;
+			orbiting = false;
 			return true;
 		}
 		if (dragHandle >= 0) {

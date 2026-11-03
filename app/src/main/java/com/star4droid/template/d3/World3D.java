@@ -532,6 +532,21 @@ public class World3D implements Disposable {
 		}
 	};
 
+	/**
+	 * The scaled picture's frame buffer. libGDX gives it a 16-bit depth buffer: surfaces a few centimeters apart (a road on
+	 * the grass) flickered into blocks at 20 m. A 24-bit depth render buffer is used when the GPU has one.
+	 */
+	private static FrameBuffer newFrameBuffer(int fw, int fh) {
+		try {
+			com.badlogic.gdx.graphics.glutils.FrameBuffer.FrameBufferBuilder b = new com.badlogic.gdx.graphics.glutils.FrameBuffer.FrameBufferBuilder(fw, fh);
+			b.addBasicColorTextureAttachment(Pixmap.Format.RGB888);
+			b.addDepthRenderBuffer(0x81A6); // GL_DEPTH_COMPONENT24
+			return b.build();
+		} catch (Throwable t) {
+			return new FrameBuffer(Pixmap.Format.RGB888, fw, fh, true);
+		}
+	}
+
 	private final Vector3 snapRight = new Vector3(), snapUp = new Vector3(), snapDir = new Vector3();
 
 	/** Moves the shadow area center in whole shadow-map texels (seen from the sun): shadow edges no longer swim while the camera moves. */
@@ -603,9 +618,6 @@ public class World3D implements Disposable {
 			shadowLight.setCenter(center);
 			shadowLight.direction.set(sunDir);
 			shadowLight.begin();
-			// depth bias: without it lit surfaces shadow themselves in stripes ("shadow acne") that crawl while the camera turns
-			Gdx.gl.glEnable(GL20.GL_POLYGON_OFFSET_FILL);
-			Gdx.gl.glPolygonOffset(2.5f, 10f);
 			shadowBatch.begin(shadowLight.getCamera());
 			for (int i = 0; i < objects.size; i++) {
 				Object3D o = objects.get(i);
@@ -614,8 +626,6 @@ public class World3D implements Disposable {
 				shadowBatch.render(o.instance);
 			}
 			shadowBatch.end();
-			Gdx.gl.glPolygonOffset(0f, 0f);
-			Gdx.gl.glDisable(GL20.GL_POLYGON_OFFSET_FILL);
 			shadowLight.end();
 		}
 		boolean useFbo = main && !editor && !fboFailed && (Quality3D.renderScale < 0.999f || (!"NONE".equals(postEffect) && Quality3D.postEffects));
@@ -627,7 +637,7 @@ public class World3D implements Disposable {
 				if (fbo != null) fbo.dispose();
 				fbo = null;
 				try {
-					fbo = new FrameBuffer(Pixmap.Format.RGB888, fw, fh, true);
+					fbo = newFrameBuffer(fw, fh);
 					fbo.getColorBufferTexture().setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
 				} catch (Throwable t) {
 					// a GPU that can't render into this frame buffer: draw straight to the screen (no scale / post effect)

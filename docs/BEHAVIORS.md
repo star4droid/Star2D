@@ -148,3 +148,57 @@ Every place that shows a behavior's text goes through `ui/behaviors/BehaviorText
 | UI chrome of the info dialog, the Add dialog and the rows | `bhv_*` (grep `Tr.t("bhv_` in `ui/behaviors`) |
 
 The first block of a behavior event in the block editor ("▶ When hit") and its title bar use the same event name (`BehaviorEvents.displayName`); the event's arguments (`onShoot(PlayerItem bullet)`) are offered as draggable values next to `current`.
+
+## 3D behaviors
+
+3D scenes have their own behavior library (`behaviors/lib/*3D.java`). They are marked
+`@BehaviorInfo(targets = BehaviorInfo.Target.THREE_D, types = {"OBJ3D", ...})`:
+
+* **Target `THREE_D`** = elements of the 3D world, editor TYPE `OBJ3D`, `LIGHT3D` or `CAMERA3D` (`ElementTypes.THREE_D_TYPES`;
+  `CAMERAVIEW` is a 2D / UI element). `types` narrows it (Flicker 3D: `LIGHT3D` only). The source scanner reads both, so project
+  behaviors can be 3D too (Files > New behavior > 3D writes a 3D skeleton).
+* **Fit rules** (`BehaviorMeta.misfit(bodyType, TYPE)`, `BehaviorText.misfit(m, env)`): a 3D behavior on a 2D / UI element and a
+  2D behavior on a 3D element are flagged; the Add dialog of a 3D element opens on the **3D** chip (All shows the 2D ones flagged),
+  a 2D / UI element never lists 3D behaviors; the AI's `behaviors add` refuses a 2D/3D mismatch unless `force:true`, and
+  `behaviors list {target:'3d'}` lists them. `BehaviorEnv.is3D()` comes from the element's TYPE.
+* **Helpers** in `Behavior`: `obj()` (Object3D), `camera3d()`, `light3d()`, `is3D()`, `world3d()`, `mainCamera3d()`, `pos3(item, out)`.
+  `Support3D` has the shared parts: input (`readMove`), headings (front = local -Z, yaw 0 looks along -Z), ground height (physics
+  raycast + terrains), `Mover` (walk with gravity / steps / walls, DYNAMIC or not, also a CAMERA3D), `Walker` (go to a point),
+  `Clips` (crossfaded animation clips), sounds in space and looping sounds, `Prompt` (a 2D button / text shown near an object; several
+  objects can share one USE button: the nearest wins).
+* Units: meters, seconds, degrees, km/h where it says so. Element references are `PlayerItem` fields; an empty player / camera
+  means the main camera (the first-person player).
+
+| Behavior | What |
+|---|---|
+| FirstPersonController3D | Joystick walk + drag / second joystick look, jump, run, head bob, footsteps; on a capsule (DYNAMIC) or on a CAMERA3D |
+| ThirdPersonController3D | Moves relative to the camera, turns to the move, jump / run, idle-walk-run-jump clips; orbit-touch or behind camera |
+| CharacterAnimator3D | Picks idle / walk / run / jump / fall clips from the measured speed, crossfades, action clips |
+| Car3D | Bullet raycast vehicle: gas / brake / reverse / steer / handbrake drift (buttons, joystick, tilt, keys), km/h, suspension, wheel nodes of a GLB ("wheel-front-left"...) or wheel elements, flip reset, engine sound, follow camera |
+| Traffic3D | AI car along waypoint lanes, stops for cars / player, honks, spins wheel nodes, despawns far away |
+| EndlessRoad3D | Recycled road tiles toward -Z, side props, lane traffic, pickups, levels (adds Car3D top speed), distance / score, crash events |
+| PathFollower3D | Waypoint elements: loop / ping-pong / once, on the ground or flying, waits; camera fly-throughs |
+| Patrol3D | Walk between points or wander, stop and look around, clips; pauses while Chase3D chases |
+| Chase3D | Sight range + field of view + line of sight, hearing, chase, attack (Health3D damage), search, go home |
+| ClickToMove3D | Tap the ground to walk there (ignores taps on 2D controls), marker element |
+| PlatformMover3D | Kinematic platform / elevator between stops, waits or waits for a call, carries riders (also a first-person camera) |
+| JumpPad3D | Launches what steps on it (bodies, controllers, first-person camera) up / forward |
+| Rotator3D, Floater3D, Oscillator3D, Swing3D, Orbit3D | Spin; bob + spin + sway; back and forth; pendulum; circle a center |
+| Billboard3D, LookAtTarget3D | Face the camera; turn toward a target in range (objects, cameras, lights), idle sweep |
+| Interactable3D | 2D USE button + prompt near the object (look check), tap object / E, onInteract, outline highlight |
+| Door3D | Hinge (opens away from the player) / slide / model clips, key item from the Inventory, auto close, sounds, events |
+| Pickup3D | Walk-over or button pickup into the Inventory, flies to the player, respawn |
+| Seat3D | Sit / stand: camera glides to the seat, movement controller paused, look while seated |
+| Trigger3D | Box / radius zone, watched elements / name prefix / camera, enter / exit events, once |
+| Health3D | Damageable 3D hit points: invincibility, regen, 2D bar / text, hurt clip / shake / knockback, death clip / hide / destroy |
+| Shooter3D, Projectile3D | Hitscan or projectile copies, camera aim, spread, rate, inventory ammo, impact effects; bullets that never tunnel |
+| Spawner3D, Lifetime3D | Timed copies of templates (area, limits, throw, lifetime); remove after N s with shrink / fade |
+| Respawn3D | Back to start / checkpoint after a fall or death |
+| Flicker3D, Flashlight3D | Candle / fire / broken / pulse / strobe light (+ glow object); spot light on the camera with toggle button and battery |
+| Footsteps3D, Buoyancy3D, CameraOrbitTouch3D | Step sounds from movement; float on WATER (exact or physical rocking); drag-orbit + pinch-zoom camera |
+
+Runtime API added for them: `Object3D.getYaw3/setYaw3/getBottomY/isDynamic/lockRotation3/applyForceAt/applyImpulseAt/velocityAt/
+getAngularVelocityY3/setNodeOffset/resetNode/getNodeCenter/getNodeSize/localToWorld` and `d3/Vehicle3D` (Bullet raycast vehicle
+wrapper, no Bullet types in its API).
+
+Test: `python3 tools/test_lib_3d.py` (conventions of every `*3D` behavior, the 2D / 3D fit rules, and a headless smoke run).

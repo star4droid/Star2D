@@ -181,7 +181,8 @@ public class Chase3D extends Behavior {
 					cooldown = attackInterval;
 					if (attackClip.length() > 0) o.playAnimationOnce(attackClip, 1);
 					if (attackSound.length() > 0) Support3D.playAt(attackSound, w, me.x, me.y, me.z, 1, 30, MathUtils.random(0.95f, 1.05f));
-					if (damage > 0 && target != null) GameplaySupport.hit(target, damage, item, 0, 0, 0, 0);
+					PlayerItem victim = target != null ? target : w.activeCamera;
+					if (damage > 0 && victim != null) GameplaySupport.hit(victim, damage, item, 0, 0, 0, 0);
 					fire("onAttack", target);
 				}
 				clips.play(o, idleClip, true, 1, 0.2f);

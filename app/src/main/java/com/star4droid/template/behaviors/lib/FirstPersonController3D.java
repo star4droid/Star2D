@@ -46,8 +46,8 @@ public class FirstPersonController3D extends Behavior {
 	public float lookSensitivity = 0.22f;
 	@Param(desc = "Turning speed with the look joystick or Q/E.", unit = "deg/s", min = 10, max = 720, step = 5)
 	public float turnSpeed = 140;
-	@Param(desc = "Field of view of the camera (0 = keep).", unit = "deg", min = 0, max = 120)
-	public float fieldOfView = 70;
+	@Param(desc = "Field of view of the camera (0 = keep the camera's own).", unit = "deg", min = 0, max = 120)
+	public float fieldOfView = 0;
 
 	@Header("Movement")
 	@Param(desc = "Walking speed.", unit = "m/s", min = 0, max = 20, step = 0.1)
@@ -71,7 +71,7 @@ public class FirstPersonController3D extends Behavior {
 	@Param(desc = "Footstep sound (empty = silent).")
 	@Sound
 	public String footstepSound = "";
-	@Param(desc = "Second footstep sound, played in turn with the first one.")
+	@Param(label = "Second footstep sound", desc = "Second footstep sound, played in turn with the first one.")
 	@Sound
 	public String footstepSound2 = "";
 	@Param(desc = "Sound when landing after a jump or a fall.")

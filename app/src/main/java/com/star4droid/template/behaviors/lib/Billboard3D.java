@@ -16,7 +16,7 @@ public class Billboard3D extends Behavior {
 	@Header("Facing")
 	@Param(desc = "Only turn around Y (stays upright).")
 	public boolean upright = true;
-	@Param(desc = "The element's face is its +Z side (quads, planes made to face +Z) instead of -Z.")
+	@Param(label = "Face is the +Z side", desc = "The element's face is its +Z side (quads, planes made to face +Z) instead of -Z.")
 	public boolean faceIsPlusZ = true;
 	@Param(desc = "Smooth turning (0 = at once).", unit = "1/s", min = 0, max = 60, step = 0.5)
 	public float smoothing = 0;

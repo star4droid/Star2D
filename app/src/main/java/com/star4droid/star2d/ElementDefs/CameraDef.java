@@ -24,7 +24,7 @@ public class CameraDef extends ItemDef {
 		clone.Pivot = this.Pivot;
 		clone.Pivot_X = this.Pivot_X;
 		clone.Pivot_Y = this.Pivot_Y;
-	    clone.elementEvents = elementEvents;
+	    clone.elementEvents = ElementEventAdapter.copyOf(elementEvents);
         clone.parentName = (parentName!=null&&parentName.equals("")) ? parentName : name;
         clone.Script = this.Script;
         clone.Active = this.Active;

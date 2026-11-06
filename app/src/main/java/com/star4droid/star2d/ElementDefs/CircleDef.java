@@ -28,7 +28,7 @@ public class CircleDef extends ItemDef {
 		clone.Pivot = this.Pivot;
 		clone.Pivot_X = this.Pivot_X;
 		clone.Pivot_Y = this.Pivot_Y;
-        clone.elementEvents = elementEvents;
+        clone.elementEvents = ElementEventAdapter.copyOf(elementEvents);
         clone.image = this.image;
         clone.type = this.type;
         clone.parentName = (parentName != null && parentName.equals("")) ? parentName : name;

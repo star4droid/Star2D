@@ -201,6 +201,17 @@ public class VisualScriptingDialog {
 		if(files.size()>0) hintsList.add("- Sounds");
 		hintsList.addAll(files);
 		
+		// object variables of the selected element (its Variables section): offered in the blocks' variable picker
+		if(!fromOther && codePath.contains("/private/") && !codePath.contains("/ui/") && editor.getSelectedView()!=null){
+		    try {
+		        PropertySet ops = PropertySet.getPropertySet(editor.getSelectedView());
+		        java.util.List<com.star4droid.star2d.behaviors.ObjectVarsGen.Var> ov = com.star4droid.star2d.behaviors.ObjectVarsGen.parse(ops.getString(com.star4droid.star2d.behaviors.ObjectVarsGen.PROPERTY));
+		        if(!ov.isEmpty()){
+		            hintsList.add("- "+com.star4droid.star2d.ui.blocks.BlockEditorActivity.OBJECT_VARS_HINT);
+		            for(com.star4droid.star2d.behaviors.ObjectVarsGen.Var v : ov) hintsList.add(v.name);
+		        }
+		    } catch(Throwable ignored){}
+		}
 		if(true){
 		    String all = ""; // all hints in one string line by line
 		    for(String string : hintsList){

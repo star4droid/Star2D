@@ -25,7 +25,7 @@ public class GroupDef extends ItemDef {
 	
 	public GroupDef getClone(String newName){
 	    GroupDef clone = new GroupDef();
-	    clone.elementEvents = elementEvents;
+	    clone.elementEvents = ElementEventAdapter.copyOf(elementEvents);
 	    clone.type = type;
         clone.parentName = (parentName!=null&&parentName.equals("")) ? parentName : name;
         clone.Script = this.Script;

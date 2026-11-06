@@ -44,7 +44,7 @@ public class UIHolderDef extends ItemDef {
 	
 	public UIHolderDef getClone(String newName){
 		UIHolderDef clone = new UIHolderDef();
-		clone.elementEvents = elementEvents;
+		clone.elementEvents = ElementEventAdapter.copyOf(elementEvents);
 		clone.uiEvents = uiEvents;
 		clone.type = type;
 		clone.parentName = (parentName != null && !parentName.equals("")) ? parentName : name;

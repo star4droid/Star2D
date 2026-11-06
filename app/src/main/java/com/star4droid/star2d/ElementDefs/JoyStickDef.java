@@ -36,7 +36,7 @@ public class JoyStickDef extends ItemDef {
 		clone.Pivot = this.Pivot;
 		clone.Pivot_X = this.Pivot_X;
 		clone.Pivot_Y = this.Pivot_Y;
-        clone.elementEvents = this.elementEvents;
+        clone.elementEvents = ElementEventAdapter.copyOf(elementEvents);
         clone.Pad_Image = this.Pad_Image;
         clone.parentName = (parentName != null && parentName.equals("")) ? parentName : name;
         clone.name = newName;

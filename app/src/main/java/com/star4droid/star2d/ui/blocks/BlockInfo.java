@@ -84,6 +84,7 @@ public final class BlockInfo {
         f("times", "times", "عدد المرات");
         f("variable", "variable", "المتغير");
         f("by", "by", "بمقدار");
+        f("element", "element", "العنصر");
         f("message", "message", "الرسالة");
         f("x", "x", "س");
         f("y", "y", "ص");
@@ -231,7 +232,10 @@ public final class BlockInfo {
         // variables
         b("setVariable", "Set variable", "اضبط متغيراً", "variable = value. Create variables in the Variables panel.", "المتغير = القيمة. أنشئ المتغيرات من لوحة المتغيرات.");
         b("changeVariable", "Change variable by", "غيّر المتغير بمقدار", "Adds to a variable (use -1 to subtract).", "يضيف إلى المتغير (استخدم -1 للطرح).");
-        b("newVariable", "Local variable", "متغير محلي", "Creates a temporary variable for this event.", "ينشئ متغيراً مؤقتاً لهذا الحدث.");
+        b("newVariable", "Local variable", "متغير محلي", "Creates a temporary variable for this event. Long-press it > Make it an object variable to use it in every event of the object.", "ينشئ متغيراً مؤقتاً لهذا الحدث. اضغط عليه مطولاً > اجعله متغير كائن لاستخدامه في كل أحداث الكائن.");
+        b("objectVariable", "Object variable", "متغير الكائن", "A variable of this object: every event of the object (and its other scripts) can use it by its name. Other objects read it with 'variable ___ of ___'.", "متغير خاص بهذا الكائن: كل أحداث الكائن (وسكربتاته الأخرى) تستخدمه باسمه. الكائنات الأخرى تقرؤه بـ «متغير ___ من ___».");
+        b("setObjectVariable", "Set variable of object", "اضبط متغير كائن", "Sets an object variable of another element (inside the object's own events just use its name).", "يضبط متغير كائن لعنصر آخر (داخل أحداث الكائن نفسه استخدم اسمه مباشرة).");
+        b("changeObjectVariable", "Change variable of object", "غيّر متغير كائن", "Adds to an object variable of another element (use -1 to subtract).", "يضيف إلى متغير كائن لعنصر آخر (استخدم -1 للطرح).");
         b("saveData", "Save data", "احفظ بيانات", "Saves a value permanently (high score...). Read it with 'saved number'.", "يحفظ قيمة بشكل دائم (أعلى نتيجة...). اقرأها بـ «الرقم المحفوظ».");
         // motion
         b("moveBy", "Move by", "تحرك بمقدار", "Moves an element by dx, dy.", "يحرك العنصر بمقدار dx و dy.");

@@ -73,6 +73,7 @@ public class PropertiesPanel implements PanelHost.Panel {
     private final HashSet<String> collapsed = new HashSet<>();
     private String fieldsSignature = "";
     private com.star4droid.star2d.ui.behaviors.BehaviorSection behaviorSection;
+    private com.star4droid.star2d.ui.behaviors.ObjectVarsSection objectVarsSection;
     private final Runnable poll = this::pollValues;
     // prefab instance bar (see updateInstanceBar)
     private LinearLayout instanceBar;
@@ -259,6 +260,7 @@ public class PropertiesPanel implements PanelHost.Panel {
             searchSecs.clear();
             behaviorFirstChild = -1;
             behaviorSection = null;
+            objectVarsSection = null;
             editors.clear();
             header.setText("");
             hideInstanceBar();
@@ -304,7 +306,10 @@ public class PropertiesPanel implements PanelHost.Panel {
             if (!known.contains(k) && typeOf.containsKey(k) && !"static".equals(typeOf.get(k))) extra.add(k);
         if (!extra.isEmpty()) addSection(c, "Other", extra);
         // public variables of the Body Script + "Additional behaviors" (stored in the element's scriptVars / behaviors)
+        objectVarsSection = null;
         if (!"LIGHT".equals(v.get("TYPE"))) {
+            // object variables (property objectVars): fields of the element usable in all its events
+            objectVarsSection = new com.star4droid.star2d.ui.behaviors.ObjectVarsSection(content, name, v.get(com.star4droid.star2d.behaviors.ObjectVarsGen.PROPERTY));
             behaviorFirstChild = content.getChildCount();
             behaviorSection = new com.star4droid.star2d.ui.behaviors.BehaviorSection(shell, content, name, v.get("behaviors"), v.get("scriptVars"));
         }
@@ -1170,6 +1175,7 @@ public class PropertiesPanel implements PanelHost.Panel {
                 root.postDelayed(infoRefresh, 900);
             }
             if (behaviorSection != null && (f.equals("behaviors") || f.equals("scriptVars"))) behaviorSection.externalChange(f, v);
+            if (objectVarsSection != null && f.equals(com.star4droid.star2d.behaviors.ObjectVarsGen.PROPERTY)) objectVarsSection.externalChange(v);
             View ed = editors.get(f);
             if (ed == null) continue;
             String type = typeOf.get(f);

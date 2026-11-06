@@ -72,6 +72,23 @@ public class Project {
 		return path+"/java/com/star4droid/Game/"+scene.toLowerCase()+".java";
 	}
 	
+	/**
+	 * Writes the generated java of a scene. Creates the parent folders and replaces a stray directory left at the path
+	 * (old copy bug); never throws, so switching scenes cannot crash on a bad path.
+	 */
+	public boolean writeCode(String scene,String code){
+		try {
+			FileHandle f = Gdx.files.absolute(getCodesPath(scene));
+			if(f.isDirectory()) f.deleteDirectory();
+			f.parent().mkdirs();
+			f.writeString(code,false);
+			return true;
+		} catch(Throwable t){
+			try { Gdx.files.absolute(path+"/logs/codewrite.error.txt").writeString(scene+": "+t+"\n",true); } catch(Throwable ignored){}
+			return false;
+		}
+	}
+	
 	public void renameScene(String scene,String newScene){
 		ArrayList<String> arrayList = getSceneList(newScene);
 		int x=0;
@@ -105,36 +122,70 @@ public class Project {
 		return path+"/java/com/star4droid/Game/SceneScript/"+scene.toLowerCase()+"Script.java";
 	}
 	
+	/**
+	 * Copies every per-scene file of {@code scene} to {@code newScene} (scene file, config, events, joints, generated java,
+	 * scripts, scene script, body scripts, variables) and renames the java identifiers that carry the scene name.
+	 * Index-aligned (a missing source no longer shifts the destinations), directories are copied by content, and on any
+	 * failure every file of the new scene is removed again so a half-copied scene is never left behind.
+	 */
 	public void copyScene(String scene,String newScene){
-		ArrayList<String> arrayList = getSceneList(newScene);
-		int x=0;
-		for(String file:getSceneList(scene)){
-			FileHandle fh = Gdx.files.absolute(file);
-			if(!fh.exists()) continue;
-			//if(!fh.isDirectory())
-			    fh.copyTo(Gdx.files.absolute(arrayList.get(x)));
-			x++;
-		}
-		
-		FileHandle[] list = Gdx.files.absolute(getBodiesScripts(scene)).list();
-		for(FileHandle fileHandle:list){
-		    if(!fileHandle.isDirectory()){
-		        String read = "";
-		        try {
-		            if(fileHandle.exists())
-						read = fileHandle.readString();
-		        } catch(Exception ex){}
-		        fileHandle.writeString(read.replace("."+scene,"."+newScene).replace("."+scene.toLowerCase(),"."+newScene.toLowerCase()),false);
-		    }
-		}
-		
-		String read = "";
+		ArrayList<String> from = getSceneList(scene), to = getSceneList(newScene);
 		try {
-			FileHandle fileHandle = Gdx.files.absolute(getCodesPath(newScene));
-		    if(fileHandle.exists())
-				read = fileHandle.readString();
-		} catch(Exception ex){}
-		Gdx.files.absolute(getCodesPath(newScene)).writeString(read.replace("public class "+scene+ " extends StageImp","public class "+newScene+" extends StageImp"),false);
+			for(int i=0;i<from.size();i++){
+				FileHandle src = Gdx.files.absolute(from.get(i)), dst = Gdx.files.absolute(to.get(i));
+				if(!src.exists()) continue;
+				if(src.isDirectory()) copyDirContent(src,dst);
+				else {
+					if(dst.isDirectory()) dst.deleteDirectory();
+					dst.parent().mkdirs();
+					src.copyTo(dst);
+				}
+			}
+			String low = scene.toLowerCase(), nlow = newScene.toLowerCase();
+			ArrayList<FileHandle> javas = new ArrayList<>();
+			collectJava(Gdx.files.absolute(getBodiesScripts(newScene)),javas);
+			collectJava(Gdx.files.absolute(getSceneScript(newScene)),javas);
+			collectJava(Gdx.files.absolute(getCodesPath(newScene)),javas);
+			for(FileHandle f : javas){
+				String text = f.readString();
+				String fixed = text
+					.replace("com.star4droid.Game.Scripts."+scene+";","com.star4droid.Game.Scripts."+newScene+";")
+					.replace("com.star4droid.Game.Scripts."+scene+".","com.star4droid.Game.Scripts."+newScene+".")
+					.replace("Refs."+low+"ItemRefs","Refs."+nlow+"ItemRefs")
+					.replace("Refs."+low+"SceneRefs","Refs."+nlow+"SceneRefs")
+					.replace("SceneScript."+low+"Script","SceneScript."+nlow+"Script")
+					.replace("class "+low+"Script","class "+nlow+"Script")
+					.replace("class "+scene+" extends StageImp","class "+nlow+" extends StageImp")
+					.replace("class "+low+" extends StageImp","class "+nlow+" extends StageImp");
+				if(!fixed.equals(text)) f.writeString(fixed,false);
+			}
+		} catch(RuntimeException e){
+			try { deleteScene(newScene); } catch(Throwable ignored){}
+			throw e;
+		}
+	}
+
+	private static void copyDirContent(FileHandle src, FileHandle dst){
+		if(dst.exists() && !dst.isDirectory()) dst.delete();
+		dst.mkdirs();
+		FileHandle[] kids = src.list();
+		if(kids == null) return;
+		for(FileHandle k : kids){
+			FileHandle d = dst.child(k.name());
+			if(k.isDirectory()) copyDirContent(k,d);
+			else {
+				if(d.isDirectory()) d.deleteDirectory();
+				k.copyTo(d);
+			}
+		}
+	}
+
+	private static void collectJava(FileHandle f, ArrayList<FileHandle> out){
+		if(!f.exists()) return;
+		if(f.isDirectory()){
+			FileHandle[] kids = f.list();
+			if(kids != null) for(FileHandle k : kids) collectJava(k,out);
+		} else if(f.name().endsWith(".java")) out.add(f);
 	}
 	
 	public ArrayList<String> getSceneList(String scene){
@@ -168,8 +219,9 @@ public class Project {
 	    //ArrayList<String> arrayList = getSceneList(newScene);
 		for(String file:getSceneList(scene)){
 			FileHandle fileHandle = Gdx.files.absolute(file);
-			if(fileHandle.exists())
-				fileHandle.delete();
+			if(!fileHandle.exists()) continue;
+			if(fileHandle.isDirectory()) fileHandle.deleteDirectory();
+			else fileHandle.delete();
 		}
 	}
 	

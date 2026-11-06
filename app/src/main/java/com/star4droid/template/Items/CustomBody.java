@@ -161,8 +161,9 @@ public class CustomBody extends Image implements PlayerItem {
                     String[] coords = point.split(",");
                     if (coords.length == 2) {
         				try {
-                        	float px = Utils.getFloat(coords[0]) * width - width*0.5f;
-                        	float py = (1 - Utils.getFloat(coords[1])) * height - height*0.5f; // Flip Y-axis
+                        	// scaled like the picture (same as the editor outline)
+                        	float px = (Utils.getFloat(coords[0]) * width - width*0.5f) * customDef.Scale_X;
+                        	float py = ((1 - Utils.getFloat(coords[1])) * height - height*0.5f) * customDef.Scale_Y; // Flip Y-axis
                         	array.add(new Vector2((UI ? 1 : StageImp.WORLD_SCALE) * px,(UI ? 1 : StageImp.WORLD_SCALE) *  py));
         				} catch(Exception e){}
                     }

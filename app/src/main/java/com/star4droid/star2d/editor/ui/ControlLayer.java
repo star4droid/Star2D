@@ -516,7 +516,7 @@ public class ControlLayer extends Table {
 		}
 		app.getEditor().getProject().save(app.getEditor());
 		CodeGenerator.generateFor(app.getEditor(), cd -> {
-			Gdx.files.absolute(app.getEditor().getProject().getCodesPath(app.getEditor().getScene())).writeString(cd,false);
+			app.getEditor().getProject().writeCode(app.getEditor().getScene(),cd);
 		});
 		if(nativeUi == null) app.toast(getTrans("saved"));
 	}
@@ -969,7 +969,7 @@ public class ControlLayer extends Table {
 	
 	private void openScene(String name){
 		CodeGenerator.generateFor(app.getEditor(), cd -> {
-			Gdx.files.absolute(app.getEditor().getProject().getCodesPath(app.getEditor().getScene())).writeString(cd,false);
+			app.getEditor().getProject().writeCode(app.getEditor().getScene(),cd);
 			app.openSceneInNewEditor(name);
 			if(nativeUi != null) nativeUi.onScenesChanged();
 		});
@@ -1027,9 +1027,19 @@ public class ControlLayer extends Table {
 			if (!(chars.contains("" + c)))
 				return "Not Allowed char : " + c;
 		}
+		if (Character.isDigit(name.charAt(0)))
+			return "Not Allowed : a scene name can't start with a digit";
 		FileHandle fhandle = Gdx.files.absolute(path);
 		if (fhandle.exists())
 			return getTrans("sceneConflict");
+		// the generated class is the lower-case name: scene1 and Scene1 would share one java file
+		FileHandle[] existing = Gdx.files.absolute(app.getEditor().getProject().getScenesPath()).list();
+		if (existing != null) for (FileHandle other : existing)
+			if (other.name().equalsIgnoreCase(name)) return getTrans("sceneConflict");
+		if (sceneAction == SceneAction.COPY) {
+			// copy what is on screen, not the last save
+			try { app.getEditor().getProject().save(app.getEditor()); } catch(Throwable ignored){}
+		}
 		fhandle.writeString("",false);
 		if (sceneAction == SceneAction.CREATE) {
 			//nothing to do...
@@ -1038,7 +1048,13 @@ public class ControlLayer extends Table {
 			EditorAction.renameScene(app.getEditor(),app.getEditor().getScene(),name);
 			app.toast(getTrans("sceneRenamed"));
 		} else if (sceneAction == SceneAction.COPY) {
-			app.getEditor().getProject().copyScene(app.getEditor().getScene(),name);
+			try {
+				app.getEditor().getProject().copyScene(app.getEditor().getScene(),name);
+			} catch(Throwable t){
+				// copyScene already removed the half-copied files
+				try { app.getEditor().getProject().deleteScene(name); } catch(Throwable ignored){}
+				return "Copy failed : "+t.getMessage();
+			}
 			app.toast(getTrans("sceneCopied"));
 		}
 		if (fhandle.exists()) {

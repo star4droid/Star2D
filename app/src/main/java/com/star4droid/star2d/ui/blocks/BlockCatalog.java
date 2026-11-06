@@ -320,6 +320,10 @@ public final class BlockCatalog {
         def("Variables", vars, "setVariable", "variable value", "score|0", false, "%1$s = %2$s;\n%3$s");
         def("Variables", vars, "changeVariable", "variable by", "|1", false, "%1$s += %2$s;\n%3$s");
         def("Variables", vars, "newVariable", "type name value", "int|count|0", false, "%1$s %2$s = %3$s;\n%4$s");
+        // object variables (docs/SCRIPTVARS.md): declared by a marker the code generator turns into a field of the element's event class
+        def("Variables", vars, "objectVariable", "type name value", "int|health|0", false, "/*@objvar %1$s|%2$s|%3$s*/\n%4$s");
+        def("Variables", vars, "setObjectVariable", "element(Body) variable value", "body2|health|0", false, "com.star4droid.template.Utils.ObjectVars.set(%1$s,\"%2$s\",%3$s);\n%4$s");
+        def("Variables", vars, "changeObjectVariable", "element(Body) variable by", "body2|health|-1", false, "com.star4droid.template.Utils.ObjectVars.add(%1$s,\"%2$s\",%3$s);\n%4$s");
         def("Variables", vars, "saveData", "key value", "best|score", false, "setValue(\"%1$s\",String.valueOf(%2$s));\n%3$s");
 
         // Motion (distances in editor pixels, speeds in pixels per second)
@@ -498,6 +502,12 @@ public final class BlockCatalog {
         r("Input", "camera y", "(getCameraY()/" + WS + ")");
         r("Data", "saved text ___", "getValue(\"%1$s\")");
         r("Data", "saved number ___", "getNumber(\"%1$s\")");
+        r("Data", "number variable ___ of ___", "com.star4droid.template.Utils.ObjectVars.getFloat(%2$s,\"%1$s\")");
+        shape("com.star4droid.template.Utils.ObjectVars.getFloat(%2$s,\"%1$s\")", 'n');
+        r("Data", "text variable ___ of ___", "com.star4droid.template.Utils.ObjectVars.getString(%2$s,\"%1$s\")");
+        shape("com.star4droid.template.Utils.ObjectVars.getString(%2$s,\"%1$s\")", 't');
+        r("Data", "yes/no variable ___ of ___", "com.star4droid.template.Utils.ObjectVars.getBool(%2$s,\"%1$s\")");
+        shape("com.star4droid.template.Utils.ObjectVars.getBool(%2$s,\"%1$s\")", 'b');
         r("Ui Nodes", "text of node ___ in ___", "UIHolder.ref(%2$s,\"%1$s\").getText()");
         shape("UIHolder.ref(%2$s,\"%1$s\").getText()", 't');
         r("Ui Nodes", "value of node ___ in ___", "UIHolder.ref(%2$s,\"%1$s\").getValue()");

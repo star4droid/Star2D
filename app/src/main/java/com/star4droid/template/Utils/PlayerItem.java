@@ -168,6 +168,14 @@ public interface PlayerItem {
 	default public void setAnimation(Animation animation){}
 	default public void removeAnimation(){}
 	public ElementEvent getElementEvents();
+	// ---- object variables (Variables section of the element's properties, see ObjectVars) ----
+	/** Value of an object variable of this element (null when it has none with that name). */
+	default public Object getVar(String name){ return ObjectVars.get(this,name); }
+	default public float getVarNumber(String name){ return ObjectVars.getFloat(this,name); }
+	default public String getVarText(String name){ return ObjectVars.getString(this,name); }
+	default public boolean getVarBool(String name){ return ObjectVars.getBool(this,name); }
+	/** Sets an object variable of this element (numbers are converted to its type). */
+	default public void setVar(String name,Object value){ ObjectVars.set(this,name,value); }
 	// ---- behaviors at runtime (ids = class names: "PlatformerPlayer", "Shooter"...) ----
 	/** Attaches a behavior object to this element (starts on the next frame). Returns it. */
 	default public com.star4droid.template.behaviors.Behavior addBehavior(com.star4droid.template.behaviors.Behavior b){

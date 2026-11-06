@@ -35,7 +35,7 @@ public class BoxDef extends ItemDef {
 		clone.Pivot = this.Pivot;
 		clone.Pivot_X = this.Pivot_X;
 		clone.Pivot_Y = this.Pivot_Y;
-	    clone.elementEvents = elementEvents;
+	    clone.elementEvents = ElementEventAdapter.copyOf(elementEvents);
 	    clone.animation = this.animation;
 	    clone.image = this.image;
 	    clone.Pressed_Image = this.Pressed_Image;

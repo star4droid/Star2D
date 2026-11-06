@@ -331,7 +331,24 @@ public class BlockEditorActivity extends AppCompatActivity implements BlockCanva
                 if (l != null) for (VarModel m : l) variables.add(m.getName());
             }
         } catch (Exception ignored) {}
+        // object variables of the element: the ones of its properties (sent by the editor as hints) and the ones
+        // created by "object variable" blocks in any of its events (all events of the element share them)
+        if (hints.containsKey(OBJECT_VARS_HINT))
+            for (String n : hints.get(OBJECT_VARS_HINT)) if (!variables.contains(n)) variables.add(n);
+        if (isElementEventPath(p) && file.getParentFile() != null) {
+            File[] evs = file.getParentFile().listFiles();
+            if (evs != null) for (File f : evs) {
+                if (!f.getName().endsWith(".java")) continue;
+                try {
+                    for (com.star4droid.star2d.behaviors.ObjectVarsGen.Var v : com.star4droid.star2d.behaviors.ObjectVarsGen.fromCode(BlockModel.read(f)))
+                        if (!variables.contains(v.name)) variables.add(v.name);
+                } catch (Exception ignored) {}
+            }
+        }
     }
+
+    /** Hints section with the element's object variables (VisualScriptingDialog). */
+    public static final String OBJECT_VARS_HINT = "Object variables";
 
     // =============================================================== layout
 
@@ -1334,6 +1351,8 @@ public class BlockEditorActivity extends AppCompatActivity implements BlockCanva
             del.setImageTintList(ColorStateList.valueOf(0xFFFF8A80));
             selectionBar.addView(del);
         }
+        if (canPromote(node))
+            selectionBar.addView(Ui.iconButton(c, R.drawable.ic_s2_variables, Tr.t("ov_promote", "Make it an object variable"), v -> promoteToObjectVar(node)));
         selectionBar.addView(Ui.iconButton(c, R.drawable.ic_s2_add, Tr.t("ui_add_after", "Add after"), v -> {
             closeValuePane();
             if (!paletteOpen) togglePalette();
@@ -1353,6 +1372,8 @@ public class BlockEditorActivity extends AppCompatActivity implements BlockCanva
                 onSelect(null);
             });
         }
+        if (canPromote(node))
+            m.add(R.drawable.ic_s2_add, 0xFFE65100, Tr.t("ov_promote", "Make it an object variable"), () -> promoteToObjectVar(node));
         m.add(R.drawable.ic_s2_code, 0xFFAB47BC, Tr.t("ui_show_code", "Show code"), () -> {
             BlockModel tmp = new BlockModel();
             BlockModel.Node r = BlockModel.newRoot();
@@ -1364,6 +1385,41 @@ public class BlockEditorActivity extends AppCompatActivity implements BlockCanva
             Dialogs.longText(this, BlockInfo.label(node.title, rtl), tmp.exportCode());
         });
         m.showAt(rootFrame, rawX, rawY);
+    }
+
+    /** An element event (Events/<scene>/private/<script>/...): its local variables can become object variables. */
+    private boolean isElementEvent() {
+        return isElementEventPath(file == null ? null : file.getAbsolutePath());
+    }
+
+    /** Events/<scene>/private/<script>/<event>(.visual): not the scene events, not the inner nodes of a UI holder. */
+    static boolean isElementEventPath(String p) {
+        if (p == null) return false;
+        int i = p.indexOf("/private/");
+        if (i < 0) return false;
+        String rest = p.substring(i + 9);
+        return rest.indexOf('/') > 0 && rest.indexOf('/') == rest.lastIndexOf('/');
+    }
+
+    private boolean canPromote(BlockModel.Node node) {
+        return node != null && "newVariable".equals(node.title) && isElementEvent() && BlockCatalog.find("objectVariable") != null;
+    }
+
+    /** Local variable block -> object variable block (same type, name and value): usable in every event of the object. */
+    private void promoteToObjectVar(BlockModel.Node node) {
+        BlockCatalog.Def d = BlockCatalog.find("objectVariable");
+        if (d == null) return;
+        beforeChange();
+        node.title = d.title;
+        node.code = d.code;
+        node.color = d.color;
+        canvas.changed();
+        afterChange();
+        loadVariables();
+        String name = node.fields.size() > 1 ? node.fields.get(1).value : "";
+        if (name != null && !name.isEmpty() && !variables.contains(name)) variables.add(name);
+        onSelect(node);
+        Snack.show(Tr.t("ov_promoted", "Now an object variable: every event of this object can use it."));
     }
 
     @Override

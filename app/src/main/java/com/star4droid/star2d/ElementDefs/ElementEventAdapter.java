@@ -16,6 +16,20 @@ public abstract class ElementEventAdapter implements ElementEvent {
 		this.name = name == null ? "" : name;
 	}
 
+	/**
+	 * A new adapter with the same events for a clone of the element. The generated adapter of an element that has
+	 * object variables (see docs/SCRIPTVARS.md "Object variables") returns a new instance, so each clone gets its own
+	 * variables with their initial values; an adapter without variables is shared.
+	 */
+	public ElementEventAdapter fresh(){
+		return this;
+	}
+
+	/** {@link #fresh()} of an adapter, the same object for any other event listener (or null). */
+	public static ElementEvent copyOf(ElementEvent e){
+		return e instanceof ElementEventAdapter ? ((ElementEventAdapter) e).fresh() : e;
+	}
+
 	@Override
 	public String getName(){
 		return name;

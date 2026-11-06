@@ -74,3 +74,58 @@ After all elements exist and before the scene `OnCreate` (see BEHAVIORS.md "Stor
 
 Editor (not in the game): `behaviors/SourceScanner.scanScript`, `behaviors/ScriptVarSync` (pure Java), `behaviors/VarSpec` (`isStatic`, `access`, `container`, `auto`, `signature()`), `behaviors/BehaviorCodeGen.assignVars`, `ui/behaviors/ScriptVarWatcher`, `ui/behaviors/VarEditors` (badge, list editor). Runtime: `template/Utils/Expose`, `template/Utils/ScriptVars`, `template/ui/UINodeRef`, `UIListeners`.
 Tests: `python3 tools/test_scriptvars.py` (scanner, sync, generated code compiled **and run** against a real script class), `tools/test_behaviors.py`.
+
+## Object variables (Variables section of an element)
+
+Every element (2D and 3D, not lights) has an **Object variables** card in the Properties panel: variables that belong to the
+object and are usable by name in **every** event of it (all its block events), not only in the event that creates them.
+
+| type (editor) | Java field | initial value |
+|---|---|---|
+| Whole number / Number / Precise number | `int` / `float` / `double` | number (or an expression) |
+| Text | `String` | text |
+| Yes / no | `boolean` | `true` / `false` |
+| List | `java.util.ArrayList<Object>` | items separated by commas: `1, 2.5, apple` |
+| Element | `PlayerItem` | element name (long-press the field to choose), found again once all elements exist |
+
+**Stored** in the element property `objectVars` (`[{"name":"health","type":"int","value":"3"}]`), so it follows save / load,
+copy / paste, prefabs and scene copy like any other property. Absent or empty = no variables (old projects are unchanged).
+
+**Blocks.** *Variables & data* has
+* **Object variable** (`type name value`): declares a variable of the object from any of its events (marker comment
+  `/*@objvar type|name|value*/`, no code of its own). The Properties card lists it with "made by a block"; tapping it copies it
+  into the list (the list wins over the block for the type / initial value);
+* a **Local variable** block in an element event can be turned into an object variable: long-press it (or the selection bar
+  button) > *Make it an object variable*;
+* **Set / change variable of object** (`element variable value`) and the values **number / text / yes-no variable ___ of ___**
+  read and write the variables of another element.
+The variable picker of the blocks editor lists the scene variables, the object variables of the element and the ones made by
+blocks in any of its events.
+
+**Generated code.** An element with object variables gets a local event class instead of the anonymous adapter:
+```java
+class hero_Events extends ElementEventAdapter {
+    hero_Events(){ super("hero"); }
+    public int health = 3;
+    public PlayerItem target = findItem("enemy");
+    @Override public ElementEventAdapter fresh(){ return new hero_Events(); }
+    @Override public void onClick(PlayerItem current) { health = health - 1; }
+}
+hero_def.elementEvents = new hero_Events();
+```
+plus `ObjectVars.set(hero, "target", findItem("enemy"));` after every element exists (before the scene `OnCreate`).
+`fresh()` is called by the definitions' `clone()` (`ElementEventAdapter.copyOf`): each clone has its own variables, starting from
+the initial values; adapters without variables are still shared.
+
+**From anywhere else** (other elements, Java Body / Scene scripts): `com.star4droid.template.Utils.ObjectVars`
+`get / set / add / getFloat / getInt / getDouble / getString / getBool / getItem / getList / has / names`, or on the element
+`item.getVar("health")`, `item.setVar("health", 3)`, `getVarNumber`, `getVarText`, `getVarBool` (in a Body Script:
+`getItem().setVar(...)`). Numbers are converted to the variable's type; a name the element does not declare is kept in a side
+map. Inside the object's own events use the bare name.
+
+Note: event files belong to the element's **script** (`Script` property); elements that share a script share the event code, so
+each of them must declare the variables that code uses (block-made variables are declared for all of them automatically).
+
+Files: `behaviors/ObjectVarsGen` (storage, markers, generated code), `ui/behaviors/ObjectVarsSection` (card), `Helpers/CodeGenerator`,
+`ui/blocks/BlockCatalog` / `BlockEditorActivity` (blocks, picker, promote), runtime `template/Utils/ObjectVars`, `ElementDefs/ElementEventAdapter`.
+Test: `python3 tools/test_objectvars.py` (generated class compiled and run: shared across events, outside access, clones).

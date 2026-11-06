@@ -350,6 +350,15 @@ public class CodeGenerator {
                                     .append(code).append("\n\t\t\t}\n");
                         }
                         String events = eventMethods.toString();
+                        // object variables: the element's Variables section + "object variable" blocks of any of its events
+                        java.util.List<com.star4droid.star2d.behaviors.ObjectVarsGen.Var> objectVars = new java.util.ArrayList<>();
+                        if (!isLight) {
+                            StringBuilder allEvents = new StringBuilder();
+                            for (int ev = 0; ev < eventsList.length - 1; ev++) if (eventsList[ev] != null) allEvents.append(eventsList[ev]).append('\n');
+                            objectVars = com.star4droid.star2d.behaviors.ObjectVarsGen.merge(
+                                    com.star4droid.star2d.behaviors.ObjectVarsGen.parse(propertySet.getString(com.star4droid.star2d.behaviors.ObjectVarsGen.PROPERTY)),
+                                    com.star4droid.star2d.behaviors.ObjectVarsGen.fromCode(allEvents.toString()));
+                        }
                         
                         // Create instance of the item definition class for property comparison
                         Class<?> cls = Class.forName("com.star4droid.star2d.ElementDefs." + defType);
@@ -361,7 +370,7 @@ public class CodeGenerator {
                             
                             // Skip certain properties
                             // Script: the runtime never reads ItemDef.Script (the script object is attached by the generated setScript below)
-                            if ("(TYPE)(Shape)(lock)(parent)(prefab)(pid)(pbase)(Script)(behaviors)(scriptVars)".contains("(" + propertyKey + ")")) {
+                            if ("(TYPE)(Shape)(lock)(parent)(prefab)(pid)(pbase)(Script)(behaviors)(scriptVars)(objectVars)".contains("(" + propertyKey + ")")) {
                                 continue;
                             }
                             if (propertyKey.equals("lock")) {
@@ -417,6 +426,11 @@ public class CodeGenerator {
                             if (!uiEv.isEmpty()) initCode = (initCode.equals("") ? "" : (initCode + "\n")) + uiEv;
                         }
                         // Generate item code using appropriate template
+                        if (!objectVars.isEmpty()) {
+                            itemsCode = itemsCode + (itemsCode.equals("") ? "" : "\n")
+                                    + com.star4droid.star2d.behaviors.ObjectVarsGen.itemCode(defType, name, initCode, events, objectVars);
+                            behaviorCode.append(com.star4droid.star2d.behaviors.ObjectVarsGen.afterBuild(name, objectVars));
+                        } else
                         itemsCode = itemsCode + (itemsCode.equals("") ? "" : "\n") + 
                                    String.format(
                                        isLight ? defaultLightCode : (events.isEmpty() ? defualtItemCode : itemWithEventsCode),

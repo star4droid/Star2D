@@ -107,5 +107,6 @@ public class Object3DDef extends ItemDef {
 		c.Pivot_X = Pivot_X;
 		c.Pivot_Y = Pivot_Y;
 		c.Version = Version;
+		c.elementEvents = ElementEventAdapter.copyOf(elementEvents);
 	}
 }

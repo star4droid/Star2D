@@ -405,19 +405,19 @@ public class World3D implements Disposable {
 		if (batch != null && renderMode.equals(batchMode) && pixel == batchPixel) return;
 		if (batch != null) batch.dispose();
 		if (Shaders3D.PBR.equals(renderMode)) {
-			batch = new ModelBatch(Shaders3D.pbr());
+			batch = new SafeBatch(Shaders3D.pbr());
 			if (shadowBatch != null) shadowBatch.dispose();
 			com.badlogic.gdx.graphics.g3d.shaders.DepthShader.Config dc = PBRDepthShaderProvider.createDefaultConfig();
 			dc.numBones = Shaders3D.NUM_BONES; // default 12: animated characters would throw "too many bones" in the shadow pass
-			shadowBatch = new ModelBatch(new PBRDepthShaderProvider(dc));
+			shadowBatch = new SafeBatch(new PBRDepthShaderProvider(dc));
 			buildIbl();
 		} else {
-			batch = new ModelBatch(new Shaders3D.Provider(renderMode, pixel));
+			batch = new SafeBatch(new Shaders3D.Provider(renderMode, pixel));
 			if (shadowBatch != null) shadowBatch.dispose();
-			shadowBatch = new ModelBatch(new Shaders3D.DepthProvider());
+			shadowBatch = new SafeBatch(new Shaders3D.DepthProvider());
 		}
-		if (unlitBatch == null) unlitBatch = new ModelBatch(new Shaders3D.Provider(Shaders3D.UNLIT, false));
-		if (outlineBatch == null) outlineBatch = new ModelBatch(new Shaders3D.Provider(Shaders3D.SIMPLE, false));
+		if (unlitBatch == null) unlitBatch = new SafeBatch(new Shaders3D.Provider(Shaders3D.UNLIT, false));
+		if (outlineBatch == null) outlineBatch = new SafeBatch(new Shaders3D.Provider(Shaders3D.SIMPLE, false));
 		batchMode = renderMode;
 		batchPixel = pixel;
 	}
@@ -619,13 +619,22 @@ public class World3D implements Disposable {
 			shadowLight.direction.set(sunDir);
 			shadowLight.begin();
 			shadowBatch.begin(shadowLight.getCamera());
-			for (int i = 0; i < objects.size; i++) {
-				Object3D o = objects.get(i);
-				if (!o.isVisible() || o.instance == null || !o.def.Cast_Shadows || o.water != null || o.def.Opacity <= 0.5f) continue;
-				if (o.position.dst(center) - o.radius > shadowDistance) continue;
-				shadowBatch.render(o.instance);
+			try {
+				for (int i = 0; i < objects.size; i++) {
+					Object3D o = objects.get(i);
+					if (!o.isVisible() || o.instance == null || !o.def.Cast_Shadows || o.water != null || o.def.Opacity <= 0.5f) continue;
+					if (o.position.dst(center) - o.radius > shadowDistance) continue;
+					shadowBatch.render(o.instance);
+				}
+				shadowBatch.end();
+			} catch (Throwable t) {
+				Gdx.app.error("Star2D-3D", "shadows: " + t);
+				try {
+					shadowBatch.getRenderContext().end();
+				} catch (Throwable ignored) {
+				}
+				SafeBatch.reset(shadowBatch);
 			}
-			shadowBatch.end();
 			shadowLight.end();
 		}
 		boolean useFbo = main && !editor && !fboFailed && (Quality3D.renderScale < 0.999f || (!"NONE".equals(postEffect) && Quality3D.postEffects));
@@ -660,19 +669,10 @@ public class World3D implements Disposable {
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
 		drawSky(cam, fw, fh);
 		boolean unlitScene = Shaders3D.UNLIT.equals(renderMode);
-		batch.begin(cam);
-		for (Object3D o : visible) {
-			ModelInstance mi = o.instance;
-			if (o.lowInstance != null && o.def.LOD_Distance > 0 && tmp.set(o.position).dst(cam.position) > o.def.LOD_Distance * Quality3D.lodBias) mi = o.lowInstance;
-			if (unlitScene || o.def.Unlit) continue;
-			// the environment is read when the batch flushes: elements without shadows use their own copy
-			batch.render(mi, !o.def.Receive_Shadows && env.shadowMap != null ? envNoShadow : env);
-		}
-		batch.end();
+		// a model the shaders can't draw must not break the whole picture (a batch left open = only the sky, every frame)
+		drawSafely(batch, cam, false, unlitScene);
 		// unlit elements
-		unlitBatch.begin(cam);
-		for (Object3D o : visible) if (unlitScene || o.def.Unlit) unlitBatch.render(o.instance);
-		unlitBatch.end();
+		drawSafely(unlitBatch, cam, true, unlitScene);
 		// outlines (selection / Outline property)
 		outlines.clear();
 		for (Object3D o : visible) {
@@ -681,8 +681,17 @@ public class World3D implements Disposable {
 		}
 		if (outlines.size > 0) {
 			outlineBatch.begin(cam);
-			for (Renderable r : outlines) outlineBatch.render(r);
-			outlineBatch.end();
+			try {
+				for (Renderable r : outlines) outlineBatch.render(r);
+				outlineBatch.end();
+			} catch (Throwable t) {
+				Gdx.app.error("Star2D-3D", "outlines: " + t);
+				try {
+					outlineBatch.getRenderContext().end();
+				} catch (Throwable ignored) {
+				}
+				SafeBatch.reset(outlineBatch);
+			}
 			Outline3D.free(outlines);
 		}
 		if (useFbo) {
@@ -692,6 +701,75 @@ public class World3D implements Disposable {
 			post.draw(fbo.getColorBufferTexture(), Quality3D.postEffects ? postEffect : "NONE", postParams, w, h);
 		}
 		drawing = null;
+	}
+
+	private void drawList(ModelBatch b, Camera cam, Array<Object3D> list, boolean unlitPass, boolean unlitScene) {
+		b.begin(cam);
+		try {
+			for (Object3D o : list) {
+				boolean unlit = unlitScene || o.def.Unlit;
+				if (unlit != unlitPass) continue;
+				if (unlitPass) {
+					b.render(o.instance);
+					continue;
+				}
+				ModelInstance mi = o.instance;
+				if (o.lowInstance != null && o.def.LOD_Distance > 0 && tmp.set(o.position).dst(cam.position) > o.def.LOD_Distance * Quality3D.lodBias) mi = o.lowInstance;
+				// the environment is read when the batch flushes: elements without shadows use their own copy
+				b.render(mi, !o.def.Receive_Shadows && env.shadowMap != null ? envNoShadow : env);
+			}
+		} finally {
+			try {
+				b.end();
+			} catch (Throwable t) {
+				// flush failed: close the batch by hand so the next frame can begin it again
+				try {
+					b.getRenderContext().end();
+				} catch (Throwable ignored) {
+				}
+				SafeBatch.reset(b);
+				throw t instanceof RuntimeException ? (RuntimeException) t : new RuntimeException(t);
+			}
+		}
+	}
+
+	private final Array<Object3D> one = new Array<Object3D>();
+
+	/** Draws the visible elements; when that fails, finds the element that breaks it and shows it as a plain box instead. */
+	private void drawSafely(ModelBatch b, Camera cam, boolean unlitPass, boolean unlitScene) {
+		try {
+			drawList(b, cam, visible, unlitPass, unlitScene);
+			return;
+		} catch (Throwable t) {
+			Gdx.app.error("Star2D-3D", "draw: " + t);
+		}
+		for (Object3D o : visible) {
+			one.clear();
+			one.add(o);
+			try {
+				drawList(b, cam, one, unlitPass, unlitScene);
+			} catch (Throwable t) {
+				Gdx.app.error("Star2D-3D", "element " + o.getName() + " can't be drawn, shown as a box: " + t);
+				o.markBroken();
+			}
+		}
+		one.clear();
+	}
+
+	/** A ModelBatch that can be closed by hand after its flush threw (else every next begin() throws: blank viewport). */
+	static final class SafeBatch extends ModelBatch {
+		SafeBatch(com.badlogic.gdx.graphics.g3d.utils.ShaderProvider p) {
+			super(p);
+		}
+
+		void reset() {
+			camera = null;
+			renderables.clear();
+		}
+
+		static void reset(ModelBatch b) {
+			if (b instanceof SafeBatch) ((SafeBatch) b).reset();
+		}
 	}
 
 	private void drawSky(Camera cam, int w, int h) {

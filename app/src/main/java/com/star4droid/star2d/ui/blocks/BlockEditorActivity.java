@@ -1002,7 +1002,7 @@ public class BlockEditorActivity extends AppCompatActivity implements BlockCanva
         File root = new File(projectKey, folder);
         String[] ext = folder.equals("images") ? new String[]{"png", "jpg", "jpeg"}
                 : folder.equals("sounds") ? new String[]{"mp3", "ogg", "wav", "m4a"}
-                : folder.equals("models") ? new String[]{"glb", "gltf"}
+                : folder.equals("models") ? new String[]{"glb", "gltf", "obj"}
                 : folder.equals("shaders") ? new String[]{"glsl"} : null;
         FilePickerDialog.show(this, title, root.getAbsolutePath(), ext, folder.equals("images"), (file, rel) -> {
             String v = folder.equals("anims") || folder.equals("scenes") ? file.getName() : rel;

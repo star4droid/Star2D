@@ -410,6 +410,9 @@ public class LibgdxEditor extends Stage {
 	
 	// load the scene from the project path
 	public void loadFromPath() {
+		// the load runs on a later frame: callbacks given meanwhile (whenLoaded, e.g. the default cube and plane of a new 3D
+		// scene) must wait for it, else they ran first and the scene was then loaded again on top of them
+		loadingScene = true;
 		Gdx.app.postRunnable(()->loadFromPathInternal());
 	}
 	
@@ -451,6 +454,14 @@ public class LibgdxEditor extends Stage {
 		else loadedCallbacks.add(r);
 	}
 	
+	private void runLoadedCallbacks(){
+		ArrayList<Runnable> cbs = new ArrayList<>(loadedCallbacks);
+		loadedCallbacks.clear();
+		for(Runnable r:cbs){
+			try { r.run(); } catch(Throwable t){ Gdx.files.external("logs/load.error.txt").writeString(Utils.getStackTraceString(t)+"\n",true); }
+		}
+	}
+	
 	private void reportLoading(float p){
 		loadProgress = p;
 		try {
@@ -487,6 +498,7 @@ public class LibgdxEditor extends Stage {
 		world = new World(new Vector2(0,-9.8f),true);
 		if(jsonSave.equals("")){
 			loadingScene = false;
+			runLoadedCallbacks();
 			return;
 		}
 		loadingScene = true;
@@ -572,11 +584,7 @@ public class LibgdxEditor extends Stage {
 				editorListener.onBodySelected();
 		}
 		reportLoading(-1f);
-		ArrayList<Runnable> cbs = new ArrayList<>(loadedCallbacks);
-		loadedCallbacks.clear();
-		for(Runnable r:cbs){
-			try { r.run(); } catch(Throwable t){ Gdx.files.external("logs/load.error.txt").writeString(Utils.getStackTraceString(t)+"\n",true); }
-		}
+		runLoadedCallbacks();
 		try {
 			if(TestApp.nativeHooks != null && TestApp.getCurrentApp() != null && TestApp.getCurrentApp().getEditor() == this)
 				TestApp.nativeHooks.onEditorChanged();

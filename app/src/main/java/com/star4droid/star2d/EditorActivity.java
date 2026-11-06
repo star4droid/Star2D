@@ -62,6 +62,7 @@ public class EditorActivity extends AppCompatActivity implements AndroidFragment
     Runnable importDone = null;
     volatile boolean appReady = false;
 	ActivityResultLauncher<String[]> files_picker;
+	ActivityResultLauncher<Uri> folder_picker;
 	ActivityResultLauncher saveFile;
     Project project;
 	Uri source;
@@ -166,6 +167,24 @@ public class EditorActivity extends AppCompatActivity implements AndroidFragment
 					com.star4droid.star2d.ui.Ui.toast(EditorActivity.this, uriList.size()+" file(s) imported");
 				}
 			});
+		
+		folder_picker = registerForActivityResult(new ActivityResultContracts.OpenDocumentTree(), treeUri -> {
+			final String target = importTargetDir;
+			final Runnable done = importDone;
+			if(treeUri == null || target == null) return;
+			int n = 0;
+			try {
+				DocumentFile root = DocumentFile.fromTreeUri(EditorActivity.this, treeUri);
+				if(root != null){
+					String name = root.getName() == null ? "model" : root.getName().replaceAll("[\\\\/:*?\"<>|]", "_");
+					n = copyTree(root, new java.io.File(target, name), 0);
+				}
+			} catch(Exception ex){
+				com.star4droid.star2d.ui.Ui.toast(EditorActivity.this,"Import error : "+ex);
+			}
+			if(done != null) done.run();
+			com.star4droid.star2d.ui.Ui.toast(EditorActivity.this, n+" file(s) imported");
+		});
 		
 		saveFile = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),new ActivityResultCallback<ActivityResult>(){
 			@Override
@@ -399,6 +418,11 @@ public class EditorActivity extends AppCompatActivity implements AndroidFragment
                 filePickerAction = "native";
                 files_picker.launch(new String[] {"*/*"});
             }
+            @Override public void importFolder(String targetDir, Runnable done){
+                importTargetDir = targetDir;
+                importDone = done;
+                try { folder_picker.launch(null); } catch(Exception e){ importFiles(targetDir, done); }
+            }
             @Override public void openBlocksAt(String file, int block){
                 com.star4droid.star2d.ui.blocks.BlockEditorActivity.open(EditorActivity.this, file, "", block);
             }
@@ -455,4 +479,23 @@ public class EditorActivity extends AppCompatActivity implements AndroidFragment
 	    
 	}
 	
+
+	/** Copies a folder picked with the system picker (sub folders too, 6 levels at most); returns the number of files. */
+	private int copyTree(DocumentFile dir, java.io.File to, int depth){
+		int n = 0;
+		if(depth > 6) return 0;
+		to.mkdirs();
+		for(DocumentFile f : dir.listFiles()){
+			String name = f.getName();
+			if(name == null || name.startsWith(".")) continue;
+			if(f.isDirectory()) n += copyTree(f, new java.io.File(to, name), depth + 1);
+			else {
+				java.io.File t = new java.io.File(to, name);
+				FileUtil.writeFile(t.getAbsolutePath(),"");
+				UriUtils.copyUriToUri(EditorActivity.this, f.getUri(), Uri.fromFile(t));
+				n++;
+			}
+		}
+		return n;
+	}
 }

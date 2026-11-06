@@ -772,7 +772,7 @@ public class PropertiesPanel implements PanelHost.Panel {
                             String root = Bridge.editor().getProject().getPath() + "/models";
                             new java.io.File(root).mkdirs();
                             return root;
-                        }, rootPath -> FilePickerDialog.show(c, Tr.t(f), rootPath, new String[]{"glb", "gltf"}, false, (file, rel) -> {
+                        }, rootPath -> FilePickerDialog.show(c, Tr.t(f), rootPath, new String[]{"glb", "gltf", "obj"}, false, (file, rel) -> {
                             String nv = rel.startsWith("/") ? rel : "/" + rel;
                             values.put(f, nv);
                             t.setText(nv);

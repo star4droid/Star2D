@@ -93,8 +93,13 @@ public class AddItemPanel implements PanelHost.Panel {
         if (ed != null && ed.is3DScene()) {
             col.addView(Ui.sectionLabel(c, Tr.t("s3_shapes", "3D shapes")));
             col.addView(grid3d(c, SHAPES_3D, ar));
-            LinearLayout imp = Ui.button(c, R.drawable.ic_s2_download, Tr.t("s3_import_glb", "Import 3D models (.glb / .gltf)"), true, v -> importModels(c));
-            col.addView(imp, Ui.margins(new LinearLayout.LayoutParams(-1, Ui.dp(c, 44)), c, 4, 4, 4, 6));
+            LinearLayout imp = Ui.button(c, R.drawable.ic_s2_download, Tr.t("s3_import_glb", "Import 3D models (.glb / .gltf / .obj)"), true, v -> importModels(c, false));
+            col.addView(imp, Ui.margins(new LinearLayout.LayoutParams(-1, Ui.dp(c, 44)), c, 4, 4, 4, 2));
+            TextView hint = Ui.text(c, Tr.t("s3_import_hint", "Pick the model together with its .mtl / .bin and texture files, or import its whole folder."), 11.5f, Ui.TEXT_3);
+            hint.setPadding(Ui.dp(c, 8), 0, Ui.dp(c, 8), 0);
+            col.addView(hint);
+            LinearLayout impDir = Ui.button(c, R.drawable.ic_s2_download, Tr.t("s3_import_folder", "Import a model folder"), false, v -> importModels(c, true));
+            col.addView(impDir, Ui.margins(new LinearLayout.LayoutParams(-1, Ui.dp(c, 40)), c, 4, 4, 4, 6));
             col.addView(Ui.sectionLabel(c, Tr.t("s3_special", "Models, terrain and water")));
             col.addView(grid3d(c, SPECIAL_3D, ar));
             col.addView(Ui.sectionLabel(c, Tr.t("s3_lights", "3D lights")));
@@ -136,39 +141,28 @@ public class AddItemPanel implements PanelHost.Panel {
     }
 
     /**
-     * Imports .glb / .gltf files from the phone into the project's models folder (a .gltf with its .bin and pictures) and
-     * adds a MODEL element for each model file chosen.
+     * Imports 3D models from the phone into the project's models folder and adds a MODEL element for each model file
+     * chosen: .glb, .gltf (with its .bin and pictures) and .obj (with its .mtl and pictures). Several files can be picked
+     * together, or a whole folder (folder = true), which keeps its sub folders so the relative names in .mtl / .gltf work.
      */
-    private void importModels(Context c) {
+    private void importModels(Context c, boolean folder) {
         final String project = shell.projectPath();
         if (project == null) return;
         final java.io.File tmp = new java.io.File(project, ".glb_import");
+        com.star4droid.star2d.Helpers.FileUtil.deleteFile(tmp.getAbsolutePath());
         tmp.mkdirs();
-        shell.host().importFiles(tmp.getAbsolutePath(), () -> {
+        Runnable done = () -> {
             final java.util.ArrayList<String> models = new java.util.ArrayList<>();
             try {
                 java.io.File dest = new java.io.File(project, "models");
                 dest.mkdirs();
-                java.io.File[] chosen = tmp.listFiles();
-                if (chosen != null) for (java.io.File f : chosen) {
-                    String n = f.getName();
-                    String low = n.toLowerCase();
-                    boolean model = low.endsWith(".glb") || low.endsWith(".gltf");
-                    boolean part = low.endsWith(".bin") || low.endsWith(".png") || low.endsWith(".jpg") || low.endsWith(".jpeg") || low.endsWith(".webp");
-                    if (!model && !part) continue; // anything else is ignored
-                    java.io.File to = new java.io.File(dest, n.replace(' ', '_'));
-                    if (to.exists()) to.delete();
-                    if (!f.renameTo(to)) {
-                        com.star4droid.star2d.Helpers.FileUtil.copyFile(f.getAbsolutePath(), to.getAbsolutePath());
-                    }
-                    if (model) models.add("/" + to.getName());
-                }
+                moveModels(tmp, dest, "", models);
             } catch (Throwable t) {
                 Ui.toast(c, String.valueOf(t));
             }
             com.star4droid.star2d.Helpers.FileUtil.deleteFile(tmp.getAbsolutePath());
             if (models.isEmpty()) {
-                Ui.toast(c, Tr.t("s3_import_none", "No .glb / .gltf model was chosen"));
+                Ui.toast(c, Tr.t("s3_import_none", "No .glb / .gltf / .obj model was chosen"));
                 return;
             }
             shell.panels.hide();
@@ -176,7 +170,41 @@ public class AddItemPanel implements PanelHost.Panel {
                 for (String m : models) Bridge.controls().actionAdd3D("OBJ3D", "MODEL", m);
             });
             Ui.toast(c, Tr.t("s3_import_done", "Imported") + ": " + models.size());
-        });
+        };
+        if (folder) shell.host().importFolder(tmp.getAbsolutePath(), done);
+        else shell.host().importFiles(tmp.getAbsolutePath(), done);
+    }
+
+    static boolean isModelFile(String low) {
+        return low.endsWith(".glb") || low.endsWith(".gltf") || low.endsWith(".obj");
+    }
+
+    static boolean isModelPart(String low) {
+        return low.endsWith(".bin") || low.endsWith(".mtl") || low.endsWith(".png") || low.endsWith(".jpg") || low.endsWith(".jpeg")
+                || low.endsWith(".webp") || low.endsWith(".bmp") || low.endsWith(".gif");
+    }
+
+    /** Moves the chosen files (and sub folders) into models/, same relative names; model files are listed as "/rel/name". */
+    private static void moveModels(java.io.File from, java.io.File dest, String rel, java.util.ArrayList<String> models) {
+        java.io.File[] chosen = from.listFiles();
+        if (chosen == null) return;
+        for (java.io.File f : chosen) {
+            String n = f.getName();
+            if (f.isDirectory()) {
+                if (rel.split("/").length < 6) moveModels(f, new java.io.File(dest, n), rel + n + "/", models);
+                continue;
+            }
+            String low = n.toLowerCase();
+            boolean model = isModelFile(low);
+            if (!model && !isModelPart(low)) continue; // anything else is ignored
+            // pictures / .bin / .mtl keep their exact names: the model files refer to them by name
+            String outName = model ? n.replace(' ', '_') : n;
+            dest.mkdirs();
+            java.io.File to = new java.io.File(dest, outName);
+            if (to.exists()) to.delete();
+            if (!f.renameTo(to)) com.star4droid.star2d.Helpers.FileUtil.copyFile(f.getAbsolutePath(), to.getAbsolutePath());
+            if (model) models.add("/" + rel + outName);
+        }
     }
 
     private GridLayout grid3d(Context c, String[][] items, boolean ar) {

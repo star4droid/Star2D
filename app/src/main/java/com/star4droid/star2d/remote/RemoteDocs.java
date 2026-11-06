@@ -384,7 +384,7 @@ public final class RemoteDocs {
             case "body": return key.equals("Collision") ? "e.g. (a)(b): names of elements that do not collide" : "element name";
             case "script": return "name of the event script";
             case "points": return "read-only in the elements tool";
-            case "model": return "/name.glb or /name.gltf (a file of the models/ folder); sets Mesh MODEL";
+            case "model": return "/name.glb, /name.gltf or /name.obj (a file of the models/ folder); sets Mesh MODEL";
             case "shader": return "\"\" (the scene's Render Mode), builtin:glow|hologram|dissolve|wave|rim|toon|gradient|pulse|xray|flag|lava|ghost, or shaders/NAME (file shaders/NAME.glsl)";
             case "static": return "read-only (fixed when the element is added)";
             default: return "";

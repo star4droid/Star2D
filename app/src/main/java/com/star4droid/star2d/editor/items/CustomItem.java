@@ -53,12 +53,14 @@ public class CustomItem extends Image implements EditorItem {
         shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
         shapeRenderer.setColor(Color.GREEN);
         
-        if (!points.isEmpty()) {
-            Vector2 first = points.get(0);
+        // keep the collider glued to the element even when it was moved/rotated/scaled without update()
+        syncBodyTransform();
+        if (!points.isEmpty() && body != null) {
+            com.badlogic.gdx.physics.box2d.Transform tr = body.getTransform();
+            Vector2 first = tr.mul(new Vector2(points.get(0)));
             Vector2 prev = first;
-            
             for (int i = 1; i < points.size(); i++) {
-                Vector2 current = points.get(i);
+                Vector2 current = tr.mul(new Vector2(points.get(i)));
                 shapeRenderer.line(prev.x, prev.y, current.x, current.y);
                 prev = current;
             }
@@ -95,27 +97,52 @@ public class CustomItem extends Image implements EditorItem {
 		offset[0] = propertySet.getFloat("ColliderX")*-1;
     	offset[1] = propertySet.getFloat("ColliderY")*-1;
         
-        // Parse and scale points
+        buildPoints();
+		
+        // Update physics body
+        updatePhysicsBody();
+		syncBodyTransform();
+		if(!propertySet.getString("Tint").equals(tint)){
+		    setColor(propertySet.getColor("Tint"));
+		    tint = propertySet.getString("Tint");
+		}
+    }
+
+    private float builtScaleX = 1, builtScaleY = 1, builtW, builtH;
+
+    /** Moves the helper body to the element's current center / rotation; rebuilds the shape when size or scale changed. */
+    private void syncBodyTransform() {
+        if (body == null || propertySet == null) return;
+        if (getScaleX() != builtScaleX || getScaleY() != builtScaleY || getWidth() != builtW || getHeight() != builtH) {
+            if (editor.getWorld().isLocked()) return;
+            buildPoints();
+            updatePhysicsBody();
+            if (body == null) return;
+        }
+        float bx = offset[0] + getX() + getWidth() * 0.5f, by = offset[1] + getY() + getHeight() * 0.5f;
+        float ang = (float) Math.toRadians(getRotation());
+        Vector2 p = body.getPosition();
+        if (p.x != bx || p.y != by || body.getAngle() != ang) {
+            if (!editor.getWorld().isLocked()) body.setTransform(bx, by, ang);
+        }
+    }
+
+    /** Polygon local to the element center, scaled like the picture (the body carries position + rotation). */
+    private void buildPoints() {
         points.clear();
+        float width = getWidth(), height = getHeight(), sx = getScaleX(), sy = getScaleY();
+        builtScaleX = sx; builtScaleY = sy; builtW = width; builtH = height;
         String pointsStr = propertySet.getString("Points");
         for (String point : pointsStr.split("-")) {
             String[] coords = point.split(",");
             if (coords.length == 2) {
 				try {
-                	float px = Utils.getFloat(coords[0]) * width - width*0.5f;
-                	float py = (1 - Utils.getFloat(coords[1])) * height - height*0.5f; // Flip Y-axis
+                	float px = (Utils.getFloat(coords[0]) * width - width*0.5f) * sx;
+                	float py = ((1 - Utils.getFloat(coords[1])) * height - height*0.5f) * sy; // Flip Y-axis
                 	points.add(new Vector2(px, py));
 				} catch(Exception e){}
             }
         }
-		
-        // Update physics body
-        updatePhysicsBody();
-		body.setTransform(new Vector2((offset[0]+x+(getWidth()*0.5f)),(offset[1]+y+(getHeight()*0.5f))),(float)Math.toRadians(-propertySet.getFloat("rotation")));
-		if(!propertySet.getString("Tint").equals(tint)){
-		    setColor(propertySet.getColor("Tint"));
-		    tint = propertySet.getString("Tint");
-		}
     }
 
     private void updatePhysicsBody() {
@@ -130,6 +157,7 @@ public class CustomItem extends Image implements EditorItem {
             def.position.set(getX(), getY());
             body = editor.getWorld().createBody(def);
             
+            if (points.size() < 3) return; // a loop needs 3 points; keep no body instead of crashing
             ChainShape shape = new ChainShape();
             Vector2[] vertices = points.toArray(new Vector2[0]);
             shape.createLoop(vertices);

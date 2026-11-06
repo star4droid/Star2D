@@ -134,7 +134,12 @@ public class Object3D extends Actor implements PlayerItem {
 		String shape = def.Mesh == null ? Shapes3D.CUBE : def.Mesh.toUpperCase();
 		int detail = (int) def.Detail;
 		if ("MODEL".equals(shape)) {
-			SceneAsset a = Assets3D.model(def.Model);
+			SceneAsset a = null;
+			try {
+				a = Assets3D.model(def.Model);
+			} catch (Throwable t) {
+				com.badlogic.gdx.Gdx.app.error("Star2D-3D", "model " + def.Model + ": " + t);
+			}
 			if (a != null) {
 				Model m = a.scene.model;
 				if (def.Model_Node != null && def.Model_Node.length() > 0 && m.getNode(def.Model_Node, true) != null)
@@ -184,6 +189,19 @@ public class Object3D extends Actor implements PlayerItem {
 		if (anim != null && def.Animation != null && def.Animation.length() > 0)
 			playAnimation(def.Animation, def.Animation_Loop, def.Animation_Speed);
 		transformDirty = true;
+	}
+
+	/** The model could not be drawn (shader / mesh error): show a plain box instead, once (no rebuild every frame). */
+	public void markBroken() {
+		try {
+			instance = new ModelInstance(Shapes3D.get(Shapes3D.CUBE, 0, 0));
+			lowInstance = null;
+			anim = null;
+			boundsDone = false;
+			transformDirty = true;
+		} catch (Throwable t) {
+			instance = null;
+		}
 	}
 
 	/** Frees what this element owns alone (the terrain mesh). Its body must be gone already. */

@@ -178,18 +178,48 @@ public class Editor3D {
 
 	private final Vector3 tmp = new Vector3(), tmp2 = new Vector3(), tmp3 = new Vector3();
 
+	private final com.badlogic.gdx.utils.ObjectSet<Object> live = new com.badlogic.gdx.utils.ObjectSet<Object>(), liveLights = new com.badlogic.gdx.utils.ObjectSet<Object>(),
+			liveCams = new com.badlogic.gdx.utils.ObjectSet<Object>();
+
+	/**
+	 * In the editor every 3D object belongs to an element of the scene. One left in the world without its element (a
+	 * scene reloaded while the defaults were being added, an element rebuilt after an error) was drawn forever and could
+	 * not be selected or deleted: drop it.
+	 */
+	private void pruneGhosts() {
+		for (int i = world.objects.size - 1; i >= 0; i--) {
+			com.star4droid.template.d3.Object3D o = world.objects.get(i);
+			if (!live.contains(o)) world.remove(o);
+		}
+		for (int i = world.lights.size - 1; i >= 0; i--) {
+			if (!liveLights.contains(world.lights.get(i))) world.removeLight(world.lights.get(i));
+		}
+		for (int i = world.cameras.size - 1; i >= 0; i--) {
+			if (!liveCams.contains(world.cameras.get(i))) world.cameras.removeIndex(i);
+		}
+	}
+
 	public void render() {
 		float dt = Math.min(0.05f, Gdx.graphics.getDeltaTime());
 		updateCamera();
 		Object[] gameQuality = Quality3D.snapshot();
 		Quality3D.setLevel(editorQuality, false);
 		Quality3D.renderScale = 1f;
+		live.clear();
+		liveLights.clear();
+		liveCams.clear();
 		for (Actor a : editor.getActors()) {
 			if (a instanceof Editor3DItem) {
 				Editor3DItem it = (Editor3DItem) a;
-				if (it.obj != null) it.obj.selected = (a == editor.getSelectedActor());
+				if (it.obj != null) {
+					it.obj.selected = (a == editor.getSelectedActor());
+					live.add(it.obj);
+				}
+				if (it.light != null) liveLights.add(it.light);
+				if (it.camera != null) liveCams.add(it.camera);
 			}
 		}
+		pruneGhosts();
 		world.camera = cam;
 		world.update(dt, false);
 		world.render(cam, Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), true);

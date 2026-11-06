@@ -778,7 +778,7 @@ public class ControlLayer extends Table {
 		actionAdd3D(kind,preset,null);
 	}
 
-	/** model: project path of a .glb / .gltf ("/name.glb"): a MODEL element showing it (named after the file). */
+	/** model: project path of a .glb / .gltf / .obj ("/name.glb"): a MODEL element showing it (named after the file). */
 	public void actionAdd3D(String kind,String preset,String model){
 		try {
 			com.star4droid.star2d.editor.LibgdxEditor ed = app.getEditor();

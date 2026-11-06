@@ -49,6 +49,8 @@ public class EditorShell extends FrameLayout implements ControlLayer.NativeUi, T
         void openJava(String path);
         /** Import files (system picker) into a folder, then call done. */
         void importFiles(String targetDir, Runnable done);
+        /** Copy a whole folder chosen by the user (with its sub folders) into targetDir/<folder name>, then run done. */
+        default void importFolder(String targetDir, Runnable done) { importFiles(targetDir, done); }
         /** Open a visual script in the block editor; false = use the legacy editor. */
         boolean openBlocks(String file, String hints);
         /** Open a block script and fly to the block at this position. */

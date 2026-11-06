@@ -116,6 +116,7 @@ public class EditorActivity extends AppCompatActivity implements AndroidFragment
 
     public void onCreate(Bundle bundle) {
         super.onCreate(bundle);
+        com.star4droid.star2d.ui.SystemBars.install(this);
         try {
             Utils.extractAssetFile(this, "cp.zip", FileUtil.getPackageDataDir(this) + "/bin/cp.jar");
         } catch (Exception e) {

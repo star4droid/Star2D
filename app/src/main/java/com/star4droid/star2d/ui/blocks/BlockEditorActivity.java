@@ -146,6 +146,7 @@ public class BlockEditorActivity extends AppCompatActivity implements BlockCanva
     @Override
     protected void onCreate(Bundle b) {
         super.onCreate(b);
+        com.star4droid.star2d.ui.SystemBars.install(this);
         if (EngineSettings.get() == null) EngineSettings.init(this);
         Tr.init(this);
         rtl = Ui.isRtl(this);
@@ -746,8 +747,8 @@ public class BlockEditorActivity extends AppCompatActivity implements BlockCanva
     }
 
     /**
-     * Drag from the palette onto the canvas: hold the block briefly, or (side palette) swipe it
-     * sideways toward the canvas. A normal vertical swipe still scrolls the list.
+     * Drag from the palette onto the canvas: long-press the block, then drag (same as blocks on the canvas).
+     * A swipe before the long press scrolls the list; a tap adds the block.
      */
     private class PaletteDrag implements View.OnTouchListener {
         final BlockCatalog.Def def;
@@ -808,7 +809,7 @@ public class BlockEditorActivity extends AppCompatActivity implements BlockCanva
                     downY = lastY;
                     dragging = false;
                     armed = true;
-                    handler.postDelayed(hold, 220);
+                    handler.postDelayed(hold, ViewConfiguration.getLongPressTimeout());
                     return false;
                 case MotionEvent.ACTION_MOVE:
                     if (!dragging) {
@@ -817,9 +818,7 @@ public class BlockEditorActivity extends AppCompatActivity implements BlockCanva
                         if (Math.abs(dx) > slop || Math.abs(dy) > slop) {
                             armed = false;
                             handler.removeCallbacks(hold);
-                            boolean land = Ui.isLandscape(BlockEditorActivity.this);
-                            // side palette: a sideways swipe toward the canvas starts the drag at once
-                            if (land && Math.abs(dx) > Math.abs(dy) * 1.3f) start(v);
+                            // blocks are dragged only after a long press; any earlier move scrolls the list
                         }
                         return dragging;
                     }

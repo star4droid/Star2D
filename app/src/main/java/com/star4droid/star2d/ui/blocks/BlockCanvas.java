@@ -80,6 +80,8 @@ public class BlockCanvas extends View {
 
     // block dragging
     private BlockModel.Node drag; // head of the dragged chain
+    /** Long press fired on a block: the next move drags it (a move before that pans the canvas). */
+    private boolean dragArmed;
     private boolean dragExternal;
     private float dragX, dragY, grabDX, grabDY;
     private final ArrayList<Box> dragBoxes = new ArrayList<>();
@@ -187,6 +189,9 @@ public class BlockCanvas extends View {
             @Override public void onLongPress(MotionEvent e) {
                 // options are shown on release, and only if the finger didn't start a drag
                 if (isDragging() || !pendingDrag || downBox == null || multi) return;
+                // blocks move only after a long press: a plain swipe pans the canvas
+                dragArmed = true;
+                panning = false;
                 if (downParam != null) {
                     // long-press on an event parameter: dragging now makes a copy of it
                     paramArmed = true;
@@ -683,6 +688,12 @@ public class BlockCanvas extends View {
             stroke.setAlpha(255);
         }
         // selection outline: whole block shape (the full C for if / else blocks)
+        // armed by a long press (ready to drag): thick bright outline so the block looks lifted
+        if (!ghost && dragArmed && pendingDrag && downBox != null && b.node == downBox.node) {
+            stroke.setColor(0xFFFFEB3B);
+            stroke.setStrokeWidth(4.5f * d);
+            c.drawPath(b.shape, stroke);
+        }
         if (b.node == selected && !ghost) {
             stroke.setColor(Color.WHITE);
             stroke.setStrokeWidth(2.5f * d);
@@ -905,8 +916,10 @@ public class BlockCanvas extends View {
                 downSlot = downBox != null ? slotAt(downBox, wx(x), wy(y)) : null;
                 downParam = downBox != null ? rootParamAt(downBox, wx(x), wy(y)) : null;
                 paramArmed = false;
+                dragArmed = false;
                 pendingDrag = downBox != null;
-                panning = !pendingDrag && !isDragging();
+                // a swipe pans even when it starts on a block; the block is dragged only after a long press
+                panning = !isDragging();
                 return true;
             case MotionEvent.ACTION_POINTER_DOWN:
             case MotionEvent.ACTION_POINTER_UP:
@@ -937,9 +950,15 @@ public class BlockCanvas extends View {
                     return true;
                 }
                 float slop = 10 * d;
-                if (pendingDrag && !multi && (Math.abs(x - downX) > slop || Math.abs(y - downY) > slop)) {
+                if (pendingDrag && !multi && !dragArmed && (Math.abs(x - downX) > slop || Math.abs(y - downY) > slop)) {
+                    // moved before the long press fired: this is a pan, not a drag
+                    pendingDrag = false;
+                    pendingMenu = null;
+                }
+                if (pendingDrag && dragArmed && !multi && (Math.abs(x - downX) > slop || Math.abs(y - downY) > slop)) {
                     pendingMenu = null;
                     pendingDrag = false;
+                    dragArmed = false;
                     if (paramArmed && downParam != null) beginExternalParamDrag(new BlockModel.Param(downParam, downParam), x, y);
                     else if (downSlot != null && downSlot.field.block != null) startParamDrag(downSlot, x, y);
                     else startDrag(downBox, x, y);
@@ -965,7 +984,9 @@ public class BlockCanvas extends View {
                 }
                 pendingMenu = null;
                 pendingDrag = false;
+                dragArmed = false;
                 panning = false;
+                invalidate();
                 return true;
             }
         }

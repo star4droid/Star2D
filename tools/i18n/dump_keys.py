@@ -105,6 +105,14 @@ def main():
                 f.write(k + "\t" + v + "\n")
         print("%s: missing %d" % (lang, len(miss)))
         bad = bad or bool(miss)
+    # translations written in the wrong script (e.g. Russian in the Spanish file)
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import check_script
+    wrong = check_script.problems()
+    for lang, k, v in wrong:
+        print("wrong script %s\t%s\t%s" % (lang, k, v))
+    print("wrong-script translations: %d" % len(wrong))
+    bad = bad or bool(wrong)
     if "--check" in sys.argv and bad:
         sys.exit(1)
 

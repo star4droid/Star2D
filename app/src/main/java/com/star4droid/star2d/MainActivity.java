@@ -20,6 +20,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+		com.star4droid.star2d.ui.SystemBars.install(this);
 		Utils.setLanguage(this);
         setContentView(R.layout.activity_main);
 		setupSplash();

@@ -856,22 +856,26 @@ public final class Tutorial {
             android.util.DisplayMetrics dm = new android.util.DisplayMetrics();
             act.getWindowManager().getDefaultDisplay().getRealMetrics(dm);
             int sw = dm.widthPixels, sh = dm.heightPixels;
+            // keep the card out of the navigation / status bars and the display cutout (edge-to-edge, any rotation)
+            android.graphics.Rect safe = com.star4droid.star2d.ui.SystemBars.safeInsets(act);
             int m = Ui.dp(c, 12);
-            int w = Math.min(sw - 2 * m, Ui.dp(c, 400));
+            int w = Math.min(sw - safe.left - safe.right - 2 * m, Ui.dp(c, 400));
             measure(MeasureSpec.makeMeasureSpec(w, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(sh, MeasureSpec.AT_MOST));
             int h = getMeasuredHeight();
             RectF avoid = f == null ? null : new RectF(f.r);
             if (avoid != null) avoid.inset(-Ui.dp(c, 18), -Ui.dp(c, 18));
             RectF avoid2 = f2 == null ? null : new RectF(f2.r);
             if (avoid2 != null) avoid2.inset(-Ui.dp(c, 12), -Ui.dp(c, 12));
-            int top = Ui.dp(c, 30);
+            int top = Math.max(Ui.dp(c, 30), safe.top + m);
+            int minX = safe.left + m, maxX = sw - safe.right - w - m;
+            int bottomLimit = sh - safe.bottom;
             float cx = avoid == null ? sw / 2f : avoid.centerX();
-            int x = (int) Math.max(m, Math.min(cx - w / 2f, sw - w - m));
-            int[] ys = avoid == null ? new int[]{sh - h - Ui.dp(c, 24), top}
-                    : new int[]{(int) avoid.bottom, (int) avoid.top - h, top, sh - h - Ui.dp(c, 24)};
+            int x = (int) Math.max(minX, Math.min(cx - w / 2f, maxX));
+            int[] ys = avoid == null ? new int[]{bottomLimit - h - Ui.dp(c, 24), top}
+                    : new int[]{(int) avoid.bottom, (int) avoid.top - h, top, bottomLimit - h - Ui.dp(c, 24)};
             int best = ys[0], bestOverlap = Integer.MAX_VALUE;
             for (int y : ys) {
-                int yy = Math.max(top, Math.min(y, sh - h - m));
+                int yy = Math.max(top, Math.min(y, bottomLimit - h - m));
                 RectF b = new RectF(x, yy, x + w, yy + h);
                 int ov = overlap(b, avoid) * 3 + overlap(b, avoid2);
                 if (ov < bestOverlap) {
@@ -882,8 +886,8 @@ public final class Tutorial {
             }
             // try the sides in landscape when nothing fits above / below
             if (bestOverlap > 0 && avoid != null && sw > sh) {
-                for (int xx : new int[]{m, sw - w - m}) {
-                    int yy = Math.max(top, Math.min((int) (avoid.centerY() - h / 2f), sh - h - m));
+                for (int xx : new int[]{minX, maxX}) {
+                    int yy = Math.max(top, Math.min((int) (avoid.centerY() - h / 2f), bottomLimit - h - m));
                     RectF b = new RectF(xx, yy, xx + w, yy + h);
                     int ov = overlap(b, avoid) * 3 + overlap(b, avoid2);
                     if (ov < bestOverlap) {

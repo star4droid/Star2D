@@ -111,6 +111,8 @@
 			android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout" android:windowSoftInputMode="adjustResize" android:exported="false"/>
 		<activity android:name="com.star4droid.star2d.suda.HistoryActivity" android:theme="@style/AppTheme.FullScreen"
 			android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout" android:exported="false"/>
+		<activity android:name="com.star4droid.star2d.suda.M2MActivity" android:theme="@style/AppTheme.FullScreen" android:hardwareAccelerated="true"
+			android:configChanges="orientation|screenSize|keyboardHidden|keyboard|smallestScreenSize|screenLayout|navigation|uiMode" android:windowSoftInputMode="adjustResize" android:exported="false"/>
 		<activity android:name="com.star4droid.star2d.suda.ModelViewerActivity" android:theme="@style/AppTheme.FullScreen"
 			android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout" android:exported="false"/>
 		<!-- libGDX model viewer in its own process: its GL context never meets the editor's libGDX instance -->

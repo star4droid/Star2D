@@ -63,7 +63,8 @@ import java.util.zip.ZipOutputStream;
  * keeps undo / redo snapshots of the graph.
  */
 public class WorkspaceActivity extends Activity implements NodeGraphView.Host, Jobs.Listener, Downloads.Listener, OutputView.SafHost {
-    private static final int REQ_IMAGE = 51, REQ_MODEL = 52, REQ_SAVE = 53;
+    private static final int REQ_IMAGE = 51, REQ_MODEL = 52, REQ_SAVE = 53, REQ_M2M = 54;
+    private String m2mNode;
     private File dir, files;
     private Graph graph;
     private NodeGraphView view;
@@ -310,6 +311,13 @@ public class WorkspaceActivity extends Activity implements NodeGraphView.Host, J
                 changed(false);
                 dlg[0].dismiss();
             }), Ui.margins(Ui.matchWrap(), this, 0, 10, 0, 0));
+        } else if (def.onDevice) {
+            col.addView(Ui.text(this, Tr.t("m2m_node_hint", "Rig the connected model and add animations with Mesh2Motion on this phone. Free: no credits, nothing is uploaded."), 14, Ui.TEXT_2));
+            if (!n.file.isEmpty()) col.addView(Ui.text(this, new File(n.file).getName(), 13, Ui.TEXT_3));
+            col.addView(Ui.button(this, R.drawable.ic_s2_play, Tr.t("m2m_open", "Open M2M Motion"), true, v -> { dlg[0].dismiss(); generate(n); }),
+                    Ui.margins(Ui.matchWrap(), this, 0, 10, 0, 0));
+            if (!n.file.isEmpty() && new File(n.file).exists()) col.addView(Ui.button(this, R.drawable.ic_s2_save, Tr.t("s3d_save", "Save"), false,
+                    v -> { dlg[0].dismiss(); OutputView.saveMenu(this, new File(n.file), null, null); }), Ui.margins(Ui.matchWrap(), this, 0, 8, 0, 0));
         } else if (def.local) {
             col.addView(Ui.text(this, "select_image".equals(n.type) || "upload_3d".equals(n.type)
                     ? (n.file.isEmpty() ? Tr.t("s3d_no_file", "No file") : new File(n.file).getName())
@@ -421,7 +429,7 @@ public class WorkspaceActivity extends Activity implements NodeGraphView.Host, J
             Graph.Link l = graph.into(n.id, p.id);
             if (l == null) continue;
             Graph.Node u = graph.node(l.fromNode);
-            if (u == null || u.def().local) continue;
+            if (u == null || u.def().local || u.def().onDevice) continue;
             if (Graph.DONE.equals(u.state) && !u.outputs.isEmpty()) continue;
             visit(u, order, seen);
         }
@@ -439,6 +447,8 @@ public class WorkspaceActivity extends Activity implements NodeGraphView.Host, J
             Graph.Node u = graph.node(l.fromNode);
             if (u != null && ("select_image".equals(u.type) || "upload_3d".equals(u.type)) && u.file.isEmpty())
                 return u.def().title() + ": " + Tr.t("s3d_choose_file", "choose a file");
+            if (u != null && u.def().onDevice && (u.file.isEmpty() || !new File(u.file).exists()))
+                return u.def().title() + ": " + Tr.t("m2m_run_first", "open M2M Motion and export the model first");
         }
         Ops.Op op = Ops.get(n.op());
         if (op != null && op.param("prompt") != null && op.param("prompt").type == Ops.T.PROMPT && graph.into(n.id, "prompt") == null
@@ -450,6 +460,7 @@ public class WorkspaceActivity extends Activity implements NodeGraphView.Host, J
     @Override
     public void generate(Graph.Node n) {
         if ("preview".equals(n.type)) { previewSave(n); return; }
+        if (n.def().onDevice) { runM2M(n); return; }
         if (n.def().local) return;
         if (Graph.RUNNING.equals(n.state) || Graph.QUEUED.equals(n.state)) { Jobs.refresh(n.jobId); return; }
         List<Graph.Node> list = chainFor(n);
@@ -532,7 +543,7 @@ public class WorkspaceActivity extends Activity implements NodeGraphView.Host, J
 
     /** upload_id for local files (re-used for 50 minutes), {"job_id","output"} refs for generated results. */
     private JsonElement inputRef(Graph.Node u, String key) throws Exception {
-        if ("select_image".equals(u.type) || "upload_3d".equals(u.type)) {
+        if ("select_image".equals(u.type) || "upload_3d".equals(u.type) || u.def().onDevice) {
             if (u.uploadId.isEmpty() || System.currentTimeMillis() - u.uploadAt > 50 * 60_000L) {
                 File f = new File(u.file);
                 if (f.getName().toLowerCase(Locale.ROOT).endsWith(".obj")) f = zipObj(f);
@@ -631,6 +642,7 @@ public class WorkspaceActivity extends Activity implements NodeGraphView.Host, J
         Graph.Node s = source(n);
         if (s == null) return false;
         if ("upload_3d".equals(s.type)) return !s.file.isEmpty();
+        if (s.def().onDevice) return !s.file.isEmpty() && new File(s.file).exists();
         File f = s.outputs.size() > 0 ? outFile(s, 0) : null;
         return f != null && f.exists();
     }
@@ -668,7 +680,7 @@ public class WorkspaceActivity extends Activity implements NodeGraphView.Host, J
         if ("select_image".equals(n.type)) { replaceFile(n); return; }
         Graph.Node s = source(n);
         if (s == null) { Ui.toast(this, Tr.t("s3d_connect_input", "connect an input")); return; }
-        if ("upload_3d".equals(s.type)) { if (!s.file.isEmpty()) ModelViewerActivity.open(this, new File(s.file), "", "", new File(s.file).length(), null); return; }
+        if ("upload_3d".equals(s.type) || s.def().onDevice) { if (!s.file.isEmpty()) ModelViewerActivity.open(this, new File(s.file), "", "", new File(s.file).length(), null); return; }
         if (s.outputs.size() == 0) return;
         JsonObject o = s.outputs.get(0).getAsJsonObject();
         if (s.outputs.size() > 1 || "image".equals(Suda3D.str(o, "kind"))) { showOutputs(s); return; }
@@ -688,7 +700,7 @@ public class WorkspaceActivity extends Activity implements NodeGraphView.Host, J
     private void previewSave(Graph.Node n) {
         Graph.Node s = source(n);
         if (s == null) { Ui.toast(this, Tr.t("s3d_connect_input", "connect an input")); return; }
-        if ("upload_3d".equals(s.type)) { if (!s.file.isEmpty()) OutputView.saveMenu(this, new File(s.file), null, null); return; }
+        if ("upload_3d".equals(s.type) || s.def().onDevice) { if (!s.file.isEmpty()) OutputView.saveMenu(this, new File(s.file), null, null); return; }
         File f = s.outputs.size() > 0 ? outFile(s, 0) : null;
         if (f == null) { generate(s); return; }
         if (!f.exists()) { openResult(n); return; }
@@ -698,6 +710,39 @@ public class WorkspaceActivity extends Activity implements NodeGraphView.Host, J
     @Override
     public void onProgress(File dest, long done, long total, String state) {
         if (dest.getPath().startsWith(files.getPath())) view.invalidate();
+    }
+
+    // ------------------------------------------------------------ M2M Motion (on the phone)
+
+    /** Opens M2M Motion on the model connected to n; the export comes back in onActivityResult (free, local). */
+    private void runM2M(Graph.Node n) {
+        Graph.Link l = graph.into(n.id, "model");
+        Graph.Node u = l == null ? null : graph.node(l.fromNode);
+        if (u == null) { Ui.toast(this, n.def().title() + ": " + Tr.t("s3d_connect_input", "connect an input") + " (" + Graph.portLabel(Graph.MODEL) + ")"); return; }
+        File in = null;
+        if ("upload_3d".equals(u.type) || u.def().onDevice) {
+            if (!u.file.isEmpty()) in = new File(u.file);
+        } else if (u.outputs.size() > 0) {
+            in = outFile(u, 0);
+            if (in != null && !in.exists()) {
+                JsonObject o = u.outputs.get(0).getAsJsonObject();
+                Downloads.start(this, Suda3D.str(o, "url"), in, (long) Suda3D.num(o, "size_bytes", -1));
+                Ui.toast(this, Tr.t("m2m_wait_download", "Downloading the input model… try again when it is done"));
+                return;
+            }
+        } else {
+            generate(u);
+            return;
+        }
+        if (in == null || !in.exists()) { Ui.toast(this, u.def().title() + ": " + Tr.t("s3d_choose_file", "choose a file")); return; }
+        if (!com.star4droid.star2d.suda.M2MActivity.accepts(in.getName())) {
+            Ui.toast(this, Tr.t("m2m_formats", "M2M Motion takes .glb or .fbx models"));
+            return;
+        }
+        m2mNode = n.id;
+        Intent i = com.star4droid.star2d.suda.M2MActivity.intent(this, in, null)
+                .putExtra("result", new File(files, "m2m_" + n.id + ".glb").getAbsolutePath());
+        try { startActivityForResult(i, REQ_M2M); } catch (Exception e) { Ui.toast(this, Suda3D.message(e)); }
     }
 
     // ------------------------------------------------------------ files
@@ -732,6 +777,20 @@ public class WorkspaceActivity extends Activity implements NodeGraphView.Host, J
     protected void onActivityResult(int req, int res, Intent data) {
         super.onActivityResult(req, res, data);
         if (res != RESULT_OK || data == null) return;
+        if (req == REQ_M2M) {
+            Graph.Node n = m2mNode == null ? null : graph.node(m2mNode);
+            String path = data.getStringExtra("path");
+            if (n == null || path == null) return;
+            markStale(n);
+            n.file = path;
+            n.uploadId = "";
+            n.state = Graph.DONE;
+            n.error = "";
+            n.credits = 0;
+            n.progress = 100;
+            changed(true);
+            return;
+        }
         if (req == REQ_SAVE) {
             if (data.getData() != null && pendingSave != null) Store.saveToUri(this, pendingSave, data.getData(), null);
             return;

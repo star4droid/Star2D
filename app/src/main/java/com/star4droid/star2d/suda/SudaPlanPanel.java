@@ -123,6 +123,7 @@ public class SudaPlanPanel implements PanelHost.Panel {
         col.addView(row(c, R.drawable.ic_s2_view3d, Tr.t("s3d_op_image_to_model", "Image → 3D"), v -> QuickGen.show(activity, "image_to_model", null)));
         col.addView(row(c, R.drawable.ic_s2_image, Tr.t("s3d_op_text_to_image", "Text → Image"), v -> QuickGen.show(activity, "text_to_image", null)));
         col.addView(row(c, R.drawable.ic_s2_cube, Tr.t("s3d_op_text_to_model", "Text → 3D"), v -> QuickGen.show(activity, "text_to_model", null)));
+        col.addView(row(c, R.drawable.ic_s2_animation, Tr.t("m2m_entry", "M2M Motion: rig & animate (free, on this phone)"), v -> M2MActivity.open(activity, null, null)));
         col.addView(row(c, R.drawable.ic_s2_nodes, Tr.t("s3d_workspace", "AI Workspace"), v -> activity.startActivity(new Intent(activity, com.star4droid.star2d.suda.ws.WorkspacesActivity.class))));
         col.addView(row(c, R.drawable.ic_s2_progress, Tr.t("s3d_running", "Running generations"), v -> QuickGen.showRunning(activity)));
         col.addView(row(c, R.drawable.ic_s2_history, Tr.t("s3d_history", "History"), v -> activity.startActivity(new Intent(activity, HistoryActivity.class))));

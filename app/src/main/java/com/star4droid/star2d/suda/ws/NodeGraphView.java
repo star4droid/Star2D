@@ -330,7 +330,8 @@ public class NodeGraphView extends View {
         }
         if (hasPreview(n)) drawPreview(c, n, previewRect(n));
         boolean busy = Graph.RUNNING.equals(n.state) || Graph.QUEUED.equals(n.state);
-        drawButton(c, generateRect(n), busy ? Tr.t("s3d_running_short", "Running…")
+        if (n.def().onDevice) drawButton(c, generateRect(n), Tr.t("m2m_open", "Open M2M Motion"), true);
+        else drawButton(c, generateRect(n), busy ? Tr.t("s3d_running_short", "Running…")
                 : (Graph.DONE.equals(n.state) || Graph.STALE.equals(n.state) || Graph.FAILED.equals(n.state) ? Tr.t("s3d_regenerate", "Regenerate") : Tr.t("s3d_generate", "Generate")), !busy);
         RectF pt = paramsToggle(n);
         text.setColor(0xFFB0B6BF);
@@ -466,13 +467,14 @@ public class NodeGraphView extends View {
 
     String stateLabel(Graph.Node n) {
         String cr = n.credits >= 0 ? " · " + com.star4droid.star2d.suda.Suda3D.fmtCredits(n.credits) + " " + Tr.t("s3d_credits", "credits") : "";
+        if (n.def().onDevice) cr = " · " + Tr.t("m2m_free_local", "Free · on this phone");
         switch (n.state) {
             case Graph.QUEUED: return Tr.t("s3d_st_queued", "Waiting in queue…");
             case Graph.RUNNING: return Tr.t("s3d_st_running", "Generating…") + " " + n.progress + "%";
             case Graph.DONE: return Tr.t("s3d_st_success", "Done") + cr;
             case Graph.FAILED: return Tr.t("s3d_st_failed", "Failed") + (n.error.isEmpty() ? "" : ": " + n.error);
             case Graph.STALE: return Tr.t("s3d_st_stale", "Outdated: inputs changed") + cr;
-            default: return Tr.t("s3d_st_idle", "Ready");
+            default: return Tr.t("s3d_st_idle", "Ready") + (n.def().onDevice ? cr : "");
         }
     }
 

@@ -62,6 +62,9 @@ public final class Graph {
         public final Port[] in, out;
         /** local = no server job (picks a file / holds text / previews). */
         public final boolean local;
+        /** Runs on the phone (M2M Motion): free, no server job; its result is a file like a "3D Upload". */
+        public boolean onDevice;
+        Def device() { onDevice = true; return this; }
         Def(String type, String title, String op, int icon, boolean local, Port[] in, Port[] out) {
             this.type = type; this.title = title; this.op = op; this.icon = icon; this.local = local; this.in = in; this.out = out;
         }
@@ -91,6 +94,7 @@ public final class Graph {
             new Def("rig_check", "Analyze for Rigging", "rig_check", R.drawable.ic_s2_search, false, new Port[]{p("model", MODEL)}, new Port[]{p("model", MODEL)}),
             new Def("rig", "Rig Model", "rig", R.drawable.ic_s2_joint, false, new Port[]{p("model", MODEL)}, new Port[]{p("rigged", RIGGED)}),
             new Def("animate", "Animation", "animate", R.drawable.ic_s2_animation, false, new Port[]{p("rigged", RIGGED)}, new Port[]{p("rigged", RIGGED)}),
+            new Def("m2m", "M2M Motion", null, R.drawable.ic_s2_animation, false, new Port[]{p("model", MODEL)}, new Port[]{p("rigged", RIGGED)}).device(),
             new Def("convert", "Convert format", "convert", R.drawable.ic_s2_export, false, new Port[]{p("model", MODEL)}, new Port[]{p("model", MODEL)}),
             new Def("preview", "Preview / Save", null, R.drawable.ic_s2_save, true, new Port[]{p("in", MODEL)}, NONE)
     ));

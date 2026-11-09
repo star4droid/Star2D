@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="100%" height="100%" viewBox="0 0 256 256" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+    <g transform="matrix(1,0,0,1,-0.509721,-604.917133)">
+        <g id="Help" transform="matrix(1,0,0,1,0.509721,604.917133)">
+            <rect x="0" y="0" width="256" height="256" style="fill:none;"/>
+            <g transform="matrix(1.118914,0,0,1.118914,-21.577433,-690.567928)">
+                <path d="M133.681,633.445C187.84,633.445 231.81,677.415 231.81,731.573C231.81,785.732 187.84,829.702 133.681,829.702C79.522,829.702 35.552,785.732 35.552,731.573C35.552,677.415 79.522,633.445 133.681,633.445ZM133.681,647.919C87.511,647.919 50.027,685.403 50.027,731.573C50.027,777.744 87.511,815.228 133.681,815.228C179.851,815.228 217.335,777.744 217.335,731.573C217.335,685.403 179.851,647.919 133.681,647.919Z" style="fill:rgb(216,216,216);"/>
+            </g>
+            <g transform="matrix(1.377827,0,0,1.377827,-29.787789,-877.785197)">
+                <g transform="matrix(109.152811,0,0,109.152811,145.64495,769.099755)">
+                </g>
+                <text x="83.074px" y="769.1px" style="font-family:'ArialRoundedMTBold', 'Arial Rounded MT Bold', sans-serif;font-size:109.153px;fill:rgb(202,202,202);">?</text>
+            </g>
+        </g>
+    </g>
+</svg>

@@ -118,7 +118,8 @@ public final class Paywall {
             Suda3D.IO.execute(() -> {
                 try {
                     Suda3D.register(c, em, pw);
-                    Ui.ui(() -> { status.setTextColor(Ui.SUCCESS); status.setText(Tr.t("s3d_register_done", "Account created. Open the email we sent to verify it, then sign in.")); });
+                    Suda3D.login(c, em, pw);
+                    Ui.ui(() -> { status.setTextColor(Ui.SUCCESS); status.setText(Tr.t("s3d_register_done", "Account created. You are signed in.")); d.dismiss(); if (done != null) done.run(); });
                 } catch (Exception e) {
                     Ui.ui(() -> { status.setTextColor(Ui.DANGER); status.setText(Suda3D.message(e)); });
                 }

@@ -217,11 +217,55 @@ public class ProjectsHomeView extends FrameLayout {
         search = findViewById(R.id.projects_search);
         findViewById(R.id.btn_new_project).setOnClickListener(v -> createNewProject());
         findViewById(R.id.btn_open).setOnClickListener(v -> host.importProject());
+        addWorkspaceButton();
         search.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int a, int b, int c) {}
             @Override public void onTextChanged(CharSequence s, int a, int b, int c) {}
             @Override public void afterTextChanged(Editable s) { refresh(); }
         });
+    }
+
+    /** Long, distinctly coloured "AI Workspace" button above the create-project buttons. */
+    private void addWorkspaceButton() {
+        View header = (View) findViewById(R.id.btn_new_project).getParent();
+        if (!(header.getParent() instanceof LinearLayout)) return;
+        LinearLayout parent = (LinearLayout) header.getParent();
+        LinearLayout b = new LinearLayout(activity);
+        b.setOrientation(LinearLayout.HORIZONTAL);
+        b.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        b.setPadding(dp(16), dp(12), dp(16), dp(12));
+        android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable(
+                android.graphics.drawable.GradientDrawable.Orientation.LEFT_RIGHT, new int[]{0xFFF5A524, 0xFFE0661B});
+        bg.setCornerRadius(dp(14));
+        b.setBackground(new android.graphics.drawable.RippleDrawable(android.content.res.ColorStateList.valueOf(0x33FFFFFF), bg, null));
+        android.widget.ImageView icon = new android.widget.ImageView(activity);
+        icon.setImageResource(R.drawable.ic_s2_nodes);
+        icon.setColorFilter(0xFF1B1300);
+        b.addView(icon, new LinearLayout.LayoutParams(dp(26), dp(26)));
+        LinearLayout texts = new LinearLayout(activity);
+        texts.setOrientation(LinearLayout.VERTICAL);
+        texts.setPadding(dp(12), 0, dp(8), 0);
+        TextView t = new TextView(activity);
+        t.setText(T("s3d_workspace", "AI Workspace"));
+        t.setTextColor(0xFF1B1300);
+        t.setTextSize(16);
+        t.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        TextView sub = new TextView(activity);
+        sub.setText(T("s3d_workspace_sub", "Generate images and 3D models with nodes (SUDA3D)"));
+        sub.setTextColor(0xCC1B1300);
+        sub.setTextSize(12.5f);
+        texts.addView(t);
+        texts.addView(sub);
+        b.addView(texts, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
+        TextView arrow = new TextView(activity);
+        arrow.setText(Ui.isRtl(activity) ? "‹" : "›");
+        arrow.setTextColor(0xFF1B1300);
+        arrow.setTextSize(24);
+        b.addView(arrow);
+        b.setOnClickListener(v -> activity.startActivity(new android.content.Intent(activity, com.star4droid.star2d.suda.ws.WorkspacesActivity.class)));
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.bottomMargin = dp(14);
+        parent.addView(b, parent.indexOfChild(header), lp);
     }
 
     /** Reload the projects list (safe to call from any thread). */

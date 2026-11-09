@@ -106,6 +106,17 @@
 			android:windowSoftInputMode="adjustResize|stateVisible"
 			android:exported="true"/>
 			
+		<!-- SUDA3D: credits, history, 3D viewer, AI workspace (node editor) -->
+		<activity android:name="com.star4droid.star2d.suda.BuyCreditsActivity" android:theme="@style/AppTheme.FullScreen"
+			android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout" android:windowSoftInputMode="adjustResize" android:exported="false"/>
+		<activity android:name="com.star4droid.star2d.suda.HistoryActivity" android:theme="@style/AppTheme.FullScreen"
+			android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout" android:exported="false"/>
+		<activity android:name="com.star4droid.star2d.suda.ModelViewerActivity" android:theme="@style/AppTheme.FullScreen"
+			android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout" android:exported="false"/>
+		<activity android:name="com.star4droid.star2d.suda.ws.WorkspacesActivity" android:theme="@style/AppTheme.FullScreen"
+			android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout" android:exported="false"/>
+		<activity android:name="com.star4droid.star2d.suda.ws.WorkspaceActivity" android:theme="@style/AppTheme.FullScreen"
+			android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout" android:windowSoftInputMode="adjustResize" android:exported="false"/>
 		<provider
 		android:name="androidx.core.content.FileProvider"
 		android:authorities="com.star4droid.star2d.evo.fileprovider"

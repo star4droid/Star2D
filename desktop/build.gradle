@@ -117,3 +117,24 @@ tasks.register('selfTest', JavaExec) {
     mainClass = 'com.star4droid.desktop.DesktopLauncher'
     args '--selftest'
 }
+
+// ---- 3D model viewer harness: the SUDA3D viewer core (app module, plain libGDX) rendered off-screen-ish under Xvfb ----
+sourceSets {
+    viewer {
+        java {
+            srcDir('../app/src/main/java')
+            srcDir('src/viewer/java')
+            include 'com/star4droid/star2d/suda/viewer/ModelViewerCore.java'
+            include 'com/star4droid/desktop/viewer/**'
+        }
+        compileClasspath += sourceSets.main.compileClasspath
+        runtimeClasspath += sourceSets.main.runtimeClasspath
+    }
+}
+tasks.register('viewerHarness', JavaExec) {
+    group = 'verification'
+    description = 'Opens the SUDA3D model viewer core on a model and saves screenshots: -PviewerModel=<file> -PviewerShots=<dir>'
+    classpath = sourceSets.viewer.runtimeClasspath
+    mainClass = 'com.star4droid.desktop.viewer.ViewerHarness'
+    args((project.findProperty('viewerModel') ?: ''), (project.findProperty('viewerShots') ?: 'build/viewer-shots'))
+}

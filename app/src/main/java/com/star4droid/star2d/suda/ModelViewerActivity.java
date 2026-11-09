@@ -18,9 +18,10 @@ import java.text.DateFormat;
 import java.util.Date;
 
 /**
- * 3D viewer page of a generated model: shows the model when it is downloaded (orbit / pinch / pan), else Download
- * with progress, Pause and Cancel. A banner warns that the server deletes the model 3 days after it was made.
- * Save → project / phone (SAF) / Downloads.
+ * Entry of the 3D viewer. A model already on the phone opens straight in
+ * {@link com.star4droid.star2d.suda.viewer.Viewer3DActivity} (libGDX viewer in its own ":viewer" process). Otherwise
+ * this page (editor process, where {@link Downloads} runs and keeps its state) shows Download with progress, Pause and
+ * Cancel, the 3-day expiry banner and Save, then hands over to the viewer when the download finishes.
  */
 public class ModelViewerActivity extends Activity implements Downloads.Listener, OutputView.SafHost {
     private static final int REQ_CREATE = 4711;
@@ -28,9 +29,12 @@ public class ModelViewerActivity extends Activity implements Downloads.Listener,
     private String url, expires, project;
     private long size;
     private FrameLayout body;
-    private SimpleModelView gl;
 
     public static void open(Activity a, File f, String url, String expiresAt, long size, String project) {
+        if (f.exists() && !Downloads.running(f)) {
+            a.startActivity(com.star4droid.star2d.suda.viewer.Viewer3DActivity.intent(a, f, url, expiresAt, size, project));
+            return;
+        }
         a.startActivity(new Intent(a, ModelViewerActivity.class).putExtra("path", f.getAbsolutePath()).putExtra("url", url)
                 .putExtra("expires", expiresAt).putExtra("size", size).putExtra("project", project));
     }
@@ -66,28 +70,15 @@ public class ModelViewerActivity extends Activity implements Downloads.Listener,
         show();
     }
 
-    @Override protected void onResume() { super.onResume(); Downloads.listen(this); if (gl != null) gl.onResume(); }
-    @Override protected void onPause() { super.onPause(); Downloads.unlisten(this); if (gl != null) gl.onPause(); }
+    @Override protected void onResume() { super.onResume(); Downloads.listen(this); if (file.exists() && !Downloads.running(file)) show(); }
+    @Override protected void onPause() { super.onPause(); Downloads.unlisten(this); }
 
     private void show() {
         body.removeAllViews();
-        gl = null;
         if (file.exists()) {
-            gl = new SimpleModelView(this);
-            body.addView(gl, Ui.match());
-            TextView hint = Ui.text(this, Tr.t("s3d_viewer_hint", "Drag to rotate · pinch to zoom · two fingers to move"), 11.5f, Ui.TEXT_3);
-            FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(-2, -2, Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
-            lp.bottomMargin = Ui.dp(this, 10);
-            body.addView(hint, lp);
-            final SimpleModelView v = gl;
-            Suda3D.IO.execute(() -> {
-                if (!v.load(file)) runOnUiThread(() -> {
-                    TextView e = Ui.text(this, v.error(), 14, Ui.TEXT_2);
-                    e.setGravity(Gravity.CENTER);
-                    e.setPadding(Ui.dp(this, 24), 0, Ui.dp(this, 24), 0);
-                    body.addView(e, new FrameLayout.LayoutParams(-1, -2, Gravity.CENTER));
-                });
-            });
+            if (isFinishing()) return;
+            startActivity(com.star4droid.star2d.suda.viewer.Viewer3DActivity.intent(this, file, url, expires, size, project));
+            finish();
             return;
         }
         LinearLayout col = Ui.column(this);

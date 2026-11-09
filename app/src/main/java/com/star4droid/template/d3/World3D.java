@@ -617,6 +617,9 @@ public class World3D implements Disposable {
 			snapShadowCenter(center);
 			shadowLight.setCenter(center);
 			shadowLight.direction.set(sunDir);
+			Shaders3D.shadowTexel = Math.max(10f, shadowDistance) / shadowSizeNow;
+			Shaders3D.shadowRange = Math.max(10f, shadowDistance) * 3f - 0.1f;
+			Shaders3D.shadowDir.set(sunDir).nor();
 			shadowLight.begin();
 			shadowBatch.begin(shadowLight.getCamera());
 			try {

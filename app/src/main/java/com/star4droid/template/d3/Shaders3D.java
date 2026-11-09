@@ -42,8 +42,9 @@ public final class Shaders3D {
 		// spot lights (flashlights, lamps): the default shader binds u_spotLights but its GLSL never uses them -> lit per pixel here
 		v = v.replace("void main() {", "#if defined(lightingFlag) && defined(normalFlag)\nvarying vec3 v_spotPos;\n#endif\nvoid main() {");
 		v = v.replace("gl_Position = u_projViewTrans * pos;", "gl_Position = u_projViewTrans * pos;\n\t#if defined(lightingFlag) && defined(normalFlag)\n\t\tv_spotPos = pos.xyz;\n\t#endif");
+		v = shadowVertex(v);
 		vertexSrc = v;
-		String f = spotFragment(DefaultShader.getDefaultFragmentShader());
+		String f = shadowFragment(spotFragment(DefaultShader.getDefaultFragmentShader()));
 		fragmentSimple = f;
 		String fn = "\nuniform float u_toonBands;\nvec3 toon(vec3 l){ float i = max(max(l.r, l.g), l.b); if (i <= 0.0) return l; float q = (floor(i * u_toonBands) + 0.5) / u_toonBands; return l * (min(q, 1.0) / i); }\n";
 		String t = f.replace("void main()", fn + "void main()");
@@ -56,6 +57,60 @@ public final class Shaders3D {
 		String s = f.replace("void main()", sfn + "void main()");
 		s = s.replace("v_lightDiffuse)", "softL(v_lightDiffuse))").replace("* v_lightDiffuse", "* softL(v_lightDiffuse)").replace("(v_lightDiffuse +", "(softL(v_lightDiffuse) +");
 		fragmentSoft = s;
+	}
+
+	/** Shadow receiving parameters of the frame (set by World3D before drawing): world size of a shadow-map texel,
+	 *  depth range of the shadow camera (m) and the direction of the light. */
+	static float shadowTexel = 0.04f, shadowRange = 120f;
+	static final com.badlogic.gdx.math.Vector3 shadowDir = new com.badlogic.gdx.math.Vector3(0, -1, 0);
+
+	/**
+	 * Shadow receiver (vertex side, always highp on GLES2): instead of libGDX's raw compare, the shadow-map lookup point is
+	 * moved toward the light along the normal by about one texel ("normal offset", more at grazing angles) and the compared
+	 * depth gets a slope-scaled bias (bigger where the surface is almost parallel to the light). This removes the striped
+	 * "shadow acne" on big grounds / box faces (worst on phones whose fragment shaders compare in fp16) without the
+	 * detaching ("peter panning") a big constant bias would cause.
+	 */
+	static String shadowVertex(String v) {
+		String orig = "\t#ifdef shadowMapFlag\n\t\tvec4 spos = u_shadowMapProjViewTrans * pos;\n\t\tv_shadowMapUv.xyz = (spos.xyz / spos.w) * 0.5 + 0.5;\n\t\tv_shadowMapUv.z = min(v_shadowMapUv.z, 0.998);\n\t#endif //shadowMapFlag";
+		String anchor = "\t\tv_normal = normal;\n\t#endif // normalFlag";
+		if (!v.contains(orig) || !v.contains(anchor)) return v;
+		v = v.replace(orig, "");
+		v = v.replace("varying vec3 v_shadowMapUv;", "varying vec3 v_shadowMapUv;\nuniform vec4 u_shadowParams;\nuniform vec3 u_shadowDir;");
+		String blk = "\n\t#ifdef shadowMapFlag\n"
+				+ "\t\tvec3 sp = pos.xyz;\n"
+				+ "\t\tfloat texel = u_shadowParams.x;\n"
+				+ "\t\tfloat sb = u_shadowParams.z;\n"
+				+ "\t\t#if defined(normalFlag)\n"
+				+ "\t\t\tfloat ndl = dot(normal, -u_shadowDir);\n"
+				// single sided planes / back faces: offset toward the light side
+				+ "\t\t\tvec3 sn = ndl < 0.0 ? -normal : normal;\n"
+				+ "\t\t\tfloat cosT = clamp(abs(ndl), 0.05, 1.0);\n"
+				+ "\t\t\tfloat sinT = sqrt(1.0 - cosT * cosT);\n"
+				+ "\t\t\tsp += sn * (texel * (0.5 + 1.5 * sinT));\n"
+				+ "\t\t\tsb += texel * min(sinT / cosT, 6.0) * u_shadowParams.y;\n"
+				+ "\t\t#else\n"
+				+ "\t\t\tsb += texel * 2.0 * u_shadowParams.y;\n"
+				+ "\t\t#endif\n"
+				+ "\t\tvec4 spos = u_shadowMapProjViewTrans * vec4(sp, 1.0);\n"
+				+ "\t\tv_shadowMapUv.xyz = (spos.xyz / spos.w) * 0.5 + 0.5;\n"
+				+ "\t\tv_shadowMapUv.z = min(v_shadowMapUv.z - sb, 0.998);\n"
+				+ "\t#endif //shadowMapFlag\n";
+		return v.replace(anchor, anchor + blk);
+	}
+
+	/** Shadow receiver (fragment side): highp lookup + compare where the GPU has it (most phones), same RGBA unpacking as the
+	 *  depth pass writes. */
+	static String shadowFragment(String f) {
+		int a = f.indexOf("varying vec3 v_shadowMapUv;"), b = f.indexOf("float getShadow()");
+		if (a < 0 || b < 0) return f;
+		String body = "#if defined(GL_ES) && defined(GL_FRAGMENT_PRECISION_HIGH)\n#define SHP highp\n#else\n#define SHP\n#endif\n"
+				+ "varying SHP vec3 v_shadowMapUv;\n#define separateAmbientFlag\n"
+				+ "float getShadowness(vec2 offset)\n{\n"
+				+ "\tconst SHP vec4 bitShifts = vec4(1.0, 1.0 / 255.0, 1.0 / 65025.0, 1.0 / 16581375.0);\n"
+				+ "\tSHP float stored = dot(texture2D(u_shadowTexture, v_shadowMapUv.xy + offset), bitShifts);\n"
+				+ "\treturn step(v_shadowMapUv.z, stored);\n}\n\n";
+		return f.substring(0, a) + body + f.substring(b);
 	}
 
 	/** Number of spot lights of the SIMPLE / SOFT / TOON shaders (= DefaultShader.Config.numSpotLights). */
@@ -97,12 +152,14 @@ public final class Shaders3D {
 
 	/** Default shader + fog range (+ toon / soft fragment). */
 	public static class Lit extends DefaultShader {
-		private final int uFog, uBands;
+		private final int uFog, uBands, uShadowP, uShadowD;
 
 		public Lit(Renderable r, Config c) {
 			super(r, c);
 			uFog = register(new Uniform("u_fogRange"));
 			uBands = register(new Uniform("u_toonBands"));
+			uShadowP = register(new Uniform("u_shadowParams"));
+			uShadowD = register(new Uniform("u_shadowDir"));
 		}
 
 		@Override
@@ -110,6 +167,12 @@ public final class Shaders3D {
 			super.begin(camera, context);
 			if (has(uFog)) set(uFog, fogNear, fogFar);
 			if (has(uBands)) set(uBands, toonBands);
+			if (has(uShadowP)) {
+				float range = Math.max(shadowRange, 1f);
+				// x: texel (m), y: 0..1 depth per meter, z: constant bias = 8 cm + 2 fp16 steps of the 0..1 depth
+				program.setUniformf(loc(uShadowP), shadowTexel, 1f / range, 0.08f / range + 0.001f, 0f);
+			}
+			if (has(uShadowD)) set(uShadowD, shadowDir);
 		}
 	}
 
@@ -150,8 +213,9 @@ public final class Shaders3D {
 		}
 	}
 
-	/** Added to the stored shadow depth (shadow camera range is 3x the shadow distance: 0.0015 is about 0.2 m at 45 m). */
-	static final String SHADOW_BIAS = "0.0016";
+	/** Small safety margin added to the stored depth (RGBA packing on GPUs without highp fragments). The real bias is the
+	 *  slope-scaled + normal-offset one of the receiver (shadowVertex). */
+	static final String SHADOW_BIAS = "0.0004";
 
 	/** Shadow pass of SIMPLE / TOON / SOFT (the default depth config has 12 bones only). */
 	public static class DepthProvider extends com.badlogic.gdx.graphics.g3d.utils.DepthShaderProvider {

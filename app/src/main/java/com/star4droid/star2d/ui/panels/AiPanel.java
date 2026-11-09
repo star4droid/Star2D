@@ -80,7 +80,7 @@ public class AiPanel implements PanelHost.Panel {
     private SharedPreferences prefs() { return Ui.prefs(shell.activity()); }
 
     private AiClient client() {
-        if (client == null) client = new AiClient(prefs());
+        if (client == null) { client = new AiClient(prefs()); client.setContext(shell.activity()); }
         return client;
     }
 
@@ -156,7 +156,7 @@ public class AiPanel implements PanelHost.Panel {
                 renderAll();
             } else if (messagesBox.getChildCount() == 0) renderAll();
         });
-        if (client().key(client().provider()).isEmpty() && client().provider().needsKey) showWelcomeSetup();
+        if (!client().onPlan() && client().key(client().provider()).isEmpty() && client().provider().needsKey) showWelcomeSetup();
     }
 
     // ================================================================ rendering
@@ -318,12 +318,12 @@ public class AiPanel implements PanelHost.Panel {
         if (text.trim().isEmpty() || busy) return;
         Context c = shell.activity();
         AiClient.Provider p = client().provider();
-        if (p.needsKey && client().key(p).isEmpty()) {
+        if (!client().onPlan() && p.needsKey && client().key(p).isEmpty()) {
             Ui.toast(c, Tr.t("ui_need_key", "Add your API key first"));
             showSettings();
             return;
         }
-        if (client().model().isEmpty()) {
+        if (!client().onPlan() && client().model().isEmpty()) {
             pickModel(c, () -> send(text, fromUser));
             return;
         }
@@ -376,6 +376,14 @@ public class AiPanel implements PanelHost.Panel {
                     }
                 }
 
+                @Override public void onCost(String cost) {
+                    Ui.ui(() -> {
+                        TextView ct = Ui.text(c, cost, 11.5f, Ui.TEXT_3);
+                        ct.setPadding(Ui.dp(c, 6), Ui.dp(c, 2), Ui.dp(c, 6), 0);
+                        messagesBox.addView(ct);
+                    });
+                }
+
                 @Override public void onDone(String full) {
                     Ui.ui(() -> {
                         messagesBox.removeView(bubble);
@@ -394,6 +402,7 @@ public class AiPanel implements PanelHost.Panel {
                     Ui.ui(() -> {
                         messagesBox.removeView(bubble);
                         setBusy(false);
+                        if (message.equals("NO_CREDITS")) { com.star4droid.star2d.suda.Paywall.fakeProgress(c, Tr.t("ui_ai", "AI assistant")); return; }
                         showError(c, message);
                     });
                 }

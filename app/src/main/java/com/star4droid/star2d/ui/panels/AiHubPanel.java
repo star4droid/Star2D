@@ -15,21 +15,23 @@ import com.star4droid.star2d.ui.Tr;
 import com.star4droid.star2d.ui.Ui;
 
 /**
- * One AI entry in the rail with two tabs: "Remote" (an AI chat such as Claude controls the editor through the
+ * One AI entry in the rail with three tabs ("Plan" = SUDA3D account and credits): "Remote" (an AI chat such as Claude controls the editor through the
  * server; the default) and "API" (the in-editor assistant that talks to a model with the user's own key).
  */
 public class AiHubPanel implements PanelHost.Panel {
     private final EditorShell shell;
-    private final PanelHost.Panel remote, api;
+    private final PanelHost.Panel remote, api, plan;
     private PanelHost.Panel active;
     private LinearLayout root, tabs;
     private FrameLayout body;
-    private TextView tabRemote, tabApi;
+    private TextView tabRemote, tabApi, tabPlan;
 
     public AiHubPanel(EditorShell shell, PanelHost.Panel remote, PanelHost.Panel api) {
         this.shell = shell;
         this.remote = remote;
         this.api = api;
+        this.plan = new com.star4droid.star2d.suda.SudaPlanPanel(shell.activity());
+        com.star4droid.star2d.suda.EditorEnv.install(shell);
         this.active = remote;
     }
 
@@ -42,6 +44,9 @@ public class AiHubPanel implements PanelHost.Panel {
     }
 
     public boolean showing(PanelHost.Panel p) { return active == p; }
+
+    /** The SUDA3D "Plan" tab. */
+    public PanelHost.Panel plan() { return plan; }
 
     /** Switch to the "API" or the "Remote" tab. */
     public void select(PanelHost.Panel p) {
@@ -69,6 +74,8 @@ public class AiHubPanel implements PanelHost.Panel {
             tabApi = tab(c, Tr.t("ai_tab_api", "API"), api);
             tabs.addView(tabRemote, Ui.weight(1));
             tabs.addView(tabApi, Ui.weight(1));
+            tabPlan = tab(c, Tr.t("ai_tab_plan", "Plan"), plan);
+            tabs.addView(tabPlan, Ui.weight(1));
             root.addView(tabs, Ui.matchWrap());
             body = new FrameLayout(c);
             root.addView(body, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
@@ -91,8 +98,8 @@ public class AiHubPanel implements PanelHost.Panel {
 
     private void styleTabs() {
         Context c = root.getContext();
-        for (TextView t : new TextView[]{tabRemote, tabApi}) {
-            boolean on = (t == tabRemote) == (active == remote);
+        for (TextView t : new TextView[]{tabRemote, tabApi, tabPlan}) {
+            boolean on = t == tabRemote ? active == remote : t == tabApi ? active == api : active == plan;
             t.setBackground(on ? Ui.rounded(Ui.ACCENT_SOFT, Ui.dp(c, 10)) : null);
             t.setTextColor(on ? Ui.ACCENT : Ui.TEXT_2);
             t.setTypeface(on ? android.graphics.Typeface.DEFAULT_BOLD : android.graphics.Typeface.DEFAULT);

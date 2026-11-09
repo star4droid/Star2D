@@ -64,14 +64,79 @@ public class AiClient {
         void onToken(String text);
         void onDone(String full);
         void onError(String message);
+        /** SUDA3D plan: cost line of the reply ("0.4 credits"). */
+        default void onCost(String cost) {}
     }
 
     private final SharedPreferences prefs;
     private volatile HttpURLConnection current;
     private volatile boolean cancelled;
 
+    private android.content.Context context;
+
     public AiClient(SharedPreferences prefs) {
         this.prefs = prefs;
+    }
+
+    /** Needed for the SUDA3D plan (account prefs). */
+    public void setContext(android.content.Context c) { this.context = c == null ? null : c.getApplicationContext(); }
+
+    /** True when replies go through the SUDA3D plan (charged from the account's credits). */
+    public boolean onPlan() { return context != null && com.star4droid.star2d.suda.Suda3D.aiUsesPlan(context); }
+
+    /** SUDA3D plan: Anthropic Messages request via POST /ai/messages (not streamed); cost reported with onCost. */
+    private void planChat(List<Msg> messages, Stream cb) {
+        try {
+            JsonObject body = new JsonObject();
+            body.addProperty("model", com.star4droid.star2d.suda.Suda3D.prefs(context).getString("plan_ai_model",
+                    com.star4droid.star2d.suda.SudaPlanPanel.AI_MODELS[0]));
+            body.addProperty("max_tokens", 4096);
+            body.addProperty("stream", false);
+            StringBuilder system = new StringBuilder();
+            JsonArray arr = new JsonArray();
+            String lastRole = null;
+            for (Msg m : messages) {
+                if (m.role.equals("system")) { system.append(m.content).append('\n'); continue; }
+                String role = m.role.equals("assistant") ? "assistant" : "user";
+                if (role.equals(lastRole)) { // the Messages API wants alternating roles: merge
+                    JsonObject prev = arr.get(arr.size() - 1).getAsJsonObject();
+                    prev.addProperty("content", prev.get("content").getAsString() + "\n\n" + m.content);
+                    continue;
+                }
+                if (arr.size() == 0 && role.equals("assistant")) continue;
+                JsonObject o = new JsonObject();
+                o.addProperty("role", role);
+                o.addProperty("content", m.content);
+                arr.add(o);
+                lastRole = role;
+            }
+            if (system.length() > 0) body.addProperty("system", system.toString());
+            body.add("messages", arr);
+            JsonObject r = com.star4droid.star2d.suda.Suda3D.aiMessages(context, body);
+            if (cancelled) { cb.onDone(""); return; }
+            StringBuilder text = new StringBuilder();
+            for (JsonElement e : r.has("content") && r.get("content").isJsonArray() ? r.getAsJsonArray("content") : new JsonArray()) {
+                JsonObject b = e.getAsJsonObject();
+                if ("text".equals(str(b, "type"))) text.append(str(b, "text"));
+            }
+            JsonObject s = r.has("suda3d") && r.get("suda3d").isJsonObject() ? r.getAsJsonObject("suda3d") : null;
+            if (s != null && s.has("cost") && s.get("cost").isJsonObject()) {
+                JsonObject cost = s.getAsJsonObject("cost");
+                double cr = 0;
+                try { cr = cost.get("credits").getAsDouble(); } catch (Exception ignored) {}
+                cb.onCost(com.star4droid.star2d.ui.Tr.t("s3d_reply_cost", "Reply cost") + ": "
+                        + com.star4droid.star2d.suda.Suda3D.fmtCredits(cr) + " " + com.star4droid.star2d.ui.Tr.t("s3d_credits", "credits")
+                        + " · " + com.star4droid.star2d.ui.Tr.t("s3d_balance", "Balance") + ": "
+                        + com.star4droid.star2d.suda.Suda3D.fmtCredits(com.star4droid.star2d.suda.Suda3D.credits(context)));
+            }
+            cb.onToken(text.toString());
+            cb.onDone(text.toString());
+        } catch (com.star4droid.star2d.suda.Suda3D.ApiException e) {
+            if (e.noBalance()) cb.onError("NO_CREDITS");
+            else cb.onError(e.getMessage());
+        } catch (Exception e) {
+            cb.onError(com.star4droid.star2d.suda.Suda3D.message(e));
+        }
     }
 
     public String providerId() { return prefs.getString("ai_provider", "openrouter"); }
@@ -157,6 +222,7 @@ public class AiClient {
     /** Stream a chat completion (blocking; call off the UI thread). */
     public void chat(List<Msg> messages, Stream cb) {
         cancelled = false;
+        if (onPlan()) { planChat(messages, cb); return; }
         Provider p = provider();
         String model = model();
         StringBuilder full = new StringBuilder();

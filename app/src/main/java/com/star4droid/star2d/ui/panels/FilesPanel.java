@@ -596,7 +596,13 @@ public class FilesPanel implements PanelHost.Panel {
         m.getMenu().add(0, 5, 5, Tr.t("delete", "Delete"));
         final String prel = prefabRel(f);
         if (!f.isDirectory() && isButtonImage(f)) m.getMenu().add(0, 8, 6, Tr.t("bm_edit", "Edit in Button Maker"));
+        if (!f.isDirectory() && FilePickerDialog.isImage(f.getName())) m.getMenu().add(0, 31, 7, Tr.t("s3d_make_3d", "Make 3D (SUDA3D)"));
         m.setOnMenuItemClickListener(it -> {
+            if (it.getItemId() == 31) {
+                com.star4droid.star2d.suda.EditorEnv.install(shell);
+                com.star4droid.star2d.suda.QuickGen.show(shell.activity(), "image_to_model", f);
+                return true;
+            }
             switch (it.getItemId()) {
                 case 8: openButtonMaker(c, f); break;
                 case 1: open(c, f); break;

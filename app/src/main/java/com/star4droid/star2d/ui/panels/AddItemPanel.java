@@ -95,11 +95,12 @@ public class AddItemPanel implements PanelHost.Panel {
             col.addView(grid3d(c, SHAPES_3D, ar));
             LinearLayout imp = Ui.button(c, R.drawable.ic_s2_download, Tr.t("s3_import_glb", "Import 3D models (.glb / .gltf / .obj)"), true, v -> importModels(c, false));
             col.addView(imp, Ui.margins(new LinearLayout.LayoutParams(-1, Ui.dp(c, 44)), c, 4, 4, 4, 2));
-            TextView hint = Ui.text(c, Tr.t("s3_import_hint", "Pick the model together with its .mtl / .bin and texture files, or import its whole folder."), 11.5f, Ui.TEXT_3);
+            TextView hint = Ui.text(c, Tr.t("s3_import_hint2", "Pick the model together with its .mtl / .bin and texture files, a .zip with them, or import its whole folder."), 11.5f, Ui.TEXT_3);
             hint.setPadding(Ui.dp(c, 8), 0, Ui.dp(c, 8), 0);
             col.addView(hint);
             LinearLayout impDir = Ui.button(c, R.drawable.ic_s2_download, Tr.t("s3_import_folder", "Import a model folder"), false, v -> importModels(c, true));
             col.addView(impDir, Ui.margins(new LinearLayout.LayoutParams(-1, Ui.dp(c, 40)), c, 4, 4, 4, 6));
+            addAiSection(c, col, true);
             col.addView(Ui.sectionLabel(c, Tr.t("s3_special", "Models, terrain and water")));
             col.addView(grid3d(c, SPECIAL_3D, ar));
             col.addView(Ui.sectionLabel(c, Tr.t("s3_lights", "3D lights")));
@@ -131,6 +132,7 @@ public class AddItemPanel implements PanelHost.Panel {
             pcard.addView(pb.view(), Ui.matchWrap());
             col.addView(pcard, Ui.margins(Ui.matchWrap(), c, 4, 0, 4, 4));
         }
+        if (shell.projectPath() != null) addAiSection(c, col, false);
         LinearLayout settings = Ui.button(c, R.drawable.ic_s2_settings, Tr.t("lightSettings", "Light settings"), false,
                 v -> { shell.panels.hide(); com.star4droid.star2d.ui.LightSettings.show(shell.activity()); });
         LinearLayout.LayoutParams lp = Ui.margins(new LinearLayout.LayoutParams(-2, Ui.dp(c, 38)), c, 4, 8, 4, 0);
@@ -154,6 +156,8 @@ public class AddItemPanel implements PanelHost.Panel {
         Runnable done = () -> {
             final java.util.ArrayList<String> models = new java.util.ArrayList<>();
             try {
+                // .zip (obj + mtl + textures) unpacked; .mtl / textures found and renamed to safe names, references rewritten
+                ObjFix.fixFolder(tmp);
                 java.io.File dest = new java.io.File(project, "models");
                 dest.mkdirs();
                 moveModels(tmp, dest, "", models);
@@ -165,14 +169,74 @@ public class AddItemPanel implements PanelHost.Panel {
                 Ui.toast(c, Tr.t("s3_import_none", "No .glb / .gltf / .obj model was chosen"));
                 return;
             }
-            shell.panels.hide();
-            Bridge.gl(() -> {
-                for (String m : models) Bridge.controls().actionAdd3D("OBJ3D", "MODEL", m);
-            });
-            Ui.toast(c, Tr.t("s3_import_done", "Imported") + ": " + models.size());
+            importList(c, project, models);
         };
         if (folder) shell.host().importFolder(tmp.getAbsolutePath(), done);
         else shell.host().importFiles(tmp.getAbsolutePath(), done);
+    }
+
+    /** Imported models: preview each (3D viewer), tick the ones to add to the scene. */
+    private void importList(Context c, String project, java.util.ArrayList<String> models) {
+        LinearLayout col = Ui.column(c);
+        col.setPadding(Ui.dp(c, 12), Ui.dp(c, 4), Ui.dp(c, 12), 0);
+        final boolean[] add = new boolean[models.size()];
+        for (int i = 0; i < models.size(); i++) {
+            final int k = i;
+            add[i] = true;
+            java.io.File f = new java.io.File(project, "models" + models.get(i));
+            android.widget.CheckBox cb = new android.widget.CheckBox(c);
+            cb.setChecked(true);
+            cb.setText(f.getName() + "  ·  " + com.star4droid.star2d.suda.Suda3D.fmtSize(f.length()));
+            cb.setTextColor(Ui.TEXT);
+            cb.setOnCheckedChangeListener((b, on) -> add[k] = on);
+            LinearLayout row = Ui.row(c);
+            row.addView(cb, Ui.weight(1));
+            row.addView(Ui.iconButton(c, R.drawable.ic_s2_view3d, Tr.t("s3d_preview", "Preview"), v -> {
+                if (c instanceof android.app.Activity)
+                    com.star4droid.star2d.suda.ModelViewerActivity.open((android.app.Activity) c, f, "", "", f.length(), project);
+            }));
+            col.addView(row, Ui.matchWrap());
+        }
+        android.widget.ScrollView sv = new android.widget.ScrollView(c);
+        sv.addView(col);
+        new android.app.AlertDialog.Builder(c)
+                .setTitle(Tr.t("s3_import_done", "Imported") + ": " + models.size())
+                .setView(sv)
+                .setPositiveButton(Tr.t("s3d_add_scene", "Add to scene"), (d, w) -> {
+                    shell.panels.hide();
+                    Bridge.gl(() -> {
+                        for (int i = 0; i < models.size(); i++) if (add[i]) Bridge.controls().actionAdd3D("OBJ3D", "MODEL", models.get(i));
+                    });
+                })
+                .setNegativeButton(Tr.t("s3d_keep_files", "Only keep the files"), null)
+                .show();
+    }
+
+    /** "Generate with SUDA3D" entries + import of downloaded workspace / generated results. */
+    private void addAiSection(Context c, LinearLayout col, boolean is3d) {
+        android.app.Activity a = shell.activity();
+        com.star4droid.star2d.suda.EditorEnv.install(shell);
+        col.addView(Ui.sectionLabel(c, Tr.t("s3d_ai_section", "AI generation (SUDA3D)")));
+        String[][] items = {{"image_to_model", "Image → 3D"}, {"text_to_model", "Text → 3D"}, {"text_to_image", "Text → Image"}};
+        LinearLayout row = Ui.row(c);
+        for (String[] it : items) {
+            LinearLayout b = Ui.button(c, 0, Tr.t("s3d_op_" + it[0], it[1]), false, v -> { shell.panels.hide(); com.star4droid.star2d.suda.QuickGen.show(a, it[0], null); });
+            row.addView(b, Ui.margins(new LinearLayout.LayoutParams(0, Ui.dp(c, 40), 1), c, 3, 2, 3, 2));
+        }
+        col.addView(row, Ui.matchWrap());
+        LinearLayout imp = Ui.button(c, R.drawable.ic_s2_nodes, is3d ? Tr.t("s3d_import_ws_model", "Import a model from the workspace")
+                : Tr.t("s3d_import_ws_image", "Import a picture from the workspace"), false, v ->
+                com.star4droid.star2d.suda.QuickGen.pickOutput(a, is3d, f -> {
+                    String project = shell.projectPath();
+                    if (project == null) return;
+                    com.star4droid.star2d.suda.Store.saveToProject(a, f, project, saved -> {
+                        if (is3d) {
+                            shell.panels.hide();
+                            Bridge.gl(() -> Bridge.controls().actionAdd3D("OBJ3D", "MODEL", "/" + saved.getName()));
+                        }
+                    });
+                }));
+        col.addView(imp, Ui.margins(new LinearLayout.LayoutParams(-1, Ui.dp(c, 40)), c, 4, 4, 4, 6));
     }
 
     static boolean isModelFile(String low) {

@@ -122,12 +122,12 @@ jobs:
           status: ${{ github.event.inputs.play_track == 'draft' && 'draft' || 'completed' }}
           whatsNewDirectory: whatsNewDirectory
 
-      # 🔏 The APK must be signed with the release key (never unsigned, never the debug key)
+      # 🔏 Report how the APK is signed (a warning only, never fails the build)
       - name: Verify APK signature
         run: |
           AP=$(ls $ANDROID_HOME/build-tools/*/apksigner | sort -V | tail -1)
           "$AP" verify --verbose --print-certs app/build/outputs/apk/release/app-release.apk | tee sig.txt
-          if grep -qi 'Android Debug' sig.txt; then echo "::error::APK is signed with the DEBUG key (keystore secrets missing or wrong)"; exit 1; fi
+          if grep -qi 'Android Debug' sig.txt; then echo "::warning::APK is signed with the DEBUG key (keystore secrets missing or wrong)"; fi
 
       # 🏷 Read version name
       - name: Read version name

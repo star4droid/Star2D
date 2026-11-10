@@ -263,9 +263,42 @@ public class ProjectsHomeView extends FrameLayout {
         arrow.setTextSize(24);
         b.addView(arrow);
         b.setOnClickListener(v -> activity.startActivity(new android.content.Intent(activity, com.star4droid.star2d.suda.ws.WorkspacesActivity.class)));
+        sub.setMaxLines(2);
+        sub.setEllipsize(android.text.TextUtils.TruncateAt.END);
+
+        // "Market" sits next to it: icon over a short label, same height
+        LinearLayout market = new LinearLayout(activity);
+        market.setOrientation(LinearLayout.VERTICAL);
+        market.setGravity(android.view.Gravity.CENTER);
+        market.setPadding(dp(10), dp(8), dp(10), dp(8));
+        android.graphics.drawable.GradientDrawable mbg = new android.graphics.drawable.GradientDrawable(
+                android.graphics.drawable.GradientDrawable.Orientation.TL_BR, new int[]{0xFF7C4DFF, 0xFF3F51B5});
+        mbg.setCornerRadius(dp(14));
+        market.setBackground(new android.graphics.drawable.RippleDrawable(android.content.res.ColorStateList.valueOf(0x33FFFFFF), mbg, null));
+        android.widget.ImageView mi = new android.widget.ImageView(activity);
+        mi.setImageResource(R.drawable.ic_s2_market);
+        mi.setColorFilter(0xFFFFFFFF);
+        market.addView(mi, new LinearLayout.LayoutParams(dp(26), dp(26)));
+        TextView mt = new TextView(activity);
+        mt.setText(T("mk_title", "Market"));
+        mt.setTextColor(0xFFFFFFFF);
+        mt.setTextSize(13.5f);
+        mt.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        mt.setSingleLine(true);
+        mt.setGravity(android.view.Gravity.CENTER);
+        market.addView(mt, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        market.setContentDescription(T("mk_title", "Market"));
+        market.setOnClickListener(v -> activity.startActivity(new android.content.Intent(activity, com.star4droid.star2d.suda.MarketActivity.class)));
+
+        LinearLayout row = new LinearLayout(activity);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.addView(b, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1));
+        LinearLayout.LayoutParams ml = new LinearLayout.LayoutParams(dp(88), ViewGroup.LayoutParams.MATCH_PARENT);
+        ml.setMarginStart(dp(10));
+        row.addView(market, ml);
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         lp.bottomMargin = dp(14);
-        parent.addView(b, parent.indexOfChild(header), lp);
+        parent.addView(row, parent.indexOfChild(header), lp);
     }
 
     /** Reload the projects list (safe to call from any thread). */

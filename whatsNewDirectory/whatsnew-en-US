@@ -1,8 +1,6 @@
-🎉 Star2D goes 3D!
-- 3D scenes: models (GLB/glTF import), lights, shadows, water, terrain, physics, vehicles
-- 3D editor: orbit camera, move/rotate/scale, collider editor, 2D layer
-- 35 ready 3D behaviors + 3D blocks
-- New examples: City, Horror House, Endless Road, Sea Dock
-- Export: new dialog with icon picker, ARM-only option, tileset merge fixed
-- Redesigned custom collider editor
+🛒 New: Market – share and download projects & games
+- Upload projects or "game only" builds (play directly, no code), grid/list view, update & edit your uploads
+- AI Workspace: model versions, Rig analyze, 2x2 multiview grid, bigger wire touch area, no generation when credits are low
+- Buy Credits: ads are removed while your balance is $1+; optional rewarded video to support the engine
+- M2M Motion screen fixed for phones
 - Many fixes and translations

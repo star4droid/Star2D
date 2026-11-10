@@ -218,7 +218,7 @@ public class DonateActivity extends AppCompatActivity implements PurchasesUpdate
 
         // contact developer
         // optional rewarded video: 1 hour without ads
-        if (!com.star4droid.star2d.ads.AdsManager.adFreeByPurchase(this)) {
+        if (com.star4droid.star2d.evo.BuildConfig.ADS_ENABLED && !com.star4droid.star2d.ads.AdsManager.adFreeByPurchase(this)) {
             LinearLayout ad = card();
             ad.addView(sectionTitle("\uD83C\uDFAC  " + T("ads_reward_title", "Watch a video to support me")));
             TextView adSub = text(T("ads_reward_sub", "Optional. Watch one short video ad, it helps fund Star2D, and you get 1 hour without ads."), 13, 0xFFC9C9E6, false);

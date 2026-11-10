@@ -21,6 +21,16 @@ cp -r static/images/icons static/images/*.svg static/images/favicon.png static/i
 cp -r static/rig-reference static-app/
 npm ci --no-audit --no-fund --ignore-scripts
 npx vite build --config vite.app.config.js
+# phone layout (kept next to this script): stylesheet + collapse handle injected into the built page
+cp "$HERE/app-mobile.css" dist-app/app-mobile.css
+python3 - <<'PY'
+p = "dist-app/create.html"
+s = open(p).read()
+s = s.replace('<meta name="viewport" content="width=device-width, initial-scale=1.0" />', '<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />', 1)
+s = s.replace("</head>", '    <link rel="stylesheet" href="./app-mobile.css" />\n  </head>', 1)
+s = s.replace('<div id="tool-panel">', '<button id="m2m-sheet-toggle" aria-label="panel" onclick="document.body.classList.toggle(\'m2m-collapsed\')">&#x2195;</button>\n    <div id="tool-panel">', 1)
+open(p, "w").write(s)
+PY
 rm -rf "$OUT"
 mkdir -p "$OUT"
 cp -r dist-app/. "$OUT/"

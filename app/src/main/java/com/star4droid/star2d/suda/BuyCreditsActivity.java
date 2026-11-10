@@ -65,7 +65,7 @@ public class BuyCreditsActivity extends Activity implements SudaBilling.Listener
         adc.addView(adT);
         TextView adB = Ui.text(this, Tr.t("ads_remove_body", "Buy any pack and all ads are removed from the app while your balance is $1 or more. If it drops below $1, ads come back until you top up again."), 13, Ui.TEXT_3);
         adc.addView(adB, Ui.margins(Ui.matchWrap(), this, 0, 4, 0, 0));
-        col.addView(adc, Ui.margins(Ui.matchWrap(), this, 0, 0, 0, 10));
+        if (com.star4droid.star2d.evo.BuildConfig.ADS_ENABLED) col.addView(adc, Ui.margins(Ui.matchWrap(), this, 0, 0, 0, 10));
         col.addView(Ui.sectionLabel(this, Tr.t("s3d_features", "What you get")));
         String[] bullets = {
                 Tr.t("s3d_feat_1", "Image → 3D, Text → 3D and Text → Image from the editor"),

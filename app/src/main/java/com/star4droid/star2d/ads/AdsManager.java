@@ -63,11 +63,11 @@ public final class AdsManager {
     }
     public static boolean adFreeByReward(Context c) { return System.currentTimeMillis() < prefs(c).getLong("free_until", 0); }
     public static long rewardFreeUntil(Context c) { return prefs(c).getLong("free_until", 0); }
-    public static boolean adsEnabled(Context c) { return !adFreeByPurchase(c) && !adFreeByReward(c); }
+    public static boolean adsEnabled(Context c) { return BuildConfig.ADS_ENABLED && !adFreeByPurchase(c) && !adFreeByReward(c); }
 
     /** Ask for consent (EEA/UK get the Google form), then start the SDK. Safe to call repeatedly. */
     public static void init(Activity a) {
-        if (consentDone) return;
+        if (consentDone || !BuildConfig.ADS_ENABLED) return;
         try {
             ConsentInformation ci = UserMessagingPlatform.getConsentInformation(a);
             ci.requestConsentInfoUpdate(a, new ConsentRequestParameters.Builder().build(),
@@ -115,6 +115,7 @@ public final class AdsManager {
     /** Adds the adaptive banner at the bottom of {@code host}; {@code content} gets bottom margin equal to the banner height. */
     public static void attachBanner(Activity a, FrameLayout host) {
         pendingHost = host;
+        if (!BuildConfig.ADS_ENABLED) { showNotice(a, host); return; }
         if (!sdkStarted || !adsEnabled(a)) { removeBanner(host); return; }
         if (banner != null && banner.getParent() == host) return;
         removeBanner(host);
@@ -141,10 +142,47 @@ public final class AdsManager {
     private static void padContent(FrameLayout host, int h) {
         for (int i = 0; i < host.getChildCount(); i++) {
             View c = host.getChildAt(i);
-            if (c == banner) continue;
+            if (c == banner || c == notice) continue;
             ViewGroup.LayoutParams lp = c.getLayoutParams();
             if (lp instanceof FrameLayout.LayoutParams) { ((FrameLayout.LayoutParams) lp).bottomMargin = h; c.setLayoutParams(lp); }
         }
+    }
+
+    // ---- "this build has no ads" notice: one slim line, dismissible, remembered per version ----
+    private static View notice;
+
+    private static void showNotice(Activity a, FrameLayout host) {
+        if (notice != null && notice.getParent() == host) return;
+        if (prefs(a).getInt("notice_closed_v", 0) == BuildConfig.VERSION_CODE) return;
+        float d = a.getResources().getDisplayMetrics().density;
+        android.widget.LinearLayout row = new android.widget.LinearLayout(a);
+        row.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setBackgroundColor(0xEE1B2230);
+        row.setPadding((int) (12 * d), (int) (4 * d), (int) (2 * d), (int) (4 * d));
+        android.widget.TextView t = new android.widget.TextView(a);
+        t.setText(com.star4droid.star2d.ui.Tr.t("ads_none_notice", "This version has no ads. Check for the latest version with ads to support the engine."));
+        t.setTextColor(0xFFB0B6BF);
+        t.setTextSize(11.5f);
+        t.setMaxLines(2);
+        t.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        row.addView(t, new android.widget.LinearLayout.LayoutParams(0, -2, 1));
+        android.widget.TextView x = new android.widget.TextView(a);
+        x.setText("\u00D7");
+        x.setTextColor(0xFFB0B6BF);
+        x.setTextSize(20);
+        x.setGravity(Gravity.CENTER);
+        x.setContentDescription(com.star4droid.star2d.ui.Tr.t("ads_hide", "Hide"));
+        x.setOnClickListener(v -> {
+            prefs(a).edit().putInt("notice_closed_v", BuildConfig.VERSION_CODE).apply();
+            if (notice != null && notice.getParent() instanceof ViewGroup) ((ViewGroup) notice.getParent()).removeView(notice);
+            notice = null;
+            padContent(host, 0);
+        });
+        row.addView(x, new android.widget.LinearLayout.LayoutParams((int) (40 * d), (int) (36 * d)));
+        notice = row;
+        host.addView(row, new FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM));
+        row.post(() -> padContent(host, row.getHeight()));
     }
 
     public static void removeBanner(FrameLayout host) {
@@ -155,7 +193,7 @@ public final class AdsManager {
     /** Re-evaluate after the balance changed (bought credits -> remove; fell under $1 -> back). */
     public static void refresh(Activity a, FrameLayout host) {
         if (host == null) return;
-        if (adsEnabled(a)) attachBanner(a, host); else removeBanner(host);
+        if (!BuildConfig.ADS_ENABLED || adsEnabled(a)) attachBanner(a, host); else removeBanner(host);
     }
 
     // ---- interstitial (after closing a project) ----

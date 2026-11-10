@@ -469,7 +469,7 @@ public class EditorActivity extends AppCompatActivity implements AndroidFragment
 	@Override
 	protected void onResume() {
 		super.onResume();
-		if(homeView!=null) com.star4droid.star2d.ads.AdsManager.refresh(this, homeView);
+		if(homeView!=null){ com.star4droid.star2d.ads.AdsManager.refresh(this, homeView); if(homeView.isShown()) homeView.refresh(); }
 		if(editor!=null)
 			editor.setToCurrentEditor();
 	}

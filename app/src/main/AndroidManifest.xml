@@ -109,6 +109,16 @@
 		<!-- SUDA3D: credits, history, 3D viewer, AI workspace (node editor) -->
 		<activity android:name="com.star4droid.star2d.suda.BuyCreditsActivity" android:theme="@style/AppTheme.FullScreen"
 			android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout" android:windowSoftInputMode="adjustResize" android:exported="false"/>
+		<activity android:name="com.star4droid.star2d.suda.MarketActivity" android:theme="@style/AppTheme.FullScreen"
+			android:windowSoftInputMode="adjustResize" android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout" />
+		<activity android:name="com.star4droid.star2d.suda.MarketDetailActivity" android:theme="@style/AppTheme.FullScreen" />
+		<activity android:name="com.star4droid.star2d.suda.MarketEditActivity" android:theme="@style/AppTheme.FullScreen"
+			android:windowSoftInputMode="adjustResize" />
+		<!-- plays a downloaded "game only" package straight from its built code (no compile, no editor) -->
+		<activity android:name="com.star4droid.star2d.LandscapePlayer" android:theme="@style/AppTheme.FullScreen" android:screenOrientation="sensorLandscape"
+			android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout|uiMode" android:launchMode="singleTop" />
+		<activity android:name="com.star4droid.star2d.PortraitPlayer" android:theme="@style/AppTheme.FullScreen" android:screenOrientation="sensorPortrait"
+			android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout|uiMode" android:launchMode="singleTop" />
 		<activity android:name="com.star4droid.star2d.suda.HistoryActivity" android:theme="@style/AppTheme.FullScreen"
 			android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout" android:exported="false"/>
 		<activity android:name="com.star4droid.star2d.suda.M2MActivity" android:theme="@style/AppTheme.FullScreen" android:hardwareAccelerated="true"

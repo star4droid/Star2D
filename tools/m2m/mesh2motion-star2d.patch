@@ -231,18 +231,38 @@ index 89a5ca2..5db5d12 100644
            this.allow_proceeding_to_next_step(true)
          }).catch((err) => {
 diff --git a/src/retarget/AnimationRetargetService.ts b/src/retarget/AnimationRetargetService.ts
-index 5e4ae5b..7191b0a 100644
+index 5e4ae5b..217fe57 100644
 --- a/src/retarget/AnimationRetargetService.ts
 +++ b/src/retarget/AnimationRetargetService.ts
-@@ -9,6 +9,7 @@ import { SkeletonType } from '../lib/enums/SkeletonType.ts'
+@@ -9,6 +9,8 @@ import { SkeletonType } from '../lib/enums/SkeletonType.ts'
  import { HumanClipRetargeter } from './human-retargeting/HumanClipRetargeter.ts'
  import { Rig } from './human-retargeting/Rig.ts'
  import { HumanChainConfig } from './human-retargeting/HumanChainConfig.ts'
++import { Quaternion, Vector3 } from 'three'
 +import { FrameAlignment } from './human-retargeting/FrameAlignment.ts'
  import { RetargetDiagnostics, type RestPoseSnapshot } from './RetargetDiagnostics.ts'
  
  // AnimationRetargetService - Shared service for retargeting animations from one skeleton to another
-@@ -259,7 +260,9 @@ export class AnimationRetargetService {
+@@ -39,6 +41,18 @@ export class AnimationRetargetService {
+   // pelvis rest orientation leaves the character tilted (face planting)
+   private root_correction_x_degrees: number = 0
+ 
++  // manual orientation fix (in the target's own axes), chosen by the user with the direction buttons
++  private manual_orientation: Quaternion = new Quaternion()
++
++  public rotate_manual_orientation (axis: 'x' | 'y' | 'z', degrees: number): void {
++    const v = new Vector3(axis === 'x' ? 1 : 0, axis === 'y' ? 1 : 0, axis === 'z' ? 1 : 0)
++    this.manual_orientation.premultiply(new Quaternion().setFromAxisAngle(v, degrees * Math.PI / 180)).normalize()
++  }
++
++  public reset_manual_orientation (): void {
++    this.manual_orientation.identity()
++  }
++
+   public set_root_correction_x_degrees (degrees: number): void {
+     this.root_correction_x_degrees = degrees
+   }
+@@ -259,7 +273,10 @@ export class AnimationRetargetService {
      const retargeted_clip: AnimationClip = HumanClipRetargeter.retarget(source_clip, source_rig, target_rig, {
        clip_name: `${source_clip.name} RT`, // RT means retargeted
        // apply any global rig correction the user has set
@@ -250,14 +270,51 @@ index 5e4ae5b..7191b0a 100644
 +      root_correction_x_degrees: this.root_correction_x_degrees,
 +      // rigs authored facing another axis (x, y or z): carry the source motion into the target's axes
 +      root_correction_frame: FrameAlignment.estimate(source_skeleton, detached_target_skeleton, this.get_bone_mappings())
++        .multiply(this.manual_orientation.clone().invert())
      })
  
      // the decisive check: any UNMAPPED bone that moves off its rest pose on frame 0 is
+diff --git a/src/retarget/RetargetAnimationListing.ts b/src/retarget/RetargetAnimationListing.ts
+index d96e082..d8be3b8 100644
+--- a/src/retarget/RetargetAnimationListing.ts
++++ b/src/retarget/RetargetAnimationListing.ts
+@@ -199,6 +199,8 @@ export class RetargetAnimationListing extends EventTarget {
+     }
+   }
+ 
++  private orientation_listener: (() => void) | null = null
++
+   // called by ArmExtensionControl whenever the arm extension amount changes
+   private update_arm_extension_value (): void {
+     this.animation_library.rebuild_display_clips()
+@@ -261,6 +263,13 @@ export class RetargetAnimationListing extends EventTarget {
+   }
+ 
+   private add_event_listeners (): void {
++    if (this.orientation_listener === null) {
++      this.orientation_listener = () => {
++        this.animation_library.rebuild_display_clips()
++        if (this.current_playing_id !== null) this.play_animation(this.current_playing_id)
++      }
++      window.addEventListener('retarget-orientation-changed', this.orientation_listener)
++    }
+     // Add any retarget-specific event listeners here
+     // For now, keeping it minimal
+     this.setup_animation_loop()
 diff --git a/src/retarget/RetargetAnimationPreview.ts b/src/retarget/RetargetAnimationPreview.ts
-index 0ed0c3d..d534db6 100644
+index 0ed0c3d..921ca34 100644
 --- a/src/retarget/RetargetAnimationPreview.ts
 +++ b/src/retarget/RetargetAnimationPreview.ts
-@@ -105,7 +105,7 @@ export class RetargetAnimationPreview extends EventTarget {
+@@ -42,6 +42,8 @@ export class RetargetAnimationPreview extends EventTarget {
+       this.update_preview_animation()
+     })
+ 
++    window.addEventListener('retarget-orientation-changed', () => { this.update_preview_animation() })
++
+     this.setup_animation_loop()
+   }
+ 
+@@ -105,7 +107,7 @@ export class RetargetAnimationPreview extends EventTarget {
      }
  
      // page lives one folder below the static root
@@ -469,7 +526,7 @@ index 42194ec..f596b51 100644
  
                          <div id="download-control-mount"></div>
 diff --git a/src/retarget/retarget.ts b/src/retarget/retarget.ts
-index 6dab65b..8dd2912 100644
+index 6dab65b..ec53bcc 100644
 --- a/src/retarget/retarget.ts
 +++ b/src/retarget/retarget.ts
 @@ -8,6 +8,7 @@ import { RetargetAnimationListing } from './RetargetAnimationListing.ts'
@@ -480,7 +537,42 @@ index 6dab65b..8dd2912 100644
  
  class RetargetModule {
    private readonly mesh2motion_engine: Mesh2MotionEngine
-@@ -227,6 +228,8 @@ class RetargetModule {
+@@ -45,7 +46,34 @@ class RetargetModule {
+     this.retarget_animation_preview = new RetargetAnimationPreview(this.step_bone_mapping)
+   }
+ 
++  // floating buttons that turn the animation's direction by hand, on any axis
++  private add_orientation_buttons (): void {
++    const bar = document.createElement('div')
++    bar.id = 'orientation-fix-bar'
++    bar.style.cssText = 'position:fixed;left:8px;bottom:8px;z-index:50;display:flex;flex-wrap:wrap;gap:4px;max-width:calc(100vw - 16px);padding:6px;border-radius:8px;background:rgba(20,20,24,.88);align-items:center;font-size:12px;color:#fff'
++    const label = document.createElement('span')
++    label.textContent = 'Direction'
++    bar.appendChild(label)
++    const service = AnimationRetargetService.getInstance()
++    const add = (text: string, action: () => void): void => {
++      const b = document.createElement('button')
++      b.textContent = text
++      b.className = 'secondary-button'
++      b.style.cssText = 'padding:4px 8px;min-width:40px'
++      b.addEventListener('click', () => { action(); window.dispatchEvent(new Event('retarget-orientation-changed')) })
++      bar.appendChild(b)
++    }
++    for (const axis of ['y', 'x', 'z'] as const) {
++      add(`${axis.toUpperCase()}−90`, () => { service.rotate_manual_orientation(axis, -90) })
++      add(`${axis.toUpperCase()}+90`, () => { service.rotate_manual_orientation(axis, 90) })
++    }
++    add('180', () => { service.rotate_manual_orientation('y', 180) })
++    add('Reset', () => { service.reset_manual_orientation() })
++    document.body.appendChild(bar)
++  }
++
+   public init (): void {
++    this.add_orientation_buttons()
+     this.add_event_listeners()
+     this.step_load_source_skeleton.begin()
+     this.step_load_target_model.begin()
+@@ -227,6 +255,8 @@ class RetargetModule {
  // Initialize when DOM is ready
  document.addEventListener('DOMContentLoaded', () => {
    retarget_app.init()

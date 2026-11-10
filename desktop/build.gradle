@@ -152,5 +152,6 @@ tasks.register('terrainHarness', JavaExec) {
     description = 'Generates a painted terrain and checks it: -PterrainShots=<dir> -PterrainBiome=MEADOW -PterrainShape=HILLS'
     classpath = sourceSets.terrainHarness.runtimeClasspath
     mainClass = 'com.star4droid.desktop.terrain.TerrainHarness'
+    systemProperties System.getProperties().findAll { it.key.toString().startsWith('terrain.') }
     args((project.findProperty('terrainShots') ?: 'build/terrain-shots'), (project.findProperty('terrainBiome') ?: 'MEADOW'), (project.findProperty('terrainShape') ?: 'HILLS'))
 }

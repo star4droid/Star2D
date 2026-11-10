@@ -39,7 +39,7 @@ import com.star4droid.star2d.ElementDefs.Object3DDef;
  * (12 m squares, a couple per frame) and thins out with the distance. Vertex alpha = sway in the wind (shader).
  */
 public class Foliage3D implements RenderableProvider {
-	public static final float CELL = 40f, GRASS_CELL = 12f;
+	public static final float CELL = 40f, GRASS_CELL = 16f;
 	/** Something walking through the grass (x, y, z, radius m): the blades bend away. Set by the player controllers. */
 	public static final Vector3 bendPos = new Vector3(0, -9999, 0);
 	public static float bendRadius = 0.9f;
@@ -87,7 +87,8 @@ public class Foliage3D implements RenderableProvider {
 			float[] d = FoliageMeshes.defaults(p.src);
 			p.collide = d[0];
 			p.collideHeight = d[1];
-			p.shadows = d[2] > 0 || p.src.contains("bush");
+			p.shadows = d[2] > 0;
+			p.distance = d[3];
 			p.tint = 0.12f;
 		} else {
 			p.collide = 0.4f;
@@ -185,11 +186,12 @@ public class Foliage3D implements RenderableProvider {
 			Gdx.app.error("Star2D-3D", "foliage model " + p.src + ": " + e);
 		}
 		if (model == null) {
-			FoliageMeshes.ProtoMesh m = FoliageMeshes.get("rock");
+			// missing file: a built-in tree / rock of the same role instead of nothing
+			FoliageMeshes.ProtoMesh m = FoliageMeshes.get(p.collide >= 0.3f && p.collideHeight > 2 ? "tree_round" : "rock");
 			s.builtin = true;
 			s.verts.add(m.verts);
 			s.idx.add(m.idx);
-			s.mats.add(new Material(ColorAttribute.createDiffuse(Color.MAGENTA), new FoliageAttribute(0f, false)));
+			s.mats.add(new Material(ColorAttribute.createDiffuse(Color.WHITE), new FoliageAttribute(1f, false)));
 			return s;
 		}
 		for (Node n : model.nodes) collect(n, s);

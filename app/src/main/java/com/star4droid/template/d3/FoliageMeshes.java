@@ -47,14 +47,16 @@ public final class FoliageMeshes {
 	}
 
 	/** Collider radius / height and the usual size of a kind (generator, new kinds in the editor). */
+	/** Collider radius, collider height, casts shadows (1/0), draw distance (m, 0 = view distance). */
 	public static float[] defaults(String name) {
 		if (name.startsWith("builtin:")) name = name.substring(8);
-		if (name.startsWith("tree_")) return new float[]{0.35f, 4f, 1};
-		if (name.equals("rock") || name.equals("boulder")) return new float[]{0.7f, 1.2f, 1};
-		if (name.equals("rock_flat")) return new float[]{0.6f, 0.5f, 1};
-		if (name.equals("stump")) return new float[]{0.35f, 0.6f, 1};
-		if (name.equals("log")) return new float[]{0.4f, 0.5f, 1};
-		return new float[]{0, 1, 0}; // walk through (bushes, flowers, ferns, reeds, mushrooms)
+		if (name.startsWith("tree_")) return new float[]{0.35f, 4f, 1, 0};
+		if (name.equals("rock") || name.equals("boulder")) return new float[]{0.7f, 1.2f, 1, 70};
+		if (name.equals("rock_flat")) return new float[]{0.6f, 0.5f, 1, 70};
+		if (name.equals("stump")) return new float[]{0.35f, 0.6f, 1, 70};
+		if (name.equals("log")) return new float[]{0.4f, 0.5f, 1, 70};
+		if (name.startsWith("bush")) return new float[]{0, 1, 1, 70};
+		return new float[]{0, 1, 0, 35}; // walk through, small: flowers, ferns, reeds, mushrooms
 	}
 
 	static void build(String n, B b) {
@@ -104,11 +106,12 @@ public final class FoliageMeshes {
 			b.rock(0.9f, 0.3f, 0.4f, 0.55f, 0.45f, 0x8E8C86, 0);
 		} else if (n.startsWith("flower_")) {
 			int c = "flower_yellow".equals(n) ? 0xF6D23C : ("flower_white".equals(n) ? 0xF4F4F0 : ("flower_purple".equals(n) ? 0xA36BD6 : 0xE5483E));
+			// light: 3 thin stems (one triangle each) and a 4 petal head (2 sided), ~60 vertices
 			for (int k = 0; k < 3; k++) {
 				float a = k * 2.1f, r = k == 0 ? 0 : 0.12f;
 				float x = MathUtils.cos(a) * r, z = MathUtils.sin(a) * r, hgt = 0.26f + k * 0.05f;
-				b.cylinder(x, 0, z, 0.012f, 0.01f, hgt, 3, 0x4E9A3A, 0f, 0, 0, 1f);
-				b.flower(x, hgt, z, 0.07f, c, 1f);
+				b.stem(x, z, hgt, 0x4E9A3A);
+				b.petals(x, hgt, z, 0.075f, c);
 			}
 		} else if ("mushroom".equals(n)) {
 			b.cylinder(0, 0, 0, 0.05f, 0.045f, 0.16f, 6, 0xF2EBDD, 0f);
@@ -148,7 +151,7 @@ public final class FoliageMeshes {
 		ProtoMesh m = CACHE.get("#grass");
 		if (m != null) return m;
 		B b = new B(7);
-		int blades = 7;
+		int blades = 5;
 		for (int k = 0; k < blades; k++) {
 			float a = k * MathUtils.PI2 / blades + b.r() * 0.6f;
 			float r = 0.03f + b.r() * 0.1f;
@@ -344,13 +347,38 @@ public final class FoliageMeshes {
 			box(x, y + 0.012f, z, r * 0.25f, 0xF8D648, sway);
 		}
 
+		/** Thin stem: one triangle seen from both sides. */
+		void stem(float x, float z, float hgt, int rgb) {
+			p0.set(x - 0.012f, 0, z);
+			p1.set(x + 0.012f, 0, z);
+			p2.set(x, hgt, z);
+			tri(p0, p1, p2, rgb, 1);
+			tri(p0, p2, p1, rgb, 1);
+		}
+
+		/** Flower head: 4 petals (2 sided) around a yellow heart. */
+		void petals(float x, float y, float z, float r, int rgb) {
+			Vector3 c = new Vector3(x, y + 0.012f, z);
+			for (int k = 0; k < 4; k++) {
+				float a0 = k * MathUtils.PI2 / 4, a1 = a0 + 1.1f;
+				p0.set(x + MathUtils.cos(a0) * r, y, z + MathUtils.sin(a0) * r);
+				p1.set(x + MathUtils.cos(a1) * r, y, z + MathUtils.sin(a1) * r);
+				tri(c, p1, p0, rgb, 1);
+				tri(c, p0, p1, rgb, 1);
+			}
+			p0.set(x - 0.02f, y + 0.015f, z);
+			p1.set(x + 0.02f, y + 0.015f, z);
+			p2.set(x, y + 0.03f, z + 0.02f);
+			tri(p0, p1, p2, 0xF8D648, 1);
+		}
+
 		/** One thin grass blade (triangle, drawn 2 sided): root darker, tip light and swaying. */
 		void blade(float x0, float y0, float z0, float x1, float y1, float z1, float tx, float ty, float tz) {
 			short base = (short) (v.size / STRIDE);
 			// soft normals pointing up: grass reads as one lit carpet instead of flickering cards
-			vert(x0, y0, z0, 0, 1, 0, 0.5f, 0.5f, 0.5f, 0);
-			vert(x1, y1, z1, 0, 1, 0, 0.5f, 0.5f, 0.5f, 0);
-			vert(tx, ty, tz, 0, 1, 0, 1.08f, 1.08f, 1.0f, 1);
+			vert(x0, y0, z0, 0, 1, 0, 0.42f, 0.45f, 0.42f, 0);
+			vert(x1, y1, z1, 0, 1, 0, 0.42f, 0.45f, 0.42f, 0);
+			vert(tx, ty, tz, 0, 1, 0, 0.98f, 1.0f, 0.9f, 1);
 			i.addAll(base, (short) (base + 1), (short) (base + 2));
 		}
 	}

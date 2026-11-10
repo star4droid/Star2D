@@ -65,7 +65,9 @@ public class Terrain3D {
 		Mesh mesh;
 		float[] verts;
 		NodePart part;
-		final Vector3 center = new Vector3();
+		/** Index ranges: full detail, then half detail (edges kept full: no cracks with a full neighbour). */
+		int fullCount, lodOffset, lodCount;
+		final Vector3 center = new Vector3(), half = new Vector3();
 		float radius;
 		int nodeIndex;
 	}
@@ -149,24 +151,26 @@ public class Terrain3D {
 				c.ch = Math.min(CHUNK, res - j0);
 				int vw = c.cw + 1, vh = c.ch + 1;
 				c.verts = new float[vw * vh * STRIDE];
-				short[] idx = new short[c.cw * c.ch * 6];
-				int k = 0;
+				com.badlogic.gdx.utils.ShortArray ia = new com.badlogic.gdx.utils.ShortArray(c.cw * c.ch * 9);
 				for (int j = 0; j < c.ch; j++)
-					for (int i = 0; i < c.cw; i++) {
-						short a = (short) (j * vw + i), b = (short) (j * vw + i + 1), cc = (short) ((j + 1) * vw + i), dd = (short) ((j + 1) * vw + i + 1);
-						// diagonal (i + 1, j) - (i, j + 1): the triangles of TerrainData.height and Bullet's heightfield
-						idx[k++] = a;
-						idx[k++] = cc;
-						idx[k++] = b;
-						idx[k++] = b;
-						idx[k++] = cc;
-						idx[k++] = dd;
+					for (int i = 0; i < c.cw; i++) quad(ia, vw, i, j, 1);
+				c.fullCount = ia.size;
+				c.lodOffset = ia.size;
+				for (int j = 0; j < c.ch; j += 2)
+					for (int i = 0; i < c.cw; i += 2) {
+						boolean edge = i == 0 || j == 0 || i + 2 >= c.cw || j + 2 >= c.ch;
+						if (edge || i + 1 >= c.cw || j + 1 >= c.ch) {
+							for (int b = j; b < Math.min(j + 2, c.ch); b++)
+								for (int a = i; a < Math.min(i + 2, c.cw); a++) quad(ia, vw, a, b, 1);
+						} else quad(ia, vw, i, j, 2);
 					}
+				c.lodCount = ia.size - c.lodOffset;
+				short[] idx = ia.toArray();
 				c.mesh = new Mesh(!dynamicMeshes, vw * vh, idx.length, ATTRS);
 				c.mesh.setIndices(idx);
 				fillChunk(c, 0, 0, res, res);
 				c.mesh.setVertices(c.verts);
-				MeshPart mp = new MeshPart("t" + chunks.size, c.mesh, 0, idx.length, GL20.GL_TRIANGLES);
+				MeshPart mp = new MeshPart("t" + chunks.size, c.mesh, 0, c.fullCount, GL20.GL_TRIANGLES);
 				Node node = new Node();
 				node.id = "chunk" + chunks.size;
 				NodePart np = new NodePart(mp, mat);
@@ -193,6 +197,17 @@ public class Terrain3D {
 		}
 	}
 
+	/** Two triangles of a cell (or of a 2 x 2 block, step 2), diagonal (i + s, j) - (i, j + s) like the heightfield. */
+	private static void quad(com.badlogic.gdx.utils.ShortArray ia, int vw, int i, int j, int st) {
+		short a = (short) (j * vw + i), b = (short) (j * vw + i + st), cc = (short) ((j + st) * vw + i), dd = (short) ((j + st) * vw + i + st);
+		ia.add(a);
+		ia.add(cc);
+		ia.add(b);
+		ia.add(b);
+		ia.add(cc);
+		ia.add(dd);
+	}
+
 	private void chunkBounds(Chunk c) {
 		float lo = Float.MAX_VALUE, hi = -Float.MAX_VALUE;
 		for (int j = c.j0; j <= c.j0 + c.ch; j++)
@@ -204,7 +219,8 @@ public class Terrain3D {
 		float x0 = (float) c.i0 / res - 0.5f, x1 = (float) (c.i0 + c.cw) / res - 0.5f;
 		float z0 = (float) c.j0 / res - 0.5f, z1 = (float) (c.j0 + c.ch) / res - 0.5f;
 		c.center.set((x0 + x1) / 2, (lo + hi) / 2 * maxHeight, (z0 + z1) / 2);
-		c.radius = 0.5f * (float) Math.sqrt((x1 - x0) * (x1 - x0) + (z1 - z0) * (z1 - z0) + ((hi - lo) * maxHeight) * ((hi - lo) * maxHeight));
+		c.half.set((x1 - x0) * 0.5f, (hi - lo) * maxHeight * 0.5f, (z1 - z0) * 0.5f);
+		c.radius = c.half.len();
 	}
 
 	/** Writes the vertices of the grid points of a chunk inside cells i0..i1, j0..j1 (normals need one more ring). */
@@ -316,22 +332,45 @@ public class Terrain3D {
 
 	private final Vector3 tmp = new Vector3();
 
-	/** Hides the chunks out of the camera's view (once per frame before drawing). */
+	/** Chunks drawn with half detail in the last cull (tests). */
+	public int lastFar;
+
+	/** Chunks farther than this use half detail (m); 0 = always full. */
+	public static float lodDistance = 55;
+
+	/** Hides the chunks out of the camera's view and picks their detail (once per frame before drawing). */
 	public void cull(Camera cam, ModelInstance inst, Matrix4 transform, Vector3 scale) {
 		if (inst == null || cam == null) return;
-		float s = Math.max(Math.abs(scale.x), Math.max(Math.abs(scale.y), Math.abs(scale.z)));
+		float sx = Math.abs(scale.x), sy = Math.abs(scale.y), sz = Math.abs(scale.z);
+		float lod = lodDistance * Math.max(0.3f, Quality3D.lodBias);
+		lastFar = 0;
 		for (int k = 0; k < chunks.size && k < inst.nodes.size; k++) {
 			Chunk c = chunks.get(k);
 			tmp.set(c.center).mul(transform);
 			Node node = inst.nodes.get(k);
-			if (node.parts.size > 0) node.parts.get(0).enabled = cam.frustum.sphereInFrustum(tmp, c.radius * s + 0.5f);
+			if (node.parts.size == 0) continue;
+			NodePart np = node.parts.get(0);
+			float hx = c.half.x * sx, hy = c.half.y * sy, hz = c.half.z * sz;
+			float r = (float) Math.sqrt(hx * hx + hy * hy + hz * hz) + 0.5f;
+			np.enabled = cam.frustum.sphereInFrustum(tmp, r);
+			boolean far = lod > 0 && c.lodCount > 0 && tmp.dst(cam.position) - r > lod;
+			np.meshPart.offset = far ? c.lodOffset : 0;
+			np.meshPart.size = far ? c.lodCount : c.fullCount;
+			if (far && np.enabled) lastFar++;
 		}
 	}
 
 	/** Every chunk visible again (shadow pass / editor picking). */
 	public void uncull(ModelInstance inst) {
 		if (inst == null) return;
-		for (Node n : inst.nodes) for (NodePart p : n.parts) p.enabled = true;
+		for (int k = 0; k < inst.nodes.size; k++)
+			for (NodePart p : inst.nodes.get(k).parts) {
+				p.enabled = true;
+				if (k < chunks.size) {
+					p.meshPart.offset = 0;
+					p.meshPart.size = chunks.get(k).fullCount;
+				}
+			}
 	}
 
 	// ------------------------------------------------------------------ queries

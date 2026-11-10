@@ -43,7 +43,9 @@ public class TerrainHarness {
 			int frame;
 			long t0;
 			int step;
-			float[][] views = {{0, 60, 95, 0, 0, 0}, {3, 1.8f, 14, 0, 0.8f, 0}, {-30, 6, -10, 0, 0, 30}};
+			float[][] views = System.getProperty("terrain.file", "").length() > 0
+					? new float[][]{{0, 90, -40, 0, 0, 70}, {0, 2.2f, -2, 2, 1, 25}, {-4, 2.2f, 38, -4, 1, 55}, {10, 2.5f, 66, 12, 1, 85}, {-3, 2.5f, 95, -5, 1, 115}, {0, 4f, 122, 0, 1, 141}}
+					: new float[][]{{0, 60, 95, 0, 0, 0}, {3, 1.8f, 14, 0, 0.8f, 0}, {-30, 6, -10, 0, 0, 30}};
 
 			@Override
 			public void create() {
@@ -67,12 +69,34 @@ public class TerrainHarness {
 				s.waterLevel = 0.15f;
 				long g0 = System.nanoTime();
 				TerrainGen.Result r = TerrainGen.generate(s);
+				final String ext = System.getProperty("terrain.file", "");
+				if (ext.length() > 0) {
+					try {
+						r.data = TerrainData.load(Gdx.files.absolute(ext));
+					} catch (Exception e) {
+						throw new RuntimeException(e);
+					}
+					s.width = Float.parseFloat(System.getProperty("terrain.w", "100"));
+					s.length = Float.parseFloat(System.getProperty("terrain.l", "230"));
+					r.props.put("Scale X", System.getProperty("terrain.w", "100"));
+					r.props.put("Scale Z", System.getProperty("terrain.l", "230"));
+					r.props.put("Terrain Height", System.getProperty("terrain.h", "29.16"));
+					r.props.put("Layer 4 Texture", "builtin:leaves");
+					r.props.put("Layer 2 Texture", "builtin:road");
+					r.props.put("Layer 1 Tiling", "40");
+					r.props.put("Layer 2 Tiling", "60");
+					r.props.put("Layer 3 Tiling", "40");
+					r.props.put("Layer 4 Tiling", "50");
+					r.waterY = Float.NaN;
+				}
 				System.out.println("GEN ms=" + (System.nanoTime() - g0) / 1000000 + " inst=" + r.data.inst.size + " protos=" + r.data.protos.size + " res=" + r.data.res + " splat=" + r.data.splatRes);
 				TerrainStore.put("/test.s2t", r.data);
 				System.out.println("SAVE " + TerrainStore.save("/test.s2t") + " bytes=" + TerrainStore.fileOf("/test.s2t").length());
 				TerrainStore.clear();
 				TerrainData back = TerrainStore.get("/test.s2t");
 				System.out.println("LOAD ok=" + (back != null) + " same=" + (back != null && back.inst.size == r.data.inst.size && back.h.length == r.data.h.length && back.h[777] == r.data.h[777]));
+				for (String n : com.star4droid.template.d3.FoliageMeshes.NAMES) System.out.println("VERTS " + n + " " + com.star4droid.template.d3.FoliageMeshes.get(n).vertexCount());
+				System.out.println("VERTS grass " + com.star4droid.template.d3.FoliageMeshes.grassTuft().vertexCount());
 				w = new World3D(null);
 				PropertySet<String, Object> cfg = new PropertySet<String, Object>();
 				cfg.put("Shadows", "true");
@@ -90,6 +114,8 @@ public class TerrainHarness {
 				d.Cast_Shadows = false;
 				d.Static_Object = true;
 				for (com.badlogic.gdx.utils.ObjectMap.Entry<String, String> e : r.props.entries()) set(d, e.key, e.value);
+				d.z = Float.parseFloat(System.getProperty("terrain.z", "0"));
+				d.y = Float.parseFloat(System.getProperty("terrain.y", "0"));
 				terrain = Object3D.forWorld(w, d);
 				// water
 				Object3DDef wd = new Object3DDef();
@@ -99,7 +125,7 @@ public class TerrainHarness {
 				wd.Scale_X = 150;
 				wd.Scale_Z = 150;
 				wd.Cast_Shadows = false;
-				Object3D.forWorld(w, wd);
+				if (!Float.isNaN(r.waterY)) Object3D.forWorld(w, wd);
 				// balls: on open ground and right above trees
 				int k = 0;
 				for (TerrainData.Inst in : back.inst) {
@@ -169,7 +195,7 @@ public class TerrainHarness {
 				Gdx.gl.glFinish();
 				long ft = System.nanoTime() - f0;
 				if (frame % 60 == 0 || frame == 5)
-					System.out.println("FRAME " + frame + " view=" + step + " drawCalls=" + prof.getDrawCalls() + " shaderSwitches=" + prof.getShaderSwitches() + " verts=" + (int) prof.getVertexCount().total + " ms=" + ft / 1000000.0);
+					System.out.println("FRAME " + frame + " view=" + step + " drawCalls=" + prof.getDrawCalls() + " shaderSwitches=" + prof.getShaderSwitches() + " verts=" + (int) prof.getVertexCount().total + " ms=" + ft / 1000000.0 + " farChunks=" + terrain.terrain().lastFar);
 				if (frame == 240) {
 					Terrain3D t = terrain.terrain();
 					for (Object3D b : balls) {

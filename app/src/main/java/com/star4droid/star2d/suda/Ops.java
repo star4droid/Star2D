@@ -63,7 +63,7 @@ public final class Ops {
     static Param imgModel() { return new Param("model", "Image model", T.CHOICE, "", true); }
     static Param texture() { return new Param("texture", "Texture quality", T.CHOICE, "standard", true, "none", "standard", "hd", "ultra"); }
     static Param pbr() { return new Param("pbr", "PBR materials", T.BOOL, "true", true); }
-    static Param faces() { return new Param("face_limit", "Face limit", T.INT, "", true); }
+    static Param faces() { return new Param("face_limit", "Polycount", T.INT, "", true); }
     static Param lowPoly() { return new Param("smart_low_poly", "Low poly", T.BOOL, "false", true); }
     static Param quad() { return new Param("quad", "Quad mesh", T.BOOL, "false", true); }
     static Param geometry() { return new Param("geometry_quality", "Geometry quality", T.CHOICE, "standard", false, "standard", "detailed"); }

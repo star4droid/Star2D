@@ -230,6 +230,29 @@ index 89a5ca2..5db5d12 100644
            // enable the ability to progress to next step
            this.allow_proceeding_to_next_step(true)
          }).catch((err) => {
+diff --git a/src/retarget/AnimationRetargetService.ts b/src/retarget/AnimationRetargetService.ts
+index 5e4ae5b..7191b0a 100644
+--- a/src/retarget/AnimationRetargetService.ts
++++ b/src/retarget/AnimationRetargetService.ts
+@@ -9,6 +9,7 @@ import { SkeletonType } from '../lib/enums/SkeletonType.ts'
+ import { HumanClipRetargeter } from './human-retargeting/HumanClipRetargeter.ts'
+ import { Rig } from './human-retargeting/Rig.ts'
+ import { HumanChainConfig } from './human-retargeting/HumanChainConfig.ts'
++import { FrameAlignment } from './human-retargeting/FrameAlignment.ts'
+ import { RetargetDiagnostics, type RestPoseSnapshot } from './RetargetDiagnostics.ts'
+ 
+ // AnimationRetargetService - Shared service for retargeting animations from one skeleton to another
+@@ -259,7 +260,9 @@ export class AnimationRetargetService {
+     const retargeted_clip: AnimationClip = HumanClipRetargeter.retarget(source_clip, source_rig, target_rig, {
+       clip_name: `${source_clip.name} RT`, // RT means retargeted
+       // apply any global rig correction the user has set
+-      root_correction_x_degrees: this.root_correction_x_degrees
++      root_correction_x_degrees: this.root_correction_x_degrees,
++      // rigs authored facing another axis (x, y or z): carry the source motion into the target's axes
++      root_correction_frame: FrameAlignment.estimate(source_skeleton, detached_target_skeleton, this.get_bone_mappings())
+     })
+ 
+     // the decisive check: any UNMAPPED bone that moves off its rest pose on frame 0 is
 diff --git a/src/retarget/RetargetAnimationPreview.ts b/src/retarget/RetargetAnimationPreview.ts
 index 0ed0c3d..d534db6 100644
 --- a/src/retarget/RetargetAnimationPreview.ts
@@ -243,6 +266,195 @@ index 0ed0c3d..d534db6 100644
  
      // if we are coming back to this step and already loaded a default animation, skip reloading
      // and just do the playing
+diff --git a/src/retarget/human-retargeting/FrameAlignment.ts b/src/retarget/human-retargeting/FrameAlignment.ts
+new file mode 100644
+index 0000000..b76f05c
+--- /dev/null
++++ b/src/retarget/human-retargeting/FrameAlignment.ts
+@@ -0,0 +1,80 @@
++import { Bone, Euler, Matrix4, Quaternion, type Skeleton, Vector3 } from 'three'
++
++/**
++ * Works out how a target rig is oriented relative to the Mesh2Motion source rig and returns the
++ * rotation that brings the target's body frame (side, up, front) onto the source's.
++ *
++ * Why: the swing-twist retargeting moves joints relative to their own rest pose, but the pelvis /
++ * root motion is written in the rig's own parent space. A rig authored facing another axis
++ * (Z-up rigs, models facing +X or -Z, mirrored exports...) therefore walks sideways, backwards
++ * or tilted while the body itself looks right. This rotation, applied to the top-level bones,
++ * fixes every axis at once (x, y and z), not only the heading.
++ *
++ * The frame is measured from the rest pose: up = pelvis -> head, side = right thigh -> left thigh,
++ * front = side x up. Falls back to the arms when the legs are not mapped. Returns identity
++ * when the bones needed are missing.
++ */
++export class FrameAlignment {
++  public static estimate (
++    source_skeleton: Skeleton, target_skeleton: Skeleton, target_to_source: Map<string, string>
++  ): Quaternion {
++    const source_frame = FrameAlignment.frame_of(source_skeleton, (name) => name)
++    const source_to_target = new Map<string, string>()
++    target_to_source.forEach((source_name, target_name) => source_to_target.set(source_name, target_name))
++    const target_frame = FrameAlignment.frame_of(target_skeleton, (name) => source_to_target.get(name) ?? '')
++    if (source_frame === null || target_frame === null) return new Quaternion()
++
++    // rotation taking target axes onto source axes: R_source * R_target^-1
++    const rotation = new Matrix4().multiplyMatrices(source_frame, target_frame.clone().invert())
++    const result = new Quaternion().setFromRotationMatrix(rotation).normalize()
++    return FrameAlignment.snap_to_axes(result)
++  }
++
++  /**
++   * Rigs differ by whole 90 degree turns about x, y or z (facing +X, -Z, Z-up exports...). A few
++   * degrees of leftover come from pose asymmetry (A-pose vs T-pose), so snap to the nearest of the
++   * 24 axis-aligned rotations when within 25 degrees of one; otherwise keep the measured value.
++   */
++  private static snap_to_axes (measured: Quaternion): Quaternion {
++    let best = new Quaternion()
++    let best_angle = Infinity
++    const e = [0, 1, 2, 3].map((i) => i * Math.PI / 2)
++    const seen: Quaternion[] = []
++    for (const x of e) for (const y of e) for (const z of e) {
++      const q = new Quaternion().setFromEuler(new Euler(x, y, z, 'XYZ')).normalize()
++      if (seen.some((o) => Math.abs(o.dot(q)) > 0.9999)) continue
++      seen.push(q)
++      const angle = 2 * Math.acos(Math.min(1, Math.abs(q.dot(measured))))
++      if (angle < best_angle) { best_angle = angle; best = q }
++    }
++    return best_angle < 25 * Math.PI / 180 ? best : measured
++  }
++
++  /** Body frame as a rotation matrix with columns (side, up, front), or null when bones are missing. */
++  private static frame_of (skeleton: Skeleton, name_for: (m2m_bone: string) => string): Matrix4 | null {
++    const root = skeleton.bones.find((bone) => bone.parent?.type !== 'Bone')
++    root?.updateWorldMatrix(true, true)
++    const position = (m2m_bone: string): Vector3 | null => {
++      const name = name_for(m2m_bone)
++      const bone: Bone | undefined = name === '' ? undefined : skeleton.getBoneByName(name)
++      return bone === undefined ? null : bone.getWorldPosition(new Vector3())
++    }
++
++    const pelvis = position('pelvis')
++    const head = position('head') ?? position('neck_01') ?? position('spine_03')
++    const left = position('thigh_l') ?? position('upperarm_l')
++    const right = position('thigh_r') ?? position('upperarm_r')
++    if (pelvis === null || head === null || left === null || right === null) return null
++
++    const up = head.sub(pelvis)
++    const side = left.sub(right)
++    if (up.lengthSq() < 1e-10 || side.lengthSq() < 1e-10) return null
++    up.normalize()
++    side.normalize()
++    const front = new Vector3().crossVectors(side, up)
++    if (front.lengthSq() < 1e-6) return null // side parallel to up: degenerate
++    front.normalize()
++    side.crossVectors(up, front).normalize() // re-orthogonalise
++    return new Matrix4().makeBasis(side, up, front)
++  }
++}
+diff --git a/src/retarget/human-retargeting/HumanClipRetargeter.ts b/src/retarget/human-retargeting/HumanClipRetargeter.ts
+index 710f307..26d98ee 100644
+--- a/src/retarget/human-retargeting/HumanClipRetargeter.ts
++++ b/src/retarget/human-retargeting/HumanClipRetargeter.ts
+@@ -1,4 +1,4 @@
+-import { AnimationClip, type QuaternionKeyframeTrack, type VectorKeyframeTrack } from 'three'
++import { AnimationClip, type Quaternion, type QuaternionKeyframeTrack, type VectorKeyframeTrack } from 'three'
+ import { Retargeter } from './Retargeter'
+ import { type Rig } from './Rig'
+ 
+@@ -7,6 +7,8 @@ export interface HumanClipRetargetOptions {
+   clip_name?: string
+   // corrective X-axis rotation (degrees) applied to the whole target rig. See Retargeter.set_root_correction_x
+   root_correction_x_degrees?: number
++  // whole-body axis alignment from FrameAlignment.estimate (any axis, optional)
++  root_correction_frame?: Quaternion
+   // 30 fps for input animations is usually sufficient for now
+   fps?: number
+ }
+@@ -38,6 +40,7 @@ export class HumanClipRetargeter {
+     // apply any global rig correction (fixes tilted rigs that have no root bone,
+     // only a pelvis bone at the top of the hierarchy)
+     retargeter.set_root_correction_x(options.root_correction_x_degrees ?? 0)
++    if (options.root_correction_frame !== undefined) retargeter.set_root_correction_frame(options.root_correction_frame)
+ 
+     // TODO: experiment with the additives later with T-pose correction
+     // retargeter.additives.push(
+diff --git a/src/retarget/human-retargeting/Retargeter.ts b/src/retarget/human-retargeting/Retargeter.ts
+index 49ba171..c6ac6cb 100644
+--- a/src/retarget/human-retargeting/Retargeter.ts
++++ b/src/retarget/human-retargeting/Retargeter.ts
+@@ -27,6 +27,9 @@ export class Retargeter {
+   // leaves the character tilted (for example face planting after retargeting)
+   private root_correction_quat: THREE.Quaternion = new THREE.Quaternion() // identity = no correction
+   private has_root_correction: boolean = false
++  private has_frame: boolean = false
++  private root_correction_x_quat: THREE.Quaternion = new THREE.Quaternion()
++  private root_correction_frame_quat: THREE.Quaternion = new THREE.Quaternion() // whole-body axis alignment, see FrameAlignment
+   private readonly top_level_bones: THREE.Bone[] = []
+ 
+   constructor (source_rig: Rig, target_rig: Rig, clip: THREE.AnimationClip) {
+@@ -85,8 +88,29 @@ export class Retargeter {
+    * @param degrees rotation around the X axis in degrees (for example -90 or 90)
+    */
+   public set_root_correction_x (degrees: number): void {
+-    this.root_correction_quat.setFromAxisAngle(new THREE.Vector3(1, 0, 0), degrees * Math.PI / 180)
+-    this.has_root_correction = degrees !== 0
++    this.root_correction_x_quat.setFromAxisAngle(new THREE.Vector3(1, 0, 0), degrees * Math.PI / 180)
++    this.update_root_correction()
++  }
++
++  /**
++   * Sets the whole-body axis alignment (any axis) between the target rig and the source rig.
++   * Applied on top of the X correction. Identity = none.
++   */
++  public set_root_correction_frame (quaternion: THREE.Quaternion): void {
++    // FrameAlignment gives target->source; the source vectors must be carried source->target
++    this.root_correction_frame_quat.copy(quaternion).invert()
++    this.has_frame = Math.abs(this.root_correction_frame_quat.w) < 1 - 1e-9
++  }
++
++  private rotate_to_target_frame (v: Vec3): void {
++    const t = new THREE.Vector3(v[0], v[1], v[2]).applyQuaternion(this.root_correction_frame_quat)
++    v[0] = t.x; v[1] = t.y; v[2] = t.z
++  }
++
++  private update_root_correction (): void {
++    // X tilt first, then the frame alignment about the world axes
++    this.root_correction_quat.copy(this.root_correction_x_quat)
++    this.has_root_correction = Math.abs(this.root_correction_quat.w) < 1 - 1e-9
+   }
+ 
+   /**
+@@ -308,6 +332,10 @@ export class Retargeter {
+ 
+       source_swing.fromQuat(source_rotation, src[i].swing)
+       source_twist.fromQuat(source_rotation, src[i].twist)
++      if (this.has_frame) { // carry the source directions into the target rig's axes (any axis)
++        this.rotate_to_target_frame(source_swing)
++        this.rotate_to_target_frame(source_twist)
++      }
+ 
+       // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+       // Get Target Neutral Transform for the joint
+@@ -380,6 +408,10 @@ export class Retargeter {
+     const bTran: Transform = this.getWorld(this.srcRig.skel, src[src.length - 1].idx)
+     const bSwing: Vec3 = new Vec3().fromQuat(bTran.rot, src[src.length - 1].swing)
+     const bTwist: Vec3 = new Vec3().fromQuat(bTran.rot, src[src.length - 1].twist)
++    if (this.has_frame) {
++      this.rotate_to_target_frame(aSwing); this.rotate_to_target_frame(aTwist)
++      this.rotate_to_target_frame(bSwing); this.rotate_to_target_frame(bTwist)
++    }
+ 
+     // Visualize data over source skeleton
+     // Debug.pnt.add(aTran.pos, 0xffff00, 1.2)
+@@ -440,6 +472,7 @@ export class Retargeter {
+     const transform_offset: Vec3 = new Vec3()
+       .fromSub(source_ws_transform.pos, source_t_pose_joint.world.pos)
+       .scale(scale_delta)
++    if (this.has_frame) this.rotate_to_target_frame(transform_offset)
+ 
+     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     // Neutral Transform
 diff --git a/src/retarget/index.html b/src/retarget/index.html
 index 42194ec..f596b51 100644
 --- a/src/retarget/index.html

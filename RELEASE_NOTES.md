@@ -1,4 +1,4 @@
-## 🎉 Star2D 0.5.1 Beta — 3D
+## 🎉 Star2D 0.5.2 Beta — 3D
 
 ### English
 **3D engine**

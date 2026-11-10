@@ -298,10 +298,11 @@ public class EditorActivity extends AppCompatActivity implements AndroidFragment
 		TestApp app = editor.getApp();
 		app.openDonate = this::openDonate;
 		// show / hide the Android home screen together with the LibGDX editor
-		app.onProjectOpening = ()->runOnUiThread(()->homeView.setVisibility(View.GONE));
+		app.onProjectOpening = ()->runOnUiThread(()->{ homeView.setVisibility(View.GONE); com.star4droid.star2d.ads.AdsManager.setEditorOpen(true); });
 		app.onProjectClosed = ()->runOnUiThread(()->{
 			shell.onProjectClosed();
 			homeView.setVisibility(View.VISIBLE);
+			com.star4droid.star2d.ads.AdsManager.setEditorOpen(false);
 			homeView.refresh();
 			com.star4droid.star2d.ads.AdsManager.refresh(this, homeView);
 			com.star4droid.star2d.ads.AdsManager.onProjectClosed(this);
@@ -450,12 +451,20 @@ public class EditorActivity extends AppCompatActivity implements AndroidFragment
         ((ViewGroup) findViewById(R.id.frame)).addView(homeView,
                 new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         com.star4droid.star2d.ads.AdsManager.init(this);
+        attachEditorAd();
         // Occasional (rare, snoozable) support dialog, only while the projects screen is showing
         homeView.postDelayed(() -> {
             if (!isFinishing() && !isDestroyed() && homeView.isShown())
                 com.star4droid.star2d.ui.SupportPrompt.maybeShow(this, this::openDonate);
         }, 3500);
     }
+	void attachEditorAd(){
+		View f = findViewById(R.id.frame);
+		if(f==null || !(f.getParent() instanceof ViewGroup) || !(((ViewGroup) f.getParent()).getParent() instanceof android.widget.LinearLayout)) return;
+		android.widget.LinearLayout root = (android.widget.LinearLayout) ((ViewGroup) f.getParent()).getParent();
+		com.star4droid.star2d.ads.AdsManager.attachEditorBanner(this, root, (View) f.getParent());
+		com.star4droid.star2d.ads.AdsManager.setEditorOpen(homeView!=null && !homeView.isShown());
+	}
 	@Override
 	protected void onStart() {
 		super.onStart();
@@ -469,7 +478,7 @@ public class EditorActivity extends AppCompatActivity implements AndroidFragment
 	@Override
 	protected void onResume() {
 		super.onResume();
-		if(homeView!=null){ com.star4droid.star2d.ads.AdsManager.refresh(this, homeView); if(homeView.isShown()) homeView.refresh(); }
+		if(homeView!=null){ com.star4droid.star2d.ads.AdsManager.refresh(this, homeView); attachEditorAd(); if(homeView.isShown()) homeView.refresh(); }
 		if(editor!=null)
 			editor.setToCurrentEditor();
 	}

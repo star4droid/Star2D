@@ -29,7 +29,7 @@ import com.star4droid.star2d.suda.Suda3D;
 
 /**
  * Ads, kept deliberately gentle (and inside AdMob policy):
- *  - one adaptive banner on the projects screen only (never inside the editor / over the game),
+ *  - one adaptive banner at the bottom of the projects screen, and one in the editor (top strip in portrait, side column on wide landscape screens; part of the layout, never over the canvas or the game),
  *  - one interstitial when the user CLOSES a project (a natural pause), at most once per 5 minutes,
  *    never in the first 3 minutes of a session, and only after 2 closes,
  *  - an optional rewarded video (Support page) = 1 hour without ads,
@@ -38,8 +38,8 @@ import com.star4droid.star2d.suda.Suda3D;
  */
 public final class AdsManager {
     private static final String PREFS = "ads_state";
-    private static final long INTERSTITIAL_GAP_MS = 5 * 60_000L, SESSION_GRACE_MS = 3 * 60_000L, REWARD_FREE_MS = 60 * 60_000L;
-    private static final int MIN_CLOSES = 2;
+    private static final long INTERSTITIAL_GAP_MS = 3 * 60_000L, SESSION_GRACE_MS = 60_000L, REWARD_FREE_MS = 60 * 60_000L;
+    private static final int MIN_CLOSES = 1;
     /** $1 = 100 credits */
     private static final double AD_FREE_CREDITS = 100;
 
@@ -74,6 +74,7 @@ public final class AdsManager {
             b.append(adFreeByPurchase(c) ? "\nad-free: balance is $1 or more" : "\nad-free by balance: no");
             b.append(adFreeByReward(c) ? "\nad-free: reward active" : "");
             b.append("\nSDK started: ").append(sdkStarted).append(", banner: ").append(banner == null ? "none" : banner.getVisibility() == View.VISIBLE ? "shown" : "loading/no fill");
+            b.append("\neditor banner: ").append(editorBanner == null ? "none" : bannerLoaded ? "loaded" : "loading/no fill");
             if (!lastError.isEmpty()) b.append("\nlast error: ").append(lastError);
         }
         return b.toString();
@@ -96,7 +97,7 @@ public final class AdsManager {
         sdkStarted = true; consentDone = true;
         Suda3D.IO.execute(() -> {
             try {
-                MobileAds.initialize(a.getApplicationContext(), s -> a.runOnUiThread(() -> { preload(a); if (pendingHost != null) attachBanner(a, pendingHost); }));
+                MobileAds.initialize(a.getApplicationContext(), s -> a.runOnUiThread(() -> { preload(a); if (pendingHost != null) attachBanner(a, pendingHost); if (editorRoot != null) attachEditorBanner(a, editorRoot, editorContent); }));
             } catch (Throwable t) { sdkStarted = false; }
         });
     }
@@ -130,7 +131,7 @@ public final class AdsManager {
     public static void attachBanner(Activity a, FrameLayout host) {
         pendingHost = host;
         if (!BuildConfig.ADS_ENABLED) { showNotice(a, host); return; }
-        if (!sdkStarted || !adsEnabled(a)) { removeBanner(host); return; }
+        if (!sdkStarted || !adsEnabled(a)) { removeBanner(host); removeEditorBanner(); return; }
         if (banner != null && banner.getParent() == host) return;
         removeBanner(host);
         DisplayMetrics dm = a.getResources().getDisplayMetrics();
@@ -208,6 +209,60 @@ public final class AdsManager {
     public static void refresh(Activity a, FrameLayout host) {
         if (host == null) return;
         if (!BuildConfig.ADS_ENABLED || adsEnabled(a)) attachBanner(a, host); else removeBanner(host);
+    }
+
+
+    // ---- editor banner: top strip in portrait, side column in landscape (wide screens), in layout, never over the canvas ----
+    private static AdView editorBanner;
+    private static android.widget.LinearLayout editorRoot;
+    private static View editorContent;
+    private static FrameLayout editorBox;
+    private static boolean editorOpen, bannerLoaded;
+
+    /** root = vertical LinearLayout of editor.xml, content = its single child (the editor area). */
+    public static void attachEditorBanner(Activity a, android.widget.LinearLayout root, View content) {
+        editorRoot = root; editorContent = content;
+        if (!BuildConfig.ADS_ENABLED || !sdkStarted || !adsEnabled(a)) { removeEditorBanner(); return; }
+        boolean land = a.getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE;
+        DisplayMetrics dm = a.getResources().getDisplayMetrics();
+        int wdp = (int) (dm.widthPixels / dm.density);
+        boolean side = land && wdp >= 900;
+        if (editorBanner != null && editorBox != null && editorBox.getParent() == root && (root.getOrientation() == android.widget.LinearLayout.HORIZONTAL) == side) return;
+        removeEditorBanner();
+        root.setOrientation(side ? android.widget.LinearLayout.HORIZONTAL : android.widget.LinearLayout.VERTICAL);
+        ViewGroup.LayoutParams clp = content.getLayoutParams();
+        if (clp instanceof android.widget.LinearLayout.LayoutParams) {
+            android.widget.LinearLayout.LayoutParams l = (android.widget.LinearLayout.LayoutParams) clp;
+            if (side) { l.width = 0; l.height = -1; } else { l.width = -1; l.height = 0; }
+            l.weight = 1; content.setLayoutParams(l);
+        }
+        AdView v = new AdView(a);
+        v.setAdUnitId(BuildConfig.ADMOB_BANNER_ID);
+        v.setAdSize(side ? AdSize.MEDIUM_RECTANGLE : AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(a, Math.max(320, wdp)));
+        FrameLayout box = new FrameLayout(a);
+        box.setBackgroundColor(0xFF10151D);
+        box.setVisibility(View.GONE);
+        box.addView(v, new FrameLayout.LayoutParams(-2, -2, Gravity.CENTER));
+        v.setAdListener(new AdListener() {
+            @Override public void onAdLoaded() { bannerLoaded = true; if (editorOpen) box.setVisibility(View.VISIBLE); }
+            @Override public void onAdFailedToLoad(LoadAdError e) { lastError = "editor banner " + e.getCode() + ": " + e.getMessage(); box.setVisibility(View.GONE); }
+        });
+        editorBanner = v; editorBox = box;
+        if (side) root.addView(box, new android.widget.LinearLayout.LayoutParams((int) (310 * dm.density), -1));
+        else root.addView(box, 0, new android.widget.LinearLayout.LayoutParams(-1, -2));
+        v.loadAd(new AdRequest.Builder().build());
+    }
+
+    /** Show the editor banner only while a project is open (the projects screen has its own). */
+    public static void setEditorOpen(boolean open) {
+        editorOpen = open;
+        if (editorBox != null) editorBox.setVisibility(open && bannerLoaded ? View.VISIBLE : View.GONE);
+    }
+
+    public static void removeEditorBanner() {
+        if (editorBox != null) { try { if (editorBox.getParent() instanceof ViewGroup) ((ViewGroup) editorBox.getParent()).removeView(editorBox); } catch (Throwable ignored) {} editorBox = null; }
+        if (editorBanner != null) { try { editorBanner.destroy(); } catch (Throwable ignored) {} editorBanner = null; }
+        bannerLoaded = false;
     }
 
     // ---- interstitial (after closing a project) ----

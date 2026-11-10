@@ -117,6 +117,12 @@ public final class Blocks3D {
 		fd("roll", "roll", "اللف");
 		fd("parent", "parent", "الأب");
 		fd("terrain", "terrain", "التضاريس");
+		fd("radius", "radius", "نصف القطر");
+		fd("depth", "depth", "العمق");
+		fd("layer", "layer", "الطبقة");
+		fd("kind", "kind", "النوع");
+		fd("seed", "seed", "البذرة");
+		fd("biome", "biome", "البيئة");
 		fd("water", "water", "الماء");
 		fd("light", "light", "الضوء");
 		fd("camera", "camera", "الكاميرا");
@@ -452,6 +458,21 @@ public final class Blocks3D {
 		st("waterColors3D", "water(Body) shallow deep", "current|#3FA9D6|#0B3D6B", B + "setWaterColors(%1$s, " + q(2) + ", " + q(3) + ");", "Water colors", "ألوان الماء", "Colors of shallow and deep water.", "ألوان الماء الضحل والعميق.");
 		st("snapToGround3D", "body(Body) terrain(Body) height", "current|current|0", X + "snapToGround(%1$s, %2$s, " + f(3) + ");", "Put on ground", "ضع على الأرض", "Places the element on the terrain (plus a height).", "يضع العنصر على التضاريس (مع ارتفاع إضافي).");
 		rp("3D ground height of ___ at ___ ___", B + "groundHeight(%1$s, " + fl(2, 3) + ")", 'n', "enn", "ارتفاع أرض ___ عند ___ ___", "Height of a terrain at x, z.", "ارتفاع التضاريس عند x و z.");
+		st("terrainDig3D", "terrain(Body) x z radius depth", "current|0|0|3|1", X + "terrainDig(%1$s, " + fl(2, 5) + ");", "Dig terrain", "احفر الأرض",
+				"Digs a soft hole in a painted terrain at x, z (negative depth = a mound). Collisions follow.", "يحفر حفرة ناعمة في التضاريس عند x و z (عمق سالب = تلة). التصادم يتبعها.");
+		st("terrainPaint3D", "terrain(Body) x z radius layer", "current|0|0|3|2", X + "terrainPaint(%1$s, " + fl(2, 4) + ", (int)(%5$s));", "Paint terrain", "لوّن الأرض",
+				"Paints a layer (1..4) of a painted terrain around x, z (scorch marks, paths, snow).", "يلوّن طبقة (1..4) من التضاريس حول x و z (آثار حريق، ممرات، ثلج).");
+		st("terrainPlant3D", "terrain(Body) kind x z scale", "current|\"tree_round\"|0|0|1", X + "terrainPlant(%1$s, " + str(2) + ", " + fl(3, 5) + ");", "Plant on terrain", "ازرع في الأرض",
+				"Adds a tree, rock, bush, flower... (tree_round, tree_pine, rock, bush, flower_red or a model /tree.glb) at x, z.", "يضيف شجرة أو صخرة أو شجيرة أو زهرة... (tree_round و tree_pine و rock و bush و flower_red أو نموذج ‎/tree.glb) عند x و z.");
+		st("terrainClear3D", "terrain(Body) x z radius", "current|0|0|3", X + "terrainClear(%1$s, " + fl(2, 4) + ");", "Clear terrain objects", "أزل أشياء الأرض",
+				"Removes the trees, rocks and objects of a terrain around x, z.", "يزيل الأشجار والصخور والأشياء من التضاريس حول x و z.");
+		st("grassBender3D", "body(Body) radius", "current|0.9", X + "grassBender(%1$s, " + f(2) + ");", "Bends grass", "يثني العشب",
+				"This element pushes the grass of painted terrains aside as it walks (0 = stop).", "هذا العنصر يزيح عشب التضاريس أثناء مشيه (0 = إيقاف).");
+		st("generateTerrain3D", "terrain(Body) biome shape seed", "current|\"MEADOW\"|\"HILLS\"|1", X + "generateTerrain(%1$s, " + str(2) + ", " + str(3) + ", (int)(%4$s));",
+				"Generate world", "ولّد عالماً", "A new random world on a terrain: biome MEADOW FOREST AUTUMN DESERT SNOW TROPICAL, shape HILLS MOUNTAINS ISLAND VALLEY PLAINS CANYON.",
+				"عالم عشوائي جديد على التضاريس: البيئة MEADOW FOREST AUTUMN DESERT SNOW TROPICAL، والشكل HILLS MOUNTAINS ISLAND VALLEY PLAINS CANYON.");
+		rp("3D ground slope of ___ at ___ ___", X + "groundSlope(%1$s, " + fl(2, 3) + ")", 'n', "enn", "ميل أرض ___ عند ___ ___", "Slope of a terrain at x, z: 0 flat .. 1 vertical.", "ميل التضاريس عند x و z: 0 مسطح .. 1 عمودي.");
+		rp("3D ground layer of ___ at ___ ___", X + "groundLayer(%1$s, " + fl(2, 3) + ")", 'n', "enn", "طبقة أرض ___ عند ___ ___", "Most painted layer (1..4) at x, z: grass, road, rock, sand...", "الطبقة الأكثر طلاءً (1..4) عند x و z: عشب، طريق، صخر، رمل...");
 		rp("3D water level of ___ at ___ ___", B + "groundHeight(%1$s, " + fl(2, 3) + ")", 'n', "enn", "مستوى ماء ___ عند ___ ___", "Height of the water surface (with waves) at x, z.", "ارتفاع سطح الماء (مع الأمواج) عند x و z.");
 
 		// ---------------------------------------------------------------- 3D Objects

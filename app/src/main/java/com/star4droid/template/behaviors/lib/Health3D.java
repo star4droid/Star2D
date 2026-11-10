@@ -118,6 +118,11 @@ public class Health3D extends Behavior implements Damageable {
 		inv = on ? Float.MAX_VALUE : 0;
 	}
 
+	/** True while set invincible by a block / a dash (not the short time after a hit). */
+	public boolean isInvincible() {
+		return inv > 1e30f;
+	}
+
 	@Block(label = "health", desc = "Hit points now.", labelAr = "الصحة", descAr = "نقاط الحياة الآن.", category = "Health 3D", args = {})
 	public float getHealth() {
 		ensure();

@@ -83,6 +83,148 @@ public final class B3x {
 		B3.setPosition(item, B3.x(item), B3.groundHeight(terrain, B3.x(item), B3.z(item)) + offset, B3.z(item));
 	}
 
+	// ---------------------------------------------------------------- painted terrains
+
+	private static Terrain3D painted(Object3D o) {
+		return o == null || o.terrain == null || o.terrain.data == null ? null : o.terrain;
+	}
+
+	/** Digs a soft hole (depth m, negative = a mound) at world x, z on a terrain; collisions follow. */
+	public static void terrainDig(Object terrain, float x, float z, float radius, float depth) {
+		Object3D o = B3.o(terrain);
+		Terrain3D t = painted(o);
+		if (t == null || radius <= 0) return;
+		float[] uv = new float[2];
+		t.uvAt(o, x, 0, z, uv);
+		float sx = Math.abs(o.scale.x), sz = Math.abs(o.scale.z), hm = Math.max(0.01f, t.maxHeight * Math.abs(o.scale.y));
+		int res = t.res, n = res + 1;
+		float ru = radius / sx, rv = radius / sz;
+		int i0 = Math.max(0, (int) ((uv[0] - ru) * res) - 1), i1 = Math.min(res, (int) ((uv[0] + ru) * res) + 1);
+		int j0 = Math.max(0, (int) ((uv[1] - rv) * res) - 1), j1 = Math.min(res, (int) ((uv[1] + rv) * res) + 1);
+		if (i0 > i1 || j0 > j1) return;
+		for (int j = j0; j <= j1; j++)
+			for (int i = i0; i <= i1; i++) {
+				float du = ((float) i / res - uv[0]) / ru, dv = ((float) j / res - uv[1]) / rv;
+				float r = (float) Math.sqrt(du * du + dv * dv);
+				if (r >= 1) continue;
+				float w = (float) (0.5 + 0.5 * Math.cos(r * Math.PI));
+				t.h[j * n + i] -= depth * w / hm;
+			}
+		t.heightsChanged(i0, j0, i1, j1);
+		if (o.rigid != null && o.world != null) o.createBody();
+	}
+
+	/** Paints a layer (1..4) of a terrain around world x, z. */
+	public static void terrainPaint(Object terrain, float x, float z, float radius, int layer) {
+		Object3D o = B3.o(terrain);
+		Terrain3D t = painted(o);
+		if (t == null || !t.painted) return;
+		float[] uv = new float[2];
+		if (!t.uvAt(o, x, 0, z, uv)) return;
+		if (TerrainEdit.paint(t, o, layer - 1, uv[0], uv[1], radius, 1, 0.5f, 1)) t.splatChanged();
+	}
+
+	/** Adds a tree / rock... ("tree_round", "rock", "builtin:bush" or a model "/tree.glb") at world x, z. */
+	public static void terrainPlant(Object terrain, String kind, float x, float z, float scale) {
+		Object3D o = B3.o(terrain);
+		Terrain3D t = painted(o);
+		if (t == null || !t.painted || kind == null || kind.length() == 0) return;
+		float[] uv = new float[2];
+		if (!t.uvAt(o, x, 0, z, uv)) return;
+		String k = kind.startsWith("/") || kind.startsWith("builtin:") ? kind : "builtin:" + kind;
+		int p = t.data.proto(k);
+		t.data.inst.add(new TerrainData.Inst(p, uv[0], uv[1], com.badlogic.gdx.math.MathUtils.random(360f), scale <= 0 ? 1 : scale, com.badlogic.gdx.math.MathUtils.random(1 << 30)));
+		t.data.revision++;
+		if (t.foliage != null) t.foliage.instancesChanged();
+		if (o.rigid != null && o.world != null && t.data.protos.get(p).collide > 0) o.createBody();
+	}
+
+	/** Removes the trees / rocks / objects of a terrain within radius of world x, z. */
+	public static void terrainClear(Object terrain, float x, float z, float radius) {
+		Object3D o = B3.o(terrain);
+		Terrain3D t = painted(o);
+		if (t == null || !t.painted) return;
+		float[] uv = new float[2];
+		t.uvAt(o, x, 0, z, uv);
+		if (TerrainEdit.erase(t, o, -1, uv[0], uv[1], radius) > 0 && o.rigid != null && o.world != null) o.createBody();
+	}
+
+	/** Slope of a terrain at world x, z: 0 flat .. 1 vertical. */
+	public static float groundSlope(Object terrain, float x, float z) {
+		Object3D o = B3.o(terrain);
+		Terrain3D t = painted(o);
+		if (t == null) return 0;
+		float[] uv = new float[2];
+		t.uvAt(o, x, 0, z, uv);
+		return t.data.slope(uv[0], uv[1], Math.abs(o.scale.x), Math.abs(o.scale.z), t.maxHeight * Math.abs(o.scale.y));
+	}
+
+	/** The most painted layer (1..4) of a terrain at world x, z (footstep sounds, speed on roads...). */
+	public static int groundLayer(Object terrain, float x, float z) {
+		Object3D o = B3.o(terrain);
+		Terrain3D t = painted(o);
+		if (t == null || !t.painted) return 1;
+		float[] uv = new float[2];
+		t.uvAt(o, x, 0, z, uv);
+		int best = 0;
+		float bw = -1;
+		for (int l = 0; l < 4; l++) {
+			float w = t.data.weight(l, uv[0], uv[1]);
+			if (w > bw) {
+				bw = w;
+				best = l;
+			}
+		}
+		return best + 1;
+	}
+
+	/** This element bends the grass around it (radius m, 0 = stop). The player controllers do it by themselves. */
+	public static void grassBender(Object item, float radius) {
+		Object3D o = B3.o(item);
+		if (o == null) return;
+		if (radius <= 0) {
+			Foliage3D.bendPos.set(0, -9999, 0);
+			Foliage3D.bender = null;
+			return;
+		}
+		Foliage3D.bender = o;
+		Foliage3D.bendRadius = radius;
+	}
+
+	/** A new random world on a terrain: biome MEADOW FOREST AUTUMN DESERT SNOW TROPICAL, shape HILLS MOUNTAINS ISLAND VALLEY PLAINS CANYON. */
+	public static void generateTerrain(Object terrain, String biome, String shape, int seed) {
+		Object3D o = B3.o(terrain);
+		if (o == null || o.terrain == null) return;
+		TerrainGen.Settings s = new TerrainGen.Settings();
+		s.width = Math.abs(o.scale.x);
+		s.length = Math.abs(o.scale.z);
+		s.height = Math.max(1, o.def.Terrain_Height);
+		s.biome = biome == null ? "MEADOW" : biome.toUpperCase();
+		s.shape = shape == null ? "HILLS" : shape.toUpperCase();
+		s.seed = seed;
+		float area = s.width * s.length / 14400f;
+		s.trees = (int) (120 * area);
+		s.bushes = (int) (80 * area);
+		s.rocks = (int) (50 * area);
+		s.flowers = (int) (150 * area);
+		TerrainGen.Result r = TerrainGen.generate(s);
+		String path = o.def.Terrain_Data != null && o.def.Terrain_Data.length() > 0 ? o.def.Terrain_Data : "/runtime_" + o.getName() + ".s2t";
+		TerrainStore.put(path, r.data);
+		o.def.Terrain_Data = path;
+		for (com.badlogic.gdx.utils.ObjectMap.Entry<String, String> e : r.props.entries()) {
+			if (e.key.startsWith("Scale") || e.key.equals("Terrain Height")) continue;
+			try {
+				java.lang.reflect.Field f = com.star4droid.star2d.ElementDefs.Object3DDef.class.getField(e.key.replace(' ', '_'));
+				if (f.getType() == float.class) f.setFloat(o.def, Float.parseFloat(e.value));
+				else if (f.getType() == String.class) f.set(o.def, e.value);
+			} catch (Exception ignored) {
+			}
+		}
+		if (o.rigid != null && o.world != null) o.world.physics().removeBody(o);
+		o.buildModel();
+		if (o.world != null && o.world.physicsAllowed() && !"NONE".equals(o.def.Body)) o.createBody();
+	}
+
 	public static float distanceXZ(Object a, Object b) {
 		float dx = B3.x(a) - B3.x(b), dz = B3.z(a) - B3.z(b);
 		return (float) Math.sqrt(dx * dx + dz * dz);

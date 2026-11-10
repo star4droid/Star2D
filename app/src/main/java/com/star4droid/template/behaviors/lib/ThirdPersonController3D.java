@@ -61,6 +61,8 @@ public class ThirdPersonController3D extends Behavior {
 	public float jumpSpeed = 5f;
 	@Param(desc = "Body radius used to stop at walls when it has no DYNAMIC body.", unit = "m", min = 0.05, max = 3, step = 0.05)
 	public float radius = 0.35f;
+	@Param(desc = "Steepest slope it can walk up (0 = any): hills of a terrain stop it.", unit = "deg", min = 0, max = 89, step = 1)
+	public float maxSlope = 0;
 	@Param(desc = "Extra heading of the model: 180 when the model faces +Z instead of -Z.", unit = "deg", min = -180, max = 180)
 	public float modelYawOffset = 0;
 
@@ -142,6 +144,8 @@ public class ThirdPersonController3D extends Behavior {
 		if (o == null) return;
 		if (o.isDynamic()) o.lockRotation3(true, true, true);
 		heading = o.getYaw3() - modelYawOffset;
+		// the player walks through the grass of painted terrains: it bends away
+		if (com.star4droid.template.d3.Foliage3D.bender == null) com.star4droid.template.d3.Foliage3D.bender = o;
 		if (jumpButton != null) jumpL = Support3D.onTap(jumpButton, new Runnable() {
 			@Override
 			public void run() {
@@ -227,6 +231,7 @@ public class ThirdPersonController3D extends Behavior {
 			if (mover.jump(item, jumpSpeed)) fire("onJump");
 		}
 		jumpQueued = false;
+		mover.maxSlope = maxSlope;
 		mover.step(w, item, vx, vz, dt, Support3D.Mover.feetOffset(item, 0), radius, true);
 		if (mover.grounded && !wasGrounded) fire("onLand");
 		wasGrounded = mover.grounded;

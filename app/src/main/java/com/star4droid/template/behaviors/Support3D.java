@@ -224,6 +224,8 @@ public final class Support3D {
 		public float vy;
 		public boolean grounded = true;
 		public float stepHeight = 0.35f;
+		/** Steepest ground it walks up (degrees, 0 = any): hills / cliffs of terrains stop it. */
+		public float maxSlope = 0;
 		/** Height of the feet when no ground is found at all (an empty scene): the start height. */
 		public float floorY = Float.NaN;
 		private float coyote;
@@ -287,7 +289,17 @@ public final class Support3D {
 			float nx = p.x + mx, nz = p.z + mz;
 			float ny = feetY + vy * dt;
 			float search = stepHeight + Math.max(0.6f, -vy * dt + 0.2f);
-			float ground = groundY(w, nx, feetY + stepHeight, nz, search, o);
+			float ground;
+			if (maxSlope > 0 && grounded && (mx != 0 || mz != 0)) {
+				// too steep uphill: test a bit ahead (a short step would hide the slope), stay where it is
+				float len = (float) Math.sqrt(mx * mx + mz * mz), k = Math.max(len, 0.25f) / len;
+				float ahead = groundY(w, p.x + mx * k, feetY + 3f, p.z + mz * k, 3f + search, o);
+				if (!Float.isNaN(ahead) && ahead - feetY > Math.max(len, 0.25f) * (float) Math.tan(Math.toRadians(maxSlope))) {
+					nx = p.x;
+					nz = p.z;
+				}
+			}
+			ground = groundY(w, nx, feetY + stepHeight, nz, search, o);
 			if (Float.isNaN(ground) && (w == null || !w.hasPhysics()) && !hasTerrain(w)) ground = floorY;
 			boolean wasGrounded = grounded;
 			if (!Float.isNaN(ground) && ny <= ground + (wasGrounded && vy <= 0 ? stepHeight : 0.001f) && vy <= 0.001f) {

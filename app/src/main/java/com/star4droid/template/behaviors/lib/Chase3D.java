@@ -21,6 +21,8 @@ public class Chase3D extends Behavior {
 	@Header("Target")
 	@Param(desc = "Who to chase (empty = the main camera: the first-person player).")
 	public PlayerItem target;
+	@Param(desc = "Chases the nearest living element whose name starts with one of these (comma separated, e.g. Hero for a party of heroes). Replaces Target.")
+	public String targetNames = "";
 
 	@Header("Senses")
 	@Param(desc = "Sees the target this far.", unit = "m", min = 0, max = 500, step = 0.5)
@@ -47,6 +49,8 @@ public class Chase3D extends Behavior {
 	public boolean returnHome = true;
 	@Param(desc = "Extra heading when the model faces +Z instead of -Z.", unit = "deg", min = -180, max = 180)
 	public float modelYawOffset = 0;
+	@Param(desc = "Flies this high above the ground (drones, ghosts, bats; 0 = walks).", unit = "m", min = 0, max = 100, step = 0.1)
+	public float flyHeight = 0;
 
 	@Header("Attack")
 	@Param(desc = "Attacks when the target is this close.", unit = "m", min = 0, max = 50, step = 0.05)
@@ -133,6 +137,27 @@ public class Chase3D extends Behavior {
 		return !Support3D.blocked(w, eye, aim, o, target);
 	}
 
+	private final GameplaySupport.NameMatcher names = new GameplaySupport.NameMatcher();
+	private float scanT;
+
+	private Object3D nearestNamed(World3D w, Object3D o) {
+		names.set(targetNames);
+		Object3D best = null;
+		float bd = Float.MAX_VALUE;
+		for (int i = 0; i < w.objects.size; i++) {
+			Object3D c = w.objects.get(i);
+			if (c == o || !c.isVisible() || !names.matches(c.getName()) || !Behavior.alive(c)) continue;
+			com.star4droid.template.behaviors.Damageable dmg = GameplaySupport.damageable(c);
+			if (dmg != null && dmg.isDead()) continue;
+			float d = c.position.dst2(o.position);
+			if (d < bd) {
+				bd = d;
+				best = c;
+			}
+		}
+		return best;
+	}
+
 	private void lose() {
 		chasing = false;
 		goingHome = returnHome;
@@ -150,7 +175,16 @@ public class Chase3D extends Behavior {
 			home.set(o.position);
 		}
 		me.set(o.position);
-		boolean have = (target == null || Support3D.alive3(target)) && Support3D.posOr(target, w, tp);
+		boolean noneFound = false;
+		if (targetNames.length() > 0) {
+			scanT -= dt;
+			if (scanT <= 0 || target == null || !Support3D.alive3(target) || !(target instanceof Object3D) || !((Object3D) target).isVisible()) {
+				scanT = 0.5f;
+				target = nearestNamed(w, o);
+			}
+			noneFound = target == null;
+		}
+		boolean have = !noneFound && (target == null || Support3D.alive3(target)) && Support3D.posOr(target, w, tp);
 		if (have && target == null) tp.y -= 1.5f; // the camera is at eye height: aim at the body
 		sees = have && canSee(w, o);
 		if (cooldown > 0) cooldown -= dt;
@@ -171,10 +205,15 @@ public class Chase3D extends Behavior {
 					return;
 				}
 			}
-			float d = me.dst(tp);
+			float d = flyHeight > 0 ? (float) Math.sqrt((me.x - tp.x) * (me.x - tp.x) + (me.z - tp.z) * (me.z - tp.z)) : me.dst(tp);
 			boolean close = sees && d <= attackRange;
+			boolean ground = flyHeight <= 0;
+			if (!ground) {
+				float g = Support3D.groundY(w, last.x, Math.max(me.y, last.y) + 5, last.z, 80, o);
+				last.y = (Float.isNaN(g) ? last.y : g) + flyHeight;
+			}
 			if (close) {
-				walker.stop(w, item, dt, true, 0.35f);
+				walker.stop(w, item, dt, ground, 0.35f);
 				o.setYaw3(Support3D.approachAngle(o.getYaw3() - modelYawOffset, Support3D.yawOf(tp.x - me.x, tp.z - me.z), turnSpeed * dt) + modelYawOffset);
 				walker.setYaw(o.getYaw3() - modelYawOffset);
 				if (cooldown <= 0) {
@@ -187,21 +226,21 @@ public class Chase3D extends Behavior {
 				}
 				clips.play(o, idleClip, true, 1, 0.2f);
 			} else {
-				float left = walker.toward(w, item, last, chaseSpeed, 8, turnSpeed, dt, true, sees ? stopDistance : 0.2f, modelYawOffset, 0.35f);
+				float left = walker.toward(w, item, last, chaseSpeed, 8, turnSpeed, dt, ground, sees ? stopDistance : 0.2f, modelYawOffset, 0.35f);
 				clips.play(o, walker.speedNow > 0.2f ? runClip : idleClip, true, 1, 0.2f);
-				if (!sees && left <= 0.4f) walker.stop(w, item, dt, true, 0.35f);
+				if (!sees && left <= 0.4f) walker.stop(w, item, dt, ground, 0.35f);
 			}
 			return;
 		}
 		if (goingHome) {
-			float left = walker.toward(w, item, home, chaseSpeed * 0.45f, 5, turnSpeed, dt, true, 0, modelYawOffset, 0.35f);
+			float left = walker.toward(w, item, home, chaseSpeed * 0.45f, 5, turnSpeed, dt, flyHeight <= 0, 0, modelYawOffset, 0.35f);
 			clips.play(o, walkClip, true, 1, 0.25f);
 			if (left <= 0.4f) goingHome = false;
 			return;
 		}
 		// idle: only stand still when no other movement behavior (Patrol 3D...) drives the element
 		if (Support3D.groupBehaviors(item, "movement", this).isEmpty()) {
-			walker.stop(w, item, dt, true, 0.35f);
+			walker.stop(w, item, dt, flyHeight <= 0, 0.35f);
 			clips.play(o, idleClip, true, 1, 0.25f);
 		}
 	}

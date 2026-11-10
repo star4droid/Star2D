@@ -43,6 +43,8 @@ public class Foliage3D implements RenderableProvider {
 	/** Something walking through the grass (x, y, z, radius m): the blades bend away. Set by the player controllers. */
 	public static final Vector3 bendPos = new Vector3(0, -9999, 0);
 	public static float bendRadius = 0.9f;
+	/** Element that bends the grass (its feet), null = bendPos as set. */
+	public static Object3D bender;
 	public static float wind = 1f;
 
 	final Terrain3D t;
@@ -467,6 +469,10 @@ public class Foliage3D implements RenderableProvider {
 		this.cam = cam;
 		shadowPass = false;
 		frame++;
+		if (bender != null) {
+			if (bender.world == null || !bender.isVisible()) bender = null;
+			else bendPos.set(bender.position.x, bender.position.y, bender.position.z);
+		}
 		batch.render(this, env);
 	}
 

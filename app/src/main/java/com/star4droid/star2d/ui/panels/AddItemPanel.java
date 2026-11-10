@@ -68,7 +68,8 @@ public class AddItemPanel implements PanelHost.Panel {
     };
     private static final String[][] SPECIAL_3D = {
             {"s3_model", "3D model", "Model", "Import a .glb / .gltf model (with animations).", "استورد نموذج ‎.glb / .gltf (مع الحركات).", "OBJ3D", "MODEL"},
-            {"s3_terrain", "Terrain", "Terrain", "Hills and valleys (noise or height image).", "تلال ووديان (ضوضاء أو صورة ارتفاعات).", "OBJ3D", "TERRAIN"},
+            {"s3_terrain", "Terrain", "Terrain", "Hills and valleys: sculpt, paint, trees (Edit terrain).", "تلال ووديان: نحت وتلوين وأشجار (تعديل التضاريس).", "OBJ3D", "TERRAIN"},
+            {"s3_gen_terrain", "Generated world", "Terrain", "Random terrain with trees, grass, a road and water.", "أرض عشوائية بأشجار وعشب وطريق وماء.", "OBJ3D", "TERRAIN_GEN"},
             {"s3_water", "Water", "Water", "Animated water with waves; things can float.", "ماء متحرك بأمواج، والأشياء تطفو عليه.", "OBJ3D", "WATER"},
             {"s3_empty", "Empty", "Cube", "Invisible point: parent, spawn point, target.", "نقطة غير مرئية: أب، نقطة ظهور، هدف.", "OBJ3D", "EMPTY"},
     };
@@ -278,6 +279,16 @@ public class AddItemPanel implements PanelHost.Panel {
             LinearLayout card = card(c, it, ar);
             card.setOnClickListener(v -> {
                 shell.panels.hide();
+                if ("TERRAIN_GEN".equals(it[6])) {
+                    Bridge.query(() -> {
+                        Bridge.controls().actionAdd3D("OBJ3D", "TERRAIN");
+                        return Boolean.TRUE;
+                    }, ok -> {
+                        com.star4droid.star2d.ui.TerrainPanel.openGenerator = true;
+                        com.star4droid.star2d.ui.TerrainPanel.open(shell);
+                    });
+                    return;
+                }
                 Bridge.gl(() -> {
                     if ("CAMERAVIEW".equals(it[5])) Bridge.controls().actionAddCameraView();
                     else Bridge.controls().actionAdd3D(it[5], it[6].isEmpty() ? null : it[6]);

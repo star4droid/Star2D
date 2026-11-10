@@ -38,6 +38,8 @@ import java.util.ArrayList;
  */
 public class TerrainPanel extends FrameLayout {
 	public static TerrainPanel current;
+	/** Open the generator right away ("Generated world" in the add menu). */
+	public static boolean openGenerator;
 
 	final EditorShell shell;
 	final Activity a;
@@ -97,6 +99,10 @@ public class TerrainPanel extends FrameLayout {
 			TerrainPanel p = new TerrainPanel(shell, info);
 			current = p;
 			shell.enterOverlay(p);
+			if (openGenerator) {
+				openGenerator = false;
+				p.post(() -> TerrainGenDialog.show(shell.activity(), p));
+			}
 		});
 	}
 

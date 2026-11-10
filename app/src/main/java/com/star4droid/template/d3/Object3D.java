@@ -1122,6 +1122,11 @@ public class Object3D extends Actor implements PlayerItem {
 		return position.y + Math.min(localBounds().min.y * scale.y, localBounds().max.y * scale.y);
 	}
 
+	/** Height (meters) of the highest point of the element (bounds x scale, rotation ignored). */
+	public float getTopY() {
+		return position.y + Math.max(localBounds().min.y * scale.y, localBounds().max.y * scale.y);
+	}
+
 	/** True when physics moves it (a DYNAMIC body). */
 	public boolean isDynamic() {
 		return rigid != null && "DYNAMIC".equals(def.Body);

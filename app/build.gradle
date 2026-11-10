@@ -48,7 +48,10 @@ android {
         // notice is shown instead). -PADMOB_TEST=true (or env) uses Google's test ids to try ads locally.
         def prop = { String key -> (project.findProperty(key) ?: System.getenv(key) ?: '').toString().trim() }
         def testAds = prop('ADMOB_TEST') == 'true'
-        def adId = { String key, String test -> prop(key) ?: (testAds ? test : '') }
+        // order: -P/env value, then Google test ids (ADMOB_TEST=true), then the project's own AdMob ids
+        def real = [ADMOB_APP_ID: 'ca-app-pub-6867422220990629~5865152801', ADMOB_BANNER_ID: 'ca-app-pub-6867422220990629/1366845451',
+                    ADMOB_INTERSTITIAL_ID: 'ca-app-pub-6867422220990629/8706938560', ADMOB_REWARDED_ID: 'ca-app-pub-6867422220990629/5216471455']
+        def adId = { String key, String test -> prop(key) ?: (testAds ? test : real[key] ?: '') }
         def appId = adId('ADMOB_APP_ID', 'ca-app-pub-3940256099942544~3347511713')
         // the SDK needs some app id in the manifest to start; it is only initialised when ads are enabled
         manifestPlaceholders = [admobAppId: appId ?: 'ca-app-pub-3940256099942544~3347511713']

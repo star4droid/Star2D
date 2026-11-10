@@ -16,12 +16,11 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.star4droid.star2d.evo.R;
-import com.star4droid.star2d.ui.Dialogs;
 import com.star4droid.star2d.ui.Tr;
 import com.star4droid.star2d.ui.Ui;
 
 /**
- * Purchase flow + account dialogs: the "Subscribe now" summary dialog, the sign-in dialog, opening Stripe Checkout,
+ * Purchase flow + account dialogs: the "Subscribe now" summary dialog, the sign-in / create-account dialogs, opening URLs,
  * and the "fake" progress shown to users without credits before telling them they have none.
  */
 public final class Paywall {
@@ -72,7 +71,7 @@ public final class Paywall {
         }
     }
 
-    /** Sign in with email + password (or paste an API key); runs done on success. */
+    /** Sign in with email + password; runs done on success. "Create an account" opens {@link #register}. */
     public static void login(Context c, Runnable done) {
         LinearLayout col = Ui.column(c);
         col.setPadding(Ui.dp(c, 20), Ui.dp(c, 6), Ui.dp(c, 20), 0);
@@ -84,11 +83,8 @@ public final class Paywall {
         col.addView(email, Ui.matchWrap());
         col.addView(pass, Ui.margins(Ui.matchWrap(), c, 0, 8, 0, 0));
         col.addView(status);
-        TextView key = Ui.text(c, Tr.t("s3d_paste_key", "Paste an API key instead"), 13, Ui.ACCENT);
-        key.setPadding(0, Ui.dp(c, 12), 0, Ui.dp(c, 4));
-        col.addView(key);
         TextView reg = Ui.text(c, Tr.t("s3d_register", "Create an account"), 13, Ui.ACCENT);
-        reg.setPadding(0, Ui.dp(c, 8), 0, Ui.dp(c, 4));
+        reg.setPadding(0, Ui.dp(c, 12), 0, Ui.dp(c, 4));
         col.addView(reg);
         AlertDialog d = new AlertDialog.Builder(c)
                 .setTitle(Tr.t("s3d_signin", "Sign in to SUDA3D"))
@@ -96,44 +92,67 @@ public final class Paywall {
                 .setPositiveButton(Tr.t("s3d_signin_btn", "Sign in"), null)
                 .setNegativeButton(Tr.t("cancel", "Cancel"), null)
                 .create();
-        key.setOnClickListener(v -> {
-            d.dismiss();
-            Dialogs.input(c, Tr.t("s3d_api_key", "API key"), Tr.t("s3d_api_key_hint", "Create a key on the SUDA3D website (Account → API keys) and paste it here."), "", null, k -> {
-                Suda3D.setKey(c, k, "");
-                Suda3D.IO.execute(() -> {
-                    try {
-                        Suda3D.me(c);
-                        Ui.ui(() -> { if (done != null) done.run(); });
-                    } catch (Exception e) {
-                        Suda3D.logout(c);
-                        Ui.ui(() -> Ui.toast(c, Suda3D.message(e)));
-                    }
-                });
-            });
-        });
-        reg.setOnClickListener(v -> {
-            String em = email.getText().toString().trim(), pw = pass.getText().toString();
-            if (em.isEmpty() || pw.length() < 8) { status.setText(Tr.t("s3d_register_hint", "Enter an email and a password (8+ characters), then tap again.")); return; }
-            status.setText("…");
-            Suda3D.IO.execute(() -> {
-                try {
-                    Suda3D.register(c, em, pw);
-                    Suda3D.login(c, em, pw);
-                    Ui.ui(() -> { status.setTextColor(Ui.SUCCESS); status.setText(Tr.t("s3d_register_done", "Account created. You are signed in.")); d.dismiss(); if (done != null) done.run(); });
-                } catch (Exception e) {
-                    Ui.ui(() -> { status.setTextColor(Ui.DANGER); status.setText(Suda3D.message(e)); });
-                }
-            });
-        });
+        reg.setOnClickListener(v -> { d.dismiss(); register(c, email.getText().toString().trim(), done); });
         d.setOnShowListener(x -> d.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
             String em = email.getText().toString().trim(), pw = pass.getText().toString();
-            if (em.isEmpty() || pw.isEmpty()) return;
+            if (em.isEmpty() || pw.isEmpty()) { status.setTextColor(Ui.DANGER); status.setText(Tr.t("s3d_fill_email_pass", "Enter your email and password.")); return; }
             status.setTextColor(Ui.TEXT_3);
             status.setText(Tr.t("s3d_signing_in", "Signing in…"));
             Suda3D.IO.execute(() -> {
                 try {
                     Suda3D.login(c, em, pw);
+                    SudaBilling.recover(c);
                     Ui.ui(() -> { d.dismiss(); if (done != null) done.run(); });
+                } catch (Exception e) {
+                    Ui.ui(() -> { status.setTextColor(Ui.DANGER); status.setText(Suda3D.message(e)); });
+                }
+            });
+        }));
+        d.show();
+    }
+
+    /** Create an account: email + password + confirm password (must match, 8+ characters), then signs in. */
+    public static void register(Context c, String emailValue, Runnable done) {
+        LinearLayout col = Ui.column(c);
+        col.setPadding(Ui.dp(c, 20), Ui.dp(c, 6), Ui.dp(c, 20), 0);
+        EditText email = Ui.input(c, emailValue == null ? "" : emailValue, Tr.t("s3d_email", "Email"));
+        email.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS);
+        EditText pass = Ui.input(c, "", Tr.t("s3d_password", "Password"));
+        pass.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        EditText pass2 = Ui.input(c, "", Tr.t("s3d_password_confirm", "Confirm password"));
+        pass2.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        TextView status = Ui.text(c, "", 12.5f, Ui.DANGER);
+        col.addView(email, Ui.matchWrap());
+        col.addView(pass, Ui.margins(Ui.matchWrap(), c, 0, 8, 0, 0));
+        col.addView(pass2, Ui.margins(Ui.matchWrap(), c, 0, 8, 0, 0));
+        col.addView(status);
+        TextView back = Ui.text(c, Tr.t("s3d_have_account", "I already have an account"), 13, Ui.ACCENT);
+        back.setPadding(0, Ui.dp(c, 12), 0, Ui.dp(c, 4));
+        col.addView(back);
+        AlertDialog d = new AlertDialog.Builder(c)
+                .setTitle(Tr.t("s3d_register", "Create an account"))
+                .setView(col)
+                .setPositiveButton(Tr.t("s3d_register_btn", "Create account"), null)
+                .setNegativeButton(Tr.t("cancel", "Cancel"), null)
+                .create();
+        back.setOnClickListener(v -> { d.dismiss(); login(c, done); });
+        d.setOnShowListener(x -> d.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+            String em = email.getText().toString().trim(), pw = pass.getText().toString(), pw2 = pass2.getText().toString();
+            status.setTextColor(Ui.DANGER);
+            if (em.isEmpty() || !em.contains("@")) { status.setText(Tr.t("s3d_bad_email", "Enter a valid email address.")); return; }
+            if (pw.length() < 8) { status.setText(Tr.t("s3d_pass_short", "The password needs at least 8 characters.")); return; }
+            if (!pw.equals(pw2)) { status.setText(Tr.t("s3d_pass_mismatch", "The passwords do not match.")); return; }
+            status.setTextColor(Ui.TEXT_3);
+            status.setText(Tr.t("s3d_registering", "Creating your account…"));
+            Suda3D.IO.execute(() -> {
+                try {
+                    Suda3D.register(c, em, pw);
+                    Suda3D.login(c, em, pw);
+                    Ui.ui(() -> {
+                        Ui.toast(c, Tr.t("s3d_register_done", "Account created. You are signed in."));
+                        d.dismiss();
+                        if (done != null) done.run();
+                    });
                 } catch (Exception e) {
                     Ui.ui(() -> { status.setTextColor(Ui.DANGER); status.setText(Suda3D.message(e)); });
                 }

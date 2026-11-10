@@ -46,6 +46,7 @@ public class SudaPlanPanel implements PanelHost.Panel {
     @Override public void onShown() {
         Suda3D.Balance.listen(onBalance);
         Jobs.init(activity);
+        SudaBilling.recover(activity);
         if (Suda3D.loggedIn(activity)) Suda3D.IO.execute(() -> { try { Suda3D.me(activity); } catch (Exception ignored) {} });
     }
 
@@ -69,7 +70,7 @@ public class SudaPlanPanel implements PanelHost.Panel {
         acc.addView(head);
         if (in) {
             String em = Suda3D.email(c);
-            acc.addView(Ui.text(c, em.isEmpty() ? Tr.t("s3d_signed_in_key", "Signed in with an API key") : em, 13, Ui.TEXT_3));
+            acc.addView(Ui.text(c, em, 13, Ui.TEXT_3));
             TextView bal = Ui.text(c, Suda3D.fmtCredits(Suda3D.credits(c)) + " " + Tr.t("s3d_credits", "credits"), 26, SudaUi.ORANGE);
             bal.setTypeface(Typeface.DEFAULT_BOLD);
             bal.setPadding(0, Ui.dp(c, 8), 0, 0);
@@ -128,13 +129,6 @@ public class SudaPlanPanel implements PanelHost.Panel {
         col.addView(row(c, R.drawable.ic_s2_progress, Tr.t("s3d_running", "Running generations"), v -> QuickGen.showRunning(activity)));
         col.addView(row(c, R.drawable.ic_s2_history, Tr.t("s3d_history", "History"), v -> activity.startActivity(new Intent(activity, HistoryActivity.class))));
 
-        // advanced
-        col.addView(Ui.sectionLabel(c, Tr.t("s3d_advanced", "Advanced")));
-        col.addView(row(c, R.drawable.ic_s2_link, Tr.t("s3d_server", "Server") + ": " + Suda3D.baseUrl(c), v ->
-                Dialogs.input(c, Tr.t("s3d_server", "Server"), Tr.t("s3d_server_hint", "Leave empty for the default server."), Suda3D.baseUrl(c), null, u -> {
-                    Suda3D.setBaseUrl(c, u.equals(Suda3D.DEFAULT_BASE_URL) ? "" : u);
-                    build();
-                })));
     }
 
     private View row(Context c, int icon, String label, View.OnClickListener l) {

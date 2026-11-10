@@ -78,5 +78,7 @@ public class star2dApp extends Application {
         
            
 		super.onCreate();
+		// SUDA3D: re-send Google Play purchases the server has not confirmed yet (it credits + consumes them)
+		try { com.star4droid.star2d.suda.SudaBilling.recover(this); } catch (Throwable ignored) {}
 	}
 }

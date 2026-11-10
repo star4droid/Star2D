@@ -62,7 +62,7 @@ import java.util.zip.ZipOutputStream;
  * whole upstream chain when needed), tracks them with {@link Jobs}, downloads results into files/ (resumable), and
  * keeps undo / redo snapshots of the graph.
  */
-public class WorkspaceActivity extends Activity implements NodeGraphView.Host, Jobs.Listener, Downloads.Listener, OutputView.SafHost {
+public class WorkspaceActivity extends Activity implements NodeGraphView.Host, Jobs.Listener, Downloads.Listener, OutputView.SafHost, NodePalette.Host {
     private static final int REQ_IMAGE = 51, REQ_MODEL = 52, REQ_SAVE = 53, REQ_M2M = 54;
     private String m2mNode;
     private File dir, files;
@@ -76,8 +76,13 @@ public class WorkspaceActivity extends Activity implements NodeGraphView.Host, J
     private final Runnable saver = this::saveNow;
     private Graph.Node pickFor;
     private File pendingSave;
-    /** Nodes waiting to run after the current one (chain run). */
-    private final ArrayDeque<String> chain = new ArrayDeque<>();
+    /**
+     * Chain runs, several at a time: key = the node whose job is running now, value = the nodes to run after it.
+     * Kept across activity re-creation (rotation) via the saved instance state.
+     */
+    private final Map<String, ArrayDeque<String>> chains = new HashMap<>();
+    private NodePalette palette;
+    private boolean dead;
     private final Map<String, Bitmap> thumbs = new HashMap<>();
 
     @Override
@@ -96,7 +101,7 @@ public class WorkspaceActivity extends Activity implements NodeGraphView.Host, J
                 SudaUi.balanceChip(this),
                 Ui.iconButton(this, R.drawable.ic_s2_undo, Tr.t("undo", "Undo"), v -> undo()),
                 Ui.iconButton(this, R.drawable.ic_s2_redo, Tr.t("redo", "Redo"), v -> redo()),
-                Ui.iconButton(this, R.drawable.ic_s2_add, Tr.t("s3d_add_node", "Add node"), v -> addMenu(null, null, Float.NaN, 0)),
+                Ui.iconButton(this, R.drawable.ic_s2_add, Tr.t("s3d_add_node", "Add node"), v -> palette.setOpen(!palette.isOpen())),
                 Ui.iconButton(this, R.drawable.ic_s2_more, Tr.t("more", "More"), v -> moreMenu()));
         title = (TextView) bar.getChildAt(1);
         title.setOnClickListener(v -> Dialogs.input(this, Tr.t("rename", "Rename"), null, graph.name, null, n -> {
@@ -117,13 +122,21 @@ public class WorkspaceActivity extends Activity implements NodeGraphView.Host, J
         slp.topMargin = Ui.dp(this, 10);
         stage.addView(selBar, slp);
         root.addView(stage, new LinearLayout.LayoutParams(-1, 0, 1));
+        palette = new NodePalette(this, this);
+        root.addView(palette, Ui.matchWrap());
         SudaUi.setup(this, root);
         view.setGraph(graph, this);
-        view.post(view::frameAll);
-        // resume jobs that were running when the workspace was closed
-        for (Graph.Node n : graph.nodes)
-            if (!n.jobId.isEmpty() && (Graph.RUNNING.equals(n.state) || Graph.QUEUED.equals(n.state)))
-                Jobs.resume(this, n.jobId, n.op(), n.def().title(), tag(n));
+        NodePalette.acceptDrops(view, this);
+        if (b != null && b.containsKey("zoom")) view.setViewport(b.getFloat("zoom"), b.getFloat("panX"), b.getFloat("panY"));
+        else view.post(view::frameAll);
+        if (b != null) restoreChains(b.getString("chains", ""));
+        // resume jobs that were running when the workspace was closed (each node polls its own job)
+        Jobs.init(this);
+        for (Graph.Node n : graph.nodes) {
+            if (!NodeGraphView.busy(n)) continue;
+            if (!n.jobId.isEmpty()) Jobs.resume(this, n.jobId, n.op(), n.def().title(), tag(n));
+            else adoptOrReset(n, false);
+        }
         if (Suda3D.loggedIn(this)) Suda3D.IO.execute(() -> { try { Suda3D.me(this); } catch (Exception ignored) {} });
         Ops.load(this, () -> view.invalidate());
     }
@@ -144,10 +157,73 @@ public class WorkspaceActivity extends Activity implements NodeGraphView.Host, J
         saveNow();
     }
 
+    @Override protected void onSaveInstanceState(Bundle out) {
+        super.onSaveInstanceState(out);
+        out.putFloat("zoom", view.zoom());
+        out.putFloat("panX", view.panX());
+        out.putFloat("panY", view.panY());
+        JsonObject o = new JsonObject();
+        for (Map.Entry<String, ArrayDeque<String>> e : chains.entrySet()) {
+            JsonArray a = new JsonArray();
+            for (String id : e.getValue()) a.add(id);
+            o.add(e.getKey(), a);
+        }
+        out.putString("chains", o.toString());
+    }
+
+    @Override protected void onDestroy() {
+        // a re-created activity owns graph.json now: late callbacks of this one must not overwrite it
+        saveNow();
+        dead = true;
+        h.removeCallbacksAndMessages(null);
+        super.onDestroy();
+    }
+
+    private void restoreChains(String json) {
+        try {
+            if (json == null || json.isEmpty()) return;
+            JsonObject o = com.google.gson.JsonParser.parseString(json).getAsJsonObject();
+            for (Map.Entry<String, JsonElement> e : o.entrySet()) {
+                ArrayDeque<String> q = new ArrayDeque<>();
+                for (JsonElement x : e.getValue().getAsJsonArray()) q.add(x.getAsString());
+                chains.put(e.getKey(), q);
+            }
+        } catch (Exception ignored) {}
+    }
+
+    /**
+     * A node saved as queued without a job id (the job was being created when the activity was re-created): take the
+     * job created for it since, or set it back to Ready when none shows up.
+     */
+    private void adoptOrReset(Graph.Node n, boolean reset) {
+        Jobs.Job best = null;
+        for (Jobs.Job j : Jobs.all())
+            if (tag(n).equals(j.tag) && j.created >= n.queuedAt - 5000 && (best == null || j.created > best.created)) best = j;
+        if (best != null) {
+            n.jobId = best.id;
+            if (best.credits >= 0) n.credits = best.credits;
+            onJob(best);
+            if (!best.finished()) Jobs.refresh(best.id);
+            return;
+        }
+        if (reset || System.currentTimeMillis() - n.queuedAt > 120_000L) {
+            n.state = Graph.IDLE;
+            n.progress = 0;
+            changed(false);
+            return;
+        }
+        String id = n.id;
+        h.postDelayed(() -> {
+            Graph.Node x = graph.node(id);
+            if (x != null && x.jobId.isEmpty() && Graph.QUEUED.equals(x.state)) adoptOrReset(x, true);
+        }, 45_000L);
+    }
+
     // ------------------------------------------------------------ persistence, undo
 
     @Override
     public void changed(boolean structural) {
+        if (dead) return;
         String now = graph.toJson().toString();
         if (!now.equals(current)) {
             undo.push(current);
@@ -162,6 +238,7 @@ public class WorkspaceActivity extends Activity implements NodeGraphView.Host, J
 
     private void saveNow() {
         h.removeCallbacks(saver);
+        if (dead) return;
         FileUtil.writeFile(new File(dir, "graph.json").getPath(), graph.toJson().toString());
     }
 
@@ -217,6 +294,16 @@ public class WorkspaceActivity extends Activity implements NodeGraphView.Host, J
                 }).setNegativeButton(Tr.t("cancel", "Cancel"), null).create();
         d.setOnCancelListener(x -> changed(true));
         d.show();
+    }
+
+    @Override
+    public void addNode(Graph.Def def, float wx, float wy) {
+        PointF c = Float.isNaN(wx) ? view.center() : new PointF(wx, wy);
+        if (Float.isNaN(wx)) { // stagger nodes added at the same centre
+            for (Graph.Node o : graph.nodes) if (Math.abs(o.x - c.x) < 8 && Math.abs(o.y - c.y) < 8) { c.x += 24; c.y += 24; }
+        }
+        graph.add(def.type, c.x, c.y);
+        changed(true);
     }
 
     @Override
@@ -462,8 +549,9 @@ public class WorkspaceActivity extends Activity implements NodeGraphView.Host, J
         if ("preview".equals(n.type)) { previewSave(n); return; }
         if (n.def().onDevice) { runM2M(n); return; }
         if (n.def().local) return;
-        if (Graph.RUNNING.equals(n.state) || Graph.QUEUED.equals(n.state)) { Jobs.refresh(n.jobId); return; }
+        if (NodeGraphView.busy(n)) { if (!n.jobId.isEmpty()) Jobs.refresh(n.jobId); return; }
         List<Graph.Node> list = chainFor(n);
+        for (Graph.Node x : list) if (NodeGraphView.busy(x)) { Ui.toast(this, x.def().title() + ": " + Tr.t("s3d_st_running", "Generating…")); return; }
         for (Graph.Node x : list) {
             String m = missing(x);
             if (m != null) { Ui.toast(this, m); return; }
@@ -488,25 +576,31 @@ public class WorkspaceActivity extends Activity implements NodeGraphView.Host, J
                         + "\n" + Tr.t("s3d_total", "Total") + ": " + price
                         : Tr.t("s3d_price", "Price") + ": " + price;
                 Dialogs.confirm(this, n.def().title(), msg, Tr.t("s3d_generate", "Generate"), () -> {
-                    chain.clear();
-                    for (Graph.Node x : list) chain.add(x.id);
-                    runNext();
+                    for (Graph.Node x : list) if (NodeGraphView.busy(x)) return; // started meanwhile
+                    ArrayDeque<String> q = new ArrayDeque<>();
+                    for (Graph.Node x : list) q.add(x.id);
+                    runNext(q);
                 });
             });
         });
     }
 
-    private void runNext() {
-        String id = chain.poll();
+    /** Starts the first node of a chain; the rest waits in {@link #chains} until its job succeeds. */
+    private void runNext(ArrayDeque<String> q) {
+        String id = q.poll();
         if (id == null) return;
         Graph.Node n = graph.node(id);
-        if (n == null) { chain.clear(); return; }
+        if (n == null) return;
+        if (!q.isEmpty()) chains.put(id, q);
         n.state = Graph.QUEUED;
         n.progress = 0;
         n.error = "";
         markStale(n);
         n.state = Graph.QUEUED;
+        n.jobId = "";
+        n.queuedAt = System.currentTimeMillis();
         changed(false);
+        saveNow();
         String op = n.op();
         JsonObject params = Ops.toJson(Ops.get(op), n.params);
         Suda3D.IO.execute(() -> {
@@ -524,6 +618,7 @@ public class WorkspaceActivity extends Activity implements NodeGraphView.Host, J
                 JsonObject r = Suda3D.createJob(this, op, params, inputs, UUID.randomUUID().toString());
                 Jobs.Job j = Jobs.track(this, r, op, n.def().title(), tag(n));
                 runOnUiThread(() -> {
+                    if (dead) return; // the re-created activity adopts the job by its tag
                     n.jobId = j.id;
                     n.credits = j.credits;
                     n.outputs = new JsonArray();
@@ -531,7 +626,8 @@ public class WorkspaceActivity extends Activity implements NodeGraphView.Host, J
                 });
             } catch (Exception e) {
                 runOnUiThread(() -> {
-                    chain.clear();
+                    if (dead) return;
+                    chains.remove(n.id);
                     n.state = Graph.FAILED;
                     n.error = Suda3D.message(e);
                     changed(false);
@@ -591,7 +687,9 @@ public class WorkspaceActivity extends Activity implements NodeGraphView.Host, J
 
     @Override
     public void onJob(Jobs.Job j) {
-        for (Graph.Node n : graph.nodes) {
+        if (dead) return;
+        for (Graph.Node n : new ArrayList<>(graph.nodes)) {
+            if (n.jobId.isEmpty() && Graph.QUEUED.equals(n.state) && tag(n).equals(j.tag) && j.created >= n.queuedAt - 5000) n.jobId = j.id;
             if (!j.id.equals(n.jobId)) continue;
             String before = n.state;
             if (j.ok()) {
@@ -609,8 +707,8 @@ public class WorkspaceActivity extends Activity implements NodeGraphView.Host, J
                 n.progress = j.progress;
             }
             if (!before.equals(n.state) || Graph.RUNNING.equals(n.state)) changed(false);
-            if (!before.equals(n.state) && j.ok() && !chain.isEmpty()) runNext();
-            if (!before.equals(n.state) && j.finished() && !j.ok()) chain.clear();
+            if (!before.equals(n.state) && j.ok()) { ArrayDeque<String> q = chains.remove(n.id); if (q != null) runNext(q); }
+            if (!before.equals(n.state) && j.finished() && !j.ok()) chains.remove(n.id);
         }
     }
 

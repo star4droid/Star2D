@@ -3,37 +3,38 @@ package com.star4droid.star2d.suda;
 import android.app.Activity;
 import android.graphics.Typeface;
 import android.os.Bundle;
-import android.text.Editable;
-import android.text.InputType;
-import android.text.TextWatcher;
+import android.app.AlertDialog;
 import android.view.Gravity;
 import android.view.View;
-import android.widget.EditText;
 import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.star4droid.star2d.evo.R;
 import com.star4droid.star2d.ui.Tr;
 import com.star4droid.star2d.ui.Ui;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Locale;
 
 /**
- * "Buy credits" page: horizontally scrolling cards $5 / $10 / $15 / Custom (last), credits under each, on the first
- * card also how many models it pays for; feature bullets below. Buy opens Stripe Checkout in the browser; on return
- * the balance is refreshed.
+ * "Buy credits" page: horizontally scrolling cards with the credit value ($5 / $10 / $15 / $50), credits under each, on
+ * the first card also how many models it pays for; feature bullets below. A card asks for confirmation (credit value vs
+ * the Google Play price, which includes Play's fee) and opens the Google Play purchase sheet. The server credits the
+ * account ({@link SudaBilling}); nothing is credited locally.
  */
-public class BuyCreditsActivity extends Activity {
+public class BuyCreditsActivity extends Activity implements SudaBilling.Listener {
     private LinearLayout cards;
-    private TextView balance;
-    private double cheapestCredits = 20, cheapestUsd = 0.21, minUsd = 5, maxUsd = 500;
-    private final ArrayList<double[]> packs = new ArrayList<>();
-    private boolean leftForCheckout;
+    private TextView balance, note;
+    private double cheapestCredits = 20, cheapestUsd = 0.21;
+    private int feePercent = 15;
+    private List<SudaBilling.Product> products = new ArrayList<>();
+    private Map<String, String> prices = new HashMap<>();
 
     @Override
     protected void onCreate(Bundle b) {
@@ -56,6 +57,8 @@ public class BuyCreditsActivity extends Activity {
         cards.setPadding(0, Ui.dp(this, 12), 0, Ui.dp(this, 12));
         hs.addView(cards);
         col.addView(hs, Ui.matchWrap());
+        note = Ui.text(this, "", 12, Ui.TEXT_3);
+        col.addView(note, Ui.margins(Ui.matchWrap(), this, 0, 0, 0, 8));
         col.addView(Ui.sectionLabel(this, Tr.t("s3d_features", "What you get")));
         String[] bullets = {
                 Tr.t("s3d_feat_1", "Image → 3D, Text → 3D and Text → Image from the editor"),
@@ -75,25 +78,37 @@ public class BuyCreditsActivity extends Activity {
         sv.addView(col);
         root.addView(sv, new LinearLayout.LayoutParams(-1, 0, 1));
         SudaUi.setup(this, root);
-        load(Suda3D.cachedPricing(this));
+        readPricing(Suda3D.cachedPricing(this));
+        setProducts(SudaBilling.parseProducts(null));
         Suda3D.IO.execute(() -> {
             try {
                 JsonObject p = Suda3D.pricing(this);
-                runOnUiThread(() -> load(p));
-            } catch (Exception e) {
-                runOnUiThread(() -> { if (packs.isEmpty()) load(null); });
-            }
+                runOnUiThread(() -> { readPricing(p); render(); });
+            } catch (Exception ignored) {}
+        });
+        Suda3D.IO.execute(() -> {
+            try {
+                JsonObject r = Suda3D.billingProducts(this);
+                runOnUiThread(() -> {
+                    feePercent = (int) Suda3D.num(r, "fee_note_percent", feePercent);
+                    setProducts(SudaBilling.parseProducts(r));
+                });
+            } catch (Exception ignored) {}
         });
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        SudaBilling.listen(this);
         refreshBalance();
-        if (leftForCheckout) {
-            leftForCheckout = false;
-            Ui.toast(this, Tr.t("s3d_checking_payment", "Checking your payment…"));
-        }
+        SudaBilling.recover(this);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        SudaBilling.unlisten(this);
     }
 
     private void refreshBalance() {
@@ -104,27 +119,24 @@ public class BuyCreditsActivity extends Activity {
         });
     }
 
-    private void load(JsonObject p) {
-        packs.clear();
-        if (p != null) {
-            for (JsonElement e : Suda3D.arr(p, "packs")) {
-                if (!e.isJsonObject()) continue;
-                JsonObject o = e.getAsJsonObject();
-                double usd = Suda3D.num(o, "usd", 0);
-                packs.add(new double[]{usd, Suda3D.num(o, "credits", usd * 100)});
-            }
-            JsonObject ch = Suda3D.obj(p, "cheapest_model");
-            if (ch != null) {
-                cheapestCredits = Math.max(0.01, Suda3D.num(ch, "credits", cheapestCredits));
-                cheapestUsd = Suda3D.num(ch, "usd", cheapestCredits / 100);
-            }
-            JsonObject cu = Suda3D.obj(p, "custom");
-            if (cu != null) { minUsd = Suda3D.num(cu, "min_usd", minUsd); maxUsd = Suda3D.num(cu, "max_usd", maxUsd); }
+    private void readPricing(JsonObject p) {
+        JsonObject ch = Suda3D.obj(p, "cheapest_model");
+        if (ch != null) {
+            cheapestCredits = Math.max(0.01, Suda3D.num(ch, "credits", cheapestCredits));
+            cheapestUsd = Suda3D.num(ch, "usd", cheapestCredits / 100);
         }
-        if (packs.isEmpty()) for (int u : new int[]{5, 10, 15}) packs.add(new double[]{u, u * 100});
+    }
+
+    private void setProducts(List<SudaBilling.Product> list) {
+        products = list;
+        render();
+        SudaBilling.queryPrices(this, list, p -> { prices = p; render(); });
+    }
+
+    private void render() {
         cards.removeAllViews();
-        for (int i = 0; i < packs.size(); i++) cards.addView(packCard(packs.get(i)[0], packs.get(i)[1], i == 0), cardLp());
-        cards.addView(customCard(), cardLp());
+        for (int i = 0; i < products.size(); i++) cards.addView(packCard(products.get(i), i == 0), cardLp());
+        note.setText(String.format(Locale.US, Tr.t("s3d_play_fee_note", "Prices in Google Play include its %1$d%% fee. You always get the full credit value shown on the card."), feePercent));
     }
 
     private LinearLayout.LayoutParams cardLp() {
@@ -144,79 +156,73 @@ public class BuyCreditsActivity extends Activity {
         return s.endsWith(".00") ? s.substring(0, s.length() - 3) : s;
     }
 
-    private LinearLayout packCard(double usd, double credits, boolean first) {
+    private LinearLayout packCard(SudaBilling.Product p, boolean first) {
         LinearLayout c = SudaUi.card(this);
         if (first) c.setBackground(Ui.rounded(Ui.SURFACE_2, Ui.dp(this, 12), SudaUi.ORANGE, Ui.dp(this, 2)));
-        TextView price = Ui.text(this, "$" + money(usd), 30, Ui.TEXT);
+        TextView price = Ui.text(this, "$" + money(p.creditUsd), 30, Ui.TEXT);
         price.setTypeface(Typeface.DEFAULT_BOLD);
         c.addView(price);
-        TextView cr = Ui.text(this, Suda3D.fmtCredits(credits) + " " + Tr.t("s3d_credits", "credits"), 15, SudaUi.ORANGE);
+        TextView cr = Ui.text(this, Suda3D.fmtCredits(p.credits) + " " + Tr.t("s3d_credits", "credits"), 15, SudaUi.ORANGE);
         cr.setTypeface(Typeface.DEFAULT_BOLD);
         c.addView(cr);
         if (first) {
-            TextView m = Ui.text(this, modelsLine(credits), 12.5f, Ui.TEXT_2);
+            TextView m = Ui.text(this, modelsLine(p.credits), 12.5f, Ui.TEXT_2);
             m.setPadding(0, Ui.dp(this, 6), 0, 0);
             c.addView(m);
         }
+        String play = prices.get(p.id);
+        if (play != null) {
+            TextView pay = Ui.text(this, Tr.t("s3d_you_pay", "You pay") + " " + play, 12, Ui.TEXT_3);
+            pay.setPadding(0, Ui.dp(this, 4), 0, 0);
+            c.addView(pay);
+        }
         View sp = new View(this);
         c.addView(sp, new LinearLayout.LayoutParams(1, Ui.dp(this, 14)));
-        c.addView(Ui.button(this, 0, Tr.t("s3d_buy_btn", "Buy"), true, v -> buy(usd)), Ui.matchWrap());
+        c.addView(Ui.button(this, 0, Tr.t("s3d_buy_btn", "Buy"), true, v -> confirm(p)), Ui.matchWrap());
+        c.setOnClickListener(v -> confirm(p));
         return c;
     }
 
-    private LinearLayout customCard() {
-        LinearLayout c = SudaUi.card(this);
-        TextView t = Ui.text(this, Tr.t("s3d_custom", "Custom"), 22, Ui.TEXT);
-        t.setTypeface(Typeface.DEFAULT_BOLD);
-        c.addView(t);
-        EditText amount = Ui.input(this, "20", "$");
-        amount.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
-        c.addView(amount, Ui.margins(Ui.matchWrap(), this, 0, 6, 0, 4));
-        TextView cr = Ui.text(this, "", 14, SudaUi.ORANGE);
-        cr.setTypeface(Typeface.DEFAULT_BOLD);
-        TextView m = Ui.text(this, "", 12.5f, Ui.TEXT_2);
-        c.addView(cr);
-        c.addView(m);
-        Runnable upd = () -> {
-            double usd = parse(amount.getText().toString());
-            if (usd < minUsd || usd > maxUsd) {
-                cr.setText(String.format(Locale.US, Tr.t("s3d_custom_range", "From $%1$s to $%2$s"), money(minUsd), money(maxUsd)));
-                m.setText("");
-            } else {
-                cr.setText(Suda3D.fmtCredits(usd * 100) + " " + Tr.t("s3d_credits", "credits"));
-                m.setText(modelsLine(usd * 100));
-            }
-        };
-        amount.addTextChangedListener(new TextWatcher() {
-            @Override public void beforeTextChanged(CharSequence s, int a, int b, int d) {}
-            @Override public void onTextChanged(CharSequence s, int a, int b, int d) {}
-            @Override public void afterTextChanged(Editable s) { upd.run(); }
-        });
-        upd.run();
-        View sp = new View(this);
-        c.addView(sp, new LinearLayout.LayoutParams(1, Ui.dp(this, 10)));
-        c.addView(Ui.button(this, 0, Tr.t("s3d_buy_btn", "Buy"), true, v -> {
-            double usd = parse(amount.getText().toString());
-            if (usd < minUsd || usd > maxUsd) { amount.setError(cr.getText()); return; }
-            buy(usd);
-        }), Ui.matchWrap());
-        return c;
+    private void confirm(SudaBilling.Product p) {
+        if (!Suda3D.loggedIn(this)) { Paywall.login(this, () -> confirm(p)); return; }
+        String play = prices.get(p.id);
+        if (play == null || !SudaBilling.hasDetails(p.id)) {
+            Ui.toast(this, Tr.t("s3d_billing_not_play", "Purchases work only in the app installed from Google Play."));
+            SudaBilling.queryPrices(this, products, x -> { prices = x; render(); });
+            return;
+        }
+        String msg = String.format(Locale.US, Tr.t("s3d_buy_confirm", "$%1$s credits → you pay %2$s (includes Google Play's %3$d%% fee)"), money(p.creditUsd), play, feePercent);
+        new AlertDialog.Builder(this)
+                .setTitle(Tr.t("s3d_buy", "Buy credits"))
+                .setMessage(msg + "\n\n" + Suda3D.fmtCredits(p.credits) + " " + Tr.t("s3d_credits", "credits"))
+                .setPositiveButton(Tr.t("s3d_buy_btn", "Buy"), (d, w) -> {
+                    if (Suda3D.playAccountId(this).isEmpty()) {
+                        // play_account_id comes with GET /me; fetch it first so the purchase is tied to this account
+                        Suda3D.IO.execute(() -> {
+                            try { Suda3D.me(this); } catch (Exception ignored) {}
+                            runOnUiThread(() -> SudaBilling.buy(this, p.id));
+                        });
+                    } else SudaBilling.buy(this, p.id);
+                })
+                .setNegativeButton(Tr.t("cancel", "Cancel"), null)
+                .show();
     }
 
-    static double parse(String s) {
-        try { return Double.parseDouble(s.trim().replace(',', '.')); } catch (Exception e) { return 0; }
+    @Override
+    public void onCredited(String productId, double usd, double credits) {
+        refreshBalance();
+        new AlertDialog.Builder(this)
+                .setTitle(Tr.t("s3d_credited_title", "Credits added"))
+                .setMessage(String.format(Locale.US, Tr.t("s3d_credited_msg", "$%1$s added to your balance (%2$s credits)."), money(usd), Suda3D.fmtCredits(credits)))
+                .setPositiveButton(Tr.t("ok", "OK"), null)
+                .show();
     }
 
-    private void buy(double usd) {
-        if (!Suda3D.loggedIn(this)) { Paywall.login(this, () -> buy(usd)); return; }
-        Ui.toast(this, Tr.t("s3d_opening_checkout", "Opening secure checkout…"));
-        Suda3D.IO.execute(() -> {
-            try {
-                String url = Suda3D.checkout(this, usd);
-                runOnUiThread(() -> { leftForCheckout = true; Paywall.openUrl(this, url); });
-            } catch (Exception e) {
-                runOnUiThread(() -> Ui.toast(this, Suda3D.message(e)));
-            }
-        });
+    @Override
+    public void onPending(String productId) {
+        Ui.toast(this, Tr.t("s3d_payment_pending", "Payment pending. Your credits are added when Google Play confirms the payment."));
     }
+
+    @Override
+    public void onError(String message) { Ui.toast(this, message); }
 }

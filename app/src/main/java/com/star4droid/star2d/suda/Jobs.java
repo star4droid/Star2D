@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Running generations: keeps every started job (also after its dialog is closed), polls GET /jobs/{id}
- * (every 3 s for images, every 60 s for long 3D jobs, or on demand) and tells listeners. Survives app restarts:
+ * (every 3 s for images, every 20 s for long 3D jobs, or on demand) and tells listeners. Survives app restarts:
  * the list is stored in the account prefs.
  */
 public final class Jobs {
@@ -109,6 +109,7 @@ public final class Jobs {
         JOBS.put(j.id, j);
         save();
         schedule(j, firstDelay(j));
+        notifyAll(j);
         return j;
     }
 
@@ -126,7 +127,7 @@ public final class Jobs {
     }
 
     static long firstDelay(Job j) { Ops.Op op = Ops.get(j.op); return op != null && op.makesModel() ? 20 : 3; }
-    static long interval(Job j) { Ops.Op op = Ops.get(j.op); return op != null && op.makesModel() ? 60 : 3; }
+    static long interval(Job j) { Ops.Op op = Ops.get(j.op); return op != null && op.makesModel() ? 20 : 3; }
 
     private static synchronized void schedule(Job j, long delaySec) {
         ScheduledFuture<?> old = TIMERS.remove(j.id);

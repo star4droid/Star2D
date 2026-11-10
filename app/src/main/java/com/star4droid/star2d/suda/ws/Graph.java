@@ -81,12 +81,12 @@ public final class Graph {
             new Def("select_image", "Select Image", null, R.drawable.ic_s2_image, true, NONE, new Port[]{p("image", IMAGE)}),
             new Def("upload_3d", "3D Upload", null, R.drawable.ic_s2_upload, true, NONE, new Port[]{p("model", MODEL)}),
             new Def("text", "Text", null, R.drawable.ic_s2_text, true, NONE, new Port[]{p("text", TEXT)}),
-            new Def("gen_image", "Generate Image", "text_to_image", R.drawable.ic_s2_palette, false, new Port[]{opt("prompt", TEXT), opt("image", IMAGE)}, new Port[]{p("image", IMAGE)}),
+            new Def("gen_image", "Generate Image", "text_to_image", R.drawable.ic_s3d_auto_awesome, false, new Port[]{opt("prompt", TEXT), opt("image", IMAGE)}, new Port[]{p("image", IMAGE)}),
             new Def("multiview", "Image → Multiview", "image_to_multiview", R.drawable.ic_s2_view_grid, false, new Port[]{p("image", IMAGE)}, new Port[]{p("images", IMAGES)}),
             new Def("text_to_3d", "Text → 3D", "text_to_model", R.drawable.ic_s2_cube, false, new Port[]{opt("prompt", TEXT)}, new Port[]{p("model", MODEL)}),
             new Def("image_to_3d", "Image → 3D", "image_to_model", R.drawable.ic_s2_view3d, false, new Port[]{p("image", IMAGE)}, new Port[]{p("model", MODEL)}),
             new Def("multiview_to_3d", "Multiview → 3D", "multiview_to_model", R.drawable.ic_s2_layers, false, new Port[]{p("images", IMAGES)}, new Port[]{p("model", MODEL)}),
-            new Def("texture", "Texture", "texture_model", R.drawable.ic_s2_palette, false, new Port[]{p("model", MODEL), opt("prompt", TEXT)}, new Port[]{p("model", MODEL)}),
+            new Def("texture", "Texture", "texture_model", R.drawable.ic_s3d_format_paint, false, new Port[]{p("model", MODEL), opt("prompt", TEXT)}, new Port[]{p("model", MODEL)}),
             new Def("refine", "Refine / Stylize", "refine_model", R.drawable.ic_s2_wand, false, new Port[]{p("model", MODEL)}, new Port[]{p("model", MODEL)}),
             new Def("retopology", "Retopology / Low poly", "retopology", R.drawable.ic_s2_grid, false, new Port[]{p("model", MODEL)}, new Port[]{p("model", MODEL)}),
             new Def("smart_uv", "Smart UV", "smart_uv", R.drawable.ic_s2_map, false, new Port[]{p("model", MODEL)}, new Port[]{p("model", MODEL)}),
@@ -94,7 +94,7 @@ public final class Graph {
             new Def("rig_check", "Analyze for Rigging", "rig_check", R.drawable.ic_s2_search, false, new Port[]{p("model", MODEL)}, new Port[]{p("model", MODEL)}),
             new Def("rig", "Rig Model", "rig", R.drawable.ic_s2_joint, false, new Port[]{p("model", MODEL)}, new Port[]{p("rigged", RIGGED)}),
             new Def("animate", "Animation", "animate", R.drawable.ic_s2_animation, false, new Port[]{p("rigged", RIGGED)}, new Port[]{p("rigged", RIGGED)}),
-            new Def("m2m", "M2M Motion", null, R.drawable.ic_s2_animation, false, new Port[]{p("model", MODEL)}, new Port[]{p("rigged", RIGGED)}).device(),
+            new Def("m2m", "M2M Motion", null, R.drawable.ic_s3d_run, false, new Port[]{p("model", MODEL)}, new Port[]{p("rigged", RIGGED)}).device(),
             new Def("convert", "Convert format", "convert", R.drawable.ic_s2_export, false, new Port[]{p("model", MODEL)}, new Port[]{p("model", MODEL)}),
             new Def("preview", "Preview / Save", null, R.drawable.ic_s2_save, true, new Port[]{p("in", MODEL)}, NONE)
     ));
@@ -114,6 +114,8 @@ public final class Graph {
         public Map<String, String> params = new LinkedHashMap<>();
         public String state = IDLE, jobId = "", error = "", file = "", uploadId = "";
         public long uploadAt;
+        /** When the node was queued to run (ms); a job created after it with this node's tag belongs to it. */
+        public long queuedAt;
         public int progress;
         public double credits = -1;
         public JsonArray outputs = new JsonArray();
@@ -135,7 +137,7 @@ public final class Graph {
             for (Map.Entry<String, String> e : params.entrySet()) p.addProperty(e.getKey(), e.getValue());
             o.add("params", p);
             o.addProperty("state", state); o.addProperty("job_id", jobId); o.addProperty("error", error); o.addProperty("file", file);
-            o.addProperty("upload_id", uploadId); o.addProperty("upload_at", uploadAt); o.addProperty("progress", progress);
+            o.addProperty("upload_id", uploadId); o.addProperty("upload_at", uploadAt); o.addProperty("queued_at", queuedAt); o.addProperty("progress", progress);
             o.addProperty("credits", credits); o.add("outputs", outputs); o.addProperty("params_open", paramsOpen);
             return o;
         }
@@ -148,7 +150,7 @@ public final class Graph {
             if (p != null) for (Map.Entry<String, JsonElement> e : p.entrySet()) n.params.put(e.getKey(), e.getValue().isJsonNull() ? "" : e.getValue().getAsString());
             n.state = Suda3D.str(o, "state").isEmpty() ? IDLE : Suda3D.str(o, "state");
             n.jobId = Suda3D.str(o, "job_id"); n.error = Suda3D.str(o, "error"); n.file = Suda3D.str(o, "file");
-            n.uploadId = Suda3D.str(o, "upload_id"); n.uploadAt = (long) Suda3D.num(o, "upload_at", 0);
+            n.uploadId = Suda3D.str(o, "upload_id"); n.uploadAt = (long) Suda3D.num(o, "upload_at", 0); n.queuedAt = (long) Suda3D.num(o, "queued_at", 0);
             n.progress = (int) Suda3D.num(o, "progress", 0); n.credits = Suda3D.num(o, "credits", -1);
             n.outputs = Suda3D.arr(o, "outputs"); n.paramsOpen = Suda3D.bool(o, "params_open");
             return n;

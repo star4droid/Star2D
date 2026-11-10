@@ -13,7 +13,6 @@ import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.text.TextUtils;
 import android.view.MotionEvent;
-import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.view.ViewConfiguration;
 
@@ -60,7 +59,6 @@ public class NodeGraphView extends View {
     private float zoom = 1f, panX, panY; // screen = world * dp * zoom + pan
     private final Paint fill = new Paint(Paint.ANTI_ALIAS_FLAG), stroke = new Paint(Paint.ANTI_ALIAS_FLAG), text = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Path path = new Path();
-    private final ScaleGestureDetector scaler;
     private final Map<String, Drawable> icons = new HashMap<>();
     public final Set<String> selected = new LinkedHashSet<>();
 
@@ -76,6 +74,10 @@ public class NodeGraphView extends View {
     private long downTime;
     private final int slop;
     private final Runnable longPress = this::onLongPress;
+    // pinch: distance / zoom / world point under the focus at gesture start (absolute, no per-event accumulation)
+    private float pinchDist0, pinchZoom0, pinchWX, pinchWY;
+    private boolean pinchScaling;
+    public static final float MIN_ZOOM = 0.3f, MAX_ZOOM = 2.5f;
 
     public static final float W = 230, HEADER = 42, PORT_ROW = 30;
 
@@ -84,18 +86,12 @@ public class NodeGraphView extends View {
         dp = c.getResources().getDisplayMetrics().density;
         slop = ViewConfiguration.get(c).getScaledTouchSlop();
         text.setColor(0xFFE8EAED);
-        scaler = new ScaleGestureDetector(c, new ScaleGestureDetector.SimpleOnScaleGestureListener() {
-            @Override public boolean onScale(ScaleGestureDetector d) {
-                float nz = Math.max(0.25f, Math.min(2.5f, zoom * d.getScaleFactor()));
-                float fx = d.getFocusX(), fy = d.getFocusY();
-                panX = fx - (fx - panX) * nz / zoom;
-                panY = fy - (fy - panY) * nz / zoom;
-                zoom = nz;
-                invalidate();
-                return true;
-            }
-        });
     }
+
+    public float zoom() { return zoom; }
+    public float panX() { return panX; }
+    public float panY() { return panY; }
+    public void setViewport(float z, float px, float py) { zoom = clamp(z); panX = px; panY = py; invalidate(); }
 
     public void setGraph(Graph g, Host h) { this.graph = g; this.host = h; invalidate(); }
     public Graph graph() { return graph; }
@@ -117,7 +113,7 @@ public class NodeGraphView extends View {
             maxX = Math.max(maxX, n.x + W); maxY = Math.max(maxY, n.y + height(n));
         }
         float w = (maxX - minX + 60) * dp, h = (maxY - minY + 60) * dp;
-        zoom = Math.max(0.3f, Math.min(1.2f, Math.min(getWidth() / w, getHeight() / h)));
+        zoom = Math.max(MIN_ZOOM, Math.min(1.2f, Math.min(getWidth() / w, getHeight() / h)));
         panX = getWidth() / 2f - (minX + maxX) / 2 * dp * zoom;
         panY = getHeight() / 2f - (minY + maxY) / 2 * dp * zoom;
         invalidate();
@@ -188,6 +184,11 @@ public class NodeGraphView extends View {
         return new RectF(n.x + 12, t, n.x + W - 12, t + 36);
     }
     RectF paramsToggle(Graph.Node n) { RectF g = generateRect(n); return new RectF(n.x + 8, g.bottom + 4, n.x + W - 8, g.bottom + 30); }
+    /** Pencil in the Parameters header (opens the parameters sheet), left of the expand chevron. */
+    RectF paramsPencil(Graph.Node n) { RectF t = paramsToggle(n); return new RectF(t.right - 62, t.top, t.right - 32, t.bottom); }
+    RectF paramsChevron(Graph.Node n) { RectF t = paramsToggle(n); return new RectF(t.right - 30, t.top, t.right, t.bottom); }
+
+    static boolean busy(Graph.Node n) { return Graph.RUNNING.equals(n.state) || Graph.QUEUED.equals(n.state); }
     RectF replaceRect(Graph.Node n) {
         float t = n.y + bodyTop(n) + ("select_image".equals(n.type) && !n.file.isEmpty() ? 88 : 0);
         return new RectF(n.x + 8, t, n.x + W - 8, t + 30);
@@ -319,7 +320,7 @@ public class NodeGraphView extends View {
         c.drawText(ellipsize(st, W - 24), sx(n.x + 12), sy(top + 15), text);
         // progress bar (job progress, or download progress)
         float frac = host == null ? -1 : host.downloadFraction(n);
-        float prog = Graph.RUNNING.equals(n.state) || Graph.QUEUED.equals(n.state) ? n.progress / 100f : frac;
+        float prog = busy(n) ? -1 : frac; // job progress is shown inside the Generate button
         if (prog >= 0) {
             RectF bar = new RectF(sx(n.x + 12), sy(top + 22), sx(n.x + W - 12), sy(top + 27));
             fill.setColor(0xFF3A3D45);
@@ -329,14 +330,18 @@ public class NodeGraphView extends View {
             c.drawRoundRect(bar, s(3), s(3), fill);
         }
         if (hasPreview(n)) drawPreview(c, n, previewRect(n));
-        boolean busy = Graph.RUNNING.equals(n.state) || Graph.QUEUED.equals(n.state);
+        boolean busy = busy(n);
         if (n.def().onDevice) drawButton(c, generateRect(n), Tr.t("m2m_open", "Open M2M Motion"), true);
-        else drawButton(c, generateRect(n), busy ? Tr.t("s3d_running_short", "Running…")
-                : (Graph.DONE.equals(n.state) || Graph.STALE.equals(n.state) || Graph.FAILED.equals(n.state) ? Tr.t("s3d_regenerate", "Regenerate") : Tr.t("s3d_generate", "Generate")), !busy);
+        else if (busy) drawProgressButton(c, generateRect(n), n);
+        else drawButton(c, generateRect(n), Graph.DONE.equals(n.state) || Graph.STALE.equals(n.state) || Graph.FAILED.equals(n.state)
+                ? Tr.t("s3d_regenerate", "Regenerate") : Tr.t("s3d_generate", "Generate"), true);
         RectF pt = paramsToggle(n);
         text.setColor(0xFFB0B6BF);
         text.setTextSize(s(12.5f));
-        c.drawText((n.paramsOpen ? "▾ " : "▸ ") + Tr.t("s3d_parameters", "Parameters"), sx(pt.left + 4), sy(pt.top + 18), text);
+        c.drawText(Tr.t("s3d_parameters", "Parameters"), sx(pt.left + 4), sy(pt.top + 18), text);
+        RectF pe = paramsPencil(n), ch = paramsChevron(n);
+        drawIcon(c, R.drawable.ic_s2_edit, sx(pe.centerX() - 8), sy(pe.centerY() - 8), s(16), 0xFFB0B6BF);
+        drawIcon(c, n.paramsOpen ? R.drawable.ic_s2_expand_less : R.drawable.ic_s2_expand_more, sx(ch.centerX() - 10), sy(ch.centerY() - 10), s(20), 0xFFB0B6BF);
         if (n.paramsOpen) {
             List<String[]> lines = paramLines(n);
             text.setTextSize(s(11.5f));
@@ -394,6 +399,28 @@ public class NodeGraphView extends View {
         text.setTypeface(Typeface.DEFAULT_BOLD);
         text.setTextAlign(Paint.Align.CENTER);
         c.drawText(label, r.centerX(), r.centerY() + s(5), text);
+        text.setTextAlign(Paint.Align.LEFT);
+        text.setTypeface(Typeface.DEFAULT);
+    }
+
+    /** The Generate button of a running node: a progress bar filling the button + "Generating… 42%" (disabled). */
+    void drawProgressButton(Canvas c, RectF w, Graph.Node n) {
+        RectF r = new RectF(sx(w.left), sy(w.top), sx(w.right), sy(w.bottom));
+        fill.setColor(0xFF3A3D45);
+        c.drawRoundRect(r, s(8), s(8), fill);
+        boolean queued = Graph.QUEUED.equals(n.state);
+        float f = queued ? 0.04f : Math.max(0.04f, Math.min(1f, n.progress / 100f));
+        c.save();
+        c.clipRect(r.left, r.top, r.left + r.width() * f, r.bottom);
+        fill.setColor(0xCCF5A524);
+        c.drawRoundRect(r, s(8), s(8), fill);
+        c.restore();
+        text.setColor(0xFFF2F4F7);
+        text.setTextSize(s(13f));
+        text.setTypeface(Typeface.DEFAULT_BOLD);
+        text.setTextAlign(Paint.Align.CENTER);
+        String label = queued ? Tr.t("s3d_st_queued", "Waiting in queue…") : Tr.t("s3d_st_running", "Generating…") + " " + n.progress + "%";
+        c.drawText(ellipsize(label, W - 40), r.centerX(), r.centerY() + s(5), text);
         text.setTextAlign(Paint.Align.LEFT);
         text.setTypeface(Typeface.DEFAULT);
     }
@@ -514,7 +541,6 @@ public class NodeGraphView extends View {
 
     @Override
     public boolean onTouchEvent(MotionEvent e) {
-        scaler.onTouchEvent(e);
         float x = e.getX(), y = e.getY();
         switch (e.getActionMasked()) {
             case MotionEvent.ACTION_DOWN: {
@@ -547,17 +573,31 @@ public class NodeGraphView extends View {
             }
             case MotionEvent.ACTION_POINTER_DOWN:
                 removeCallbacks(longPress);
-                if (mode == WIRE) invalidate();
+                if (mode == WIRE) { // a second finger cancels the wire being dragged
+                    if (host != null) host.changed(true);
+                    wireNode = null;
+                }
+                if (mode == DRAG_NODE && moved && host != null) host.changed(false);
                 mode = PINCH;
-                lastX = avgX(e); lastY = avgY(e);
+                moved = true;
+                startPinch(e, -1);
                 return true;
             case MotionEvent.ACTION_MOVE: {
-                if (Math.abs(x - downX) > slop || Math.abs(y - downY) > slop) { moved = true; removeCallbacks(longPress); }
                 if (mode == PINCH) {
-                    float ax = avgX(e), ay = avgY(e);
-                    panX += ax - lastX; panY += ay - lastY;
-                    lastX = ax; lastY = ay;
-                } else if (mode == PAN && moved) {
+                    if (e.getPointerCount() < 2) return true;
+                    float d = spread(e, -1), fx = avgX(e, -1), fy = avgY(e, -1);
+                    // ignore tiny distance jitter until the fingers really spread / pinch
+                    if (!pinchScaling && Math.abs(d - pinchDist0) > slop * 1.5f) { pinchScaling = true; pinchDist0 = d; pinchZoom0 = zoom; }
+                    float nz = pinchScaling && pinchDist0 > 1 ? clamp(pinchZoom0 * d / pinchDist0) : zoom;
+                    zoom = nz;
+                    // the world point that was under the focus at start stays under the current focus (pan + zoom)
+                    panX = fx - pinchWX * dp * zoom;
+                    panY = fy - pinchWY * dp * zoom;
+                    invalidate();
+                    return true;
+                }
+                if (Math.abs(x - downX) > slop || Math.abs(y - downY) > slop) { moved = true; removeCallbacks(longPress); }
+                if (mode == PAN && moved) {
                     panX += x - lastX; panY += y - lastY;
                 } else if (mode == DRAG_NODE && moved) {
                     float dx = (x - lastX) / (dp * zoom), dy = (y - lastY) / (dp * zoom);
@@ -569,15 +609,25 @@ public class NodeGraphView extends View {
                 invalidate();
                 return true;
             }
-            case MotionEvent.ACTION_POINTER_UP:
+            case MotionEvent.ACTION_POINTER_UP: {
+                if (mode != PINCH) return true;
+                int up = e.getActionIndex();
+                if (e.getPointerCount() - 1 >= 2) { startPinch(e, up); return true; }
+                // one finger left: keep panning with it, no jump
+                int keep = up == 0 ? 1 : 0;
+                mode = PAN;
+                moved = true;
+                lastX = downX = e.getX(keep);
+                lastY = downY = e.getY(keep);
                 return true;
+            }
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_CANCEL: {
                 removeCallbacks(longPress);
                 int m = mode;
                 mode = NONE;
                 if (e.getActionMasked() == MotionEvent.ACTION_CANCEL) { invalidate(); return true; }
-                if (m == WIRE) finishWire(x, y);
+                if (m == WIRE && wireNode != null) finishWire(x, y);
                 else if (m == DRAG_NODE && moved) { if (host != null) host.changed(false); }
                 else if (m == DRAG_NODE && touchNode != null) tapNode(touchNode, wx(x), wy(y));
                 else if (m == PAN && !moved) tapEmpty(wx(x), wy(y));
@@ -588,8 +638,32 @@ public class NodeGraphView extends View {
         return true;
     }
 
-    static float avgX(MotionEvent e) { float s = 0; for (int i = 0; i < e.getPointerCount(); i++) s += e.getX(i); return s / e.getPointerCount(); }
-    static float avgY(MotionEvent e) { float s = 0; for (int i = 0; i < e.getPointerCount(); i++) s += e.getY(i); return s / e.getPointerCount(); }
+    /** Pinch start (or restart when a finger is added / removed): skip = pointer index going up, -1 none. */
+    private void startPinch(MotionEvent e, int skip) {
+        pinchDist0 = spread(e, skip);
+        pinchZoom0 = zoom;
+        pinchScaling = false;
+        pinchWX = wx(avgX(e, skip));
+        pinchWY = wy(avgY(e, skip));
+    }
+
+    static float clamp(float z) { return Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, z)); }
+
+    /** Average distance of the pointers from their centre. */
+    static float spread(MotionEvent e, int skip) {
+        float cx = avgX(e, skip), cy = avgY(e, skip), s = 0;
+        int n = 0;
+        for (int i = 0; i < e.getPointerCount(); i++) {
+            if (i == skip) continue;
+            s += (float) Math.hypot(e.getX(i) - cx, e.getY(i) - cy);
+            n++;
+        }
+        return n == 0 ? 0 : s / n;
+    }
+
+    static float avgX(MotionEvent e, int skip) { float s = 0; int n = 0; for (int i = 0; i < e.getPointerCount(); i++) if (i != skip) { s += e.getX(i); n++; } return n == 0 ? 0 : s / n; }
+    static float avgY(MotionEvent e, int skip) { float s = 0; int n = 0; for (int i = 0; i < e.getPointerCount(); i++) if (i != skip) { s += e.getY(i); n++; } return n == 0 ? 0 : s / n; }
+
     static float dist(float x1, float y1, float x2, float y2) { return (float) Math.hypot(x1 - x2, y1 - y2); }
 
     private void onLongPress() {
@@ -647,8 +721,9 @@ public class NodeGraphView extends View {
                 else if (previewRect(n).contains(px, py)) host.openResult(n);
                 return;
         }
-        if (generateRect(n).contains(px, py)) host.generate(n);
+        if (generateRect(n).contains(px, py)) { if (n.def().onDevice || !busy(n)) host.generate(n); }
         else if (hasPreview(n) && previewRect(n).contains(px, py)) host.openResult(n);
+        else if (paramsPencil(n).contains(px, py)) host.editParams(n);
         else if (paramsToggle(n).contains(px, py) || (n.paramsOpen && py > paramsToggle(n).bottom)) {
             n.paramsOpen = !n.paramsOpen;
             host.changed(false);

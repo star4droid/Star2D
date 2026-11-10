@@ -23,17 +23,18 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 /**
- * SUDA3D account + server API (see SUDA3D contract). One place for the server base URL (overridable in the Plan tab),
+ * SUDA3D account + server API (see SUDA3D contract). One place for the fixed server base URL (not shown, not changeable),
  * the API key (private prefs of the app, never shown again after login), and every JSON call. All calls are blocking:
  * run them on {@link #IO}.
  */
 public final class Suda3D {
-    /** Default server; the Plan tab's advanced settings can override it. */
-    public static final String DEFAULT_BASE_URL = "https://suda3d.com";
+    /** The SUDA3D server. Fixed: never shown in the app and not changeable. */
+    public static final String BASE_URL = "https://springgreen-otter-786523.hostingersite.com";
     public static final String API_PREFIX = "/api/v1";
 
     private static final String PREFS = "suda3d_account";
     private static final String K_KEY = "api_key", K_BASE = "base_url", K_EMAIL = "email", K_PLAN_AI = "ai_use_plan";
+    private static final String K_PLAY = "play_account_id";
     private static final String K_PAID = "paid", K_CREDITS = "credits", K_USD = "usd", K_PRICING = "pricing_cache";
     public static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
 
@@ -69,13 +70,13 @@ public final class Suda3D {
     }
 
     public static String baseUrl(Context c) {
-        String u = prefs(c).getString(K_BASE, "").trim();
-        if (u.isEmpty()) u = DEFAULT_BASE_URL;
-        while (u.endsWith("/")) u = u.substring(0, u.length() - 1);
-        return u;
+        SharedPreferences p = prefs(c);
+        if (p.contains(K_BASE)) p.edit().remove(K_BASE).apply(); // drop the old server override of earlier versions
+        return BASE_URL;
     }
 
-    public static void setBaseUrl(Context c, String url) { prefs(c).edit().putString(K_BASE, url == null ? "" : url.trim()).apply(); }
+    /** Account id to pass to Google Play as obfuscatedAccountId (from GET /me), "" until known. */
+    public static String playAccountId(Context c) { return prefs(c).getString(K_PLAY, ""); }
     public static String key(Context c) { return prefs(c).getString(K_KEY, ""); }
     public static boolean loggedIn(Context c) { return !key(c).isEmpty(); }
     public static String email(Context c) { return prefs(c).getString(K_EMAIL, ""); }
@@ -92,7 +93,7 @@ public final class Suda3D {
     }
 
     public static void logout(Context c) {
-        prefs(c).edit().remove(K_KEY).remove(K_EMAIL).remove(K_PAID).remove(K_CREDITS).remove(K_USD).putBoolean(K_PLAN_AI, false).apply();
+        prefs(c).edit().remove(K_KEY).remove(K_EMAIL).remove(K_PAID).remove(K_CREDITS).remove(K_USD).remove(K_PLAY).putBoolean(K_PLAN_AI, false).apply();
     }
 
     static void storeBalance(Context c, JsonObject balance) {
@@ -132,6 +133,8 @@ public final class Suda3D {
         String em = str(r, "email");
         SharedPreferences.Editor e = prefs(c).edit().putBoolean(K_PAID, bool(r, "paid"));
         if (!em.isEmpty()) e.putString(K_EMAIL, em);
+        String play = str(r, "play_account_id");
+        if (!play.isEmpty()) e.putString(K_PLAY, play);
         e.apply();
         storeBalance(c, obj(r, "balance"));
         return r;
@@ -159,11 +162,23 @@ public final class Suda3D {
         return call(c, "POST", "/quote", b, loggedIn(c));
     }
 
-    /** POST /billing/checkout {usd} → Stripe Checkout url. */
-    public static String checkout(Context c, double usd) throws Exception {
+    /** GET /billing/products → {products:[{product_id, credit_usd, credits}], fee_note_percent}. */
+    public static JsonObject billingProducts(Context c) throws Exception {
+        return call(c, "GET", "/billing/products", null, loggedIn(c));
+    }
+
+    /**
+     * POST /billing/google/verify: the server checks the Google Play purchase, credits the account once (idempotent on
+     * resubmit) and consumes it. Returns {credited:{usd,credits}, balance:{usd,credits}}; the balance is stored.
+     */
+    public static JsonObject verifyGooglePurchase(Context c, String productId, String token, String orderId) throws Exception {
         JsonObject b = new JsonObject();
-        b.addProperty("usd", usd);
-        return str(call(c, "POST", "/billing/checkout", b, true), "url");
+        b.addProperty("product_id", productId);
+        b.addProperty("purchase_token", token);
+        if (orderId != null && !orderId.isEmpty()) b.addProperty("order_id", orderId);
+        JsonObject r = call(c, "POST", "/billing/google/verify", b, true);
+        storeBalance(c, obj(r, "balance"));
+        return r;
     }
 
     /** POST /uploads (multipart) → upload_id. */

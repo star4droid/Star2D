@@ -806,7 +806,7 @@ public class ControlLayer extends Table {
 			if("OBJ3D".equals(kind)){
 				ps.put("Mesh",preset == null ? "CUBE" : preset);
 				if("PLANE".equals(preset)){ ps.put("Scale X","10"); ps.put("Scale Z","10"); y = 0; }
-				else if("TERRAIN".equals(preset)){ ps.put("Scale X","60"); ps.put("Scale Y","1"); ps.put("Scale Z","60"); ps.put("Terrain Noise","1"); ps.put("Color","#7CB65A"); y = 0; }
+				else if("TERRAIN".equals(preset)){ ps.put("Scale X","60"); ps.put("Scale Y","1"); ps.put("Scale Z","60"); ps.put("Terrain Noise","1"); ps.put("Color","#7CB65A"); ps.put("Receive Shadows","false"); y = 0; }
 				else if("WATER".equals(preset)){ ps.put("Scale X","60"); ps.put("Scale Z","60"); ps.put("Cast Shadows","false"); y = 0; }
 				else if("MODEL".equals(preset)){ y = 0; if(model != null){ ps.put("Model",model); com.star4droid.template.d3.Assets3D.reload(model); } }
 				else if("QUAD".equals(preset) || "DISC".equals(preset)) y = 0.5f;

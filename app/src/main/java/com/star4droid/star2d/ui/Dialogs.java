@@ -119,6 +119,19 @@ public final class Dialogs {
         b.setNegativeButton(Tr.t("close", "Close"), null);
         AlertDialog d = b.create();
         d.show();
+        // a tall dialog (a form in a ScrollView) must keep its buttons on screen: cap the window to 85% of the screen height
+        try {
+            android.util.DisplayMetrics dm = c.getResources().getDisplayMetrics();
+            android.view.Window w = d.getWindow();
+            if (w != null) {
+                w.setLayout(android.view.ViewGroup.LayoutParams.WRAP_CONTENT, android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
+                final int maxH = (int) (dm.heightPixels * 0.85f);
+                w.getDecorView().post(() -> {
+                    if (w.getDecorView().getHeight() > maxH) w.setLayout(w.getDecorView().getWidth(), maxH);
+                });
+            }
+        } catch (Throwable ignored) {
+        }
         return d;
     }
 

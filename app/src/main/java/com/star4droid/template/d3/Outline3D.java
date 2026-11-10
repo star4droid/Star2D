@@ -61,10 +61,12 @@ public final class Outline3D {
 		for (Renderable r : tmp) {
 			if (r.meshPart.primitiveType != GL20.GL_TRIANGLES) continue;
 			if (r.meshPart.mesh.getVertexAttribute(VertexAttributes.Usage.Normal) == null) continue;
+			// the stroke is drawn with the bind pose: a skinned model would show a white T-pose copy beside it (the editor draws a box for those)
+			if (r.bones != null) continue;
 			Renderable o = pool.obtain();
 			o.set(r);
 			Material m = new Material();
-			m.set(new Attr(color, width));
+			m.set(new Attr(color, Math.min(width, 0.12f)));
 			o.material = m;
 			o.environment = null;
 			o.shader = null;

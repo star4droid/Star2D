@@ -682,7 +682,7 @@ public class World3D implements Disposable {
 		// outlines (selection / Outline property)
 		outlines.clear();
 		for (Object3D o : visible) {
-			if (o.selected) Outline3D.collect(o.instance, Color.WHITE, Math.max(0.02f, o.radius * 0.025f), outlines);
+			if (o.selected) { if (o.terrain == null) Outline3D.collect(o.instance, Color.WHITE, Math.min(0.12f, Math.max(0.02f, o.radius * 0.025f)), outlines); }
 			else if (o.outline) Outline3D.collect(o.instance, o.outlineColor, o.outlineWidth, outlines);
 		}
 		if (outlines.size > 0) {
@@ -722,8 +722,9 @@ public class World3D implements Disposable {
 				ModelInstance mi = o.instance;
 				if (o.terrain != null) {
 					o.terrain.cull(cam, mi, o.transform, o.scale);
-					b.render(mi, env);
-					if (o.terrain.foliage != null) o.terrain.foliage.render(b, cam, env, o);
+					com.badlogic.gdx.graphics.g3d.Environment tenv = !o.def.Receive_Shadows && env.shadowMap != null ? envNoShadow : env;
+					b.render(mi, tenv);
+					if (o.terrain.foliage != null) o.terrain.foliage.render(b, cam, tenv, o);
 					continue;
 				}
 				if (o.lowInstance != null && o.def.LOD_Distance > 0 && tmp.set(o.position).dst(cam.position) > o.def.LOD_Distance * Quality3D.lodBias) mi = o.lowInstance;
@@ -853,7 +854,20 @@ public class World3D implements Disposable {
 		for (Object3D o : objects) {
 			if (!o.isVisible() || o == ignore || o.instance == null && !editor) continue;
 			wb.set(o.localBounds()).mul(o.transform);
+			// a terrain is hit where its surface is (its bounds are huge and often contain the camera: they would win every pick)
+			if (o.terrain() != null) {
+				if (!Intersector.intersectRayBounds(ray, wb, tmp) || !o.terrain().intersect(o, ray, tmp)) continue;
+				float d = tmp.dst2(ray.origin);
+				if (d < bestD) {
+					bestD = d;
+					best = o;
+					pickPoint.set(tmp);
+				}
+				continue;
+			}
 			if (Intersector.intersectRayBounds(ray, wb, tmp)) {
+				// the camera inside the bounds (a room, a big element): the entry point is the camera itself, use the middle instead
+				if (wb.contains(ray.origin)) wb.getCenter(tmp);
 				float d = tmp.dst2(ray.origin);
 				// inside a big element (terrain, room): prefer smaller ones in front
 				if (d < bestD) {

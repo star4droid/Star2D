@@ -708,6 +708,8 @@ public class Editor3D {
 		return best;
 	}
 
+	private float lastTwist;
+
 	public boolean touchDown(int x, int y, int pointer) {
 		moved = false;
 		if (pointer == 1) {
@@ -723,6 +725,7 @@ public class Editor3D {
 			pinchStartZoom = distance;
 			lastF0.set(Gdx.input.getX(0), Gdx.input.getY(0));
 			lastF1.set(Gdx.input.getX(1), Gdx.input.getY(1));
+			lastTwist = MathUtils.atan2(lastF1.y - lastF0.y, lastF1.x - lastF0.x);
 			return true;
 		}
 		if (pointer > 1) return true;
@@ -763,6 +766,13 @@ public class Editor3D {
 				Vector3 up = new Vector3(right).crs(cam.direction).nor();
 				target.add(right.scl(-mx * k)).add(up.scl(my * k));
 			}
+			// twist of the two fingers = turn the view around (yaw); both fingers moving up / down together while apart = tilt
+			float tw = MathUtils.atan2(y1 - y0, x1 - x0);
+			float dtw = tw - lastTwist;
+			while (dtw > MathUtils.PI) dtw -= MathUtils.PI2;
+			while (dtw < -MathUtils.PI) dtw += MathUtils.PI2;
+			if (d > 40f) yaw += dtw * MathUtils.radiansToDegrees;
+			lastTwist = tw;
 			lastF0.set(x0, y0);
 			lastF1.set(x1, y1);
 			moved = true;

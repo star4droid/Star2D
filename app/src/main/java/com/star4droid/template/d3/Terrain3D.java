@@ -282,7 +282,7 @@ public class Terrain3D {
 			splatTexture.draw(splatPixmap, 0, 0);
 		} else {
 			if (splatTexture != null) splatTexture.dispose();
-			splatTexture = new Texture(splatPixmap, false);
+			splatTexture = new Texture(new com.badlogic.gdx.graphics.glutils.PixmapTextureData(splatPixmap, null, false, false, true));
 			splatTexture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
 			splatTexture.setWrap(Texture.TextureWrap.ClampToEdge, Texture.TextureWrap.ClampToEdge);
 		}

@@ -22,6 +22,8 @@ ASSETS = sys.argv[1] if len(sys.argv) > 1 else "/tmp/advout"
 OUT = sys.argv[2] if len(sys.argv) > 2 else "/tmp/advproj"
 REPO = os.environ.get("ADVENTURE", "/home/claude/adventure-game")
 FOLDER = "Adventure"
+STASH = "/tmp/adv_menu_images"
+MENU_IMAGES = ["shade_menu.png", "menu_side.png", "icon_castle.png", "btn_gold.png", "btn_glass.png"]
 W, H = 1280, 720
 
 G.EXAMPLES = OUT
@@ -214,6 +216,68 @@ def story_script():
     return "\n".join(out)
 
 
+def slime_glb(dst, color):
+    """Jelly slime like the original: glossy body + dark oval eyes with highlights, facing -Z (diameter 1, origin at centre)."""
+    import math, struct, json
+    def sphere(r, cx, cy, cz, sx, sy, sz, nu=24, nv=16):
+        P, N, I = [], [], []
+        for j in range(nv + 1):
+            v = j / nv * math.pi
+            for i in range(nu + 1):
+                u = i / nu * 2 * math.pi
+                x, y, z = math.sin(v) * math.cos(u), math.cos(v), math.sin(v) * math.sin(u)
+                P += [cx + x * r * sx, cy + y * r * sy, cz + z * r * sz]
+                n = (x / sx, y / sy, z / sz); l = math.sqrt(sum(c * c for c in n)) or 1
+                N += [n[0] / l, n[1] / l, n[2] / l]
+        for j in range(nv):
+            for i in range(nu):
+                a = j * (nu + 1) + i; b = a + nu + 1
+                I += [a, b, a + 1, a + 1, b, b + 1]
+        return P, N, I
+    parts = [(sphere(0.5, 0, 0, 0, 1, 1, 1), [c / 255 for c in color] + [1], 0.18, [0, 0, 0]),]
+    for sgn in (-1, 1):
+        d = (sgn * 0.3, 0.17, -0.83); l = math.sqrt(sum(c * c for c in d)); d = [c / l for c in d]
+        parts.append((sphere(0.07, d[0] * 0.5, d[1] * 0.5, d[2] * 0.5, 0.7, 1.25, 1), [0.06, 0.07, 0.11, 1], 0.9, [0, 0, 0]))
+        parts.append((sphere(0.028, d[0] * 0.5 + sgn * 0.0, d[1] * 0.5 + 0.045, d[2] * 0.5 - 0.055, 1, 1, 1, 8, 6), [1, 1, 1, 1], 0.4, [1, 1, 1]))
+    buf = b""; views = []; acc = []; meshes = []; mats = []; nodes = []
+    for k, ((P, N, I), base, rough, em) in enumerate(parts):
+        def add(data, target):
+            nonlocal buf
+            while len(buf) % 4: buf += b"\0"
+            views.append({"buffer": 0, "byteOffset": len(buf), "byteLength": len(data), "target": target}); buf += data
+            return len(views) - 1
+        vp = add(struct.pack("<%df" % len(P), *P), 34962); vn = add(struct.pack("<%df" % len(N), *N), 34962); vi = add(struct.pack("<%dH" % len(I), *I), 34963)
+        xs, ys, zs = P[0::3], P[1::3], P[2::3]
+        acc.append({"bufferView": vp, "componentType": 5126, "count": len(P) // 3, "type": "VEC3", "min": [min(xs), min(ys), min(zs)], "max": [max(xs), max(ys), max(zs)]})
+        acc.append({"bufferView": vn, "componentType": 5126, "count": len(N) // 3, "type": "VEC3"})
+        acc.append({"bufferView": vi, "componentType": 5123, "count": len(I), "type": "SCALAR"})
+        m = {"name": "m%d" % k, "pbrMetallicRoughness": {"baseColorFactor": base, "metallicFactor": 0, "roughnessFactor": rough}}
+        if any(em): m["emissiveFactor"] = em
+        mats.append(m)
+        meshes.append({"primitives": [{"attributes": {"POSITION": len(acc) - 3, "NORMAL": len(acc) - 2}, "indices": len(acc) - 1, "material": k}]})
+        nodes.append({"name": "Slime" if k == 0 else "Eye%d" % k, "mesh": k})
+    g = {"asset": {"version": "2.0"}, "scene": 0, "scenes": [{"nodes": list(range(len(nodes)))}], "nodes": nodes, "meshes": meshes, "materials": mats,
+         "accessors": acc, "bufferViews": views, "buffers": [{"byteLength": len(buf)}]}
+    js = json.dumps(g, separators=(",", ":")).encode("utf-8"); js += b" " * ((4 - len(js) % 4) % 4)
+    while len(buf) % 4: buf += b"\0"
+    body = struct.pack("<I", len(js)) + b"JSON" + js + struct.pack("<I", len(buf)) + b"BIN\0" + buf
+    open(dst, "wb").write(b"glTF" + struct.pack("<II", 2, 12 + len(body)) + body)
+
+
+def arrow_forward(src, dst):
+    """arrow.glb is modelled tip-up (+Y); bake -90 about X so the tip points -Z (the engine's forward)."""
+    import math, struct, json
+    g, rest = G.glb_read(src)
+    h = math.sqrt(0.5)
+    for i in g["scenes"][g.get("scene", 0)]["nodes"]:
+        n = g["nodes"][i]
+        n["rotation"] = [-h, 0, 0, h]
+    js = json.dumps(g, separators=(",", ":")).encode("utf-8")
+    js += b" " * ((4 - len(js) % 4) % 4)
+    body = struct.pack("<I", len(js)) + b"JSON" + js + rest
+    open(dst, "wb").write(b"glTF" + struct.pack("<II", 2, 12 + len(body)) + body)
+
+
 # ---------------------------------------------------------------------- scene
 def build():
     global PROJ
@@ -224,8 +288,13 @@ def build():
     for m in ("warrior", "archer", "gunner", "healer", "boss"):
         G.glb_turn(os.path.join(ASSETS, "models", m + ".glb"), os.path.join(PROJ, "models", m + ".glb") if os.path.isdir(os.path.join(PROJ, "models"))
                    else (os.makedirs(os.path.join(PROJ, "models")) or os.path.join(PROJ, "models", m + ".glb")), 90)
-    for m in ("arrow", "drone", "turret", "tree", "guide"):
+    for m in ("drone", "tree", "guide"):
         copy(os.path.join(ASSETS, "models", m + ".glb"), "models")
+    # the gunner's turret modelled facing +Z: turn it so the barrel points forward (-Z)
+    G.glb_turn(os.path.join(ASSETS, "models", "turret.glb"), os.path.join(PROJ, "models", "turret.glb"), 180)
+    for nm, col in (("slime", (95, 227, 106)), ("slime_teal", (56, 214, 200)), ("slime_purple", (154, 92, 255))):
+        slime_glb(os.path.join(PROJ, "models", nm + ".glb"), col)
+    arrow_forward(os.path.join(ASSETS, "models", "arrow.glb"), os.path.join(PROJ, "models", "arrow.glb"))
     for s in os.listdir(os.path.join(ASSETS, "sounds")):
         if s not in ("jump.wav", "click.wav"):
             copy(os.path.join(ASSETS, "sounds", s), "sounds")
@@ -233,6 +302,9 @@ def build():
     os.makedirs(os.path.join(PROJ, "terrains"), exist_ok=True)
     shutil.copyfile(os.path.join(ASSETS, "world.s2t"), os.path.join(PROJ, "terrains", "world.s2t"))
     ui()
+    os.makedirs(STASH, exist_ok=True)
+    for f in MENU_IMAGES:
+        shutil.move(os.path.join(PROJ, "images", f), os.path.join(STASH, f))
     font()
     ZONES, BARS, PONDS = INFO["zones"], INFO["barriers"], INFO["ponds"]
     gy = ground
@@ -240,7 +312,7 @@ def build():
     # ---------------------------------------------------------------- world
     cx, cz = INFO["center"]
     sc.add("OBJ3D", "Ground", Mesh="TERRAIN", x=cx, y=BASE, z=cz, Scale_X=SX, Scale_Y=1, Scale_Z=SZ, Static_Object=True, Body="STATIC",
-           Cast_Shadows=False, P={"Terrain Data": "/world.s2t", "Terrain Height": HEIGHT, "Color": "#FFFFFF",
+           Cast_Shadows=False, Receive_Shadows=False, P={"Terrain Data": "/world.s2t", "Terrain Height": HEIGHT, "Color": "#FFFFFF",
                                   "Layer 1 Texture": "builtin:grass", "Layer 2 Texture": "builtin:road", "Layer 3 Texture": "builtin:rock", "Layer 4 Texture": "builtin:leaves",
                                   "Layer 1 Tiling": 34, "Layer 2 Tiling": 48, "Layer 3 Tiling": 30, "Layer 4 Tiling": 40,
                                   "Grass Density": float(os.environ.get("ADV_GRASS", "2.0")), "Grass Height": 0.34, "Grass Color": "#7CBF45", "Grass Layer": 1, "Grass Distance": 26, "Foliage Distance": float(os.environ.get("ADV_FOL", "0"))})
@@ -310,25 +382,25 @@ def build():
     sc.shape("Laser", "CYLINDER", *far, 0.12, 0.12, 0.9, "#FF4040", static=False, body="DYNAMIC", rx=90, Visible=False, Unlit=True, Emissive="#FF2020",
              Emissive_Intensity=2, Cast_Shadows=False, Gravity_Scale=0, Collider="SPHERE", Continuous_Collision=True,
              behaviors=[("Projectile3D", {"speed": 22, "gravity": 0, "lifetime": 2.5, "damage": 9, "targetPrefix": "Hero", "impactEffect": "HitFx"})])
+    sc.shape("TurretBolt", "CYLINDER", *far, 0.1, 0.1, 0.7, "#FFE070", static=False, body="DYNAMIC", rx=90, Visible=False, Unlit=True, Emissive="#FFC040",
+             Emissive_Intensity=2.2, Cast_Shadows=False, Gravity_Scale=0, Collider="SPHERE", Continuous_Collision=True, behaviors=[proj3(7, 40, 1.2)])
     sc.model("VolleyArrow", "arrow.glb", *far, 1.0, rx=-90, static=False, Visible=False, Cast_Shadows=False)
     sc.shape("Grenade", "SPHERE", *far, 0.35, 0.35, 0.35, "#3A3F4A", static=False, Visible=False, Cast_Shadows=False, Emissive="#FF8040", Emissive_Intensity=0.4)
     sc.shape("Blast", "SPHERE", *far, 2.2, 2.2, 2.2, "#FFB040", static=False, Unlit=True, Emissive="#FF9020", Emissive_Intensity=1.5, Opacity=0.7, Cast_Shadows=False, Visible=False)
     sc.model("TurretT", "turret.glb", *far, 1.2, static=False, body="STATIC", collider="BOX", Visible=False,
              behaviors=[("Turret3D", {"targets": "Slime,Drone,Boss", "range": 16, "turnSpeed": 400, "fireAngle": 10}),
-                        ("Shooter3D", {"autoFire": False, "aimWithCamera": False, "fireRate": 5, "mode": "HITSCAN", "damage": 7, "range": 18, "spread": 1.5,
-                                       "muzzleDistance": 0.6, "muzzleHeight": 0.5, "impactEffect": "HitFx", "useKeyboard": False, "recoil": 0, "shootSound": "/shoot.wav"})])
+                        ("Shooter3D", {"autoFire": False, "aimWithCamera": False, "fireRate": 5, "mode": "PROJECTILE", "bulletTemplate": "TurretBolt", "bulletSpeed": 40, "spread": 1.5,
+                                       "muzzleDistance": 0.9, "muzzleHeight": 0.5, "impactEffect": "HitFx", "useKeyboard": False, "recoil": 0, "shootSound": "/shoot.wav"})])
     # enemies
     slime_b = lambda hp, dmg, speed, color: [
         ("Chase3D", {"targetNames": "Hero", "sightRange": 40, "fieldOfView": 360, "needLineOfSight": False, "hearRange": 40, "searchTime": 60, "chaseSpeed": speed,
                      "stopDistance": 1.0, "returnHome": False, "attackRange": 1.4, "attackInterval": 1.1, "damage": dmg, "attackSound": "/squish.wav",
                      "runClip": "", "attackClip": "", "idleClip": "", "walkClip": ""}),
         ("Health3D", {"maxHealth": hp, "invincibleTime": 0.15, "onDeath": "DESTROY", "removeAfter": 0, "deathSound": "/squish.wav", "knockback": 4, "hurtShake": 0})]
-    sc.shape("Slime", "SPHERE", *far, 1.0, 0.8, 1.0, "#5BD16A", static=False, body="KINEMATIC", Visible=False, Roughness=0.3, Shininess=40,
-             Collider="SPHERE", behaviors=slime_b(70, 8, 2.6, None))
-    sc.shape("SlimeBlue", "SPHERE", *far, 1.2, 0.95, 1.2, "#4AA8F0", static=False, body="KINEMATIC", Visible=False, Roughness=0.3, Shininess=40,
-             Collider="SPHERE", behaviors=slime_b(170, 11, 2.8, None))
-    sc.shape("SlimeBig", "SPHERE", *far, 2.0, 1.6, 2.0, "#A45BE0", static=False, body="KINEMATIC", Visible=False, Roughness=0.3, Shininess=40,
-             Collider="SPHERE", behaviors=slime_b(360, 16, 2.0, None))
+    hop = lambda b: b + [("SlimeHop3D", {"period": 0.95, "squash": 0.34})]
+    sc.model("Slime", "slime.glb", *far, 0.75, static=False, body="KINEMATIC", collider="SPHERE", Visible=False, behaviors=hop(slime_b(70, 8, 2.6, None)))
+    sc.model("SlimeBlue", "slime_teal.glb", *far, 1.05, static=False, body="KINEMATIC", collider="SPHERE", Visible=False, behaviors=hop(slime_b(170, 11, 2.8, None)))
+    sc.model("SlimeBig", "slime_purple.glb", *far, 1.4, static=False, body="KINEMATIC", collider="SPHERE", Visible=False, behaviors=hop(slime_b(360, 16, 2.0, None)))
     sc.model("Drone", "drone.glb", *far, 1.0, static=False, body="KINEMATIC", collider="BOX", Visible=False,
              behaviors=[("Chase3D", {"targetNames": "Hero", "sightRange": 45, "fieldOfView": 360, "needLineOfSight": False, "hearRange": 45, "searchTime": 60,
                                      "chaseSpeed": 3.2, "stopDistance": 7, "returnHome": False, "attackRange": 9, "attackInterval": 2, "damage": 0, "flyHeight": 2.8,
@@ -361,8 +433,8 @@ def build():
     # ---------------------------------------------------------------- heroes (party), healer, guide arrow, camera
     sx, sz = 0.0, 3.5
     targets = "Slime,Drone,Boss"
-    tpc = lambda: ("ThirdPersonController3D", {"joystick": "Joy", "jumpButton": "JumpBtn", "camera": "Cam", "cameraMode": "ORBIT_TOUCH", "cameraDistance": 6.5,
-                                               "cameraHeight": 1.5, "cameraPitch": -16, "walkSpeed": 2.6, "runSpeed": 5.6, "jumpSpeed": 5.2, "radius": 0.35,
+    tpc = lambda: ("ThirdPersonController3D", {"joystick": "Joy", "jumpButton": "JumpBtn", "camera": "Cam", "cameraMode": "ORBIT_TOUCH", "cameraDistance": 7.2,
+                                               "cameraHeight": 0.7, "cameraPitch": -40, "walkSpeed": 2.6, "runSpeed": 5.6, "jumpSpeed": 5.2, "radius": 0.35,
                                                "maxSlope": 42, "modelYawOffset": 0, "idleClip": "idle", "walkClip": "walk", "runClip": "run", "jumpClip": "jump",
                                                "useKeyboard": True, "turnSpeed": 720})
     health = lambda: ("Health3D", {"maxHealth": 120, "invincibleTime": 0.5, "healthBar": "HpBar", "healthText": "HpText", "showMax": True, "hurtShake": 0.5, "hurtClip": "hurt", "hurtSound": "/hurt.wav",
@@ -411,7 +483,7 @@ def build():
     sc.model("Guide", "guide.glb", sx, gy(sx, sz) + 2.4, sz - 1.5, 0.75, static=False, Color="#5AD2FF", Unlit=True, Emissive="#5AD2FF", Emissive_Intensity=1.4,
              Cast_Shadows=False, Receive_Shadows=False, behaviors=[("Compass3D", {"anchor": "Hero_Warrior", "target": "MarkMeadow", "height": 0.25, "ahead": 1.4, "arriveDistance": 9,
                                                           "modelYawOffset": 0, "bob": 0.1})])
-    sc.add("CAMERA3D", "Cam", x=sx, y=gy(sx, sz) + 3, z=sz - 6.5, Rotation_Y=180, Active=True, FOV=62, Near=0.1, Far=320)
+    sc.add("CAMERA3D", "Cam", x=sx, y=gy(sx, sz) + 3, z=sz - 6.5, Rotation_Y=180, Active=True, FOV=40, Near=0.1, Far=320)
 
     # ---------------------------------------------------------------- coins and gems (counters of the HUD)
     def lerp(a, b, t):
@@ -538,29 +610,12 @@ def build():
         T("PauseSetTxt", 490, 304, 300, 62, "الإعدادات", 0.5, z=410, visible=False)
         BTN("PauseMenuBtn", 490, 228, 300, 62, "btn_glass_s.png", z=406, visible=False)
         T("PauseMenuTxt", 490, 228, 300, 62, "القائمة الرئيسية", 0.5, z=410, visible=False)
-        IMG("HelpPanel", 360, 180, 560, 360, "panel_center.png", 405, visible=False)
-        T("HelpTitle", 360, 470, 560, 50, "طريقة اللعب", 0.6, GOLDC, z=410, visible=False, font=BIG)
-        T("HelpText", 392, 270, 496, 190, HELP_TEXT, 0.4, align="RIGHT", z=410, visible=False)
-        BTN("HelpCloseBtn", 490, 196, 300, 62, "btn_gold_s.png", z=406, visible=False)
-        T("HelpCloseTxt", 490, 196, 300, 62, "حسنًا", 0.55, "#4A2800", z=410, visible=False)
-    with sc.grp("MenuUi", ui=True):
-        sc.add("BOX", "MenuBlock", x=0, y=0, width=1280, height=720, z=380, P={"image": "/shade_menu.png", "Collider Width": 1280, "Collider Height": 720, "Tint": "#FFFFFF"})
-        IMG("MenuSide", 0, 0, 600, 720, "menu_side.png", 385)
-        IMG("MenuIcon", 202, 604, 96, 96, "icon_castle.png", 390)
-        T("MenuTitle", 40, 470, 420, 130, "مغامرات الأفق", 1.0, "#D8E8FF", z=392, font=BIG)
-        T("MenuSub", 30, 436, 440, 34, "انطلق .. واكتشف عالمًا مليئًا بالمغامرات", 0.34, "#EAF1FF", z=392)
-        BTN("PlayBtn", 52, 340, 442, 78, "btn_gold.png", z=390)
-        T("PlayTxt", 52, 340, 442, 78, "ابدأ اللعب", 0.66, "#4A2800", z=395)
-        BTN("SetBtn", 52, 258, 442, 66, "btn_glass.png", z=390)
-        T("SetTxt", 52, 258, 442, 66, "الإعدادات", 0.5, z=395)
-        BTN("HelpBtn", 52, 180, 442, 66, "btn_glass.png", z=390)
-        T("HelpTxt", 52, 180, 442, 66, "طريقة اللعب", 0.5, z=395)
     # the conversation behavior lives on the dialog panel
     dlg = next(e for e in sc.els if e["name"] == "DlgPanel")
     dlg["behaviors"] = json.dumps([{"type": "Dialogue", "enabled": True, "params": {
         "panel": "DlgPanel", "nameText": "DlgName", "bodyText": "DlgText", "portraits": ["Bust_warrior", "Bust_gunner", "Bust_archer", "Bust_healer"],
         "skipButton": "DlgSkip", "extras": ["DlgPill", "DlgHint", "DlgSkipIcon", "DlgSkipText"], "script": story_script(), "speed": 40, "autoNext": 3.2,
-        "startSection": ""}}], ensure_ascii=False)
+        "startSection": "", "hideWhileTalking": ["Hud"]}}], ensure_ascii=False)
 
     # ---------------------------------------------------------------- events (blocks)
     proj = PROJ
@@ -572,9 +627,7 @@ def build():
     cur = R("current character ___", "Party")
 
     BOSS_UI = ["BossFrame", "BossBar", "BossHp", "BossChip", "BossName"]
-    MENU_UI = ["MenuBlock", "MenuSide", "MenuIcon", "MenuTitle", "MenuSub", "PlayBtn", "PlayTxt", "SetBtn", "SetTxt", "HelpBtn", "HelpTxt"]
     PAUSE_UI = ["PauseShade", "PausePanel", "PauseTitle", "ResumeBtn", "ResumeTxt", "PauseSetBtn", "PauseSetTxt", "PauseMenuBtn", "PauseMenuTxt"]
-    HELP_UI = ["PauseShade", "HelpPanel", "HelpTitle", "HelpText", "HelpCloseBtn", "HelpCloseTxt"]
     END_UI = ["EndShade", "EndPanel", "EndTitle", "EndText", "RestartBtn", "RestartText"]
     vis = lambda names, on: [B("setVisibility", n, "true" if on else "false") for n in names]
     J = lambda r: r.code()
@@ -651,13 +704,9 @@ def build():
         B("setText", "EndTitle", q("هُزم الفريق")), B("setText", "EndText", q("حاولوا مرة أخرى، الوادي ينتظركم"))])
     for k in ("warrior", "archer", "gunner"):
         G.write_event(proj, "private/Party%s/onClick" % k.capitalize(), [B("CharacterSwitch3D.switchTo", "Party", "Hero_" + k.capitalize())])
-    G.write_event(proj, "private/RestartBtn/onClick", [B("OpenScene", "scene1")])
-    # main menu, pause and help
-    G.write_event(proj, "public/OnCreate", [B("Pause")])
-    G.write_event(proj, "private/PlayBtn/onClick", vis(MENU_UI, False) + [B("Resume"), B("Dialogue.start", "DlgPanel", q("intro"))])
-    G.write_event(proj, "private/SetBtn/onClick", [B("showGraphicsMenu3D", "true")])
-    G.write_event(proj, "private/HelpBtn/onClick", vis(HELP_UI, True))
-    G.write_event(proj, "private/HelpCloseBtn/onClick", vis(HELP_UI, False))
+    G.write_event(proj, "private/RestartBtn/onClick", [B("OpenScene", "scene2")])
+    # the game scene starts with the intro talk (the dialogue freezes the game and hides the HUD while it runs)
+    G.write_event(proj, "public/OnCreate", [B("Dialogue.start", "DlgPanel", q("intro"))])
     G.write_event(proj, "private/PauseBtn/onClick", [B("Pause")] + vis(PAUSE_UI, True))
     G.write_event(proj, "private/ResumeBtn/onClick", vis(PAUSE_UI, False) + [B("Resume")])
     G.write_event(proj, "private/PauseSetBtn/onClick", [B("showGraphicsMenu3D", "true")])
@@ -677,10 +726,97 @@ def build():
     return PROJ
 
 
+def build_menu():
+    """The main menu as its own scene (scene1, the one the game starts in): the party on a meadow + the menu UI; Play opens scene2 (the game)."""
+    global PROJ
+    MF = "AdventureMenu"
+    mp = G.fresh(MF)
+    for kind in ("images", "models", "files", "sounds"):
+        os.makedirs(os.path.join(mp, kind), exist_ok=True)
+    used_img = ["shade_menu.png", "menu_side.png", "icon_castle.png", "btn_gold.png", "btn_glass.png", "panel_center.png", "btn_gold_s.png", "shade.png"]
+    for f in used_img:
+        src = os.path.join(STASH, f) if os.path.isfile(os.path.join(STASH, f)) else os.path.join(PROJ, "images", f)
+        shutil.copyfile(src, os.path.join(mp, "images", f))
+    for f in os.listdir(os.path.join(PROJ, "files")):
+        shutil.copyfile(os.path.join(PROJ, "files", f), os.path.join(mp, "files", f))
+    for m in ("warrior", "archer", "gunner", "healer", "tree"):
+        shutil.copyfile(os.path.join(PROJ, "models", m + ".glb"), os.path.join(mp, "models", m + ".glb"))
+    sc = G.Scene()
+    AR, BIG, GOLDC = "/files/ar.s2df", "/files/ar_big.s2df", "#FFD36A"
+
+    def T(name, x, y, w, h, text, scale=0.5, color="#FFFFFF", align="CENTER", visible=True, z=110, font=AR):
+        e = sc.text(name, x, y, w, h, text, scale, color, visible, z)
+        e["Auto Size"] = "false"
+        e["Text Align"] = align
+        e["font"] = font
+        return e
+
+    def IMG(name, x, y, w, h, image, z=100, visible=True):
+        return sc.add("BOX", name, x=x, y=y, width=w, height=h, z=z, Visible=visible, P={"image": "/" + image, "Collider Width": w, "Collider Height": h})
+
+    def BTN(name, x, y, w, h, image, z=100, visible=True):
+        return sc.button(name, x, y, w, h, image, pressed=False, visible=visible, z=z)
+
+    # 3D backdrop: meadow, trees, the four heroes idling, a camera that sits left so they stand in the free right half
+    sc.shape("MenuGround", "CYLINDER", 0, -0.5, 0, 90, 1, 90, "#6DB65A", Cast_Shadows=False)
+    for i, (x, z, k) in enumerate(((-9, -6, 3.2), (7, -9, 3.6), (12, -3, 3.0), (-4, -12, 3.4), (2, -15, 3.8), (-13, -10, 3.5))):
+        sc.model("MenuTree%d" % i, "tree.glb", x, 0, z, k, ry=i * 57)
+    for i, (m, x) in enumerate((("warrior", 0.2), ("archer", 1.5), ("gunner", 2.8), ("healer", 4.1))):
+        sc.model("Menu_" + m, m + ".glb", x, 0, 0 - (0.5 if i in (1, 2) else 0), 1.75 if m != "healer" else 1.6, ry=180 + (8 - i * 5), static=False, Animation="idle",
+                 Cast_Shadows=False)
+    sc.add("CAMERA3D", "Cam", x=-1.6, y=1.5, z=7.2, Rotation_Y=0, Rotation_X=-4, Active=True, FOV=52, Near=0.1, Far=200)
+    # 2D layer
+    IMG("MenuShade", 0, 0, 1280, 720, "shade_menu.png", 20)
+    IMG("MenuSide", 0, 0, 600, 720, "menu_side.png", 25)
+    IMG("MenuIcon", 202, 604, 96, 96, "icon_castle.png", 30)
+    T("MenuTitle", 40, 470, 420, 130, "مغامرات الأفق", 1.0, "#D8E8FF", z=32, font=BIG)
+    T("MenuSub", 30, 436, 440, 34, "انطلق .. واكتشف عالمًا مليئًا بالمغامرات", 0.34, "#EAF1FF", z=32)
+    BTN("PlayBtn", 52, 340, 442, 78, "btn_gold.png", z=30)
+    T("PlayTxt", 52, 340, 442, 78, "ابدأ اللعب", 0.66, "#4A2800", z=35)
+    BTN("SetBtn", 52, 258, 442, 66, "btn_glass.png", z=30)
+    T("SetTxt", 52, 258, 442, 66, "الإعدادات", 0.5, z=35)
+    BTN("HelpBtn", 52, 180, 442, 66, "btn_glass.png", z=30)
+    T("HelpTxt", 52, 180, 442, 66, "طريقة اللعب", 0.5, z=35)
+    IMG("HelpShade", 0, 0, 1280, 720, "shade.png", 400, visible=False)
+    IMG("HelpPanel", 360, 180, 560, 360, "panel_center.png", 405, visible=False)
+    T("HelpTitle", 360, 470, 560, 50, "طريقة اللعب", 0.6, GOLDC, z=410, visible=False, font=BIG)
+    T("HelpText", 392, 270, 496, 190, HELP_TEXT, 0.4, align="RIGHT", z=410, visible=False)
+    BTN("HelpCloseBtn", 490, 196, 300, 62, "btn_gold_s.png", z=406, visible=False)
+    T("HelpCloseTxt", 490, 196, 300, 62, "حسنًا", 0.55, "#4A2800", z=410, visible=False)
+    vis = lambda names, on: [B("setVisibility", n, "true" if on else "false") for n in names]
+    HELP_UI = ["HelpShade", "HelpPanel", "HelpTitle", "HelpText", "HelpCloseBtn", "HelpCloseTxt"]
+    G.write_event(mp, "private/PlayBtn/onClick", [B("OpenScene", "scene2")])
+    G.write_event(mp, "private/SetBtn/onClick", [B("showGraphicsMenu3D", "true")])
+    G.write_event(mp, "private/HelpBtn/onClick", vis(HELP_UI, True))
+    G.write_event(mp, "private/HelpCloseBtn/onClick", vis(HELP_UI, False))
+    G.write_project(MF, sc, {"Lighting Preset": "CUSTOM", "Render Mode": "SOFT", "Ambient Color": "#8C97A8", "Ambient Intensity": 1.0, "Sun": True,
+                             "Sun Color": "#FFF2DC", "Sun Intensity": 1.05, "Sun Pitch": -35, "Sun Yaw": 30, "Sky": "GRADIENT", "Sky Top": "#4F8FE6",
+                             "Sky Bottom": "#CFE6FA", "Fog": False, "Shadows": False, "Quality": "MEDIUM"}, ("menu", "menu"), "# menu\n")
+    return mp
+
+
+def install_menu(game, menu):
+    """Final layout: scene1 = the menu, scene2 = the game (validated as scene1 before the rename)."""
+    for sub, name in (("configs", "scene1.json"), ("scenes", "scene1")):
+        os.replace(os.path.join(game, sub, name), os.path.join(game, sub, name.replace("scene1", "scene2")))
+        shutil.copyfile(os.path.join(menu, sub, name), os.path.join(game, sub, name))
+    os.replace(os.path.join(game, "Events", "scene1"), os.path.join(game, "Events", "scene2"))
+    shutil.copytree(os.path.join(menu, "Events", "scene1"), os.path.join(game, "Events", "scene1"))
+    for f in os.listdir(os.path.join(menu, "images")):
+        shutil.copyfile(os.path.join(menu, "images", f), os.path.join(game, "images", f))
+
+
 def main():
     p = build()
     print("generated", p)
     ok = G.validate()
+    if ok:
+        mp = build_menu()
+        G.FOLDERS = ["AdventureMenu"]
+        ok = G.validate()
+        if ok:
+            install_menu(p, mp)
+            print("menu scene installed: scene1 = menu, scene2 = game")
     sys.exit(0 if ok else 1)
 
 

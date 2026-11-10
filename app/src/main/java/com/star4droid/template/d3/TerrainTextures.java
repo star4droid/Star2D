@@ -37,8 +37,9 @@ public final class TerrainTextures {
 		Texture t = CACHE.get(name);
 		if (t != null) return t;
 		Pixmap p = make(name);
-		t = new Texture(p, true);
-		p.dispose();
+		// managed + the pixmap kept: after the app was paused and the GL context re-created the texture is uploaded again
+		// (an unmanaged pixmap texture came back white: "everything turns white and never returns")
+		t = new Texture(new com.badlogic.gdx.graphics.glutils.PixmapTextureData(p, null, true, false, true));
 		t.setWrap(Texture.TextureWrap.Repeat, Texture.TextureWrap.Repeat);
 		t.setFilter(Texture.TextureFilter.MipMapLinearNearest, Texture.TextureFilter.Linear);
 		CACHE.put(name, t);

@@ -34,6 +34,10 @@ public class Dialogue extends Behavior {
 	public List<PlayerItem> extras = new ArrayList<PlayerItem>();
 
 	@Header("Script")
+	@Param(desc = "Freeze the game (physics, enemies, timers) while talking, and run it again afterwards.")
+	public boolean pauseGame = true;
+	@Param(desc = "Hidden while talking, shown again after (the HUD group: joystick, buttons, bars).")
+	public List<PlayerItem> hideWhileTalking = new ArrayList<PlayerItem>();
 	@Param(desc = "[section] lines, then speaker|Name|text|voice per line.")
 	public String script = "[intro]\nhero|Hero|Hello!|";
 	@Param(desc = "Letters per second (0 = all at once).", unit = "letters/s", min = 0, max = 500, step = 1)
@@ -53,7 +57,8 @@ public class Dialogue extends Behavior {
 	private String curName = "";
 	private int index = -1;
 	private float shown, wait;
-	private boolean open;
+	private boolean open, pausedByMe;
+	private final ArrayList<PlayerItem> hidden = new ArrayList<PlayerItem>();
 	private EventListener nl, sl, pl;
 	private final ArrayList<String> queue = new ArrayList<String>();
 
@@ -73,6 +78,17 @@ public class Dialogue extends Behavior {
 		curName = section;
 		open = true;
 		show(true);
+		if (pauseGame && stage != null && stage.isPlaying()) {
+			stage.Pause();
+			pausedByMe = true;
+		}
+		hidden.clear();
+		for (PlayerItem h : hideWhileTalking) {
+			if (h != null && h.getActor() != null && h.getActor().isVisible()) {
+				hidden.add(h);
+				h.getActor().setVisible(false);
+			}
+		}
 		go(0);
 	}
 
@@ -143,6 +159,12 @@ public class Dialogue extends Behavior {
 		open = false;
 		show(false);
 		String done = curName;
+		if (queue.isEmpty()) {
+			for (PlayerItem h : hidden) if (h.getActor() != null) h.getActor().setVisible(true);
+			hidden.clear();
+			if (pausedByMe && stage != null) stage.Resume();
+			pausedByMe = false;
+		}
 		fire("onEnd", done);
 		if (!queue.isEmpty()) start(queue.remove(0));
 	}
@@ -161,6 +183,7 @@ public class Dialogue extends Behavior {
 
 	@Override
 	public void onStart() {
+		runWhenPaused = true;
 		Runnable t = new Runnable() {
 			@Override
 			public void run() {

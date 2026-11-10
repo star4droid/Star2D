@@ -48,6 +48,8 @@ public abstract class Behavior {
 	public PlayerItem item;
 	/** The running scene. */
 	public StageImp stage;
+	/** UI behaviors (dialogue, menus) set this so they keep running while the game is paused. */
+	protected boolean runWhenPaused = false;
 	/** Turn it off/on from code: setEnabled(false). */
 	@Hidden public boolean enabled = true;
 
@@ -189,7 +191,7 @@ public abstract class Behavior {
 	public final void engineUpdate() {
 		if (!enabled) return;
 		if (!started) engineStart();
-		if (stage != null && !stage.isPlaying()) return;
+		if (stage != null && !stage.isPlaying() && !runWhenPaused) return;
 		float dt = Gdx.graphics.getDeltaTime();
 		time += dt;
 		onUpdate(dt);

@@ -108,6 +108,7 @@ public final class TerrainGen {
 		r.props.put("Scale Y", "1");
 		r.props.put("Scale Z", fmt(s.length));
 		r.props.put("Grass Density", fmt(s.grass));
+		r.props.put("Receive Shadows", "false");
 		d.revision++;
 		return r;
 	}

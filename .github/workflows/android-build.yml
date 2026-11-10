@@ -43,19 +43,3 @@ jobs:
           name: engine.apk
           path: app/build/outputs/apk/release/app-release.apk
           retention-days: 90
-
-      # 🩹 xdelta patch from the APK of the latest release (verified), as its own artifact
-      - name: Make xdelta patch from the latest release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          V=$(grep -m1 versionName app/build.gradle | sed -E 's/.*"([^"]+)".*/\1/')
-          bash tools/ci_make_patch.sh app/build/outputs/apk/release/app-release.apk patch-out "$V"
-
-      - name: Upload patch
-        if: ${{ hashFiles('patch-out/*.xdelta') != '' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: engine.xdelta
-          path: patch-out/
-          retention-days: 90

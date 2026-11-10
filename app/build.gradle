@@ -26,7 +26,7 @@ android {
                 storeFile keystoreFile
                 storePassword System.getenv("KEYSTORE_PASSWORD")
                 keyAlias System.getenv("KEY_ALIAS")
-                keyPassword System.getenv("KEYSTORE_PASSWORD")
+                keyPassword System.getenv("KEY_PASSWORD") ?: System.getenv("KEYSTORE_PASSWORD")
             } else {
                 println "Release keystore '${keystoreFile.absolutePath}' not found. Using debug keystore."
                 initWith signingConfigs.debug

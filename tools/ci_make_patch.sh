@@ -1,16 +1,19 @@
 #!/usr/bin/env bash
-# CI helper: builds an xdelta3 patch from the APK of the latest GitHub release to the APK just built.
-#   tools/ci_make_patch.sh <new.apk> <out-dir> <version-name>
+# CI helper: builds an xdelta3 patch from the APK of the PREVIOUS GitHub release (not the one being released) to the APK just built.
+#   tools/ci_make_patch.sh <new.apk> <out-dir> <version-name> [current-tag]
 # Writes <out-dir>/Star2D-<version>-<oldmd5:8>-to-<newmd5:8>.xdelta (+ .txt with both MD5s) and sets
 # PATCH_FILE / PATCH_INFO / PATCH_BASE_TAG in $GITHUB_ENV. Does nothing (exit 0) when there is no earlier release APK.
 # Needs: gh (GH_TOKEN), xdelta3. The patch is verified: decoding it with the old APK must give the new APK byte for byte.
 set -uo pipefail
-NEW="$1"; OUT="$2"; VER="$3"
+NEW="$1"; OUT="$2"; VER="$3"; CUR="${4:-}"   # CUR = tag being released now: never used as the base
 mkdir -p "$OUT"
 WORK="$(mktemp -d)"
-TAG="$(gh release list --limit 1 --json tagName --jq '.[0].tagName' 2>/dev/null || true)"
-if [ -z "$TAG" ]; then echo "No earlier release: no patch."; exit 0; fi
-if ! gh release download "$TAG" --pattern '*.apk' --dir "$WORK" 2>/dev/null; then echo "Release $TAG has no APK: no patch."; exit 0; fi
+TAG=""
+for T in $(gh release list --limit 10 --json tagName,isDraft,isPrerelease --jq '.[] | select(.isDraft|not) | .tagName' 2>/dev/null); do
+  [ "$T" = "$CUR" ] && continue
+  if gh release download "$T" --pattern 'Star2D-*.apk' --dir "$WORK" 2>/dev/null; then TAG="$T"; break; fi
+done
+if [ -z "$TAG" ]; then echo "No earlier release APK: no patch."; exit 0; fi
 OLD="$(ls "$WORK"/*.apk | head -1)"
 if ! command -v xdelta3 >/dev/null; then sudo apt-get update -qq && sudo apt-get install -y -qq xdelta3; fi
 OLD_MD5="$(md5sum "$OLD" | cut -d' ' -f1)"; NEW_MD5="$(md5sum "$NEW" | cut -d' ' -f1)"

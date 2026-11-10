@@ -122,21 +122,12 @@ jobs:
           status: ${{ github.event.inputs.play_track == 'draft' && 'draft' || 'completed' }}
           whatsNewDirectory: whatsNewDirectory
 
-      # 🩹 xdelta patch from the APK of the latest release (before this build replaces it)
-      - name: Make xdelta patch from the latest release
-        env:
-          GH_TOKEN: ${{ github.token }}
+      # 🔏 The APK must be signed with the release key (never unsigned, never the debug key)
+      - name: Verify APK signature
         run: |
-          V=$(grep -m1 versionName app/build.gradle | sed -E 's/.*"([^"]+)".*/\1/')
-          bash tools/ci_make_patch.sh app/build/outputs/apk/release/app-release.apk patch-out "$V"
-
-      - name: Upload patch
-        if: ${{ hashFiles('patch-out/*.xdelta') != '' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: engine.xdelta
-          path: patch-out/
-          retention-days: 90
+          AP=$(ls $ANDROID_HOME/build-tools/*/apksigner | sort -V | tail -1)
+          "$AP" verify --verbose --print-certs app/build/outputs/apk/release/app-release.apk | tee sig.txt
+          if grep -qi 'Android Debug' sig.txt; then echo "::error::APK is signed with the DEBUG key (keystore secrets missing or wrong)"; exit 1; fi
 
       # 🏷 Read version name
       - name: Read version name
@@ -157,13 +148,15 @@ jobs:
           generate_release_notes: true
           files: Star2D-${{ env.VERSION_NAME }}.apk
 
-      # 🩹 the patch goes to the release too (older patches of that release are replaced)
-      - name: Upload xdelta patch to GitHub Releases
-        if: ${{ github.event.inputs.upload_to_releases == 'true' && hashFiles('patch-out/*.xdelta') != '' }}
+      # 🩹 xdelta patch ONLY when releasing: from the PREVIOUS release's APK (not this version) to this APK
+      - name: Make and upload xdelta patch
+        if: ${{ github.event.inputs.upload_to_releases == 'true' }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           TAG="v${{ env.VERSION_NAME }}"
+          bash tools/ci_make_patch.sh app/build/outputs/apk/release/app-release.apk patch-out "$VERSION_NAME" "$TAG"
+          if ! ls patch-out/*.xdelta >/dev/null 2>&1; then echo "No patch."; exit 0; fi
           for a in $(gh release view "$TAG" --json assets --jq '.assets[].name' | grep -E '\.xdelta(\.txt)?$' || true); do
             gh release delete-asset "$TAG" "$a" --yes || true
           done

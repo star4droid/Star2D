@@ -58,6 +58,7 @@ public final class PropertyTips {
         t("Text", "Text to show.", "النص المعروض.");
         t("Font Scale", "Size of the text. Ignored while Auto Size is on (the text then fills its box).", "حجم النص. يُتجاهل عند تفعيل الحجم التلقائي (يملأ النص صندوقه).");
         t("Auto Size", "On: the text size follows the box: it never leaves it, and grows or shrinks when you resize it (Arabic and English).", "مفعّل: يتبع حجم الخط صندوق النص فلا يخرج منه ويكبر ويصغر مع تغيير حجمه (عربي وإنجليزي).");
+        t("Text Align", "Where the lines sit in the box: LEFT, CENTER or RIGHT (use RIGHT or CENTER for Arabic).", "موضع الأسطر في الصندوق: LEFT أو CENTER أو RIGHT (استخدم RIGHT أو CENTER للعربية).");
         t("tileX", "Repeat the image horizontally.", "تكرار الصورة أفقياً.");
         t("tileY", "Repeat the image vertically.", "تكرار الصورة رأسياً.");
         t("Zoom", "Camera zoom. Smaller = closer.", "تقريب الكاميرا: أصغر = أقرب.");

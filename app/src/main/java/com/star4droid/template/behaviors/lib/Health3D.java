@@ -38,6 +38,8 @@ public class Health3D extends Behavior implements Damageable {
 	public ProgressItem healthBar;
 	@Param(desc = "2D text showing the hit points (optional).")
 	public PlayerItem healthText;
+	@Param(desc = "Shows the maximum after the hit points, like 100 / 100.")
+	public boolean showMax = false;
 	@Param(desc = "Shakes the camera when the camera's player is hurt.", min = 0, max = 5, step = 0.1)
 	public float hurtShake = 0.6f;
 
@@ -190,7 +192,7 @@ public class Health3D extends Behavior implements Damageable {
 			healthBar.setMax(100);
 			healthBar.setProgress(Math.round(getHealthPercent()));
 		}
-		if (healthText != null) healthText.setItemText(String.valueOf((int) Math.ceil(hp)));
+		if (healthText != null) healthText.setItemText(showMax ? (int) Math.ceil(hp) + " / " + (int) Math.ceil(maxHealth) : String.valueOf((int) Math.ceil(hp)));
 	}
 
 	private void die() {

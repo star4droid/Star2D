@@ -221,6 +221,7 @@ public class TextItem extends Label implements PlayerItem {
 		getStyle().fontColor = textDef.getColor(textDef.Text_Color);
 		setStyle(getStyle());
 		setFontScale((UI ? 1 : StageImp.WORLD_SCALE) * textDef.Font_Scale);
+		setAlignment("CENTER".equalsIgnoreCase(textDef.Text_Align) ? com.badlogic.gdx.utils.Align.center : "RIGHT".equalsIgnoreCase(textDef.Text_Align) ? com.badlogic.gdx.utils.Align.right : com.badlogic.gdx.utils.Align.left);
 		if(getStage()==null)
 		    stage.addActor(this);
 		if(stage!=null && stage.onCreateCalled){

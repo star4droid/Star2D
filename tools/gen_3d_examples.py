@@ -1706,8 +1706,11 @@ def validate():
                 refs.add(os.path.relpath(f, proj))
                 if not os.path.isfile(f):
                     P(pre + "%s: missing sound %s" % (os.path.relpath(jf, proj), m.group(1)))
-            for name in re.findall(r"\b([A-Za-z_]\w*)\b", code):
-                pass
+            for m in re.finditer(r'"(/?[\w\-]+\.(?:png|jpg|jpeg|webp))"', code):
+                f = os.path.join(proj, "images", m.group(1).lstrip("/"))
+                refs.add(os.path.relpath(f, proj))
+                if not os.path.isfile(f):
+                    P(pre + "%s: missing image %s" % (os.path.relpath(jf, proj), m.group(1)))
         # models a painted terrain plants (foliage kinds of terrains/*.s2t)
         for tf in glob.glob(os.path.join(proj, "terrains", "*.s2t")):
             raw = open(tf, "rb").read()
@@ -1737,14 +1740,16 @@ def validate():
         os.makedirs(cls, exist_ok=True)
         r = subprocess.run(["javac", "-nowarn", "--release", "8", "-encoding", "UTF-8", "-d", cls, "-cp", cp, gen], capture_output=True, text=True)
         if r.returncode == 0:
-            # the phone's own compiler (com.sun.tools.javac of app/libs/lib_10.jar, -source 7) with its class path
-            phone_jar = os.path.join(ROOT, "app/libs/lib_10.jar")
-            if os.path.exists(phone_jar):
-                cls7 = os.path.join(tmp, folder, "out7")
-                os.makedirs(cls7, exist_ok=True)
-                pcp = os.path.join(ROOT, "app/src/main/assets/cp.zip") + os.pathsep + os.path.join(ROOT, "app/src/main/assets/java/game.zip")
-                r = subprocess.run(["java", "--limit-modules", "java.base,java.logging,java.xml,java.desktop,java.management,java.naming,java.compiler", "-cp", phone_jar, "com.sun.tools.javac.Main", "-nowarn", "-source", "7", "-target", "7", "-encoding", "UTF-8",
-                                    "-bootclasspath", pcp, "-d", cls7, "-cp", pcp, gen], capture_output=True, text=True)
+            # what the phone compiles against: the shipped runtime class path (assets/java/game.zip + cp.zip), so a stale
+            # template (classes missing on the phone) fails here too; the class file must really be written
+            cls7 = os.path.join(tmp, folder, "out7")
+            os.makedirs(cls7, exist_ok=True)
+            pcp = os.path.join(ROOT, "app/src/main/assets/java/game.zip") + os.pathsep + os.path.join(ROOT, "app/src/main/assets/cp.zip")
+            r = subprocess.run(["javac", "-nowarn", "--release", "8", "-encoding", "UTF-8", "-d", cls7, "-cp", pcp, gen], capture_output=True, text=True)
+            if r.returncode == 0 and not os.path.isfile(os.path.join(cls7, "com/star4droid/Game/scene1.class")):
+                r = subprocess.CompletedProcess(r.args, 1, "no class written with the phone class path\n", "")
+            if r.returncode != 0:
+                r = subprocess.CompletedProcess(r.args, 1, "with the phone class path (assets/java/game.zip; stale template? run tools/make_template.py build):\n" + r.stdout, r.stderr)
         if r.returncode != 0:
             P(pre + "the generated scene does not compile:\n" + r.stdout + r.stderr)
         elif re.search(r"->|::", open(gen, encoding="utf-8").read()):

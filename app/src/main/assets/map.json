@@ -1,6 +1,6 @@
 {
 "Editor":",name,Loop,type,lock,Script,parent,",
-"Appearance":",Zoom,Scale X,Scale Y,Tint,font,file,Duration,Text,Font Scale,Auto Size,X Ray,Soft,Softness Length,Progress,Max,Background Color,Progress Color,Visible,Pad Image,Button Image,image,Pressed Image,Touch Start Image,Touch End Image,tileX,tileY,Text Color,ui,fit,Y Sort,animation",
+"Appearance":",Zoom,Scale X,Scale Y,Tint,font,file,Duration,Text,Font Scale,Auto Size,Text Align,X Ray,Soft,Softness Length,Progress,Max,Background Color,Progress Color,Visible,Pad Image,Button Image,image,Pressed Image,Touch Start Image,Touch End Image,tileX,tileY,Text Color,ui,fit,Y Sort,animation",
 "Transform":",x,y,z,Static Light,attach To,Offset X,Offset Y,rotation,Pivot,Pivot X,Pivot Y,width,height,radius,",
 "Gravity":",friction,restitution,density,Active,Bullet,Gravity Scale,Fixed Rotation,isSensor",
 "Collider":",Points,Collision,ColliderX,ColliderY,Collider Width,Collider Height,Collider Radius",

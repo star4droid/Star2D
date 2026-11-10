@@ -62,6 +62,7 @@ public final class BuiltIns {
 			LookAtTarget.class,
 			LookAtTarget3D.class,
 			MeleeCombo3D.class,
+			Minimap3D.class,
 			MovingPlatform.class,
 			OpenSceneOnClick.class,
 			Orbit.class,

@@ -62,7 +62,7 @@ TEXT, PROGRESS, JOYSTICK, PARTICLE: `type: UI` = screen layer (default for TEXT/
 
 ## TEXT
 
-`Text`: the string. `Text Color`: `#RRGGBB(AA)`. `Font Scale`: multiplier of the built-in font (ASCII only, small: use 3 to 6 on a 1280x720 screen). `font`: optional `.s2df` font file for other alphabets or a styled look (make it with the `fonts` tool, `read_docs fonts`; with a custom font keep `Font Scale` near 1 and set the size in the font). `width/height` is the text box; text wraps, is vertically centered and left-aligned. `Auto Size` (default true): the text size follows the box (grows and shrinks with width/height, Arabic and English), the text never leaves the box and `Font Scale` is ignored. Turn it off to use `Font Scale`. A text written `@key` is a translation (see `features`). Change it at runtime with the block `setText` (or `showText`). Default `type` is UI.
+`Text`: the string. `Text Color`: `#RRGGBB(AA)`. `Font Scale`: multiplier of the built-in font (ASCII only, small: use 3 to 6 on a 1280x720 screen). `font`: optional `.s2df` font file for other alphabets or a styled look (make it with the `fonts` tool, `read_docs fonts`; with a custom font keep `Font Scale` near 1 and set the size in the font). `width/height` is the text box; text wraps, is vertically centered and left-aligned unless `Text Align` is CENTER or RIGHT (right is the natural side of Arabic). `Auto Size` (default true): the text size follows the box (grows and shrinks with width/height, Arabic and English), the text never leaves the box and `Font Scale` is ignored. Turn it off to use `Font Scale`. A text written `@key` is a translation (see `features`). Change it at runtime with the block `setText` (or `showText`). Default `type` is UI.
 
 ## PROGRESS
 

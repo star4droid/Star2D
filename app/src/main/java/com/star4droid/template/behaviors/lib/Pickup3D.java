@@ -26,6 +26,8 @@ public class Pickup3D extends Behavior {
 	@Header("Pick up")
 	@Param(desc = "The player (empty = the main camera, the first-person player).")
 	public PlayerItem player;
+	@Param(desc = "Or the nearest shown element whose name starts with one of these (comma separated, e.g. Hero for a party that switches characters). Replaces Player.")
+	public String playerNames = "";
 	@Param(desc = "Picked up within this distance.", unit = "m", min = 0.1, max = 50, step = 0.1)
 	public float range = 1.4f;
 	@Param(desc = "2D button to tap for picking up (empty = picked up just by walking into range).")
@@ -51,7 +53,8 @@ public class Pickup3D extends Behavior {
 	private final Support3D.Prompt prompt = new Support3D.Prompt();
 	private final Vector3 c = new Vector3(), start = new Vector3(), pp = new Vector3();
 	private boolean taken, clicked, flying, has;
-	private float back, fly;
+	private float back, fly, scanT;
+	private final com.star4droid.template.behaviors.GameplaySupport.NameMatcher names = new com.star4droid.template.behaviors.GameplaySupport.NameMatcher();
 
 	@Block(label = "pick up now", desc = "Gives the item to the player now.", labelAr = "التقط الآن", descAr = "يعطي العنصر للاعب الآن.", category = "Pickup 3D", args = {})
 	public void pickUp() {
@@ -138,6 +141,25 @@ public class Pickup3D extends Behavior {
 		Object3D o = obj();
 		World3D w = world3d();
 		if (o == null || w == null || !has) return;
+		if (playerNames.length() > 0) {
+			scanT -= dt;
+			if (scanT <= 0 || player == null || !(player instanceof Object3D) || !((Object3D) player).isVisible()) {
+				scanT = 0.25f;
+				names.set(playerNames);
+				Object3D best = null;
+				float bd = Float.MAX_VALUE;
+				for (int i = 0; i < w.objects.size; i++) {
+					Object3D q = w.objects.get(i);
+					if (q == o || !q.isVisible() || !names.matches(q.getName())) continue;
+					float dd = q.position.dst2(o.position);
+					if (dd < bd) {
+						bd = dd;
+						best = q;
+					}
+				}
+				if (best != null) player = best;
+			}
+		}
 		if (flying) {
 			fly += dt * 3f;
 			if (Support3D.posOr(player, w, pp)) {

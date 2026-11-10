@@ -11,6 +11,7 @@ public class TextDef extends ItemDef {
 	public boolean Visible=true;
 	public float x=0,y=0,z=0,width=50,height=50,rotation=0,Font_Scale=1;
 	public boolean Auto_Size=true;
+	public String Text_Align="LEFT";
 	
 	public TextDef(){
 		
@@ -47,6 +48,7 @@ public class TextDef extends ItemDef {
         clone.rotation = this.rotation;
         clone.Font_Scale = this.Font_Scale;
         clone.Auto_Size = this.Auto_Size;
+        clone.Text_Align = this.Text_Align;
         return clone;
     }
 }

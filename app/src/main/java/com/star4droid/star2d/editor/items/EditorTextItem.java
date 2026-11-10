@@ -73,6 +73,8 @@ public class EditorTextItem extends Label implements EditorItem {
 		setText(shownText);
 		getStyle().fontColor= propertySet.getColor("Text Color");
 		setStyle(getStyle());
+		String ta = String.valueOf(propertySet.get("Text Align"));
+		setAlignment("CENTER".equalsIgnoreCase(ta) ? com.badlogic.gdx.utils.Align.center : "RIGHT".equalsIgnoreCase(ta) ? com.badlogic.gdx.utils.Align.right : com.badlogic.gdx.utils.Align.left);
 		float base = propertySet.containsKey("Font Scale") ? propertySet.getFloat("Font Scale") : 1f;
 		// Auto Size (on by default): the letters shrink until the text fits the box
 		boolean auto = !"false".equals(String.valueOf(propertySet.get("Auto Size")));

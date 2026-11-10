@@ -61,10 +61,10 @@ def reporter(display):
 
 for t in ["setVisible3D", "setPhysics3D", "playSound3D", "cameraShake3D", "showGraphicsMenu3D", "setProgress", "setVisibility", "setText",
           "Dialogue.start", "Spawner3D.start", "Compass3D.setTarget", "Compass3D.setAnchor", "Companion3D.setLeader", "Boss3D.dropIn",
-          "ThirdPersonController3D.setLocked"]:
+          "ThirdPersonController3D.setLocked", "Pause", "Resume", "setImage", "CharacterSwitch3D.switchTo", "waitSeconds"]:
     block(t)
 for r in ["___ == ___", "___ >= ___", "___ and ___", "copies alive ___", "copies made ___", "current character ___", "current character number ___",
-          "health percent ___"]:
+          "health percent ___", "count of item ___", "health ___"]:
     reporter(r)
 B, R, q = G.B, G.R, G.q
 
@@ -127,79 +127,49 @@ def panel_png(name, w, h, fill, radius=24, border=None):
     img.resize((w, h), Image.LANCZOS).save(os.path.join(PROJ, "images", name), optimize=True)
 
 
-def ic_sword(d, w, h, ss, c):
-    d.polygon([(w * 0.70, h * 0.22), (w * 0.78, h * 0.30), (w * 0.42, h * 0.66), (w * 0.34, h * 0.58)], fill=c)
-    d.line([(w * 0.28, h * 0.56), (w * 0.44, h * 0.72)], fill=c, width=7 * ss)
-    d.line([(w * 0.34, h * 0.66), (w * 0.24, h * 0.76)], fill=c, width=8 * ss)
-
-
-def ic_star(d, w, h, ss, c):
-    cx, cy, ro, ri = w / 2, h / 2, min(w, h) * 0.3, min(w, h) * 0.13
-    pts = []
-    for k in range(10):
-        a = -math.pi / 2 + k * math.pi / 5
-        r = ro if k % 2 == 0 else ri
-        pts.append((cx + math.cos(a) * r, cy + math.sin(a) * r))
-    d.polygon(pts, fill=c)
-
-
-def ic_bolt(d, w, h, ss, c):
-    d.polygon([(w * 0.56, h * 0.18), (w * 0.32, h * 0.54), (w * 0.48, h * 0.54), (w * 0.42, h * 0.82), (w * 0.68, h * 0.44), (w * 0.52, h * 0.44)], fill=c)
-
-
-def ic_dash(d, w, h, ss, c):
-    for k in range(3):
-        x = w * (0.26 + k * 0.17)
-        d.polygon([(x, h * 0.3), (x + w * 0.16, h * 0.5), (x, h * 0.7), (x + w * 0.06, h * 0.5)], fill=c)
-
-
-def ic_up(d, w, h, ss, c):
-    d.polygon([(w * 0.5, h * 0.24), (w * 0.26, h * 0.56), (w * 0.4, h * 0.56), (w * 0.4, h * 0.76), (w * 0.6, h * 0.76), (w * 0.6, h * 0.56), (w * 0.74, h * 0.56)], fill=c)
-
-
-def ic_swap(d, w, h, ss, c):
-    d.arc([w * 0.24, h * 0.24, w * 0.76, h * 0.76], 200, 340, fill=c, width=6 * ss)
-    d.polygon([(w * 0.72, h * 0.32), (w * 0.80, h * 0.48), (w * 0.62, h * 0.46)], fill=c)
-    d.arc([w * 0.24, h * 0.24, w * 0.76, h * 0.76], 20, 160, fill=c, width=6 * ss)
-    d.polygon([(w * 0.28, h * 0.68), (w * 0.20, h * 0.52), (w * 0.38, h * 0.54)], fill=c)
+def coin_sound(path):
+    """A short two-note blip (CC0, synthesized)."""
+    import wave
+    sr = 22050
+    frames = bytearray()
+    for i in range(int(sr * 0.22)):
+        t = i / sr
+        f = 988 if t < 0.07 else 1319
+        env = min(1.0, t * 200) * math.exp(-max(0.0, t - 0.07) * 14)
+        v = int(9000 * env * math.sin(2 * math.pi * f * t) + 3000 * env * math.sin(4 * math.pi * f * t))
+        frames += struct.pack("<h", v)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    w = wave.open(path, "wb")
+    w.setnchannels(1)
+    w.setsampwidth(2)
+    w.setframerate(sr)
+    w.writeframes(bytes(frames))
+    w.close()
 
 
 def ui():
-    p = lambda n: os.path.join(PROJ, "images", n)
-    os.makedirs(os.path.join(PROJ, "images"), exist_ok=True)
-    G.make_button(p("btn_attack.png"), 160, 160, ic_sword, base=(150, 40, 40, 190))
-    G.make_button(p("btn_skill_a.png"), 120, 120, ic_star, base=(40, 80, 160, 180))
-    G.make_button(p("btn_skill_b.png"), 120, 120, ic_bolt, base=(110, 50, 150, 180))
-    G.make_button(p("btn_dash.png"), 110, 110, ic_dash, base=(30, 110, 90, 180))
-    G.make_button(p("btn_jump.png"), 110, 110, ic_up, base=(40, 60, 80, 170))
-    G.make_button(p("btn_switch.png"), 96, 96, ic_swap, base=(60, 60, 70, 190))
-    G.make_button(p("btn_gear.png"), 72, 72, G.ic_gear)
-    G.make_button(p("btn_wide.png"), 360, 96, G.ic_none, shape="rect", base=(40, 120, 200, 220))
-    G.make_joystick(PROJ)
-    panel_png("panel_dialog.png", 700, 170, (14, 18, 28, 215), 28, (90, 210, 255, 200))
-    panel_png("panel_center.png", 640, 340, (14, 18, 28, 225), 32, (255, 214, 102, 220))
-    panel_png("panel_hud.png", 420, 100, (14, 18, 28, 150), 22)
-    panel_png("panel_skip.png", 120, 44, (255, 255, 255, 40), 18, (255, 255, 255, 140))
-    for k in ("warrior", "archer", "gunner", "healer"):
-        image_from(os.path.join(REPO, "img", "bust_%s.webp" % k), "bust_%s.png" % k, (300, 320))
-        if k != "healer":
-            image_from(os.path.join(REPO, "img", "face_%s.webp" % k), "face_%s.png" % k, (128, 128))
+    import adv_ui_assets as UA
+    UA.make_all(PROJ, REPO, image_from)
 
 
 def font():
-    """Arabic + Latin font of the texts (DejaVu Sans Bold: free license, has Arabic letters)."""
+    """Arabic + Latin font of the texts: Cairo (the font of the original game, OFL), merged Arabic + Latin subsets."""
     d = os.path.join(PROJ, "files")
     os.makedirs(d, exist_ok=True)
-    shutil.copyfile("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", os.path.join(d, "DejaVuSans-Bold.ttf"))
-    for name, size, border in (("ar.s2df", 30, 2.0), ("ar_big.s2df", 54, 3.0)):
-        cfg = {"font": "DejaVuSans-Bold.ttf", "rtl": "true", "size": str(size), "color": "FFFFFFFF", "borderWidth": str(border), "borderColor": "000000CC",
-               "shadowOffsetX": "2", "shadowOffsetY": "2", "shadowColor": "00000088", "kerning": "true", "hinting": "AutoMedium", "genMipMaps": "false",
-               "incremental": "false", "mono": "false", "flip": "false", "renderCount": "2", "borderGamma": "1.8", "borderStraight": "false",
+    for f in ("Cairo-700.ttf", "Cairo-900.ttf"):
+        shutil.copyfile(os.path.join("/tmp/cairo", f), os.path.join(d, f))
+    for name, ttf, size, border in (("ar.s2df", "Cairo-700.ttf", 34, 2.0), ("ar_big.s2df", "Cairo-900.ttf", 64, 3.0), ("ar_ui.s2df", "Cairo-700.ttf", 34, 0.0)):
+        cfg = {"font": ttf, "rtl": "true", "size": str(size), "color": "FFFFFFFF", "borderWidth": str(border), "borderColor": "000000B0",
+               "shadowOffsetX": "0" if not border else "1", "shadowOffsetY": "0" if not border else "2", "shadowColor": "00000066", "kerning": "true", "hinting": "AutoMedium",
+               "genMipMaps": "false", "incremental": "false", "mono": "false", "flip": "false", "renderCount": "2", "borderGamma": "1.8", "borderStraight": "false",
                "spaceX": "0", "spaceY": "0", "padTop": "0", "padLeft": "0", "padRight": "0", "padBottom": "0", "magFilter": "Linear", "minFilter": "Linear"}
         json.dump(cfg, open(os.path.join(d, name), "w"))
 
 
 # ---------------------------------------------------------------------- story (story.js)
+NAMES_SKILL = {"warrior": ("هجوم", "شقّ", "إعصار"), "archer": ("سهم", "وابل", "خارق"), "gunner": ("إطلاق", "الآلة", "قنبلة")}
+HELP_TEXT = ("الحركة: عصا التحكم على اليسار\nالهجوم والمهارات: الأزرار على اليمين\nاقفز بزر القفز واندفع لتفادي الضربات\n"
+             "بدّل الشخصية بالضغط على وجهها في الأعلى\nاتبع السهم الأزرق وأنجز مهام الوادي")
 NAMES = {"warrior": "المحارب", "archer": "الرامية", "healer": "المعالجة", "gunner": "المقاتل"}
 SCRIPT = {
     "intro": [("healer", "أخيرًا استيقظتم! منذ الليلة الماضية وطاقةٌ غريبة تتدفّق من الوادي الجنوبي، ولم أشعر بمثلها من قبل."),
@@ -259,6 +229,7 @@ def build():
     for s in os.listdir(os.path.join(ASSETS, "sounds")):
         if s not in ("jump.wav", "click.wav"):
             copy(os.path.join(ASSETS, "sounds", s), "sounds")
+    coin_sound(os.path.join(PROJ, "sounds", "coin.wav"))
     os.makedirs(os.path.join(PROJ, "terrains"), exist_ok=True)
     shutil.copyfile(os.path.join(ASSETS, "world.s2t"), os.path.join(PROJ, "terrains", "world.s2t"))
     ui()
@@ -384,7 +355,7 @@ def build():
                              "waveSpeed": 8, "waveRadius": 16, "slamCooldown": 6.5, "leapDamage": 22, "leapCooldown": 9, "ringTemplate": "Ring", "landEffect": "DustFx",
                              "idleClip": "idle", "walkClip": "walk", "punchClip": "punch", "slamClip": "slam", "jumpClip": "jump", "landClip": "land",
                              "angryClip": "angry", "slamSound": "/slam.wav", "punchSound": "/hit.wav"}),
-                 ("Health3D", {"maxHealth": 1600, "invincibleTime": 0.08, "healthBar": "BossBar", "onDeath": "PLAY_CLIP", "deathClip": "death", "removeAfter": 0,
+                 ("Health3D", {"maxHealth": 1600, "invincibleTime": 0.08, "healthBar": "BossBar", "healthText": "BossHp", "showMax": True, "onDeath": "PLAY_CLIP", "deathClip": "death", "removeAfter": 0,
                                "deathSound": "/slam.wav", "hurtShake": 0})])
 
     # ---------------------------------------------------------------- heroes (party), healer, guide arrow, camera
@@ -394,7 +365,7 @@ def build():
                                                "cameraHeight": 1.5, "cameraPitch": -16, "walkSpeed": 2.6, "runSpeed": 5.6, "jumpSpeed": 5.2, "radius": 0.35,
                                                "maxSlope": 42, "modelYawOffset": 0, "idleClip": "idle", "walkClip": "walk", "runClip": "run", "jumpClip": "jump",
                                                "useKeyboard": True, "turnSpeed": 720})
-    health = lambda: ("Health3D", {"maxHealth": 120, "invincibleTime": 0.5, "healthBar": "HpBar", "hurtShake": 0.5, "hurtClip": "hurt", "hurtSound": "/hurt.wav",
+    health = lambda: ("Health3D", {"maxHealth": 120, "invincibleTime": 0.5, "healthBar": "HpBar", "healthText": "HpText", "showMax": True, "hurtShake": 0.5, "hurtClip": "hurt", "hurtSound": "/hurt.wav",
                                    "onDeath": "PLAY_CLIP", "deathClip": "death", "removeAfter": 0, "regenPerSecond": 1.5, "regenDelay": 5})
     dash = lambda dmg, back=False: ("Dash3D", {"dashButton": "DashBtn", "joystick": "Joy", "distance": 5, "duration": 0.24, "cooldown": 0.9, "invincible": True,
                                                "clip": "dodge" if back else "dash", "damage": dmg, "targets": targets, "backward": back, "sound": "/switch.wav"})
@@ -435,59 +406,161 @@ def build():
         ("Companion3D", {"leader": "Hero_Warrior", "followDistance": 2.2, "sideOffset": 1.3, "walkSpeed": 2.6, "runSpeed": 6.2, "teleportDistance": 22,
                          "healBelow": 0.65, "healAmount": 30, "healCooldown": 7, "healClip": "heal", "healEffect": "HealFx", "healSound": "/heal.wav",
                          "idleClip": "idle", "walkClip": "walk", "runClip": "run"})])
-    sc.add("OBJ3D", "Party", [("CharacterSwitch3D", {"characters": ["Hero_Warrior", "Hero_Archer", "Hero_Gunner"], "switchButton": "SwitchBtn", "cooldown": 0.6,
+    sc.add("OBJ3D", "Party", [("CharacterSwitch3D", {"characters": ["Hero_Warrior", "Hero_Archer", "Hero_Gunner"], "cooldown": 0.6,
                                                      "switchEffect": "HealFx", "autoSwitchOnDeath": 1.6})], Mesh="EMPTY", x=sx, y=gy(sx, sz) + 3, z=sz, Cast_Shadows=False)
     sc.model("Guide", "guide.glb", sx, gy(sx, sz) + 2.4, sz - 1.5, 0.75, static=False, Color="#5AD2FF", Unlit=True, Emissive="#5AD2FF", Emissive_Intensity=1.4,
              Cast_Shadows=False, Receive_Shadows=False, behaviors=[("Compass3D", {"anchor": "Hero_Warrior", "target": "MarkMeadow", "height": 0.25, "ahead": 1.4, "arriveDistance": 9,
                                                           "modelYawOffset": 0, "bob": 0.1})])
     sc.add("CAMERA3D", "Cam", x=sx, y=gy(sx, sz) + 3, z=sz - 6.5, Rotation_Y=180, Active=True, FOV=62, Near=0.1, Far=320)
 
-    # ---------------------------------------------------------------- 2D layer
+    # ---------------------------------------------------------------- coins and gems (counters of the HUD)
+    def lerp(a, b, t):
+        return a + (b - a) * t
+    pts = []
+    start = (sx, sz)
+    chain = [start] + [(Z["x"], Z["z"]) for Z in ZONES]
+    for i in range(len(chain) - 1):
+        (x0, z0), (x1, z1) = chain[i], chain[i + 1]
+        for t in (0.3, 0.6):
+            pts.append((lerp(x0, x1, t) + (1.6 if t < 0.5 else -1.6), lerp(z0, z1, t), "coin"))
+    for Z in ZONES[:3]:
+        for k in range(4):
+            a = k * math.pi / 2 + 0.7
+            pts.append((Z["x"] + math.cos(a) * Z["r"] * 0.62, Z["z"] + math.sin(a) * Z["r"] * 0.62, "coin" if k % 2 == 0 else "gem"))
+    pts.append((ZONES[3]["x"] + 6, ZONES[3]["z"] - 6, "gem"))
+    if True:
+        for i, (x, z, kind) in enumerate(pts):
+            pick = ("Pickup3D", {"itemId": kind, "count": 1, "playerNames": "Hero", "range": 1.7, "tapObject": False, "sound": "/coin.wav", "flyToPlayer": True})
+            spin = ("Rotator3D", {"speedY": 140, "localAxes": False})
+            if kind == "coin":
+                sc.shape("Coin%d" % i, "CYLINDER", x, gy(x, z) + 0.95, z, 0.6, 0.08, 0.6, "#FFC928", rx=90, static=False, Unlit=True, Emissive="#FFB000",
+                         Emissive_Intensity=0.9, Cast_Shadows=False, Receive_Shadows=False, behaviors=[pick, spin])
+            else:
+                sc.shape("Gem%d" % i, "PYRAMID", x, gy(x, z) + 1.0, z, 0.5, 0.7, 0.5, "#4FC8FF", static=False, Unlit=True, Emissive="#4FC8FF",
+                         Emissive_Intensity=1.0, Cast_Shadows=False, Receive_Shadows=False, behaviors=[pick, spin])
+
+    # ---------------------------------------------------------------- 2D layer (the look of the original game)
     AR = "/files/ar.s2df"
     BIG = "/files/ar_big.s2df"
+    GOLDC = "#FFD36A"
+    ALL_TEXT = []
+
+    def T(name, x, y, w, h, text, scale=0.5, color="#FFFFFF", align="CENTER", visible=True, z=110, font=AR):
+        e = sc.text(name, x, y, w, h, text, scale, color, visible, z)
+        e["Auto Size"] = "false"
+        e["Text Align"] = align
+        e["font"] = font
+        return e
+
+    def IMG(name, x, y, w, h, image, z=100, visible=True):
+        return sc.add("BOX", name, x=x, y=y, width=w, height=h, z=z, Visible=visible, P={"image": "/" + image, "Collider Width": w, "Collider Height": h})
+
+    def BTN(name, x, y, w, h, image, z=100, visible=True, pressed=False):
+        return sc.button(name, x, y, w, h, image, pressed=pressed, visible=visible, z=z)
+
+    def skill(name, label, x, y, size, image, text, scale):
+        BTN(name, x, y, size, size, image, z=100, pressed=True)
+        T(label, x + 4, y + size * 0.1, size - 8, 26, text, scale, z=112)
+
     with sc.grp("Hud", ui=True):
-        sc.add("JOYSTICK", "Joy", x=36, y=36, width=250, height=250, z=120, P={"Pad Image": "/joy_pad.png", "Button Image": "/joy_knob.png"})
-        sc.button("AttackBtn", 1096, 40, 150, 150, "btn_attack.png")
-        sc.button("SkillABtn", 956, 46, 112, 112, "btn_skill_a.png")
-        sc.button("SkillBBtn", 1120, 214, 112, 112, "btn_skill_b.png")
-        sc.button("DashBtn", 980, 186, 100, 100, "btn_dash.png")
-        sc.button("JumpBtn", 836, 40, 100, 100, "btn_jump.png")
-        sc.button("SwitchBtn", 1172, 600, 88, 88, "btn_switch.png")
-        sc.button("GearBtn", 1088, 612, 66, 66, "btn_gear.png")
-        sc.add("BOX", "HudBack", x=12, y=604, width=430, height=104, z=100, P={"image": "/panel_hud.png", "Collider Width": 430, "Collider Height": 104})
+        sc.add("JOYSTICK", "Joy", x=40, y=34, width=250, height=250, z=120, P={"Pad Image": "/joy_pad.png", "Button Image": "/joy_knob.png"})
+        skill("AttackBtn", "AtkLbl", 1100, 34, 150, "btn_attack.png", NAMES_SKILL["warrior"][0], 0.52)
+        skill("SkillABtn", "ALbl", 972, 50, 104, "btn_skill_a.png", NAMES_SKILL["warrior"][1], 0.42)
+        skill("SkillBBtn", "BLbl", 1124, 204, 104, "btn_skill_b.png", NAMES_SKILL["warrior"][2], 0.42)
+        skill("DashBtn", "DashLbl", 1000, 168, 92, "btn_dash.png", "اندفاع", 0.38)
+        skill("JumpBtn", "JumpLbl", 858, 40, 92, "btn_jump.png", "قفز", 0.38)
+        # hero panel: face, name + level, health / xp / ultimate bars
+        IMG("HudBack", 14, 622, 252, 84, "panel_hero.png", 100)
         for k, n in (("warrior", "FaceWarrior"), ("archer", "FaceArcher"), ("gunner", "FaceGunner")):
-            sc.add("BOX", n, x=22, y=614, width=84, height=84, z=105, Visible=(k == "warrior"), P={"image": "/face_%s.png" % k, "Collider Width": 84, "Collider Height": 84})
-        sc.text("HeroName", 118, 664, 300, 36, NAMES["warrior"], scale=0.8)
-        sc.add("PROGRESS", "HpBar", x=118, y=624, width=306, height=26, z=110, P={"Max": 100, "Progress": 100, "Background Color": "#3A1418", "Progress Color": "#E5484D"})
-        sc.text("Objective", 460, 662, 600, 44, "اتبع السهم الأزرق إلى المرج الأخضر", scale=0.75, color="#FFE27A")
-        sc.text("BossName", 440, 616, 400, 34, "العملاق الأزرق", scale=0.85, color="#9FDBFF", visible=False)
-        sc.add("PROGRESS", "BossBar", x=440, y=598, width=400, height=18, z=110, Visible=False,
-               P={"Max": 100, "Progress": 100, "Background Color": "#10233A", "Progress Color": "#43B0FF"})
-    for e in sc.els:
-        if e["TYPE"] == "TEXT":
-            e["font"] = AR
+            IMG(n, 24, 632, 64, 64, "face_%s.png" % k, 105, visible=(k == "warrior"))
+        T("HeroName", 96, 676, 96, 26, NAMES["warrior"], 0.5, align="LEFT")
+        T("HeroLv", 190, 676, 68, 26, "Lv. 1", 0.5, GOLDC, align="LEFT")
+        sc.add("PROGRESS", "HpBar", x=96, y=655, width=160, height=16, z=106, P={"Max": 100, "Progress": 100, "Background Color": "#3A1824", "Progress Color": "#FF5A5F"})
+        T("HpText", 96, 654, 160, 18, "120 / 120", 0.3, align="CENTER", z=112)
+        sc.add("PROGRESS", "XpBar", x=96, y=647, width=160, height=4, z=106, P={"Max": 100, "Progress": 0, "Background Color": "#26324A", "Progress Color": "#5AD2FF"})
+        sc.add("PROGRESS", "UltBar", x=96, y=638, width=160, height=4, z=106, P={"Max": 100, "Progress": 0, "Background Color": "#26324A", "Progress Color": GOLDC})
+        # quest
+        IMG("QuestBack", 14, 530, 252, 84, "panel_quest.png", 100)
+        IMG("QuestIcon", 232, 580, 28, 28, "icon_quest.png", 105)
+        T("QuestHead", 86, 580, 142, 28, "مهمة رئيسية", 0.4, GOLDC, align="RIGHT")
+        T("QuestCount", 24, 580, 62, 28, "", 0.4, GOLDC, align="LEFT")
+        T("Objective", 24, 536, 232, 44, "اتبع السهم الأزرق إلى المرج الأخضر", 0.38, "#EAF1FF", align="RIGHT")
+        # counters, pause, minimap
+        IMG("CoinChip", 1008, 664, 98, 42, "chip_coin.png", 100)
+        T("CoinTxt", 1044, 664, 56, 42, "0", 0.46, z=110, align="CENTER")
+        IMG("GemChip", 1112, 664, 98, 42, "chip_gem.png", 100)
+        T("GemTxt", 1148, 664, 56, 42, "0", 0.46, z=110, align="CENTER")
+        sc.button("PauseBtn", 1218, 664, 46, 46, "btn_pause.png", pressed=True)
+        mm = IMG("MapBack", 1142, 526, 128, 128, "map_back.png", 100)
+        mm["behaviors"] = json.dumps([{"type": "Minimap3D", "enabled": True, "params": {
+            "targetNames": "Hero", "terrain": "Ground", "span": 56, "rotateWithCamera": True, "inset": 6, "showTrees": True,
+            "markerNames": "Mark", "markerColor": GOLDC, "enemyNames": "Slime,Drone,Boss", "enemyColor": "#FF4B5C", "arrowColor": "#2A6BFF"}}], ensure_ascii=False)
+        IMG("MapFrame", 1142, 526, 128, 128, "map_frame.png", 108)
+        # party buttons (the active one gets the gold ring)
+        for i, k in enumerate(("warrior", "archer", "gunner")):
+            BTN("Party" + k.capitalize(), 1206, 470 - i * 64, 56, 56, "pface_%s%s.png" % (k, "_on" if k == "warrior" else ""), z=100)
+        # boss bar (shown in the arena)
+        IMG("BossFrame", 420, 30, 440, 34, "boss_frame.png", 100, visible=False)
+        sc.add("PROGRESS", "BossBar", x=428, y=36, width=424, height=22, z=104, Visible=False,
+               P={"Max": 100, "Progress": 100, "Background Color": "#2A0E18", "Progress Color": "#FF4B3A"})
+        T("BossHp", 428, 34, 424, 26, "", 0.3, z=112, visible=False)
+        IMG("BossChip", 545, 66, 190, 34, "chip_white.png", 104, visible=False)
+        T("BossName", 545, 66, 190, 34, "العملاق الأزرق", 0.46, "#1A2238", z=112, visible=False)
+        # zone banner
+        IMG("BannerBack", 450, 566, 380, 84, "banner.png", 100, visible=False)
+        T("BannerSmall", 450, 614, 380, 28, "منطقة جديدة", 0.34, GOLDC, z=112, visible=False)
+        T("BannerName", 450, 576, 380, 42, "", 0.6, z=112, visible=False)
     with sc.grp("DialogUi", ui=True):
-        sc.add("BOX", "DlgPanel", x=290, y=392, width=700, height=170, z=200, Visible=False, P={"image": "/panel_dialog.png", "Collider Width": 700, "Collider Height": 170})
-        for k, x in (("warrior", 92), ("gunner", 92), ("archer", 986), ("healer", 986)):
-            sc.add("BOX", "Bust_" + k, x=x, y=376, width=200, height=218, z=210, Visible=False, P={"image": "/bust_%s.png" % k, "Collider Width": 1, "Collider Height": 1})
-        sc.text("DlgName", 330, 512, 400, 40, "", scale=0.78, color="#9FDBFF", visible=False, z=220)
-        sc.text("DlgText", 310, 404, 660, 104, "", scale=0.64, visible=False, z=220)
-        sc.add("BOX", "DlgSkip", x=860, y=516, width=110, height=40, z=225, Visible=False, P={"image": "/panel_skip.png", "Collider Width": 110, "Collider Height": 40})
-        sc.text("DlgSkipText", 872, 518, 86, 34, "تخطَّ", scale=0.62, visible=False, z=226)
+        IMG("DlgPanel", 290, 16, 700, 150, "panel_dialog.png", 200, visible=False)
+        for k, x in (("warrior", 20), ("gunner", 20), ("archer", 962), ("healer", 962)):
+            IMG("Bust_" + k, x, 0, 290, 318, "bust_%s.png" % k, 210, visible=False)
+        IMG("DlgPill", 826, 118, 150, 40, "pill_name.png", 215, visible=False)
+        T("DlgName", 826, 118, 150, 40, "", 0.5, z=220, visible=False)
+        T("DlgText", 306, 46, 668, 70, "", 0.48, "#FFFFFF", align="RIGHT", z=220, visible=False)
+        T("DlgHint", 306, 22, 200, 22, "انقر للمتابعة", 0.28, "#B8C8E8", align="LEFT", z=220, visible=False)
+        IMG("DlgSkip", 580, 664, 118, 40, "pill_skip.png", 225, visible=False)
+        IMG("DlgSkipIcon", 668, 672, 24, 24, "icon_skip.png", 226, visible=False)
+        T("DlgSkipText", 590, 664, 72, 40, "تخطي", 0.44, z=226, visible=False)
     with sc.grp("EndUi", ui=True):
-        sc.add("BOX", "EndPanel", x=320, y=190, width=640, height=340, z=300, Visible=False, P={"image": "/panel_center.png", "Collider Width": 640, "Collider Height": 340})
-        sc.text("EndTitle", 400, 420, 480, 80, "", scale=1.0, color="#FFD666", visible=False, z=310)
-        sc.text("EndText", 380, 330, 520, 60, "", scale=0.7, visible=False, z=310)
-        sc.button("RestartBtn", 460, 220, 360, 96, "btn_wide.png", visible=False, z=305)
-        sc.text("RestartText", 520, 244, 240, 50, "العب مجددًا", scale=0.85, visible=False, z=310)
-    for e in sc.els:
-        if e["TYPE"] == "TEXT":
-            e["font"] = BIG if e["name"] == "EndTitle" else AR
+        IMG("EndShade", 0, 0, 1280, 720, "shade.png", 296, visible=False)
+        IMG("EndPanel", 360, 180, 560, 360, "panel_center.png", 300, visible=False)
+        T("EndTitle", 360, 420, 560, 90, "", 0.8, GOLDC, z=310, visible=False, font=BIG)
+        T("EndText", 380, 340, 520, 60, "", 0.5, z=310, visible=False)
+        BTN("RestartBtn", 490, 230, 300, 62, "btn_gold_s.png", z=305, visible=False)
+        T("RestartText", 490, 230, 300, 62, "العب مجددًا", 0.55, "#4A2800", z=310, visible=False)
+    with sc.grp("PauseUi", ui=True):
+        IMG("PauseShade", 0, 0, 1280, 720, "shade.png", 400, visible=False)
+        IMG("PausePanel", 360, 180, 560, 360, "panel_center.png", 405, visible=False)
+        T("PauseTitle", 360, 460, 560, 60, "إيقاف مؤقت", 0.7, GOLDC, z=410, visible=False, font=BIG)
+        BTN("ResumeBtn", 490, 380, 300, 62, "btn_gold_s.png", z=406, visible=False)
+        T("ResumeTxt", 490, 380, 300, 62, "متابعة", 0.55, "#4A2800", z=410, visible=False)
+        BTN("PauseSetBtn", 490, 304, 300, 62, "btn_glass_s.png", z=406, visible=False)
+        T("PauseSetTxt", 490, 304, 300, 62, "الإعدادات", 0.5, z=410, visible=False)
+        BTN("PauseMenuBtn", 490, 228, 300, 62, "btn_glass_s.png", z=406, visible=False)
+        T("PauseMenuTxt", 490, 228, 300, 62, "القائمة الرئيسية", 0.5, z=410, visible=False)
+        IMG("HelpPanel", 360, 180, 560, 360, "panel_center.png", 405, visible=False)
+        T("HelpTitle", 360, 470, 560, 50, "طريقة اللعب", 0.6, GOLDC, z=410, visible=False, font=BIG)
+        T("HelpText", 392, 270, 496, 190, HELP_TEXT, 0.4, align="RIGHT", z=410, visible=False)
+        BTN("HelpCloseBtn", 490, 196, 300, 62, "btn_gold_s.png", z=406, visible=False)
+        T("HelpCloseTxt", 490, 196, 300, 62, "حسنًا", 0.55, "#4A2800", z=410, visible=False)
+    with sc.grp("MenuUi", ui=True):
+        sc.add("BOX", "MenuBlock", x=0, y=0, width=1280, height=720, z=380, P={"image": "/shade_menu.png", "Collider Width": 1280, "Collider Height": 720, "Tint": "#FFFFFF"})
+        IMG("MenuSide", 0, 0, 600, 720, "menu_side.png", 385)
+        IMG("MenuIcon", 202, 604, 96, 96, "icon_castle.png", 390)
+        T("MenuTitle", 40, 470, 420, 130, "مغامرات الأفق", 1.0, "#D8E8FF", z=392, font=BIG)
+        T("MenuSub", 30, 436, 440, 34, "انطلق .. واكتشف عالمًا مليئًا بالمغامرات", 0.34, "#EAF1FF", z=392)
+        BTN("PlayBtn", 52, 340, 442, 78, "btn_gold.png", z=390)
+        T("PlayTxt", 52, 340, 442, 78, "ابدأ اللعب", 0.66, "#4A2800", z=395)
+        BTN("SetBtn", 52, 258, 442, 66, "btn_glass.png", z=390)
+        T("SetTxt", 52, 258, 442, 66, "الإعدادات", 0.5, z=395)
+        BTN("HelpBtn", 52, 180, 442, 66, "btn_glass.png", z=390)
+        T("HelpTxt", 52, 180, 442, 66, "طريقة اللعب", 0.5, z=395)
     # the conversation behavior lives on the dialog panel
     dlg = next(e for e in sc.els if e["name"] == "DlgPanel")
     dlg["behaviors"] = json.dumps([{"type": "Dialogue", "enabled": True, "params": {
         "panel": "DlgPanel", "nameText": "DlgName", "bodyText": "DlgText", "portraits": ["Bust_warrior", "Bust_gunner", "Bust_archer", "Bust_healer"],
-        "skipButton": "DlgSkip", "extras": ["DlgSkipText"], "script": story_script(), "speed": 40, "autoNext": 3.2, "startSection": "intro"}}], ensure_ascii=False)
+        "skipButton": "DlgSkip", "extras": ["DlgPill", "DlgHint", "DlgSkipIcon", "DlgSkipText"], "script": story_script(), "speed": 40, "autoNext": 3.2,
+        "startSection": ""}}], ensure_ascii=False)
 
     # ---------------------------------------------------------------- events (blocks)
     proj = PROJ
@@ -498,59 +571,97 @@ def build():
     alive = lambda s: R("copies alive ___", s)
     cur = R("current character ___", "Party")
 
+    BOSS_UI = ["BossFrame", "BossBar", "BossHp", "BossChip", "BossName"]
+    MENU_UI = ["MenuBlock", "MenuSide", "MenuIcon", "MenuTitle", "MenuSub", "PlayBtn", "PlayTxt", "SetBtn", "SetTxt", "HelpBtn", "HelpTxt"]
+    PAUSE_UI = ["PauseShade", "PausePanel", "PauseTitle", "ResumeBtn", "ResumeTxt", "PauseSetBtn", "PauseSetTxt", "PauseMenuBtn", "PauseMenuTxt"]
+    HELP_UI = ["PauseShade", "HelpPanel", "HelpTitle", "HelpText", "HelpCloseBtn", "HelpCloseTxt"]
+    END_UI = ["EndShade", "EndPanel", "EndTitle", "EndText", "RestartBtn", "RestartText"]
+    vis = lambda names, on: [B("setVisibility", n, "true" if on else "false") for n in names]
+    J = lambda r: r.code()
+    num = lambda n: R("current character number ___", "Party")
+
     def objective(text):
         return B("setText", "Objective", q(text))
+
+    def quest_count(txt):
+        return B("setText", "QuestCount", q(txt))
+
+    def banner(i):
+        return vis(["BannerBack", "BannerSmall", "BannerName"], True) + [B("setText", "BannerName", q(ZONES[i]["name"])), B("waitSeconds", "2.8", yes=vis(["BannerBack", "BannerSmall", "BannerName"], False))]
 
     def open_barrier(i):
         return [B("setVisible3D", "Barrier%d" % i, "false"), B("setPhysics3D", "Barrier%d" % i, "false"), B("playSound3D", "/barrier.wav", "1"),
                 B("cameraShake3D", "0.2")]
 
     def go_to(k, label):
-        return [B("Compass3D.setTarget", "Guide", "Mark" + k), B("setVisible3D", "Beacon" + k, "true"), objective("اتبع السهم الأزرق إلى %s" % label)]
+        return [B("Compass3D.setTarget", "Guide", "Mark" + k), B("setVisible3D", "Beacon" + k, "true"), objective("اتبع السهم الأزرق إلى %s" % label), quest_count("")]
 
-    def arrive(k, stage_now, section, starts, text):
+    def arrive(k, i, stage_now, section, starts, text, total):
         return [B("ifThen", eq("stage", stage_now), yes=[
             B("setVariable", "stage", str(stage_now + 1)), B("Compass3D.setTarget", "Guide", "null"), B("setVisible3D", "Beacon" + k, "false"),
-            B("Dialogue.start", "DlgPanel", q(section))] + [B("Spawner3D.start", s) for s in starts] + [objective(text)])]
+            B("Dialogue.start", "DlgPanel", q(section))] + banner(i) + [B("Spawner3D.start", s) for s in starts] + [objective(text), quest_count("0 / %d" % total)])]
 
-    G.write_event(proj, "private/ZoneMeadow/behaviors/Trigger3D/onEnter", arrive("Meadow", 0, "meadow", ["SpawnMeadow"], "اهزم السلايمات في المرج الأخضر"))
-    G.write_event(proj, "private/ZoneFalls/behaviors/Trigger3D/onEnter", arrive("Falls", 2, "falls", ["SpawnFalls", "SpawnFallsBig"], "اهزم السلايمات حول البحيرة"))
-    G.write_event(proj, "private/ZoneAutumn/behaviors/Trigger3D/onEnter", arrive("Autumn", 4, "autumn", ["SpawnDrones"], "دمّر الطائرات المسيّرة"))
+    G.write_event(proj, "private/ZoneMeadow/behaviors/Trigger3D/onEnter", arrive("Meadow", 0, 0, "meadow", ["SpawnMeadow"], "اهزم السلايمات في المرج الأخضر", 6))
+    G.write_event(proj, "private/ZoneFalls/behaviors/Trigger3D/onEnter", arrive("Falls", 1, 2, "falls", ["SpawnFalls", "SpawnFallsBig"], "اهزم السلايمات حول البحيرة", 8))
+    G.write_event(proj, "private/ZoneAutumn/behaviors/Trigger3D/onEnter", arrive("Autumn", 2, 4, "autumn", ["SpawnDrones"], "دمّر الطائرات المسيّرة", 6))
     G.write_event(proj, "private/ZoneArena/behaviors/Trigger3D/onEnter", [B("ifThen", eq("stage", 6), yes=[
         B("setVariable", "stage", "7"), B("Compass3D.setTarget", "Guide", "null"), B("setVisible3D", "BeaconArena", "false"),
-        B("Dialogue.start", "DlgPanel", q("boss")), B("Boss3D.dropIn", "Boss", "24"), B("setVisibility", "BossBar", "true"), B("setVisibility", "BossName", "true"),
-        objective("اهزم العملاق الأزرق! اقفز فوق الموجات الأرضية")])])
+        B("Dialogue.start", "DlgPanel", q("boss")), B("Boss3D.dropIn", "Boss", "24")] + vis(BOSS_UI, True) + banner(3) + [
+        objective("اهزم العملاق الأزرق! اقفز فوق الموجات الأرضية"), quest_count("")])])
+    done = lambda s, n: and_(R("___ >= ___", made(s), str(n)), eq(alive(s), "0"))
+    kills = lambda s: "(" + J(made(s)) + " - " + J(alive(s)) + ")"
     G.write_event(proj, "public/OnStep", [
-        B("ifThen", and_(eq("stage", 1), and_(R("___ >= ___", made("SpawnMeadow"), "6"), eq(alive("SpawnMeadow"), "0"))), yes=[
+        B("setText", "CoinTxt", '"" + ' + J(R("count of item ___", q("coin")))),
+        B("setText", "GemTxt", '"" + ' + J(R("count of item ___", q("gem")))),
+        B("ifThen", eq("stage", 1), yes=[B("setText", "QuestCount", kills("SpawnMeadow") + ' + " / 6"')]),
+        B("ifThen", eq("stage", 3), yes=[B("setText", "QuestCount", "(" + kills("SpawnFalls") + " + " + kills("SpawnFallsBig") + ') + " / 8"')]),
+        B("ifThen", eq("stage", 5), yes=[B("setText", "QuestCount", kills("SpawnDrones") + ' + " / 6"')]),
+        B("ifThen", and_(eq("stage", 1), done("SpawnMeadow", 6)), yes=[
             B("setVariable", "stage", "2")] + open_barrier(1) + [B("Dialogue.start", "DlgPanel", q("meadowDone"))] + go_to("Falls", "بحيرة الشلال")),
-        B("ifThen", and_(eq("stage", 3), and_(and_(R("___ >= ___", made("SpawnFalls"), "7"), eq(alive("SpawnFalls"), "0")),
-                                               and_(R("___ >= ___", made("SpawnFallsBig"), "1"), eq(alive("SpawnFallsBig"), "0")))), yes=[
+        B("ifThen", and_(eq("stage", 3), and_(done("SpawnFalls", 7), done("SpawnFallsBig", 1))), yes=[
             B("setVariable", "stage", "4")] + open_barrier(2) + [B("Dialogue.start", "DlgPanel", q("fallsDone"))] + go_to("Autumn", "الغابة الخريفية")),
-        B("ifThen", and_(eq("stage", 5), and_(R("___ >= ___", made("SpawnDrones"), "6"), eq(alive("SpawnDrones"), "0"))), yes=[
+        B("ifThen", and_(eq("stage", 5), done("SpawnDrones", 6)), yes=[
             B("setVariable", "stage", "6")] + open_barrier(3) + [B("Dialogue.start", "DlgPanel", q("autumnDone"))] + go_to("Arena", "ساحة العملاق")),
     ])
     G.write_event(proj, "private/Boss/behaviors/Health3D/onDeath", [
-        B("setVariable", "stage", "8"), B("setVisibility", "BossBar", "false"), B("setVisibility", "BossName", "false"), B("playSound3D", "/victory.wav", "1"),
-        B("Dialogue.start", "DlgPanel", q("victory")), objective("انتصرت على العملاق الأزرق! 🏆 استكشف العالم بحرية"),
-        B("waitSeconds", "14", yes=[
-            B("setVisibility", "EndPanel", "true"), B("setVisibility", "EndTitle", "true"), B("setText", "EndTitle", q("انتصار!")),
-            B("setVisibility", "EndText", "true"), B("setText", "EndText", q("أنقذتم الوادي من العملاق الأزرق")),
-            B("setVisibility", "RestartBtn", "true"), B("setVisibility", "RestartText", "true")])])
+        B("setVariable", "stage", "8")] + vis(BOSS_UI, False) + [B("playSound3D", "/victory.wav", "1"),
+        B("Dialogue.start", "DlgPanel", q("victory")), objective("انتصرت على العملاق الأزرق! استكشف العالم بحرية"), quest_count(""),
+        B("waitSeconds", "14", yes=vis(END_UI, True) + [B("setText", "EndTitle", q("انتصار!")), B("setText", "EndText", q("أنقذتم الوادي من العملاق الأزرق"))])])
+
+    def face_images():
+        out = []
+        for k, idx in (("warrior", 1), ("archer", 2), ("gunner", 3)):
+            on = eq(num(0), str(idx))
+            out.append(B("setVisibility", "Face" + k.capitalize(), on))
+            out.append(B("if", on, yes=[B("setImage", "Party" + k.capitalize(), "/pface_%s_on.png" % k)], no=[B("setImage", "Party" + k.capitalize(), "/pface_%s.png" % k)]))
+        return out
+
+    def labels():
+        out = []
+        for k, idx in (("warrior", 1), ("archer", 2), ("gunner", 3)):
+            a, b_, c = NAMES_SKILL[k]
+            out.append(B("ifThen", eq(num(0), str(idx)), yes=[B("setText", "HeroName", q(NAMES[k])), B("setText", "AtkLbl", q(a)), B("setText", "ALbl", q(b_)), B("setText", "BLbl", q(c))]))
+        return out
+
     G.write_event(proj, "private/Party/behaviors/CharacterSwitch3D/onSwitch", [
         B("Companion3D.setLeader", "Healer", cur), B("Compass3D.setAnchor", "Guide", cur), B("playSound3D", "/switch.wav", "0.8"),
         B("setProgress", "HpBar", R("health percent ___", cur)),
-        B("setVisibility", "FaceWarrior", eq(R("current character number ___", "Party"), "1")),
-        B("setVisibility", "FaceArcher", eq(R("current character number ___", "Party"), "2")),
-        B("setVisibility", "FaceGunner", eq(R("current character number ___", "Party"), "3")),
-        B("ifThen", eq(R("current character number ___", "Party"), "1"), yes=[B("setText", "HeroName", q(NAMES["warrior"]))]),
-        B("ifThen", eq(R("current character number ___", "Party"), "2"), yes=[B("setText", "HeroName", q(NAMES["archer"]))]),
-        B("ifThen", eq(R("current character number ___", "Party"), "3"), yes=[B("setText", "HeroName", q(NAMES["gunner"]))])])
-    G.write_event(proj, "private/Party/behaviors/CharacterSwitch3D/onPartyDefeated", [
-        B("setVisibility", "EndPanel", "true"), B("setVisibility", "EndTitle", "true"), B("setText", "EndTitle", q("هُزم الفريق")),
-        B("setVisibility", "EndText", "true"), B("setText", "EndText", q("حاولوا مرة أخرى، الوادي ينتظركم")),
-        B("setVisibility", "RestartBtn", "true"), B("setVisibility", "RestartText", "true")])
+        B("setText", "HpText", '"" + (int) Math.ceil(' + J(R("health ___", cur)) + ') + " / 120"')] + face_images() + labels())
+    G.write_event(proj, "private/Party/behaviors/CharacterSwitch3D/onPartyDefeated", vis(END_UI, True) + [
+        B("setText", "EndTitle", q("هُزم الفريق")), B("setText", "EndText", q("حاولوا مرة أخرى، الوادي ينتظركم"))])
+    for k in ("warrior", "archer", "gunner"):
+        G.write_event(proj, "private/Party%s/onClick" % k.capitalize(), [B("CharacterSwitch3D.switchTo", "Party", "Hero_" + k.capitalize())])
     G.write_event(proj, "private/RestartBtn/onClick", [B("OpenScene", "scene1")])
-    G.write_event(proj, "private/GearBtn/onClick", [B("showGraphicsMenu3D", "true")])
+    # main menu, pause and help
+    G.write_event(proj, "public/OnCreate", [B("Pause")])
+    G.write_event(proj, "private/PlayBtn/onClick", vis(MENU_UI, False) + [B("Resume"), B("Dialogue.start", "DlgPanel", q("intro"))])
+    G.write_event(proj, "private/SetBtn/onClick", [B("showGraphicsMenu3D", "true")])
+    G.write_event(proj, "private/HelpBtn/onClick", vis(HELP_UI, True))
+    G.write_event(proj, "private/HelpCloseBtn/onClick", vis(HELP_UI, False))
+    G.write_event(proj, "private/PauseBtn/onClick", [B("Pause")] + vis(PAUSE_UI, True))
+    G.write_event(proj, "private/ResumeBtn/onClick", vis(PAUSE_UI, False) + [B("Resume")])
+    G.write_event(proj, "private/PauseSetBtn/onClick", [B("showGraphicsMenu3D", "true")])
+    G.write_event(proj, "private/PauseMenuBtn/onClick", [B("OpenScene", "scene1")])
 
     G.write_project(FOLDER, sc, {"Lighting Preset": "CUSTOM", "Render Mode": "SOFT", "Ambient Color": "#8C97A8", "Ambient Intensity": 1.0, "Sun": True,
                                  "Sun Color": "#FFF2DC", "Sun Intensity": 1.05, "Sun Pitch": -52, "Sun Yaw": 40, "Sky": "GRADIENT", "Sky Top": "#4F8FE6",

@@ -15,6 +15,7 @@ on:
         default: production
         options:
           - production
+          - internal
           - beta
           - alpha
           - draft

@@ -1,0 +1,1 @@
+import{t as e,w as t}from"./offline-QHUhl-Ex.js";new class{constructor(){this.mesh2motion_engine=new e}},t.install();

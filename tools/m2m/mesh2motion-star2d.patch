@@ -231,7 +231,7 @@ index 89a5ca2..5db5d12 100644
            this.allow_proceeding_to_next_step(true)
          }).catch((err) => {
 diff --git a/src/retarget/AnimationRetargetService.ts b/src/retarget/AnimationRetargetService.ts
-index 5e4ae5b..217fe57 100644
+index 5e4ae5b..553a0c4 100644
 --- a/src/retarget/AnimationRetargetService.ts
 +++ b/src/retarget/AnimationRetargetService.ts
 @@ -9,6 +9,8 @@ import { SkeletonType } from '../lib/enums/SkeletonType.ts'
@@ -262,15 +262,26 @@ index 5e4ae5b..217fe57 100644
    public set_root_correction_x_degrees (degrees: number): void {
      this.root_correction_x_degrees = degrees
    }
-@@ -259,7 +273,10 @@ export class AnimationRetargetService {
+@@ -246,7 +260,10 @@ export class AnimationRetargetService {
+     const { mesh2motion_config, other_rig_config } = HumanChainConfig.build_mapped_chain_configs(this.get_bone_mappings())
+ 
+     source_rig.fromConfig(mesh2motion_config)
+-    target_rig.fromConfig(other_rig_config)
++    // how the target rig is oriented relative to the canonical (Mesh2Motion) axes, plus the user's manual turn
++    const target_to_source: Quaternion = FrameAlignment.estimate(source_skeleton, detached_target_skeleton, this.get_bone_mappings())
++      .multiply(this.manual_orientation.clone().invert())
++    target_rig.fromConfig(other_rig_config, target_to_source.clone().invert())
+ 
+     // instrumentation. Runs before the retargeter drives anything, so the rigs are still
+     // holding the rest pose they captured. See RetargetDiagnostics for why each check exists
+@@ -259,7 +276,9 @@ export class AnimationRetargetService {
      const retargeted_clip: AnimationClip = HumanClipRetargeter.retarget(source_clip, source_rig, target_rig, {
        clip_name: `${source_clip.name} RT`, // RT means retargeted
        // apply any global rig correction the user has set
 -      root_correction_x_degrees: this.root_correction_x_degrees
 +      root_correction_x_degrees: this.root_correction_x_degrees,
 +      // rigs authored facing another axis (x, y or z): carry the source motion into the target's axes
-+      root_correction_frame: FrameAlignment.estimate(source_skeleton, detached_target_skeleton, this.get_bone_mappings())
-+        .multiply(this.manual_orientation.clone().invert())
++      root_correction_frame: target_to_source
      })
  
      // the decisive check: any UNMAPPED bone that moves off its rest pose on frame 0 is
@@ -512,6 +523,47 @@ index 49ba171..c6ac6cb 100644
  
      // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
      // Neutral Transform
+diff --git a/src/retarget/human-retargeting/Rig.ts b/src/retarget/human-retargeting/Rig.ts
+index 4f1c266..d3085bd 100644
+--- a/src/retarget/human-retargeting/Rig.ts
++++ b/src/retarget/human-retargeting/Rig.ts
+@@ -6,6 +6,7 @@ import { type Joint } from './Joint'
+ import { Pose } from './Pose'
+ import { RigItem } from './RigItem'
+ import Vec3 from './Vec3'
++import Quat from './Quat'
+ 
+ import type * as THREE from 'three'
+ 
+@@ -27,7 +28,13 @@ export class Rig {
+     // this.tpose.debug();
+   }
+ 
+-  fromConfig (cfg: Record<string, string[]>): this {
++  /**
++   * @param canonical_to_rig optional rotation from the canonical axes assumed below (up Y, front Z,
++   *   left X) to this rig's own rest orientation. Needed for rigs authored facing another axis:
++   *   without it the swing / twist directions are wrong for them and the legs swing sideways.
++   */
++  fromConfig (cfg: Record<string, string[]>, canonical_to_rig: THREE.Quaternion | null = null): this {
++    this.frame_rotation = canonical_to_rig === null ? null : new Quat().xyzw(canonical_to_rig.x, canonical_to_rig.y, canonical_to_rig.z, canonical_to_rig.w)
+     for (const [k, chain_names] of Object.entries(cfg)) {
+       if (chain_names.length === 0) {
+         console.log('Error - Rig.fromConfig : No joint names for chain ', k)
+@@ -104,7 +111,13 @@ export class Rig {
+    * @param twist - The twist vector for the joints in the chain.
+    * @returns The current Rig instance for chaining.
+    */
++  private frame_rotation: Quat | null = null
++
+   buildItem (k: string, names: string[], swing: Vec3, twist: Vec3): this {
++    if (this.frame_rotation !== null) {
++      swing = new Vec3().fromQuat(this.frame_rotation, swing)
++      twist = new Vec3().fromQuat(this.frame_rotation, twist)
++    }
+     const rig_items: RigItem[] = []
+     let j
+ 
 diff --git a/src/retarget/index.html b/src/retarget/index.html
 index 42194ec..f596b51 100644
 --- a/src/retarget/index.html

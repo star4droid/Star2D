@@ -303,6 +303,8 @@ public class EditorActivity extends AppCompatActivity implements AndroidFragment
 			shell.onProjectClosed();
 			homeView.setVisibility(View.VISIBLE);
 			homeView.refresh();
+			com.star4droid.star2d.ads.AdsManager.refresh(this, homeView);
+			com.star4droid.star2d.ads.AdsManager.onProjectClosed(this);
 		});
 		app.getProjectsStage().setExportRunnable(()->exportProject(app.getProjectsStage().getSelectedProject().file()));
 		app.getProjectsStage().setBackupRunnable(()->backupProject(app.getProjectsStage().getSelectedProject().file()));
@@ -447,6 +449,7 @@ public class EditorActivity extends AppCompatActivity implements AndroidFragment
         homeView = new ProjectsHomeView(this,this);
         ((ViewGroup) findViewById(R.id.frame)).addView(homeView,
                 new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        com.star4droid.star2d.ads.AdsManager.init(this);
         // Occasional (rare, snoozable) support dialog, only while the projects screen is showing
         homeView.postDelayed(() -> {
             if (!isFinishing() && !isDestroyed() && homeView.isShown())
@@ -466,6 +469,7 @@ public class EditorActivity extends AppCompatActivity implements AndroidFragment
 	@Override
 	protected void onResume() {
 		super.onResume();
+		if(homeView!=null) com.star4droid.star2d.ads.AdsManager.refresh(this, homeView);
 		if(editor!=null)
 			editor.setToCurrentEditor();
 	}

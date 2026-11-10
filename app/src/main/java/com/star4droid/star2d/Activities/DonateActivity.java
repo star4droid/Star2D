@@ -1,6 +1,7 @@
 package com.star4droid.star2d.Activities;
 
 import android.animation.ObjectAnimator;
+import java.util.Locale;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
@@ -216,6 +217,33 @@ public class DonateActivity extends AppCompatActivity implements PurchasesUpdate
         animated.add(play);
 
         // contact developer
+        // optional rewarded video: 1 hour without ads
+        if (!com.star4droid.star2d.ads.AdsManager.adFreeByPurchase(this)) {
+            LinearLayout ad = card();
+            ad.addView(sectionTitle("\uD83C\uDFAC  " + T("ads_reward_title", "Watch a video to support me")));
+            TextView adSub = text(T("ads_reward_sub", "Optional. Watch one short video ad, it helps fund Star2D, and you get 1 hour without ads."), 13, 0xFFC9C9E6, false);
+            adSub.setPadding(0, dp(4), 0, dp(10));
+            ad.addView(adSub);
+            TextView adBtn = text("", 15, Color.WHITE, true);
+            adBtn.setGravity(Gravity.CENTER);
+            adBtn.setBackground(ripple(0x33FFFFFF, 12));
+            Runnable[] upd = new Runnable[1];
+            upd[0] = () -> runOnUiThread(() -> {
+                long until = com.star4droid.star2d.ads.AdsManager.rewardFreeUntil(this);
+                boolean ready = com.star4droid.star2d.ads.AdsManager.rewardedReady();
+                if (until > System.currentTimeMillis()) adBtn.setText(String.format(Locale.US, T("ads_free_left", "No ads for %d more min"), Math.max(1, (until - System.currentTimeMillis()) / 60000)) + (ready ? "  \u2022  " + T("ads_reward_more", "watch another") : ""));
+                else adBtn.setText(ready ? T("ads_reward_btn", "Watch video") : T("ads_reward_loading", "Loading video..."));
+                adBtn.setAlpha(ready ? 1f : 0.6f);
+            });
+            adBtn.setOnClickListener(v -> com.star4droid.star2d.ads.AdsManager.showRewarded(this, () -> Toast.makeText(this, T("ads_thanks", "Thank you! No ads for 1 hour."), Toast.LENGTH_LONG).show(), upd[0]));
+            ad.addView(adBtn, new LinearLayout.LayoutParams(-1, dp(48)));
+            col.addView(ad, cardLp());
+            animated.add(ad);
+            com.star4droid.star2d.ads.AdsManager.init(this);
+            com.star4droid.star2d.ads.AdsManager.loadRewarded(this, upd[0]);
+            upd[0].run();
+        }
+
         LinearLayout other = card();
         other.addView(sectionTitle("\uD83E\uDD1D  " + T("support_other_title", "Other ways to support")));
         TextView otherSub = text(T("support_other_sub", "Contact the developer for other support methods"), 13, 0xFFC9C9E6, false);

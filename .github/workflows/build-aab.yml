@@ -82,10 +82,16 @@ jobs:
 
       # ⚡ Build APK
       - name: Build APK with Gradle
+        env: &admob
+          ADMOB_APP_ID: ${{ secrets.ADMOB_APP_ID }}
+          ADMOB_BANNER_ID: ${{ secrets.ADMOB_BANNER_ID }}
+          ADMOB_INTERSTITIAL_ID: ${{ secrets.ADMOB_INTERSTITIAL_ID }}
+          ADMOB_REWARDED_ID: ${{ secrets.ADMOB_REWARDED_ID }}
         run: ./gradlew clean assembleRelease
 
       # ⚡ Build AAB
       - name: Build AAB with Gradle
+        env: *admob
         run: ./gradlew bundleRelease
 
       # 📦 Upload APK as artifact

@@ -59,6 +59,13 @@ public class BuyCreditsActivity extends Activity implements SudaBilling.Listener
         col.addView(hs, Ui.matchWrap());
         note = Ui.text(this, "", 12, Ui.TEXT_3);
         col.addView(note, Ui.margins(Ui.matchWrap(), this, 0, 0, 0, 8));
+        // ad removal, stated clearly
+        LinearLayout adc = SudaUi.card(this);
+        TextView adT = Ui.text(this, "\uD83D\uDEAB  " + Tr.t("ads_remove_title", "No ads when you have credits"), 15, Ui.TEXT_2);
+        adc.addView(adT);
+        TextView adB = Ui.text(this, Tr.t("ads_remove_body", "Buy any pack and all ads are removed from the app while your balance is $1 or more. If it drops below $1, ads come back until you top up again."), 13, Ui.TEXT_3);
+        adc.addView(adB, Ui.margins(Ui.matchWrap(), this, 0, 4, 0, 0));
+        col.addView(adc, Ui.margins(Ui.matchWrap(), this, 0, 0, 0, 10));
         col.addView(Ui.sectionLabel(this, Tr.t("s3d_features", "What you get")));
         String[] bullets = {
                 Tr.t("s3d_feat_1", "Image → 3D, Text → 3D and Text → Image from the editor"),

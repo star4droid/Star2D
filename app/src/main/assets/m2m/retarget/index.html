@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+        <title>Retarget - Mesh2Motion</title>
+
+        <!-- Stylesheets-->
+
+
+      <script type="module" crossorigin src="../bundle/retarget-CjvKtiz6.js"></script>
+      <link rel="modulepreload" crossorigin href="../bundle/offline-J7xy797A.js">
+      <link rel="stylesheet" crossorigin href="../bundle/offline-B1dipCa9.css">
+      <link rel="stylesheet" crossorigin href="../bundle/retarget-BOowslzh.css">
+        <link rel="stylesheet" href="../app-mobile.css" />
+  </head>
+
+    <body style="margin: 0">
+
+        <nav>
+        <div style="display: inline-flex; align-items: center;">
+            <a id="logo-branding" href="https://mesh2motion.org">
+                <img src="../images/mesh2motion.svg" width="130" /></a>
+            <a href="/">Explore</a>
+            <a href="/create.html" >Use Your Model</a>
+            <span class="active-nav-item">Use Your Rigged Model</span>
+            <a href="/composer/index.html">Remix</a>
+        </div>
+
+        <div style="display: inline-flex; align-items: center;">
+            <div id="top-nav-links-mount"></div>
+        </div>
+    </nav>
+
+        <!-- Tool Options Panel -->
+        <button id="m2m-sheet-toggle" aria-label="panel" onclick="document.body.classList.toggle('m2m-collapsed')">&#x2195;</button>
+        <div id="tool-panel">
+
+            <!-- bone mapping step to hook up source and target rig -->
+            <span id="bone-mapping-step">
+                <h1>Bring your own rigged model</h1>
+
+                <div style="max-width: 30rem;">
+                    <div style="
+                            padding: 0.5rem;
+                            margin: 0;
+                            border: 2px solid #dbff66;
+                            width: 100%;
+                            display: flex;
+                            gap: 0.5rem;
+                            justify-content: center;
+                        ">
+
+                        <span data-tippy-content="This feature is still being developed. The main stable workflow is to use a Mesh2Motion rig that you 'skin' in another application like Blender. Mixamo skeletons supported as long as there is only 1 skeleton in the file." >
+                            <span class="button-icon-group">
+                                <span>Experimental</span>
+                               
+                                <img src="../images/icons/help.svg" alt="Help" width="20" height="20" />
+
+                            </span>
+                        </span>
+
+                        <a id="m2m-model-github-link" style="font-size: 1rem" target="_blank" href="https://github.com/Mesh2Motion/mesh2motion-assets/tree/main/rigs">View M2M rigs from GitHub.</a>
+                    </div>
+
+                    <p style="margin: 0; margin-top: 1rem;">Import your rig and map the bones to continue.</p>
+                </div>
+
+                <div style="display: flex; flex-direction: row; gap: 1rem; margin-top: 1rem;">
+                    <!-- Mesh2Motion skeleton (source) - draggable bones -->
+                    <div class="bone-map-section">
+                        <h2 class="bone-map-heading">
+                            <span>Mesh2Motion Skeleton</span>
+                        </h2>
+                        <div class="bone-map-content">
+                            <div id="skeleton-selection-container" style="margin-bottom: 1.0rem;">
+                                <select id="skeleton-type-select" class="button">
+                                    <!-- populated dynamically from RigConfig -->
+                                </select>
+                            </div>
+                            
+                            <div style="display: flex; gap: 1.0rem; margin-bottom: 1rem;">
+                                <input type="text" id="source-bones-filter" placeholder="Source bones filter" style="flex-grow: 1;">
+                                <span><span id="source-bone-count">0</span> bones</span>
+                            </div>
+  
+                            <div id="source-bones-list">
+                                <p style="color: var(--text-secondary);">No source skeleton loaded</p>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div style="align-self: center; font-size: 2rem; color: var(--text-secondary);">
+                        ⇨
+                    </div>  
+
+                    <!-- imported 3d skinned mesh (target) - drop zone for bones -->
+                    <div class="bone-map-section">
+                        <p class="bone-map-heading">
+                            <span>Your 3D Rig Model</span>
+                            <span id="auto-bone-map-match">✨Mixamo</span>
+                            <span id="view-bone-tree-button" 
+                                data-tippy-content="View bone hierarchy for for debugging purposes" style="display: none;">
+                                Analyze
+                            </span>
+                        </p>
+                        <div class="bone-map-content">
+                            <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+                                <!-- there are some issues going on with scaling the skeleton for FBX and other formats so we will start simple for now with just GLB files -->
+                                <input type="file" id="upload-file" accept=".glb, .fbx, .zip" style="display: none;" />
+                                <label for="upload-file" class="button" id="load-model-button">Upload Rig</label>
+
+                                <button id="auto-map-button" class="secondary-button" style="display: none;">Auto-Map</button>
+                                <button id="clear-mappings-button" class="secondary-button" style="display: none;">Clear Mappings</button>
+                            </div>
+                            
+                            <span id="target-bones-list-container"  >
+
+                                <div style="display: flex; gap: 1.0rem;"  >
+                                    <input type="text" id="target-bones-filter" placeholder="Target bones filter" style="flex-grow: 1">
+                                    <span><span id="target-bone-count">0</span> bones</span> 
+                                </div>
+
+                                
+                                <div id="target-bones-list">
+                                    <p style="color: var(--text-secondary);">No target skeleton loaded</p>
+                                </div>
+                            </span>
+                            <span id="no-bone-mapping-needed-message" style="display: none;">No bone mapping needed. The uploaded model is using a Mesh2Motion rig. The bone names of this match the source skeleton exactly.</span>
+
+                        </div>
+
+                    </div>
+                </div>
+
+                <div style="display: flex; padding: 1rem; justify-content: flex-end; align-items: center; gap: 0.25rem;">
+                    <button id="continue-to-listing-button" disabled>Continue</button>
+                    <span id="continue-button-tooltip"
+                        data-tippy-content="Map at least one source bone to a target bone before continuing by dragging a bone from the source bones list to the target bones list."
+                        aria-label="Continue requirements help"
+                        style="display: inline-flex; align-items: center; color: var(--text-secondary); cursor: help;"
+                    >
+                      
+                        <img src="../images/icons/help.svg" alt="Help" width="20" height="20" />
+                    </span>
+                </div>
+            </span>
+
+            <!-- animation listings area -->
+            <span id="skinned-step-animation-export-options">
+
+                <div id="animations-listing">
+
+                    <!-- Filter textbox and tab switcher side by side -->
+                    <div style="display: flex; gap: 1rem; align-items: flex-start;">
+                        <!-- Tab switcher for Library vs Selected animations -->
+                        <div class="pill-switch-group" aria-label="Animation view mode" style="margin: 0;">
+                            <div class="pill-switch">
+                                <input type="radio" id="animation-view-library" name="animation-view-mode" value="library" checked />
+                                <label for="animation-view-library">Library</label>
+                                <input type="radio" id="animation-view-selected" name="animation-view-mode" value="selected" />
+                                <label for="animation-view-selected">Selected</label>
+                            </div>
+                        </div>
+
+                        <!-- Filter textbox for animations -->
+                        <span>
+                            <input type="text" id="animation-filter" placeholder="Filter">
+                        </span>
+                    </div>
+                    
+                    <!-- Select all / Deselect all button and animation count -->
+                    <div style="display: flex; gap: 1rem; align-items: center; margin-top: 0.5rem; justify-content: space-between;">
+                        <button id="toggle-select-all-animations" class="secondary-button">Select All</button>
+                        <button id="animation-tag-filter-button" class="secondary-button" data-tippy-content="Filter by tag" aria-label="Filter by tag" style="display: none">
+                            <img src="../images/icons/tag.svg" alt="" width="20" height="20" />
+                            <span id="animation-tag-filter-count" style="display: none">0</span>
+                        </button>
+
+
+                        <div id="animation-listing-count" style="white-space: nowrap;">0 animations</div>
+                    </div>
+       
+                    <!-- loading progress when animations start getting larger. -->
+                    <div id="animation-progress-loader-container" style="display: none">
+                        <div id="loading-status-text">Loading animation data</div>
+                        <div id="loading-progress-bar"></div>
+                        <div id="current-file-progress-bar"></div>
+                    </div>
+       
+        
+                    <!-- javascript will populate this item with animations
+                         that we get from the animations file(s)  -->
+                    <div id="animations-items"> </div>
+
+                    <!-- slider to control arm extension. shared with the create workflow -->
+                    <div id="arm-extension-mount"></div>
+
+                    <div class="download-actions-row" style="display: flex; gap: 0.5rem;">
+                        <button class="no-style-button" id="back_to_bone_map_button" >&#x2039; Back</button>
+
+                        <div id="download-control-mount"></div>
+
+                    </div>
+
+
+       
+                </div>
+        
+               
+            </span>
+
+        </div>
+
+        <div id="animation-player-mount"></div>
+
+
+    <div id="header-ui-mount"></div>
+
+
+        <!-- 3d view controls shown on bottom right. This helps with click events -->
+        <div id="view-control-hitbox"></div>
+
+    </body>
+</html>

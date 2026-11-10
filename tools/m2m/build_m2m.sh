@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Builds the Mesh2Motion "Use Your Model" page for the Star2D app ("M2M Motion" tool) into
+# Builds the Mesh2Motion "Use Your Model" and "Use Your Rigged Model" (retarget) pages for the Star2D app ("M2M Motion" tool) into
 # app/src/main/assets/m2m/ — code + small UI images only. Rigs/animations are NOT bundled: the app downloads them
 # on demand from the SUDA3D server (GET /api/v1/m2m/manifest) and serves them to the page at /m2mdata/.
 #
@@ -29,6 +29,13 @@ s = open(p).read()
 s = s.replace('<meta name="viewport" content="width=device-width, initial-scale=1.0" />', '<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />', 1)
 s = s.replace("</head>", '    <link rel="stylesheet" href="./app-mobile.css" />\n  </head>', 1)
 s = s.replace('<div id="tool-panel">', '<button id="m2m-sheet-toggle" aria-label="panel" onclick="document.body.classList.toggle(\'m2m-collapsed\')">&#x2195;</button>\n    <div id="tool-panel">', 1)
+open(p, "w").write(s)
+# the "Use Your Rigged Model" (retarget) page gets the same phone layout
+p = "dist-app/retarget/index.html"
+s = open(p).read()
+s = s.replace('<meta name="viewport" content="width=device-width, initial-scale=1.0">', '<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">', 1)
+s = s.replace("</head>", '    <link rel="stylesheet" href="../app-mobile.css" />\n  </head>', 1)
+s = s.replace('<div id="tool-panel">', '<button id="m2m-sheet-toggle" aria-label="panel" onclick="document.body.classList.toggle(\'m2m-collapsed\')">&#x2195;</button>\n        <div id="tool-panel">', 1)
 open(p, "w").write(s)
 PY
 rm -rf "$OUT"

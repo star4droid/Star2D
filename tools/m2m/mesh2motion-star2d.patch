@@ -50,7 +50,7 @@ index 048939c..c0bce21 100644
            const error_message = error instanceof Error ? error.message : 'Failed to export file.'
 diff --git a/src/lib/M2MAppBridge.ts b/src/lib/M2MAppBridge.ts
 new file mode 100644
-index 0000000..eb9678a
+index 0000000..29b9c0d
 --- /dev/null
 +++ b/src/lib/M2MAppBridge.ts
 @@ -0,0 +1,117 @@
@@ -86,7 +86,7 @@ index 0000000..eb9678a
 +const CHUNK_BYTES = 768 * 1024 // multiple of 3: every chunk is valid base64 on its own
 +
 +const HIDE_CSS = `
-+  nav > div > a:not(#logo-branding), #nav-support-mesh2motion, #nav-github, #learn-link,
++  nav > div > a:not(#logo-branding), .active-nav-item, #m2m-model-github-link, #nav-support-mesh2motion, #nav-github, #learn-link,
 +  .request-animation-link, .anim-request-tile, #props-dock, #build-version,
 +  #load-model-tools .alternate-background-section, #load-model-tools > div[style*="font-size: 1.5rem"] { display: none !important; }
 +  #logo-branding { pointer-events: none; }
@@ -135,7 +135,7 @@ index 0000000..eb9678a
 +  private static async load_model (url: string, name: string): Promise<void> {
 +    const response = await fetch(url)
 +    const blob = await response.blob()
-+    const input = document.querySelector<HTMLInputElement>('#model-upload')
++    const input = document.querySelector<HTMLInputElement>('#model-upload') ?? document.querySelector<HTMLInputElement>('#upload-file')
 +    if (input === null) return
 +    const transfer = new DataTransfer()
 +    transfer.items.add(new File([blob], name))
@@ -211,13 +211,132 @@ index 89a5ca2..5db5d12 100644
            // enable the ability to progress to next step
            this.allow_proceeding_to_next_step(true)
          }).catch((err) => {
+diff --git a/src/retarget/RetargetAnimationPreview.ts b/src/retarget/RetargetAnimationPreview.ts
+index 0ed0c3d..d534db6 100644
+--- a/src/retarget/RetargetAnimationPreview.ts
++++ b/src/retarget/RetargetAnimationPreview.ts
+@@ -105,7 +105,7 @@ export class RetargetAnimationPreview extends EventTarget {
+     }
+ 
+     // page lives one folder below the static root
+-    const animation_file_path = '../' + preview_animation.file
++    const animation_file_path = preview_animation.file.startsWith('/') ? preview_animation.file : '../' + preview_animation.file // app build serves rigs from the absolute /m2mdata/
+ 
+     // if we are coming back to this step and already loaded a default animation, skip reloading
+     // and just do the playing
+diff --git a/src/retarget/index.html b/src/retarget/index.html
+index 42194ec..f596b51 100644
+--- a/src/retarget/index.html
++++ b/src/retarget/index.html
+@@ -199,7 +199,7 @@
+                     <!-- slider to control arm extension. shared with the create workflow -->
+                     <div id="arm-extension-mount"></div>
+ 
+-                    <div style="display: flex; gap: 0.5rem;">
++                    <div class="download-actions-row" style="display: flex; gap: 0.5rem;">
+                         <button class="no-style-button" id="back_to_bone_map_button" >&#x2039; Back</button>
+ 
+                         <div id="download-control-mount"></div>
+diff --git a/src/retarget/retarget.ts b/src/retarget/retarget.ts
+index 6dab65b..8dd2912 100644
+--- a/src/retarget/retarget.ts
++++ b/src/retarget/retarget.ts
+@@ -8,6 +8,7 @@ import { RetargetAnimationListing } from './RetargetAnimationListing.ts'
+ import { AnimationRetargetService } from './AnimationRetargetService'
+ import { type SkeletonType } from '../lib/enums/SkeletonType.ts'
+ import { RetargetUtils } from './RetargetUtils.ts'
++import { M2MAppBridge } from '../lib/M2MAppBridge.ts'
+ 
+ class RetargetModule {
+   private readonly mesh2motion_engine: Mesh2MotionEngine
+@@ -227,6 +228,8 @@ class RetargetModule {
+ // Initialize when DOM is ready
+ document.addEventListener('DOMContentLoaded', () => {
+   retarget_app.init()
++  M2MAppBridge.install() // Star2D app: hands over the user's model once the page is ready
+ })
+ 
+ const retarget_app = new RetargetModule()
++
+diff --git a/src/retarget/steps/StepExportRetargetedAnimations.ts b/src/retarget/steps/StepExportRetargetedAnimations.ts
+index 5c99774..035262f 100644
+--- a/src/retarget/steps/StepExportRetargetedAnimations.ts
++++ b/src/retarget/steps/StepExportRetargetedAnimations.ts
+@@ -1,3 +1,4 @@
++import { M2MAppBridge } from '../../lib/M2MAppBridge.ts'
+ import { Scene, type AnimationClip, type Object3D, type SkinnedMesh } from 'three'
+ import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js'
+ import { FBXExporter } from '@comfyorg/fbx-exporter-three'
+@@ -180,6 +181,10 @@ export class StepExportRetargetedAnimations extends EventTarget {
+   }
+ 
+   private save_file (blob: Blob, filename: string): void {
++    if (M2MAppBridge.active()) { // Star2D app: hand the file to the app
++      void M2MAppBridge.send_file(blob, filename)
++      return
++    }
+     const export_button_hidden_link: HTMLAnchorElement | null = document.querySelector('#download-hidden-link')
+     if (export_button_hidden_link != null) {
+       export_button_hidden_link.href = URL.createObjectURL(blob)
+diff --git a/src/retarget/steps/StepLoadSourceSkeleton.ts b/src/retarget/steps/StepLoadSourceSkeleton.ts
+index ea2f0e0..6d7dec4 100644
+--- a/src/retarget/steps/StepLoadSourceSkeleton.ts
++++ b/src/retarget/steps/StepLoadSourceSkeleton.ts
+@@ -6,6 +6,7 @@ import { CustomSkeletonHelper } from '../../lib/CustomSkeletonHelper.ts'
+ import { DOMUtilities } from '../../lib/DOMUtilities.ts'
+ import type GLTFResult from '../../lib/processes/load-skeleton/interfaces/GLTFResult.ts'
+ import { ModalDialog } from '../../lib/ModalDialog.ts'
++import { M2MAppBridge } from '../../lib/M2MAppBridge.ts'
+ 
+ export class StepLoadSourceSkeleton extends EventTarget {
+   private readonly loader: GLTFLoader = new GLTFLoader() // all skeletons are in GLB format
+@@ -45,8 +46,7 @@ export class StepLoadSourceSkeleton extends EventTarget {
+   private load_default_skeleton (): void {
+     // Set the skeleton type to human and load it automatically
+     this.skeleton_type = SkeletonType.Human
+-    const rig_file = RigConfig.rig_file_for(SkeletonType.Human) ?? ''
+-    this.load_skeleton_from_path(`/${rig_file}`).catch((error) => {
++    this.load_rig(SkeletonType.Human).catch((error) => {
+       console.error('Failed to load default human skeleton:', error)
+     })
+ 
+@@ -73,8 +73,7 @@ export class StepLoadSourceSkeleton extends EventTarget {
+     this.clear_previous_skeleton()
+ 
+     // Load the selected skeleton using the rig file path from RigConfig
+-    const rig_file = RigConfig.rig_file_for(this.skeleton_type) ?? ''
+-    this.load_skeleton_from_path(`/${rig_file}`).catch((error) => {
++    this.load_rig(this.skeleton_type).catch((error) => {
+       console.error('Failed to load skeleton:', error)
+     })
+ 
+@@ -86,6 +85,19 @@ export class StepLoadSourceSkeleton extends EventTarget {
+     return RigConfig.by_key(selection)?.skeleton_type ?? SkeletonType.None
+   }
+ 
++  /** Star2D app: the rig's files are downloaded on first use, then served at /m2mdata/ (absolute path already). */
++  private async load_rig (skeleton_type: SkeletonType): Promise<void> {
++    const entry = RigConfig.by_skeleton_type(skeleton_type)
++    try {
++      await M2MAppBridge.ensure_rig(entry?.manifest_key)
++    } catch (error) {
++      this.show_error_dialog('This skeleton could not be downloaded. Check your connection and try again.')
++      throw error
++    }
++    const rig_file = entry?.rig_file ?? ''
++    await this.load_skeleton_from_path(rig_file.startsWith('/') ? rig_file : `/${rig_file}`)
++  }
++
+   private async load_skeleton_from_path (file_path: string): Promise<void> {
+     try {
+       await new Promise<void>((resolve, reject) => {
 diff --git a/vite.app.config.js b/vite.app.config.js
 new file mode 100644
-index 0000000..262e004
+index 0000000..23baea6
 --- /dev/null
 +++ b/vite.app.config.js
 @@ -0,0 +1,23 @@
-+// Star2D app build of the "Use Your Model" page only (no asset library, no demo/test files).
++// Star2D app build of the "Use Your Model" and "Use Your Rigged Model" pages only (no asset library, no demo/test files).
 +// Rigs and animations are downloaded by the app and served from /m2mdata/ (see M2MActivity in Star2D).
 +import { resolve } from 'path'
 +import { defineConfig } from 'vite'
@@ -236,7 +355,7 @@ index 0000000..262e004
 +    emptyOutDir: true,
 +    sourcemap: false,
 +    chunkSizeWarningLimit: 4000,
-+    rollupOptions: { input: { create: resolve(__dirname, 'src/create.html') } }
++    rollupOptions: { input: { create: resolve(__dirname, 'src/create.html'), retarget: resolve(__dirname, 'src/retarget/index.html') } }
 +  },
 +  plugins: [glsl()]
 +})

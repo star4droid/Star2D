@@ -59,3 +59,14 @@ nav { display: none !important; }
     width: 64px; height: 26px; align-items: center; justify-content: center; padding: 0; border-radius: 13px 13px 0 0; min-height: 0; font-size: 16px; line-height: 1; }
   body.m2m-collapsed #m2m-sheet-toggle { bottom: 1.5rem; }
 }
+
+/* export / download row at the TOP of the animation list (it used to sit below every animation) */
+#animations-listing { display: flex; flex-direction: column; }
+#animations-listing .download-actions-row {
+  order: -1; position: sticky; top: 0; z-index: 8; margin: 0 0 .45rem; padding: .3rem 0 .45rem;
+  background: var(--bg-primary); border-bottom: 1px solid var(--bg-tertiary);
+}
+.download-settings-panel { top: calc(100% + .35rem) !important; bottom: auto !important; }
+/* retarget page: long bone lists must not push the panel sideways */
+#bone-mapping-step { max-width: 100%; }
+#source-bones-list, #target-bones-list { max-height: 28vh; overflow-y: auto; }

@@ -53,6 +53,7 @@ public class M2MActivity extends Activity implements OutputView.SafHost {
 
     private WebView web;
     private File model, resultTarget, pendingSave;
+    private boolean retargetMode;
     private String project;
     private ValueCallback<Uri[]> fileCallback;
     private final Map<String, OutputStream> outs = new HashMap<>();
@@ -91,6 +92,7 @@ public class M2MActivity extends Activity implements OutputView.SafHost {
         LinearLayout root = Ui.column(this);
         root.setBackgroundColor(Ui.BG);
         root.addView(SudaUi.topBar(this, Tr.t("m2m_title", "M2M Motion"),
+                Ui.iconButton(this, R.drawable.ic_s2_refresh, Tr.t("m2m_mode", "Mode"), v -> chooseMode()),
                 Ui.iconButton(this, R.drawable.ic_s2_info, Tr.t("m2m_licenses", "Licenses"), v -> licenses(this))), Ui.matchWrap());
         web = new WebView(this);
         web.setLayerType(View.LAYER_TYPE_HARDWARE, null);
@@ -101,14 +103,9 @@ public class M2MActivity extends Activity implements OutputView.SafHost {
         cr.setOnClickListener(v -> licenses(this));
         root.addView(cr, Ui.matchWrap());
         SudaUi.setup(this, root);
-        if (b == null && model != null && glbHasSkeleton(model))
-            new android.app.AlertDialog.Builder(this)
-                    .setTitle(Tr.t("m2m_rigged_title", "This model already has a skeleton"))
-                    .setMessage(Tr.t("m2m_rigged_msg", "M2M Motion builds a new skeleton and replaces the one in this model. To keep its own skeleton, use it directly (Preview or Animation) instead."))
-                    .setPositiveButton(Tr.t("m2m_rigged_continue", "Continue"), null)
-                    .setNegativeButton(Tr.t("cancel", "Cancel"), (d, w) -> finish())
-                    .setOnCancelListener(d -> finish())
-                    .show();
+        retargetMode = model != null && hasSkeleton(model);
+        if (retargetMode && b == null)
+            Ui.toast(this, Tr.t("m2m_rigged_auto", "This model already has a skeleton: it is used as it is. Use the top-right button to change the mode."));
 
         WebSettings s = web.getSettings();
         s.setJavaScriptEnabled(true);
@@ -138,22 +135,57 @@ public class M2MActivity extends Activity implements OutputView.SafHost {
             }
         });
         if (b != null) web.restoreState(b);
-        else web.loadUrl(ORIGIN + "/create.html");
+        else web.loadUrl(ORIGIN + page());
     }
 
-    /** True when a GLB declares skins (a rigged model); FBX / unreadable files count as unknown (false). */
-    static boolean glbHasSkeleton(File f) {
+    private String page() { return retargetMode ? "/retarget/index.html" : "/create.html"; }
+
+    /** Manual choice: build a new skeleton for the model, or keep the model's own skeleton and retarget animations to it. */
+    private void chooseMode() {
+        String[] items = {Tr.t("m2m_mode_build", "Build a new skeleton (rig this model)"),
+                Tr.t("m2m_mode_retarget", "Use the model's own skeleton (retarget animations, manual bone mapping)")};
+        Dialogs.choose(this, Tr.t("m2m_mode", "Mode"), items, i -> {
+            boolean want = i == 1;
+            if (want == retargetMode) return;
+            retargetMode = want;
+            web.loadUrl(ORIGIN + page()); // the page announces itself (ready) and the model is handed over again
+        });
+    }
+
+    /** True when the model already has a skeleton: a GLB that declares skins, or an FBX with bone ("LimbNode") objects. */
+    static boolean hasSkeleton(File f) {
+        String n = f.getName().toLowerCase(Locale.ROOT);
         try (java.io.RandomAccessFile r = new java.io.RandomAccessFile(f, "r")) {
+            if (n.endsWith(".fbx")) return fbxHasBones(r);
             byte[] h = new byte[20];
             if (r.length() < 20) return false;
             r.readFully(h);
             if (h[0] != 'g' || h[1] != 'l' || h[2] != 'T' || h[3] != 'F') return false;
             int len = (h[12] & 0xFF) | (h[13] & 0xFF) << 8 | (h[14] & 0xFF) << 16 | (h[15] & 0xFF) << 24;
-            if (len <= 0 || len > 8_000_000) return false;
+            if (len <= 0 || len > 16_000_000) return false;
             byte[] j = new byte[len];
             r.readFully(j);
             return new String(j, java.nio.charset.StandardCharsets.UTF_8).contains("\"skins\"");
         } catch (Exception e) { return false; }
+    }
+
+    private static boolean fbxHasBones(java.io.RandomAccessFile r) throws java.io.IOException {
+        byte[] key = "LimbNode".getBytes(java.nio.charset.StandardCharsets.US_ASCII), buf = new byte[1 << 16];
+        long total = 0;
+        int keep = 0, n;
+        r.seek(0);
+        while ((n = r.read(buf, keep, buf.length - keep)) > 0 && total < 200_000_000L) {
+            int end = keep + n;
+            for (int i = 0; i + key.length <= end; i++) {
+                int k = 0;
+                while (k < key.length && buf[i + k] == key[k]) k++;
+                if (k == key.length) return true;
+            }
+            keep = Math.min(key.length - 1, end);
+            System.arraycopy(buf, end - keep, buf, 0, keep);
+            total += n;
+        }
+        return false;
     }
 
     @Override protected void onSaveInstanceState(Bundle out) { super.onSaveInstanceState(out); web.saveState(out); }

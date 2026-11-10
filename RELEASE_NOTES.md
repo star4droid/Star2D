@@ -18,6 +18,8 @@
 **Fixes**
 - Fixed a crash when opening the editor ("Error reading file: files/skins/uiskin.json"): the app now has a second way to read its own files, and reports exactly what is wrong if it still fails.
 - The APK is now signed in the old and the new way, so every installer accepts it (some said "not signed" or "package invalid").
+- M2M Motion: if your model already has a skeleton, it is detected and used as it is (animations are moved onto it, with automatic or manual bone mapping). A button at the top switches between "build a new skeleton" and "use the model's skeleton". The Download button is now at the top of the animation list.
+- Rig block: choose the skeleton standard (Mixamo, ActorCore, Unity, Unreal, VRM) and the "Other" type.
 - The Mesh2Motion screen now fits phones and tablets.
 - AI Workspace: model versions can be chosen, a 2x2 view for multi-angle results, easier wire connections, and nothing starts if your credits are not enough.
 
@@ -39,6 +41,8 @@
 **إصلاحات**
 - إصلاح انهيار عند فتح المحرر (رسالة "Error reading file: files/skins/uiskin.json"): صار للتطبيق طريقة ثانية لقراءة ملفاته، ويذكر السبب بدقة إن فشلت.
 - توقيع الـ APK صار بالطريقتين القديمة والجديدة ليقبله كل مثبّت (بعضها كان يقول "غير موقّع" أو "الحزمة غير صالحة").
+- M2M Motion: إذا كان نموذجك يحتوي هيكلاً عظمياً يُكتشف تلقائياً ويُستخدم كما هو (تُنقل الأنيميشن عليه، مع ربط العظام تلقائياً أو يدوياً). زر في الأعلى يبدّل بين "بناء هيكل جديد" و"استخدام هيكل النموذج". وزر التنزيل صار في أعلى قائمة الأنيميشن.
+- بلوكة Rig: اختيار معيار الهيكل (Mixamo وActorCore وUnity وUnreal وVRM) ونوع "أخرى".
 - شاشة Mesh2Motion صارت تناسب الهواتف والأجهزة اللوحية.
 - مساحة عمل الذكاء الاصطناعي: اختيار إصدار النموذج، وعرض 2×2 للنتائج من عدة زوايا، وتوصيل أسهل بين العناصر، ولا يبدأ شيء إذا كان رصيدك غير كافٍ.
 

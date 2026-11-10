@@ -1,6 +1,3 @@
-🛒 New: Market – share and download projects & games
-- Upload projects or "game only" builds (play directly, no code), grid/list view, update & edit your uploads
-- AI Workspace: model versions, Rig analyze, 2x2 multiview grid, bigger wire touch area, no generation when credits are low
-- Buy Credits: ads are removed while your balance is $1+; optional rewarded video to support the engine
-- M2M Motion screen fixed for phones
-- Many fixes and translations
+🆕 Banner ad inside the editor, earlier ad after closing a project
+🛠 Fixed editor crash: Error reading files/skins/uiskin.json
+🛠 Build fixes

@@ -1,3 +1,15 @@
+## Star2D 0.5.4 Beta — Ads in the editor & fixes
+
+### English
+- **Ads**: banner inside the editor (top in portrait, side column on wide landscape screens), the interstitial after closing a project now shows sooner (first close after 1 minute, then every 3 minutes at most).
+- **Fix**: editor crash "Error reading file: files/skins/uiskin.json" (FileNotFoundException) - the skin is now re-read from the app's assets if the first read fails.
+- **Build**: more memory for Gradle so the release packaging does not fail on CI.
+
+### العربية
+- **الإعلانات**: بانر داخل المحرر (أعلى في الوضع العمودي، وعمود جانبي في الشاشات الأفقية العريضة)، والإعلان البيني بعد إغلاق مشروع يظهر أبكر (أول إغلاق بعد دقيقة، ثم كل 3 دقائق كحد أقصى).
+- **إصلاح**: انهيار المحرر "Error reading file: files/skins/uiskin.json" - يُعاد قراءة الثيم من ملفات التطبيق إذا فشلت القراءة الأولى.
+- **البناء**: ذاكرة أكبر لـ Gradle حتى لا يفشل تغليف النسخة على GitHub.
+
 ## Star2D 0.5.3 Beta — Market
 
 ### English

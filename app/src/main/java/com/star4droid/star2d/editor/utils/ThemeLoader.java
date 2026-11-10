@@ -21,7 +21,7 @@ public class ThemeLoader {
   private static Skin orangeSkin;
   public static void loadTheme() {
     if (VisUI.isLoaded()) return;
-    orangeSkin = new Skin(Gdx.files.internal("files/skins/uiskin.json"));
+    orangeSkin = new Skin(skinFile("files/skins/uiskin.json"));
     /*
     HashMap<String,int[]> splitsMap = new HashMap<>();
     FileHandle orange = Gdx.files.internal("files/skins/orange");
@@ -122,6 +122,43 @@ public class ThemeLoader {
 	Lang.loadTrans(TestApp.getCurrentApp().preferences.getString("lang","en"));
   }
   
+  /**
+   * Internal skin file. If the activity's AssetManager cannot see it (seen after an in-place app update, or a stale
+   * AssetManager: FileNotFoundException files/skins/uiskin.json), re-read the skins from the application's own
+   * assets into the cache folder and load them from there.
+   */
+  private static FileHandle skinFile(String path) {
+    FileHandle in = Gdx.files.internal(path);
+    try {
+      if (in.exists()) return in;
+      in.read().close();
+      return in;
+    } catch (Throwable ignored) {}
+    try {
+      android.content.Context ctx = ((android.content.Context) Gdx.app).getApplicationContext();
+      java.io.File root = new java.io.File(ctx.getCacheDir(), "skins_fallback");
+      java.io.File out = new java.io.File(root, path);
+      if (!out.exists()) copyAssets(ctx.getAssets(), "files/skins", new java.io.File(root, "files/skins"));
+      if (out.exists()) return Gdx.files.absolute(out.getAbsolutePath());
+    } catch (Throwable ignored) {}
+    return in;
+  }
+
+  private static void copyAssets(android.content.res.AssetManager am, String dir, java.io.File to) throws java.io.IOException {
+    String[] list = am.list(dir);
+    if (list == null || list.length == 0) return;
+    to.mkdirs();
+    for (String n : list) {
+      String sub = dir + "/" + n;
+      String[] kids = am.list(sub);
+      if (kids != null && kids.length > 0) { copyAssets(am, sub, new java.io.File(to, n)); continue; }
+      try (java.io.InputStream is = am.open(sub); java.io.FileOutputStream os = new java.io.FileOutputStream(new java.io.File(to, n))) {
+        byte[] b = new byte[16384]; int r;
+        while ((r = is.read(b)) > 0) os.write(b, 0, r);
+      }
+    }
+  }
+
   public static Skin getOrangeSkin(){
     return orangeSkin;
   }
@@ -139,7 +176,7 @@ public class ThemeLoader {
 
   private static void loadMain(Skin skin) {
     FileHandle skinFile =
-        Gdx.files.internal("files/skins/visui/uiskin.json"); // VisUI.SkinScale.X2.getSkinFile();
+        skinFile("files/skins/visui/uiskin.json"); // VisUI.SkinScale.X2.getSkinFile();
     FileHandle atlasFile = skinFile.sibling(skinFile.nameWithoutExtension() + ".atlas");
     if (atlasFile.exists()) {
       skin.addRegions(new TextureAtlas(atlasFile));

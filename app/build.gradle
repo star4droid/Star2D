@@ -54,6 +54,8 @@ android {
             signingConfig signingConfigs.release
             minifyEnabled false
             shrinkResources false
+            // native debug symbols go inside the AAB; Play Console reads them automatically
+            ndk { debugSymbolLevel 'FULL' }
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }

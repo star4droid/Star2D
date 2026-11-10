@@ -1,3 +1,5 @@
-🆕 Banner ad inside the editor, earlier ad after closing a project
-🛠 Fixed editor crash: Error reading files/skins/uiskin.json
-🛠 Build fixes
+New: Market - share your projects or "game only" versions and download others' work.
+New: small ads on the projects screen and in the editor. No ads while your balance is $1 or more, or for 1 hour after watching a video.
+Fixed: crash when opening the editor.
+Fixed: Mesh2Motion screen on phones and tablets.
+Improved: AI Workspace.

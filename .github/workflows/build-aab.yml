@@ -136,6 +136,8 @@ jobs:
           V=$(grep -m1 versionName app/build.gradle | sed -E 's/.*"([^"]+)".*/\1/')
           echo "VERSION_NAME=$V" >> $GITHUB_ENV
           cp app/build/outputs/apk/release/app-release.apk "Star2D-$V.apk"
+          # only the newest section of RELEASE_NOTES.md (English, then Arabic)
+          awk '/^## /{n++} n==1' RELEASE_NOTES.md > release-body.md
 
       # 📤 Upload APK to GitHub Releases if requested
       - name: Upload APK to GitHub Releases
@@ -144,8 +146,8 @@ jobs:
         with:
           tag_name: v${{ env.VERSION_NAME }}
           name: Star2D ${{ env.VERSION_NAME }}
-          body_path: RELEASE_NOTES.md
-          generate_release_notes: true
+          body_path: release-body.md
+          generate_release_notes: false
           files: Star2D-${{ env.VERSION_NAME }}.apk
 
       # 🩹 xdelta patch ONLY when releasing: from the PREVIOUS release's APK (not this version) to this APK

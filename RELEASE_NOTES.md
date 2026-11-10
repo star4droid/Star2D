@@ -1,28 +1,44 @@
-## Star2D 0.5.4 Beta — Ads in the editor & fixes
+## Star2D 0.5.4 Beta
 
-### English
-- **Ads**: banner inside the editor (top in portrait, side column on wide landscape screens), the interstitial after closing a project now shows sooner (first close after 1 minute, then every 3 minutes at most).
-- **Fix**: editor crash "Error reading file: files/skins/uiskin.json" (FileNotFoundException) - the skin is now re-read from the app's assets if the first read fails.
-- **Build**: more memory for Gradle so the release packaging does not fail on CI.
+### What's new
+
+**Market (experimental)**
+- Share your projects with everyone and download projects made by others.
+- You can also share a "game only" version: people just play it, they can't open or copy your blocks and code.
+- Browse as a grid or a list, update or delete what you shared, and edit its description and icon.
+- If a project was made with a different version of the engine, you get a warning before downloading it.
+- Up to 2 uploads per day.
+
+**Ads**
+- A small banner now appears on the projects screen and inside the editor.
+- A short ad may appear after you close a project.
+- You can watch a video to remove ads for 1 hour (Support page).
+- No ads at all while your credit balance is $1 or more.
+
+**Fixes**
+- Fixed a crash when opening the editor ("Error reading file: files/skins/uiskin.json").
+- The Mesh2Motion screen now fits phones and tablets.
+- AI Workspace: model versions can be chosen, a 2x2 view for multi-angle results, easier wire connections, and nothing starts if your credits are not enough.
 
 ### العربية
-- **الإعلانات**: بانر داخل المحرر (أعلى في الوضع العمودي، وعمود جانبي في الشاشات الأفقية العريضة)، والإعلان البيني بعد إغلاق مشروع يظهر أبكر (أول إغلاق بعد دقيقة، ثم كل 3 دقائق كحد أقصى).
-- **إصلاح**: انهيار المحرر "Error reading file: files/skins/uiskin.json" - يُعاد قراءة الثيم من ملفات التطبيق إذا فشلت القراءة الأولى.
-- **البناء**: ذاكرة أكبر لـ Gradle حتى لا يفشل تغليف النسخة على GitHub.
 
-## Star2D 0.5.3 Beta — Market
+**المتجر (تجريبي)**
+- شارك مشاريعك مع الجميع ونزّل مشاريع صنعها الآخرون.
+- يمكنك أيضاً مشاركة "اللعبة فقط": يلعبها الناس مباشرة، ولا يستطيعون فتحها أو نسخ البلوكات والكود.
+- اعرض المشاريع كشبكة أو كقائمة، وحدّث أو احذف ما شاركته، وعدّل وصفه وأيقونته.
+- إذا كان المشروع مصنوعاً بإصدار مختلف من المحرك يظهر لك تنبيه قبل التنزيل.
+- حتى مشروعين في اليوم.
 
-### English
-- **Market** (experimental): upload projects or "game only" packages (compiled game + assets, no blocks/events/code, played directly and not openable in the editor), browse as grid or list, download, update, edit and delete your uploads. The engine version is stored with each upload and a warning asks for confirmation when you download one made with another version. Two uploads per day by default (the admin can raise it per user).
-- **Ads** (AdMob): one banner on the projects screen, a rare interstitial after closing a project, an optional rewarded video (1 hour without ads). Users who buy credits see no ads while their balance is $1 or more. Builds without ad ids show a small dismissible notice instead.
-- **AI Workspace**: model versions on Rig/Texture/Segment/Retopology, Rig analyze, Polycount, multiview 2x2 grid with select/delete, bigger wire touch area, nothing starts (and no warning) when credits are not enough.
-- **M2M Motion**: the screen now fits phones and tablets in portrait and landscape.
+**الإعلانات**
+- يظهر الآن شريط إعلان صغير في شاشة المشاريع وداخل المحرر.
+- قد يظهر إعلان قصير بعد إغلاق مشروع.
+- يمكنك مشاهدة فيديو لإزالة الإعلانات ساعة كاملة (من صفحة الدعم).
+- لا إعلانات إطلاقاً ما دام رصيدك دولاراً واحداً أو أكثر.
 
-### العربية
-- **المتجر** (تجريبي): ارفع مشاريع أو "لعبة فقط" (اللعبة المبنية والملفات بدون بلوكات/أحداث/كود، تُلعب مباشرة ولا تُفتح في المحرر)، عرض شبكة أو قائمة، تنزيل وتحديث وتعديل وحذف ما رفعته. يُحفظ إصدار المحرك مع كل رفع، وعند تنزيل مشروع من إصدار مختلف يظهر تنبيه للتأكيد. مشروعان في اليوم افتراضياً (والمشرف يزيدها لكل مستخدم).
-- **الإعلانات** (AdMob): بانر واحد في شاشة المشاريع، وإعلان بيني نادر بعد إغلاق مشروع، وفيديو اختياري (ساعة بلا إعلانات). من يشتري رصيداً لا يرى إعلانات ما دام رصيده 1$ أو أكثر. النسخ بدون معرّفات إعلانات تعرض تنبيهاً صغيراً قابلاً للإخفاء.
-- **AI Workspace**: إصدارات النماذج في Rig/Texture/Segment/Retopology، تحليل Rig، Polycount، شبكة multiview 2×2 مع اختيار/حذف، توصيلات أسهل، ولا يبدأ شيء (بلا تحذير) عند نقص الرصيد.
-- **M2M Motion**: الشاشة تناسب الهواتف والأجهزة اللوحية عمودياً وأفقياً.
+**إصلاحات**
+- إصلاح انهيار عند فتح المحرر (رسالة "Error reading file: files/skins/uiskin.json").
+- شاشة Mesh2Motion صارت تناسب الهواتف والأجهزة اللوحية.
+- مساحة عمل الذكاء الاصطناعي: اختيار إصدار النموذج، وعرض 2×2 للنتائج من عدة زوايا، وتوصيل أسهل بين العناصر، ولا يبدأ شيء إذا كان رصيدك غير كافٍ.
 
 ## 🎉 Star2D 0.5.2 Beta — 3D
 

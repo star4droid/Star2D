@@ -275,6 +275,7 @@ public class WorkspaceActivity extends Activity implements NodeGraphView.Host, J
     private void addMenu(Graph.Node from, Graph.Port port, float wx, float wy) {
         List<Graph.Def> defs = new ArrayList<>();
         for (Graph.Def d : Graph.DEFS) {
+            if (Graph.hidden(d)) continue;
             if (port == null) { defs.add(d); continue; }
             for (Graph.Port p : d.in) if (Graph.compatible(port.type, p.type)) { defs.add(d); break; }
         }
@@ -365,17 +366,24 @@ public class WorkspaceActivity extends Activity implements NodeGraphView.Host, J
         TextView t = Ui.title(this, titleText);
         t.setPadding(0, Ui.dp(this, 8), 0, Ui.dp(this, 6));
         col.addView(t);
-        ScrollView sv = new ScrollView(this);
+        // the sheet is as tall as its content (up to ~70% of the screen) so short forms leave no empty area,
+        // and it shrinks with the keyboard instead of being pushed off screen
+        final int capH = (int) (getResources().getDisplayMetrics().heightPixels * (Ui.isLandscape(this) ? 0.62f : 0.62f));
+        ScrollView sv = new ScrollView(this) {
+            @Override protected void onMeasure(int wSpec, int hSpec) {
+                super.onMeasure(wSpec, MeasureSpec.makeMeasureSpec(capH, MeasureSpec.AT_MOST));
+            }
+        };
+        sv.setFillViewport(false);
         sv.addView(content);
-        col.addView(sv, new LinearLayout.LayoutParams(-1, 0, 1));
+        col.addView(sv, new LinearLayout.LayoutParams(-1, -2));
         d.setContentView(col);
         Window w = d.getWindow();
         if (w != null) {
             w.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(0));
             w.setGravity(Gravity.BOTTOM);
-            int maxH = (int) (getResources().getDisplayMetrics().heightPixels * (Ui.isLandscape(this) ? 0.92f : 0.75f));
             int width = Ui.isLandscape(this) ? Math.min(getResources().getDisplayMetrics().widthPixels, Ui.dp(this, 560)) : ViewGroup.LayoutParams.MATCH_PARENT;
-            w.setLayout(width, maxH);
+            w.setLayout(width, ViewGroup.LayoutParams.WRAP_CONTENT);
             w.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
         }
         return d;
@@ -462,6 +470,12 @@ public class WorkspaceActivity extends Activity implements NodeGraphView.Host, J
                 col.addView(price);
                 q.run();
             }
+            if ("rig".equals(n.type)) {
+                col.addView(Ui.text(this, Tr.t("s3d_analyze_hint", "Analyze checks whether the model can be rigged and picks the matching skeleton."), 13, Ui.TEXT_3),
+                        Ui.margins(Ui.matchWrap(), this, 0, 8, 0, 0));
+                col.addView(Ui.button(this, R.drawable.ic_s2_search, Tr.t("s3d_analyze", "Analyze"), false, v -> { dlg[0].dismiss(); analyze(n); }),
+                        Ui.margins(Ui.matchWrap(), this, 0, 6, 0, 0));
+            }
             col.addView(Ui.button(this, R.drawable.ic_s2_play, Tr.t("s3d_generate", "Generate"), true, v -> { dlg[0].dismiss(); generate(n); }),
                     Ui.margins(Ui.matchWrap(), this, 0, 8, 0, 0));
             if (!n.outputs.isEmpty() || !n.jobId.isEmpty()) col.addView(Ui.button(this, R.drawable.ic_s2_download, Tr.t("s3d_results", "Results"), false, v -> { dlg[0].dismiss(); showOutputs(n); }),
@@ -475,6 +489,55 @@ public class WorkspaceActivity extends Activity implements NodeGraphView.Host, J
         dlg[0] = sheet(def.title(), col);
         dlg[0].setOnDismissListener(x -> changed(false));
         dlg[0].show();
+    }
+
+    // ------------------------------------------------------------ rig analysis
+
+    /** Rig node → Analyze: runs "rig check" on the connected model; the result sets the Skeleton parameter. */
+    private void analyze(Graph.Node n) {
+        Graph.Link l = graph.into(n.id, "model");
+        Graph.Node u = l == null ? null : graph.node(l.fromNode);
+        if (u == null) { Ui.toast(this, Tr.t("s3d_connect_model_first", "Connect a model first")); return; }
+        boolean ready = u.def().local || u.def().onDevice || (Graph.DONE.equals(u.state) && !u.outputs.isEmpty());
+        if (!ready) { Ui.toast(this, Tr.t("s3d_generate_model_first", "Generate the connected model first")); return; }
+        if (!Paywall.gate(this, Tr.t("s3d_analyze", "Analyze"))) return;
+        Ui.toast(this, Tr.t("s3d_analyzing", "Analyzing the model…"));
+        Suda3D.IO.execute(() -> {
+            try {
+                JsonObject inputs = new JsonObject();
+                inputs.add("model", inputRef(u, "model"));
+                JsonObject r = Suda3D.createJob(this, "rig_check", new JsonObject(), inputs, UUID.randomUUID().toString());
+                Jobs.track(this, r, "rig_check", Tr.t("s3d_analyze", "Analyze"), "an:" + dir.getName() + ":" + n.id);
+            } catch (Exception e) {
+                runOnUiThread(() -> { if (!dead) Paywall.handle(this, e, Tr.t("s3d_analyze", "Analyze")); });
+            }
+        });
+    }
+
+    private final java.util.Set<String> analyzed = new java.util.HashSet<>();
+
+    private void onAnalyzed(Jobs.Job j) {
+        if (!j.finished() || !analyzed.add(j.id)) return;
+        String nodeId = j.tag.substring(j.tag.lastIndexOf(':') + 1);
+        Graph.Node n = graph.node(nodeId);
+        runOnUiThread(() -> {
+            if (dead || n == null) return;
+            if (!j.ok()) { Ui.toast(this, j.error.isEmpty() ? com.star4droid.star2d.suda.SudaUi.statusLabel(j.status) : j.error); return; }
+            JsonObject r = j.result;
+            boolean riggable = r == null || !r.has("riggable") || r.get("riggable").getAsBoolean();
+            String type = r == null ? "" : Suda3D.str(r, "rig_type");
+            if (type.isEmpty() && r != null) type = Suda3D.str(r, "topology");
+            Ops.Param p = Ops.get("rig").param("rig_type");
+            String match = null;
+            if (p != null && p.choices != null) for (String c : p.choices) if (c.equalsIgnoreCase(type)) match = c;
+            if (!riggable) { Ui.toast(this, Tr.t("s3d_not_riggable", "This model can't be rigged automatically")); return; }
+            if (match != null) {
+                n.params.put("rig_type", match);
+                markStale(n);
+                changed(false);
+                Ui.toast(this, String.format(Locale.US, Tr.t("s3d_analyze_done", "Rigging OK. Skeleton set to %1$s"), com.star4droid.star2d.suda.SudaUi.choiceLabel(match)));
+            } else Ui.toast(this, Tr.t("s3d_analyze_ok", "The model can be rigged"));
+        });
     }
 
     private void quoteInto(Graph.Node n, TextView price) {
@@ -622,6 +685,7 @@ public class WorkspaceActivity extends Activity implements NodeGraphView.Host, J
                     n.jobId = j.id;
                     n.credits = j.credits;
                     n.outputs = new JsonArray();
+                    n.params.remove("_mv_sel");
                     changed(false);
                 });
             } catch (Exception e) {
@@ -652,6 +716,7 @@ public class WorkspaceActivity extends Activity implements NodeGraphView.Host, J
         if ("images".equals(key)) {
             JsonArray a = new JsonArray();
             for (int i = 0; i < Math.max(1, u.outputs.size()); i++) {
+                if (NodeGraphView.mvState(u, i) != '1') continue; // deselected / deleted views of a multiview
                 JsonObject o = new JsonObject();
                 o.addProperty("job_id", u.jobId);
                 o.addProperty("output", i);
@@ -688,6 +753,7 @@ public class WorkspaceActivity extends Activity implements NodeGraphView.Host, J
     @Override
     public void onJob(Jobs.Job j) {
         if (dead) return;
+        if (j.tag.startsWith("an:" + dir.getName() + ":")) { onAnalyzed(j); return; }
         for (Graph.Node n : new ArrayList<>(graph.nodes)) {
             if (n.jobId.isEmpty() && Graph.QUEUED.equals(n.state) && tag(n).equals(j.tag) && j.created >= n.queuedAt - 5000) n.jobId = j.id;
             if (!j.id.equals(n.jobId)) continue;
@@ -761,6 +827,16 @@ public class WorkspaceActivity extends Activity implements NodeGraphView.Host, J
             Graph.Node s = source(n);
             if (s != null && s.outputs.size() > 0 && "image".equals(Suda3D.str(s.outputs.get(0).getAsJsonObject(), "kind"))) f = outFile(s, 0);
         }
+        return loadThumb(f);
+    }
+
+    @Override
+    public Bitmap thumbAt(Graph.Node n, int i) {
+        if (i >= n.outputs.size() || !"image".equals(Suda3D.str(n.outputs.get(i).getAsJsonObject(), "kind"))) return null;
+        return loadThumb(outFile(n, i));
+    }
+
+    private Bitmap loadThumb(File f) {
         if (f == null || !f.exists()) return null;
         String k = f.getPath() + f.length();
         Bitmap b = thumbs.get(k);
@@ -771,6 +847,11 @@ public class WorkspaceActivity extends Activity implements NodeGraphView.Host, J
             thumbs.put(k, b);
         }
         return b;
+    }
+
+    @Override
+    public void outputsEdited(Graph.Node n) {
+        for (Graph.Node d : graph.downstream(n)) if (Graph.DONE.equals(d.state)) d.state = Graph.STALE;
     }
 
     @Override

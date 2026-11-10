@@ -32,6 +32,8 @@ public final class Jobs {
         public double credits = -1;
         public long created;
         public JsonArray outputs = new JsonArray();
+        /** Non-file result of a job (rig check: riggable, rig_type); may be null. */
+        public JsonObject result;
         /** Free text tag: "ws:<workspace>:<node>" or "quick". */
         public String tag = "";
         public boolean finished() { return "success".equals(status) || "failed".equals(status) || "cancelled".equals(status); }
@@ -41,7 +43,7 @@ public final class Jobs {
             JsonObject o = new JsonObject();
             o.addProperty("id", id); o.addProperty("op", op); o.addProperty("title", title); o.addProperty("status", status);
             o.addProperty("error", error); o.addProperty("progress", progress); o.addProperty("credits", credits);
-            o.addProperty("created", created); o.add("outputs", outputs); o.addProperty("tag", tag);
+            o.addProperty("created", created); o.add("outputs", outputs); o.addProperty("tag", tag); if (result != null) o.add("result", result);
             return o;
         }
 
@@ -49,7 +51,7 @@ public final class Jobs {
             Job j = new Job();
             j.id = Suda3D.str(o, "id"); j.op = Suda3D.str(o, "op"); j.title = Suda3D.str(o, "title"); j.status = Suda3D.str(o, "status");
             j.error = Suda3D.str(o, "error"); j.progress = (int) Suda3D.num(o, "progress", 0); j.credits = Suda3D.num(o, "credits", -1);
-            j.created = (long) Suda3D.num(o, "created", 0); j.outputs = Suda3D.arr(o, "outputs"); j.tag = Suda3D.str(o, "tag");
+            j.created = (long) Suda3D.num(o, "created", 0); j.outputs = Suda3D.arr(o, "outputs"); j.tag = Suda3D.str(o, "tag"); j.result = Suda3D.obj(o, "result");
             return j;
         }
 
@@ -153,6 +155,8 @@ public final class Jobs {
                 JsonObject cost = Suda3D.obj(r, "cost");
                 if (cost != null) j.credits = Suda3D.num(cost, "credits", j.credits);
                 j.outputs = Suda3D.arr(r, "outputs");
+                JsonObject res = Suda3D.obj(r, "result");
+                if (res != null) j.result = res;
                 JsonElement err = r.get("error");
                 if (err != null && !err.isJsonNull()) j.error = err.isJsonObject() ? Suda3D.str(err.getAsJsonObject(), "message") : err.getAsString();
                 save();

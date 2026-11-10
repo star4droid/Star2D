@@ -51,6 +51,10 @@ public class NodeGraphView extends View {
         float downloadFraction(Graph.Node n);
         Bitmap thumb(Graph.Node n);
         boolean hasLocalResult(Graph.Node n);
+        /** Thumbnail of output i of a generated node (multiview grid), or null while it is not downloaded. */
+        Bitmap thumbAt(Graph.Node n, int i);
+        /** The user picked / deleted outputs of n: downstream results are outdated. */
+        void outputsEdited(Graph.Node n);
     }
 
     private Graph graph = new Graph();
@@ -150,12 +154,15 @@ public class NodeGraphView extends View {
             case "preview": return h + 96 + 44;
         }
         h += 24 + 10; // status + progress
-        if (hasPreview(n)) h += 96;
+        if (hasPreview(n)) h += previewH(n);
         h += 44; // generate
         h += 30; // parameters toggle
         if (n.paramsOpen) h += Math.max(1, paramLines(n).size()) * 20 + 6;
         return h + 6;
     }
+
+    /** Height of the result area: a 2 × 2 grid for Multiview, one picture otherwise. */
+    float previewH(Graph.Node n) { return "multiview".equals(n.type) ? 214f : 96f; }
 
     boolean hasPreview(Graph.Node n) { return Graph.DONE.equals(n.state) || Graph.STALE.equals(n.state) || (host != null && host.hasLocalResult(n)); }
 
@@ -176,10 +183,10 @@ public class NodeGraphView extends View {
     RectF pencil(Graph.Node n) { return new RectF(n.x + W - 38, n.y + 4, n.x + W - 4, n.y + HEADER - 4); }
     RectF previewRect(Graph.Node n) {
         float t = n.y + bodyTop(n) + ("preview".equals(n.type) || "select_image".equals(n.type) ? 0 : 34);
-        return new RectF(n.x + 12, t, n.x + W - 12, t + ("select_image".equals(n.type) ? 84 : 88));
+        return new RectF(n.x + 12, t, n.x + W - 12, t + ("select_image".equals(n.type) ? 84 : previewH(n) - 8));
     }
     RectF generateRect(Graph.Node n) {
-        float t = n.y + bodyTop(n) + 34 + (hasPreview(n) ? 96 : 0);
+        float t = n.y + bodyTop(n) + 34 + (hasPreview(n) ? previewH(n) : 0);
         if ("preview".equals(n.type)) t = n.y + bodyTop(n) + 96;
         return new RectF(n.x + 12, t, n.x + W - 12, t + 36);
     }
@@ -370,7 +377,89 @@ public class NodeGraphView extends View {
         text.setTypeface(Typeface.DEFAULT);
     }
 
+    /** Per-view state of a Multiview result: '1' used, '0' not used, 'x' deleted (kept in params, saved with the graph). */
+    public static char mvState(Graph.Node n, int i) {
+        String v = n.params.get("_mv_sel");
+        return v != null && i < v.length() ? v.charAt(i) : '1';
+    }
+
+    static void mvSet(Graph.Node n, int i, char ch) {
+        StringBuilder b = new StringBuilder(n.params.containsKey("_mv_sel") ? n.params.get("_mv_sel") : "");
+        while (b.length() < 4) b.append('1');
+        b.setCharAt(i, ch);
+        n.params.put("_mv_sel", b.toString());
+    }
+
+    RectF mvCell(RectF w, int i) {
+        float cw = (w.width() - 4) / 2, ch = (w.height() - 4) / 2;
+        float l = w.left + (i % 2) * (cw + 4), t = w.top + (i / 2) * (ch + 4);
+        return new RectF(l, t, l + cw, t + ch);
+    }
+
+    void drawGrid(Canvas c, Graph.Node n, RectF w) {
+        int count = Math.min(4, Math.max(n.outputs.size(), 4));
+        for (int i = 0; i < count; i++) {
+            RectF cw = mvCell(w, i);
+            RectF r = new RectF(sx(cw.left), sy(cw.top), sx(cw.right), sy(cw.bottom));
+            char st = mvState(n, i);
+            fill.setColor(0xFF23252B);
+            c.drawRoundRect(r, s(7), s(7), fill);
+            if (st == 'x' || i >= n.outputs.size()) {
+                text.setTextSize(s(18));
+                text.setColor(0xFF5B6068);
+                text.setTextAlign(Paint.Align.CENTER);
+                c.drawText("–", r.centerX(), r.centerY() + s(6), text);
+                text.setTextAlign(Paint.Align.LEFT);
+                continue;
+            }
+            Bitmap b = host == null ? null : host.thumbAt(n, i);
+            if (b != null) {
+                float k = Math.min(r.width() / b.getWidth(), r.height() / b.getHeight());
+                float bw = b.getWidth() * k, bh = b.getHeight() * k;
+                c.drawBitmap(b, null, new RectF(r.centerX() - bw / 2, r.centerY() - bh / 2, r.centerX() + bw / 2, r.centerY() + bh / 2), null);
+            } else {
+                text.setTextSize(s(10.5f));
+                text.setColor(0xFF7D8590);
+                text.setTextAlign(Paint.Align.CENTER);
+                c.drawText(Tr.t("s3d_loading", "Loading…"), r.centerX(), r.centerY() + s(4), text);
+                text.setTextAlign(Paint.Align.LEFT);
+            }
+            boolean used = st == '1';
+            if (!used) { fill.setColor(0xAA14161A); c.drawRoundRect(r, s(7), s(7), fill); }
+            stroke.setStyle(Paint.Style.STROKE);
+            stroke.setStrokeWidth(s(used ? 2f : 1f));
+            stroke.setColor(used ? SudaUi.ORANGE : 0xFF4A4D55);
+            c.drawRoundRect(r, s(7), s(7), stroke);
+            stroke.setStyle(Paint.Style.FILL);
+            // delete badge (top-right)
+            float br = s(11), bx = r.right - br - s(3), by = r.top + br + s(3);
+            fill.setColor(0xCC000000);
+            c.drawCircle(bx, by, br, fill);
+            text.setTextSize(s(15));
+            text.setColor(0xFFF2F4F7);
+            text.setTextAlign(Paint.Align.CENTER);
+            c.drawText("×", bx, by + s(5.5f), text);
+            text.setTextAlign(Paint.Align.LEFT);
+        }
+    }
+
+    /** Tap inside the grid: the corner badge deletes the view, anywhere else toggles whether it is used. */
+    boolean tapGrid(Graph.Node n, float px, float py) {
+        RectF w = previewRect(n);
+        for (int i = 0; i < 4; i++) {
+            RectF cw = mvCell(w, i);
+            if (!cw.contains(px, py) || i >= n.outputs.size() || mvState(n, i) == 'x') continue;
+            if (px > cw.right - 28 && py < cw.top + 28) mvSet(n, i, 'x');
+            else mvSet(n, i, mvState(n, i) == '1' ? '0' : '1');
+            if (host != null) { host.outputsEdited(n); host.changed(false); }
+            invalidate();
+            return true;
+        }
+        return false;
+    }
+
     void drawPreview(Canvas c, Graph.Node n, RectF w) {
+        if ("multiview".equals(n.type) && n.outputs.size() > 0) { drawGrid(c, n, w); return; }
         RectF r = new RectF(sx(w.left), sy(w.top), sx(w.right), sy(w.bottom));
         fill.setColor(0xFF23252B);
         c.drawRoundRect(r, s(8), s(8), fill);
@@ -537,7 +626,18 @@ public class NodeGraphView extends View {
         return null;
     }
 
-    float portHit() { return Math.max(16, 22 / zoom); }
+    float portHit() { return Math.max(26, 32 / zoom); }
+
+    /** Top-most node whose input/output circle is within the (generous) touch radius; may be just outside the node body. */
+    Graph.Node portNodeAt(float wxp, float wyp) {
+        for (int i = graph.nodes.size() - 1; i >= 0; i--) {
+            Graph.Node n = graph.nodes.get(i);
+            Graph.Def d = n.def();
+            for (int k = 0; k < d.out.length; k++) if (dist(wxp, wyp, n.x + W, portY(n, k)) < portHit()) return n;
+            for (int k = 0; k < d.in.length; k++) if (dist(wxp, wyp, n.x, portY(n, k)) < portHit()) return n;
+        }
+        return null;
+    }
 
     @Override
     public boolean onTouchEvent(MotionEvent e) {
@@ -546,7 +646,8 @@ public class NodeGraphView extends View {
             case MotionEvent.ACTION_DOWN: {
                 downX = lastX = x; downY = lastY = y; moved = false; downTime = System.currentTimeMillis();
                 float px = wx(x), py = wy(y);
-                touchNode = nodeAt(px, py);
+                touchNode = portNodeAt(px, py);
+                if (touchNode == null) touchNode = nodeAt(px, py);
                 mode = PAN;
                 if (touchNode != null) {
                     mode = DRAG_NODE;
@@ -677,7 +778,8 @@ public class NodeGraphView extends View {
 
     private void finishWire(float x, float y) {
         float px = wx(x), py = wy(y);
-        Graph.Node target = nodeAt(px, py);
+        Graph.Node target = portNodeAt(px, py);
+        if (target == null || target == wireNode) target = nodeAt(px, py);
         if (target != null && target != wireNode) {
             Graph.Def d = target.def();
             Graph.Port best = null;
@@ -723,6 +825,7 @@ public class NodeGraphView extends View {
         }
         if (Graph.FAILED.equals(n.state) && !n.error.isEmpty() && py < generateRect(n).top && px >= n.x && px <= n.x + W) { showError(n); return; }
         if (generateRect(n).contains(px, py)) { if (n.def().onDevice || !busy(n)) host.generate(n); }
+        else if (hasPreview(n) && "multiview".equals(n.type) && n.outputs.size() > 0 && previewRect(n).contains(px, py)) { tapGrid(n, px, py); }
         else if (hasPreview(n) && previewRect(n).contains(px, py)) host.openResult(n);
         else if (paramsPencil(n).contains(px, py)) host.editParams(n);
         else if (paramsToggle(n).contains(px, py) || (n.paramsOpen && py > paramsToggle(n).bottom)) {

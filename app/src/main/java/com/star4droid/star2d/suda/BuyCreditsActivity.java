@@ -170,12 +170,6 @@ public class BuyCreditsActivity extends Activity implements SudaBilling.Listener
             m.setPadding(0, Ui.dp(this, 6), 0, 0);
             c.addView(m);
         }
-        String play = prices.get(p.id);
-        if (play != null) {
-            TextView pay = Ui.text(this, Tr.t("s3d_you_pay", "You pay") + " " + play, 12, Ui.TEXT_3);
-            pay.setPadding(0, Ui.dp(this, 4), 0, 0);
-            c.addView(pay);
-        }
         View sp = new View(this);
         c.addView(sp, new LinearLayout.LayoutParams(1, Ui.dp(this, 14)));
         c.addView(Ui.button(this, 0, Tr.t("s3d_buy_btn", "Buy"), true, v -> confirm(p)), Ui.matchWrap());

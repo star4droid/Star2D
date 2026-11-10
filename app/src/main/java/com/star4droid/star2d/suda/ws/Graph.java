@@ -79,7 +79,7 @@ public final class Graph {
 
     public static final List<Def> DEFS = new ArrayList<>(Arrays.asList(
             new Def("select_image", "Select Image", null, R.drawable.ic_s2_image, true, NONE, new Port[]{p("image", IMAGE)}),
-            new Def("upload_3d", "3D Upload", null, R.drawable.ic_s2_upload, true, NONE, new Port[]{p("model", MODEL)}),
+            new Def("upload_3d", "3D Upload", null, R.drawable.ic_s2_upload, true, NONE, new Port[]{p("model", MODEL), p("rigged", RIGGED)}),
             new Def("text", "Text", null, R.drawable.ic_s2_text, true, NONE, new Port[]{p("text", TEXT)}),
             new Def("gen_image", "Generate Image", "text_to_image", R.drawable.ic_s3d_auto_awesome, false, new Port[]{opt("prompt", TEXT), opt("image", IMAGE)}, new Port[]{p("image", IMAGE)}),
             new Def("multiview", "Image → Multiview", "image_to_multiview", R.drawable.ic_s2_view_grid, false, new Port[]{p("image", IMAGE)}, new Port[]{p("images", IMAGES)}),
@@ -98,6 +98,9 @@ public final class Graph {
             new Def("convert", "Convert format", "convert", R.drawable.ic_s2_export, false, new Port[]{p("model", MODEL)}, new Port[]{p("model", MODEL)}),
             new Def("preview", "Preview / Save", null, R.drawable.ic_s2_save, true, new Port[]{p("in", MODEL)}, NONE)
     ));
+
+    /** Kept so old graphs still load; its function lives in the Rig node (Analyze). */
+    public static boolean hidden(Def d) { return "rig_check".equals(d.type); }
 
     public static Def def(String type) {
         for (Def d : DEFS) if (d.type.equals(type)) return d;

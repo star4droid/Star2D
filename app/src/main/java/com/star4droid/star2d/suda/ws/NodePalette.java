@@ -83,12 +83,14 @@ public class NodePalette extends LinearLayout {
         hs.setHorizontalScrollBarEnabled(false);
         GridLayout grid = new GridLayout(a);
         int rows = Ui.isLandscape(a) ? 1 : 2;
-        int n = Graph.DEFS.size();
+        int n = 0;
+        for (Graph.Def d : Graph.DEFS) if (!Graph.hidden(d)) n++;
         grid.setRowCount(rows);
         grid.setColumnCount((n + rows - 1) / rows);
         grid.setOrientation(GridLayout.VERTICAL);
         grid.setPadding(Ui.dp(a, 8), Ui.dp(a, 2), Ui.dp(a, 8), Ui.dp(a, 8));
         for (Graph.Def d : Graph.DEFS) {
+            if (Graph.hidden(d)) continue;
             View card = card(d);
             GridLayout.LayoutParams lp = new GridLayout.LayoutParams();
             lp.width = Ui.dp(a, 92);

@@ -279,6 +279,11 @@ public class DonateActivity extends AppCompatActivity implements PurchasesUpdate
         col.addView(comm, cardLp());
         animated.add(comm);
 
+        TextView adsDiag = text(com.star4droid.star2d.ads.AdsManager.status(this), 11, 0x88C9C9E6, false);
+        adsDiag.setPadding(dp(6), dp(4), dp(6), dp(16));
+        adsDiag.setTextIsSelectable(true);
+        col.addView(adsDiag);
+
         // staggered entrance
         for (int i = 0; i < animated.size(); i++) {
             View v = animated.get(i);

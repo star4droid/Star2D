@@ -44,6 +44,7 @@ public final class AdsManager {
     private static final double AD_FREE_CREDITS = 100;
 
     private static boolean consentDone, sdkStarted;
+    private static volatile String lastError = "";
     private static InterstitialAd interstitial;
     private static boolean loadingInterstitial;
     private static RewardedAd rewarded;
@@ -64,6 +65,19 @@ public final class AdsManager {
     public static boolean adFreeByReward(Context c) { return System.currentTimeMillis() < prefs(c).getLong("free_until", 0); }
     public static long rewardFreeUntil(Context c) { return prefs(c).getLong("free_until", 0); }
     public static boolean adsEnabled(Context c) { return BuildConfig.ADS_ENABLED && !adFreeByPurchase(c) && !adFreeByReward(c); }
+
+    /** One readable line for the Support page: why ads are (not) showing. */
+    public static String status(Context c) {
+        StringBuilder b = new StringBuilder();
+        b.append(BuildConfig.ADS_ENABLED ? "ads in build: yes" : "ads in build: NO (no AdMob ids in this build)");
+        if (BuildConfig.ADS_ENABLED) {
+            b.append(adFreeByPurchase(c) ? "\nad-free: balance is $1 or more" : "\nad-free by balance: no");
+            b.append(adFreeByReward(c) ? "\nad-free: reward active" : "");
+            b.append("\nSDK started: ").append(sdkStarted).append(", banner: ").append(banner == null ? "none" : banner.getVisibility() == View.VISIBLE ? "shown" : "loading/no fill");
+            if (!lastError.isEmpty()) b.append("\nlast error: ").append(lastError);
+        }
+        return b.toString();
+    }
 
     /** Ask for consent (EEA/UK get the Google form), then start the SDK. Safe to call repeatedly. */
     public static void init(Activity a) {
@@ -105,7 +119,7 @@ public final class AdsManager {
         loadingInterstitial = true;
         InterstitialAd.load(c, BuildConfig.ADMOB_INTERSTITIAL_ID, new AdRequest.Builder().build(), new InterstitialAdLoadCallback() {
             @Override public void onAdLoaded(InterstitialAd ad) { interstitial = ad; loadingInterstitial = false; }
-            @Override public void onAdFailedToLoad(LoadAdError e) { interstitial = null; loadingInterstitial = false; }
+            @Override public void onAdFailedToLoad(LoadAdError e) { lastError = "interstitial " + e.getCode() + ": " + e.getMessage(); interstitial = null; loadingInterstitial = false; }
         });
     }
 
@@ -131,7 +145,7 @@ public final class AdsManager {
                 int h = v.getAdSize() != null ? v.getAdSize().getHeightInPixels(a) : 0;
                 padContent(host, h);
             }
-            @Override public void onAdFailedToLoad(LoadAdError e) { padContent(host, 0); }
+            @Override public void onAdFailedToLoad(LoadAdError e) { lastError = "banner " + e.getCode() + ": " + e.getMessage(); padContent(host, 0); }
         });
         banner = v;
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(-2, -2, Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);

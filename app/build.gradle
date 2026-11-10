@@ -42,8 +42,8 @@ android {
         applicationId "com.star4droid.star2d.evo"
         minSdk 24
         targetSdk 36
-        versionCode 54
-        versionName "0.5.4Beta"
+        versionCode 55
+        versionName "0.5.5Beta"
         // AdMob ids come from -P properties / env (GitHub secrets). With no ids the build has NO ads (a small dismissible
         // notice is shown instead). -PADMOB_TEST=true (or env) uses Google's test ids to try ads locally.
         def prop = { String key -> (project.findProperty(key) ?: System.getenv(key) ?: '').toString().trim() }

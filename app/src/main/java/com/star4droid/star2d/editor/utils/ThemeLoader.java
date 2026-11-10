@@ -130,18 +130,62 @@ public class ThemeLoader {
   private static FileHandle skinFile(String path) {
     FileHandle in = Gdx.files.internal(path);
     try {
-      if (in.exists()) return in;
       in.read().close();
       return in;
     } catch (Throwable ignored) {}
+    android.content.Context ctx = null;
+    java.io.File root = null, out = null;
     try {
-      android.content.Context ctx = ((android.content.Context) Gdx.app).getApplicationContext();
-      java.io.File root = new java.io.File(ctx.getCacheDir(), "skins_fallback");
-      java.io.File out = new java.io.File(root, path);
-      if (!out.exists()) copyAssets(ctx.getAssets(), "files/skins", new java.io.File(root, "files/skins"));
+      ctx = ((android.content.Context) Gdx.app).getApplicationContext();
+      root = new java.io.File(ctx.getCacheDir(), "skins_fallback_" + versionOf(ctx));
+      out = new java.io.File(root, path);
+      if (!out.exists()) {
+        // 1) the application's own AssetManager
+        try { copyAssets(ctx.getAssets(), "files/skins", new java.io.File(root, "files/skins")); } catch (Throwable ignored) {}
+        // 2) bypass AssetManager completely: read the entries straight from the installed APK
+        if (!out.exists()) unzipFromApk(ctx.getPackageCodePath(), "assets/files/skins/", new java.io.File(root, "files/skins"));
+      }
       if (out.exists()) return Gdx.files.absolute(out.getAbsolutePath());
     } catch (Throwable ignored) {}
-    return in;
+    throw new com.badlogic.gdx.utils.GdxRuntimeException("Cannot read " + path + " | " + diagnose(ctx));
+  }
+
+  private static long versionOf(android.content.Context c) {
+    try { return c.getPackageManager().getPackageInfo(c.getPackageName(), 0).getLongVersionCode(); } catch (Throwable t) { return 0; }
+  }
+
+  private static void unzipFromApk(String apk, String prefix, java.io.File to) throws java.io.IOException {
+    try (java.util.zip.ZipFile z = new java.util.zip.ZipFile(apk)) {
+      java.util.Enumeration<? extends java.util.zip.ZipEntry> en = z.entries();
+      while (en.hasMoreElements()) {
+        java.util.zip.ZipEntry e = en.nextElement();
+        if (e.isDirectory() || !e.getName().startsWith(prefix)) continue;
+        java.io.File f = new java.io.File(to, e.getName().substring(prefix.length()));
+        f.getParentFile().mkdirs();
+        try (java.io.InputStream is = z.getInputStream(e); java.io.FileOutputStream os = new java.io.FileOutputStream(f)) {
+          byte[] b = new byte[16384]; int r;
+          while ((r = is.read(b)) > 0) os.write(b, 0, r);
+        }
+      }
+    }
+  }
+
+  /** One line for the crash report: what is wrong with the installed package. */
+  private static String diagnose(android.content.Context c) {
+    StringBuilder sb = new StringBuilder();
+    try {
+      java.io.File apk = new java.io.File(c.getPackageCodePath());
+      sb.append("apk=").append(apk).append(" exists=").append(apk.exists()).append(" size=").append(apk.length());
+      sb.append(" ver=").append(versionOf(c));
+      String[] l = c.getAssets().list("files");
+      sb.append(" assets/files=").append(l == null ? -1 : l.length);
+      try (java.util.zip.ZipFile z = new java.util.zip.ZipFile(apk)) {
+        sb.append(" zipEntry=").append(z.getEntry("assets/files/skins/uiskin.json") != null);
+        sb.append(" zipEntries=").append(z.size());
+      }
+      sb.append(" splits=").append(java.util.Arrays.toString(c.getApplicationInfo().splitSourceDirs));
+    } catch (Throwable t) { sb.append(" diag-failed=").append(t); }
+    return sb.toString();
   }
 
   private static void copyAssets(android.content.res.AssetManager am, String dir, java.io.File to) throws java.io.IOException {

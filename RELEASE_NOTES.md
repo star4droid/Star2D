@@ -1,4 +1,4 @@
-## Star2D 0.5.4 Beta
+## Star2D 0.5.5 Beta
 
 ### What's new
 
@@ -16,7 +16,8 @@
 - No ads at all while your credit balance is $1 or more.
 
 **Fixes**
-- Fixed a crash when opening the editor ("Error reading file: files/skins/uiskin.json").
+- Fixed a crash when opening the editor ("Error reading file: files/skins/uiskin.json"): the app now has a second way to read its own files, and reports exactly what is wrong if it still fails.
+- The APK is now signed in the old and the new way, so every installer accepts it (some said "not signed" or "package invalid").
 - The Mesh2Motion screen now fits phones and tablets.
 - AI Workspace: model versions can be chosen, a 2x2 view for multi-angle results, easier wire connections, and nothing starts if your credits are not enough.
 
@@ -36,7 +37,8 @@
 - لا إعلانات إطلاقاً ما دام رصيدك دولاراً واحداً أو أكثر.
 
 **إصلاحات**
-- إصلاح انهيار عند فتح المحرر (رسالة "Error reading file: files/skins/uiskin.json").
+- إصلاح انهيار عند فتح المحرر (رسالة "Error reading file: files/skins/uiskin.json"): صار للتطبيق طريقة ثانية لقراءة ملفاته، ويذكر السبب بدقة إن فشلت.
+- توقيع الـ APK صار بالطريقتين القديمة والجديدة ليقبله كل مثبّت (بعضها كان يقول "غير موقّع" أو "الحزمة غير صالحة").
 - شاشة Mesh2Motion صارت تناسب الهواتف والأجهزة اللوحية.
 - مساحة عمل الذكاء الاصطناعي: اختيار إصدار النموذج، وعرض 2×2 للنتائج من عدة زوايا، وتوصيل أسهل بين العناصر، ولا يبدأ شيء إذا كان رصيدك غير كافٍ.
 

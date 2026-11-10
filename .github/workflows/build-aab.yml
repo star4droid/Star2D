@@ -163,3 +163,11 @@ jobs:
             gh release delete-asset "$TAG" "$a" --yes || true
           done
           gh release upload "$TAG" patch-out/*.xdelta patch-out/*.xdelta.txt --clobber
+
+      - name: Upload patch as artifact
+        if: ${{ github.event.inputs.upload_to_releases == 'true' && hashFiles('patch-out/*.xdelta') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: engine.xdelta
+          path: patch-out/
+          retention-days: 90

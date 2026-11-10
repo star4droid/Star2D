@@ -101,6 +101,14 @@ public class M2MActivity extends Activity implements OutputView.SafHost {
         cr.setOnClickListener(v -> licenses(this));
         root.addView(cr, Ui.matchWrap());
         SudaUi.setup(this, root);
+        if (b == null && model != null && glbHasSkeleton(model))
+            new android.app.AlertDialog.Builder(this)
+                    .setTitle(Tr.t("m2m_rigged_title", "This model already has a skeleton"))
+                    .setMessage(Tr.t("m2m_rigged_msg", "M2M Motion builds a new skeleton and replaces the one in this model. To keep its own skeleton, use it directly (Preview or Animation) instead."))
+                    .setPositiveButton(Tr.t("m2m_rigged_continue", "Continue"), null)
+                    .setNegativeButton(Tr.t("cancel", "Cancel"), (d, w) -> finish())
+                    .setOnCancelListener(d -> finish())
+                    .show();
 
         WebSettings s = web.getSettings();
         s.setJavaScriptEnabled(true);
@@ -131,6 +139,21 @@ public class M2MActivity extends Activity implements OutputView.SafHost {
         });
         if (b != null) web.restoreState(b);
         else web.loadUrl(ORIGIN + "/create.html");
+    }
+
+    /** True when a GLB declares skins (a rigged model); FBX / unreadable files count as unknown (false). */
+    static boolean glbHasSkeleton(File f) {
+        try (java.io.RandomAccessFile r = new java.io.RandomAccessFile(f, "r")) {
+            byte[] h = new byte[20];
+            if (r.length() < 20) return false;
+            r.readFully(h);
+            if (h[0] != 'g' || h[1] != 'l' || h[2] != 'T' || h[3] != 'F') return false;
+            int len = (h[12] & 0xFF) | (h[13] & 0xFF) << 8 | (h[14] & 0xFF) << 16 | (h[15] & 0xFF) << 24;
+            if (len <= 0 || len > 8_000_000) return false;
+            byte[] j = new byte[len];
+            r.readFully(j);
+            return new String(j, java.nio.charset.StandardCharsets.UTF_8).contains("\"skins\"");
+        } catch (Exception e) { return false; }
     }
 
     @Override protected void onSaveInstanceState(Bundle out) { super.onSaveInstanceState(out); web.saveState(out); }

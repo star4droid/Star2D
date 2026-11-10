@@ -92,7 +92,8 @@ public final class Ops {
             new Op("convert", "Convert format", In.MODEL, new Param("format", "Format", T.CHOICE, "glb", true, "glb", "fbx", "obj", "usdz", "stl"),
                     quad(), faces(), new Param("texture_size", "Texture size", T.CHOICE, "2048", false, "512", "1024", "2048", "4096")),
             new Op("rig_check", "Analyze for rigging", In.MODEL),
-            new Op("rig", "Rig", In.MODEL, version(), new Param("rig_type", "Skeleton", T.CHOICE, "biped", true, "biped", "quadruped", "hexapod", "octopod", "avian", "serpentine", "aquatic")),
+            new Op("rig", "Rig", In.MODEL, version(), new Param("rig_type", "Skeleton", T.CHOICE, "biped", true, "biped", "quadruped", "hexapod", "octopod", "avian", "serpentine", "aquatic", "others"),
+                    new Param("spec", "Skeleton standard", T.CHOICE, "tripo", true, "tripo", "mixamo", "actorcore", "unity", "unreal", "vrm")),
             new Op("animate", "Animation", In.MODEL, new Param("animation", "Animation", T.CHOICE, "preset:idle", true,
                     "preset:idle", "preset:walk", "preset:run", "preset:jump", "preset:climb", "preset:dive", "preset:slash", "preset:shoot", "preset:hurt", "preset:fall", "preset:turn"))
     ));

@@ -158,7 +158,7 @@ public class Barrage3D extends Behavior {
 		}
 		if (best != null) {
 			c.set(best.position);
-			o.setYaw3(Support3D.yawOf(c.x - o.position.x, c.z - o.position.z) + modelYawOffset);
+			Combat3D.face(item, Support3D.yawOf(c.x - o.position.x, c.z - o.position.z), modelYawOffset);
 		} else {
 			float yaw = Combat3D.facing(item, modelYawOffset);
 			c.set(o.position.x - MathUtils.sinDeg(yaw) * forwardDistance, o.position.y, o.position.z - MathUtils.cosDeg(yaw) * forwardDistance);

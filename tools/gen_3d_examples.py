@@ -23,7 +23,7 @@ block definitions (Blocks3D, nodes.java DSL, BlockCatalog, behavior blocks), and
 compiles (javac against the template classes, tools/examples3d_test/Examples3DCheck.java emulates Helpers/CodeGenerator).
 Needs the template classes (bash gradlew :template:compileReleaseJavaWithJavac) and the gradle cache (gdx, gson, bullet, gltf).
 """
-import glob, io, json, math, os, re, shutil, struct, subprocess, sys, tempfile
+import glob, io, json, math, os, re, shutil, struct, subprocess, sys, tempfile, zlib
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 EXAMPLES = os.path.join(ROOT, "app/src/main/assets/files/examples")
@@ -1671,6 +1671,12 @@ def validate():
                         elif base == "String":
                             if not isinstance(x, str):
                                 P(pre + "%s: %s.%s must be text" % (n, b["type"], k))
+                            elif "\n" in x:  # a script (Dialogue): every voice file named in it
+                                for v in re.findall(r"(/?[\w\-]+\.(?:ogg|mp3|wav))(?=\s|$)", x):
+                                    f = os.path.join(proj, "sounds", v.lstrip("/"))
+                                    refs.add(os.path.relpath(f, proj))
+                                    if not os.path.isfile(f):
+                                        P(pre + "%s: %s.%s missing sound %s" % (n, b["type"], k, v))
                             elif re.search(r"\.(ogg|mp3|wav)$", x):
                                 f = os.path.join(proj, "sounds", x.lstrip("/"))
                                 refs.add(os.path.relpath(f, proj))
@@ -1702,6 +1708,14 @@ def validate():
                     P(pre + "%s: missing sound %s" % (os.path.relpath(jf, proj), m.group(1)))
             for name in re.findall(r"\b([A-Za-z_]\w*)\b", code):
                 pass
+        # models a painted terrain plants (foliage kinds of terrains/*.s2t)
+        for tf in glob.glob(os.path.join(proj, "terrains", "*.s2t")):
+            raw = open(tf, "rb").read()
+            for m in set(re.findall(rb"/([\w\-]+\.glb)", zlib.decompress(raw[8:]))):
+                f = os.path.join(proj, "models", m.decode())
+                refs.add(os.path.relpath(f, proj))
+                if not os.path.isfile(f):
+                    P(pre + "%s plants a missing model %s" % (os.path.basename(tf), m.decode()))
         # shipped files that nothing uses
         for kind in ("models", "sounds", "images"):
             for f in glob.glob(os.path.join(proj, kind, "*")):
@@ -1737,6 +1751,8 @@ def validate():
             P(pre + "lambda / method reference in the scene code (the phone compiles Java 7)")
         else:
             notes.append("%s: scene Java compiles (%d lines)" % (folder, open(gen, encoding="utf-8").read().count("\n")))
+            if os.environ.get("KEEP_CLASSES"):  # the compiled scene (a desktop game.jar for tests)
+                shutil.copytree(cls, os.path.join(os.environ["KEEP_CLASSES"], folder), dirs_exist_ok=True)
     for n in notes:
         print("  " + n)
     if problems:

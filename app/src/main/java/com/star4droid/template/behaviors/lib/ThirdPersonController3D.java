@@ -134,6 +134,13 @@ public class ThirdPersonController3D extends Behavior {
 		return (float) Math.sqrt(vx * vx + vz * vz);
 	}
 
+	/** Turns the character to a heading now (degrees; attacks aiming at an enemy). */
+	public void setHeading(float yaw) {
+		heading = yaw;
+		Object3D o = obj();
+		if (o != null) o.setYaw3(heading + modelYawOffset);
+	}
+
 	private Camera3D cam() {
 		return Support3D.cameraOr(camera, world3d());
 	}

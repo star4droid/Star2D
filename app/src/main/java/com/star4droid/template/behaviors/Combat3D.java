@@ -70,11 +70,56 @@ public final class Combat3D {
 		return o;
 	}
 
+	private static final java.util.WeakHashMap<PlayerItem, boolean[]> SLEEPING = new java.util.WeakHashMap<PlayerItem, boolean[]>();
+
+	/**
+	 * A template that only exists to be copied: hidden, no body, its behaviors paused (a hidden enemy template must not
+	 * chase or shoot). Copies made with {@link #cloneLive} get the behaviors as they were.
+	 */
+	public static void sleep(PlayerItem t) {
+		if (t == null || SLEEPING.containsKey(t)) return;
+		com.star4droid.template.Utils.ItemScript sc = t.getScript();
+		java.util.ArrayList<Behavior> all = sc == null ? new java.util.ArrayList<Behavior>() : sc.getBehaviors();
+		boolean[] st = new boolean[all.size()];
+		for (int i = 0; i < all.size(); i++) {
+			st[i] = all.get(i).isEnabled();
+			all.get(i).setEnabled(false);
+		}
+		SLEEPING.put(t, st);
+		Support3D.setActive3(t, false);
+	}
+
+	/** A copy of a template with its behaviors running (also for templates put to sleep). */
+	public static PlayerItem cloneLive(Object3D t, String name) {
+		boolean[] st = SLEEPING.get(t);
+		com.star4droid.template.Utils.ItemScript sc = t.getScript();
+		java.util.ArrayList<Behavior> all = sc == null ? null : sc.getBehaviors();
+		if (st != null && all != null) for (int i = 0; i < all.size() && i < st.length; i++) all.get(i).enabled = st[i];
+		PlayerItem c;
+		try {
+			c = t.getClone(name);
+		} finally {
+			if (st != null && all != null) for (int i = 0; i < all.size() && i < st.length; i++) all.get(i).enabled = false;
+		}
+		return c;
+	}
+
 	/** The third person controller of an element (null when it has none). */
 	public static ThirdPersonController3D controller(PlayerItem it) {
 		if (it == null) return null;
 		Behavior b = it.getBehavior("ThirdPersonController3D");
 		return b instanceof ThirdPersonController3D ? (ThirdPersonController3D) b : null;
+	}
+
+	/** Turns an element to a heading (degrees, without the model's turn); its controller keeps it. */
+	public static void face(PlayerItem it, float yaw, float modelYawOffset) {
+		ThirdPersonController3D c = controller(it);
+		if (c != null) {
+			c.setHeading(yaw);
+			return;
+		}
+		Object3D o = Support3D.o(it);
+		if (o != null) o.setYaw3(yaw + modelYawOffset);
 	}
 
 	/** Standing on the ground (controller, else a short ray / terrain test). */

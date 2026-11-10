@@ -66,6 +66,10 @@ public class Shooter3D extends Behavior {
 	public String ammoItem = "";
 	@Param(desc = "Camera kick per shot.", min = 0, max = 3, step = 0.05)
 	public float recoil = 0.15f;
+	@Param(desc = "Auto aim: turns to the nearest of these (name prefixes, comma separated) when shooting (empty = off).")
+	public String autoAimTargets = "";
+	@Param(desc = "Auto aim reach.", unit = "m", min = 1, max = 500, step = 1)
+	public float autoAimRange = 20;
 	@Param(desc = "Sound of a shot.")
 	@Sound
 	public String shootSound = "";
@@ -121,7 +125,19 @@ public class Shooter3D extends Behavior {
 			} else o3.add(new Vector3(d3).scl(muzzleDistance)).add(0, muzzleHeight, 0);
 		} else if (o != null) {
 			o.forward(d3);
+			Object3D t = autoAimTargets.length() > 0 ? nearest(w, o) : null;
+			if (t != null) {
+				float yaw = Support3D.yawOf(t.position.x - o.position.x, t.position.z - o.position.z);
+				float turn = Support3D.angleDiff(Support3D.yawOf(d3.x, d3.z), yaw);
+				float off = Support3D.angleDiff(Support3D.yawOf(d3.x, d3.z), o.getYaw3());
+				com.star4droid.template.behaviors.Combat3D.face(item, o.getYaw3() + turn - off, off);
+				o.forward(d3);
+			}
 			o3.set(o.position).add(0, muzzleHeight, 0).add(new Vector3(d3).scl(muzzleDistance));
+			if (t != null) {
+				float ty = (t.getBottomY() + t.getTopY()) * 0.5f;
+				d3.set(t.position.x - o3.x, ty - o3.y, t.position.z - o3.z).nor();
+			}
 		}
 		if (spread > 0) {
 			d3.rotate(Vector3.Y, MathUtils.random(-spread, spread));
@@ -129,6 +145,24 @@ public class Shooter3D extends Behavior {
 			if (!side.isZero(0.001f)) d3.rotate(side.nor(), MathUtils.random(-spread, spread));
 			d3.nor();
 		}
+	}
+
+	private final GameplaySupport.NameMatcher aimNames = new GameplaySupport.NameMatcher();
+	private final java.util.ArrayList<Object3D> aimFound = new java.util.ArrayList<Object3D>();
+
+	private Object3D nearest(World3D w, Object3D o) {
+		aimNames.set(autoAimTargets);
+		com.star4droid.template.behaviors.Combat3D.targets(w, aimNames, item, o.position, autoAimRange, 360, 0, aimFound);
+		Object3D best = null;
+		float bd = Float.MAX_VALUE;
+		for (Object3D e : aimFound) {
+			float d = e.position.dst2(o.position);
+			if (d < bd) {
+				bd = d;
+				best = e;
+			}
+		}
+		return best;
 	}
 
 	private void fireNow() {

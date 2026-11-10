@@ -4,6 +4,7 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
 import com.star4droid.template.Utils.PlayerItem;
 import com.star4droid.template.behaviors.Behavior;
+import com.star4droid.template.behaviors.Combat3D;
 import com.star4droid.template.behaviors.BehaviorInfo;
 import com.star4droid.template.behaviors.Block;
 import com.star4droid.template.behaviors.GameplaySupport;
@@ -104,7 +105,7 @@ public class Spawner3D extends Behavior {
 		PlayerItem tp = templates.get(MathUtils.random(templates.size() - 1));
 		if (!(tp instanceof Object3D)) return null;
 		Object3D t = (Object3D) tp;
-		PlayerItem c = t.getClone(t.getName() + "_s" + GameplaySupport.nextId());
+		PlayerItem c = Combat3D.cloneLive(t, t.getName() + "_s" + GameplaySupport.nextId());
 		if (!(c instanceof Object3D)) return null;
 		Object3D o = (Object3D) c;
 		Vector3 p = new Vector3(here.position);
@@ -140,7 +141,7 @@ public class Spawner3D extends Behavior {
 	public void onUpdate(float dt) {
 		if (!hidden) {
 			hidden = true;
-			for (PlayerItem t : templates) if (t != item) Support3D.setActive3(t, false);
+			for (PlayerItem t : templates) if (t != item) Combat3D.sleep(t);
 		}
 		if (!running) return;
 		wait -= dt;

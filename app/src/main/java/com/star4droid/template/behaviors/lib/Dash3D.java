@@ -159,7 +159,7 @@ public class Dash3D extends Behavior {
 				if (len > 0.01f) {
 					dx = dir[0] / len;
 					dz = dir[1] / len;
-					o.setYaw3(Support3D.yawOf(dx, dz) + modelYawOffset);
+					Combat3D.face(item, Support3D.yawOf(dx, dz), modelYawOffset);
 				}
 			}
 		}

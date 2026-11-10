@@ -58,6 +58,7 @@ public class Summon3D extends Behavior {
 
 	@Override
 	public void onStart() {
+		Combat3D.sleep(template);
 		l = Support3D.onTap(button, new Runnable() {
 			@Override
 			public void run() {
@@ -83,7 +84,7 @@ public class Summon3D extends Behavior {
 			float fx = -MathUtils.sinDeg(yaw), fz = -MathUtils.cosDeg(yaw), rx = MathUtils.cosDeg(yaw), rz = -MathUtils.sinDeg(yaw);
 			float x = o.position.x + fx * front + rx * side, z = o.position.z + fz * front + rz * side;
 			Object3D t = (Object3D) template;
-			PlayerItem c = t.getClone(t.getName() + "_s" + GameplaySupport.nextId());
+			PlayerItem c = Combat3D.cloneLive(t, t.getName() + "_s" + GameplaySupport.nextId());
 			if (c instanceof Object3D) {
 				Object3D s = (Object3D) c;
 				float g = Support3D.groundY(w, x, o.position.y + 3, z, 20, o);

@@ -223,7 +223,11 @@ public class Boss3D extends Behavior {
 				if (leapCooldown > 0 && leapCd <= 0 && d > 8) {
 					start(LEAP, jumpClip);
 					from.set(o.position);
-					to.set(focus.position);
+					// lands just short of the target (on it, the ground check would put the boss on the target's head)
+					to.set(o.position).sub(focus.position);
+					to.y = 0;
+					if (to.isZero(0.001f)) to.set(0, 0, 1);
+					to.nor().scl(Math.max(1.2f, punchRange * 0.7f)).add(focus.position);
 					break;
 				}
 				tp.set(focus.position);

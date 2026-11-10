@@ -40,6 +40,8 @@ public class MeleeCombo3D extends Behavior {
 	public float arc = 140;
 	@Param(desc = "Extra heading of the model (same as its controller: 90 for models facing +X).", unit = "deg", min = -180, max = 180)
 	public float modelYawOffset = 0;
+	@Param(desc = "Turns to the nearest enemy this close when a hit starts (0 = off).", unit = "m", min = 0, max = 30, step = 0.5)
+	public float autoFace = 5;
 
 	@Header("Combo")
 	@Param(desc = "Clips of the combo, in order (comma separated).")
@@ -256,7 +258,25 @@ public class MeleeCombo3D extends Behavior {
 
 	private int lastStep = -1;
 
+	private void faceNearest(Object3D o) {
+		World3D w = world3d();
+		if (autoFace <= 0 || w == null) return;
+		matcher.set(targets);
+		Combat3D.targets(w, matcher, item, o.position, autoFace, 360, 0, found);
+		Object3D best = null;
+		float bd = Float.MAX_VALUE;
+		for (Object3D e : found) {
+			float d = e.position.dst2(o.position);
+			if (d < bd) {
+				bd = d;
+				best = e;
+			}
+		}
+		if (best != null) Combat3D.face(item, Support3D.yawOf(best.position.x - o.position.x, best.position.z - o.position.z), modelYawOffset);
+	}
+
 	private void startHit(Object3D o, int s) {
+		faceNearest(o);
 		step = s;
 		lastStep = s;
 		t = 0;

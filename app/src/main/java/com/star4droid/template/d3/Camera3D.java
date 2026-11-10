@@ -172,6 +172,19 @@ public class Camera3D extends Actor implements PlayerItem {
 			}
 		}
 		cam.position.set(position);
+		// a following camera never goes under a terrain (hills behind the player, a slope while orbiting)
+		if (t != null && world != null && !"FIRST_PERSON".equals(followMode)) {
+			for (int i = 0; i < world.objects.size; i++) {
+				Object3D g = world.objects.get(i);
+				if (g.terrain() == null || !g.isVisible()) continue;
+				if (Math.abs(cam.position.x - g.position.x) > g.getSizeX() * 0.5f || Math.abs(cam.position.z - g.position.z) > g.getSizeZ() * 0.5f) continue;
+				float min = g.heightAt(cam.position.x, cam.position.z) + 0.45f;
+				if (cam.position.y < min) {
+					cam.position.y = min;
+					position.y = min;
+				}
+			}
+		}
 		if (lookAtTarget && t != null) {
 			look.set(t.position.x, t.position.y + lookHeight, t.position.z).sub(cam.position);
 			// camera on the look point: keep the last direction (a zero direction makes a NaN view)

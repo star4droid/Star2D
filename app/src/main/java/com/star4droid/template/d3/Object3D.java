@@ -284,8 +284,10 @@ public class Object3D extends Actor implements PlayerItem {
 	/** Local bounds of the model (before scale). */
 	public BoundingBox localBounds() {
 		if (!boundsDone) {
-			if (instance != null) instance.calculateBoundingBox(bounds);
-			else bounds.set(new Vector3(-0.5f, -0.5f, -0.5f), new Vector3(0.5f, 0.5f, 0.5f));
+			if (instance != null) {
+				// skinned characters: measured as drawn (through the bones), not in their bind space
+				if (!(SkinBounds.skinned(instance) && SkinBounds.calculate(instance, bounds))) instance.calculateBoundingBox(bounds);
+			} else bounds.set(new Vector3(-0.5f, -0.5f, -0.5f), new Vector3(0.5f, 0.5f, 0.5f));
 			if (!bounds.isValid() || bounds.getDimensions(new Vector3()).isZero()) bounds.set(new Vector3(-0.5f, -0.5f, -0.5f), new Vector3(0.5f, 0.5f, 0.5f));
 			boundsDone = true;
 		}

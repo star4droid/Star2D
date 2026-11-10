@@ -632,6 +632,13 @@ public class WorkspaceActivity extends Activity implements NodeGraphView.Host, J
             }
             double t = total;
             boolean k = known;
+            // not enough credits for the whole chain: nothing starts, straight to Buy Credits
+            try { Suda3D.me(this); } catch (Exception ignored) {}
+            double have = Suda3D.credits(this);
+            if (k && have >= 0 && t > have && Suda3D.paid(this)) {
+                runOnUiThread(() -> { if (!dead) Paywall.openBuy(this); });
+                return;
+            }
             runOnUiThread(() -> {
                 String price = k ? (t == 0 ? Tr.t("s3d_free", "Free") : Suda3D.fmtCredits(t) + " " + Tr.t("s3d_credits", "credits")) : "?";
                 String msg = list.size() > 1

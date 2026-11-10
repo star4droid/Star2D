@@ -206,6 +206,13 @@ public final class QuickGen {
             final File img = image;
             Suda3D.IO.execute(() -> {
                 try {
+                    // not enough credits: nothing is uploaded or started, straight to Buy Credits
+                    try {
+                        double need = Suda3D.num(Suda3D.quote(a, op.id, params), "credits", 0);
+                        try { Suda3D.me(a); } catch (Exception ignored) {}
+                        double have = Suda3D.credits(a);
+                        if (Suda3D.paid(a) && have >= 0 && need > have) { Ui.ui(() -> { dialog.dismiss(); Paywall.openBuy(a); }); return; }
+                    } catch (Exception ignored) {}
                     JsonObject inputs = new JsonObject();
                     if (img != null && op.input == Ops.In.IMAGE) inputs.addProperty("image", Suda3D.upload(a, img));
                     JsonObject r = Suda3D.createJob(a, op.id, params, inputs, UUID.randomUUID().toString());

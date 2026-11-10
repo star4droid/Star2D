@@ -165,6 +165,8 @@ public final class Paywall {
     public static boolean handle(Context c, Throwable e, String title) {
         boolean noBalance = e instanceof Suda3D.ApiException && (((Suda3D.ApiException) e).noBalance() || ((Suda3D.ApiException) e).unauthorized());
         if (!noBalance) return false;
+        // someone who already bought credits and ran out: straight to Buy Credits (the fake progress is only for people who never paid)
+        if (Suda3D.loggedIn(c) && Suda3D.paid(c)) { Ui.ui(() -> openBuy(c)); return true; }
         Ui.ui(() -> fakeProgress(c, title));
         return true;
     }

@@ -625,8 +625,11 @@ public class World3D implements Disposable {
 			try {
 				for (int i = 0; i < objects.size; i++) {
 					Object3D o = objects.get(i);
+					if (o.terrain != null && o.terrain.foliage != null && o.isVisible() && o.instance != null)
+						o.terrain.foliage.renderShadows(shadowBatch, shadowLight.getCamera(), center, shadowDistance, o);
 					if (!o.isVisible() || o.instance == null || !o.def.Cast_Shadows || o.water != null || o.def.Opacity <= 0.5f) continue;
 					if (o.position.dst(center) - o.radius > shadowDistance) continue;
+					if (o.terrain != null) o.terrain.cull(shadowLight.getCamera(), o.instance, o.transform, o.scale);
 					shadowBatch.render(o.instance);
 				}
 				shadowBatch.end();
@@ -717,6 +720,12 @@ public class World3D implements Disposable {
 					continue;
 				}
 				ModelInstance mi = o.instance;
+				if (o.terrain != null) {
+					o.terrain.cull(cam, mi, o.transform, o.scale);
+					b.render(mi, env);
+					if (o.terrain.foliage != null) o.terrain.foliage.render(b, cam, env, o);
+					continue;
+				}
 				if (o.lowInstance != null && o.def.LOD_Distance > 0 && tmp.set(o.position).dst(cam.position) > o.def.LOD_Distance * Quality3D.lodBias) mi = o.lowInstance;
 				// the environment is read when the batch flushes: elements without shadows use their own copy
 				b.render(mi, !o.def.Receive_Shadows && env.shadowMap != null ? envNoShadow : env);

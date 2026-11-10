@@ -199,7 +199,7 @@ public final class Shaders3D {
 
 		@Override
 		protected Shader createShader(Renderable r) {
-			Shader special = special(r);
+			Shader special = special(r, mode);
 			if (special != null) return special;
 			DefaultShader.Config c = config;
 			if (r.bones != null && r.bones.length > c.numBones) {
@@ -253,7 +253,7 @@ public final class Shaders3D {
 
 		@Override
 		protected Shader createShader(Renderable r) {
-			Shader special = special(r);
+			Shader special = special(r, PBR);
 			if (special != null) return special;
 			return super.createShader(r);
 		}
@@ -269,8 +269,16 @@ public final class Shaders3D {
 	}
 
 	/** Water and project shaders. */
-	static Shader special(Renderable r) {
+	static Shader special(Renderable r, String mode) {
 		if (r.material == null) return null;
+		if (r.material.has(Terrain3D.TerrainAttribute.Type) && r.bones == null) {
+			Shader s = Terrain3D.shader(r, mode);
+			if (s != null) return s;
+		}
+		if (r.material.has(Foliage3D.FoliageAttribute.Type) && r.bones == null) {
+			Shader s = Foliage3D.shader(r, mode);
+			if (s != null) return s;
+		}
 		if (r.material.has(Water3D.WaterAttribute.Type)) {
 			Water3D.WaterShader s = new Water3D.WaterShader(r);
 			return s;

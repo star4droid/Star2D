@@ -131,7 +131,7 @@ public class Editor3DItem extends Actor implements EditorItem {
 				fill(d, propertySet);
 				d.name = getName();
 				String sig = d.Mesh + "|" + d.Model + "|" + d.Model_Node + "|" + d.Detail + "|" + d.Steps + "|" + d.Heightmap + "|" + d.Terrain_Height + "|" + d.Terrain_Resolution
-						+ "|" + d.Terrain_Noise + "|" + d.Terrain_Seed + "|" + d.Water_Resolution + "|" + d.Water_Quality + "|" + d.LOD_Distance + "|" + d.Animation + "|" + com.star4droid.template.d3.Assets3D.version(d.Model);
+						+ "|" + d.Terrain_Noise + "|" + d.Terrain_Seed + "|" + d.Terrain_Data + "|" + d.Grass_Density + "|" + d.Grass_Height + "|" + d.Grass_Layer + "|" + d.Grass_Color + "|" + d.Grass_Distance + "|" + d.Foliage_Distance + "|" + d.Water_Resolution + "|" + d.Water_Quality + "|" + d.LOD_Distance + "|" + d.Animation + "|" + com.star4droid.template.d3.Assets3D.version(d.Model);
 				if (obj == null) {
 					obj = Object3D.forWorld(w, d);
 					meshSig = sig;

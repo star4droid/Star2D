@@ -346,6 +346,9 @@ public final class Assets3D {
 		ERRORS.clear();
 		Shapes3D.forgetGL();
 		Water3D.forgetGL();
+		TerrainTextures.invalidate();
+		Foliage3D.forgetGL();
+		FoliageMeshes.class.getName();
 		Outline3D.OutlineShader.program = null;
 		B3.forgetSounds();
 	}

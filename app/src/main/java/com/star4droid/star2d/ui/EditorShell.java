@@ -191,6 +191,18 @@ public class EditorShell extends FrameLayout implements ControlLayer.NativeUi, T
     }
 
     public Activity activity() { return activity; }
+
+    /** Full screen tool over the 3D view (terrain editor): the normal bars are hidden until {@link #exitOverlay}. */
+    public void enterOverlay(View v) {
+        panels.hide();
+        chrome.setVisibility(GONE);
+        addView(v, Ui.match());
+    }
+
+    public void exitOverlay(View v) {
+        removeView(v);
+        chrome.setVisibility(VISIBLE);
+    }
     public Host host() { return host; }
 
     // =============================================================== layout
@@ -1264,6 +1276,10 @@ public class EditorShell extends FrameLayout implements ControlLayer.NativeUi, T
         // a game is being played: Back returns to the editor (the shell is hidden while playing, so without this the activity closed the app)
         if (playing || (Bridge.app() != null && Bridge.app().isPlaying())) {
             Bridge.gl(() -> Bridge.app().play(null));
+            return true;
+        }
+        if (TerrainPanel.current != null) {
+            TerrainPanel.current.close();
             return true;
         }
         if (toolOpen && toolCloser != null) {

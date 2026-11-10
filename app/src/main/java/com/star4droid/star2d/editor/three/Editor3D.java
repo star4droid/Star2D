@@ -53,6 +53,13 @@ public class Editor3D {
 	public boolean colliderEdit = false;
 	private Actor colliderTarget;
 	private final ShapeRenderer screen = new ShapeRenderer();
+	/** Terrain editor (brushes) while a terrain is being edited, else idle. */
+	public final TerrainSession terrain = new TerrainSession(this);
+
+	public boolean terrainMode() {
+		return terrain.item != null;
+	}
+
 	/** Editor viewport quality (independent of the game's). */
 	public static String editorQuality = "MEDIUM";
 
@@ -221,6 +228,7 @@ public class Editor3D {
 		}
 		pruneGhosts();
 		world.camera = cam;
+		terrain.update(dt);
 		world.update(dt, false);
 		world.render(cam, Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), true);
 		Quality3D.restore(gameQuality);
@@ -234,7 +242,12 @@ public class Editor3D {
 		Editor3DItem sel = selected3D();
 		if (colliderEdit && (sel == null || sel != colliderTarget || !hasCollider(sel))) colliderEdit = false;
 		if ((showColliders || colliderEdit) && hasCollider(sel)) drawCollider(sel);
-		if (colliderEdit) drawColliderHandles(sel);
+		if (terrainMode()) {
+			Gdx.gl.glEnable(GL20.GL_DEPTH_TEST);
+			shapes.setProjectionMatrix(cam.combined);
+			terrain.drawCursor(shapes);
+			Gdx.gl.glDisable(GL20.GL_DEPTH_TEST);
+		} else if (colliderEdit) drawColliderHandles(sel);
 		else drawGizmo();
 		Gdx.gl.glEnable(GL20.GL_BLEND);
 	}
@@ -699,6 +712,7 @@ public class Editor3D {
 		moved = false;
 		if (pointer == 1) {
 			// second finger: pan + pinch, cancel a gizmo drag
+			if (terrainMode()) terrain.cancelStroke();
 			cancelDrag();
 			if (dragHandle >= 0) endHandleDrag();
 			orbiting = false;
@@ -714,6 +728,13 @@ public class Editor3D {
 		if (pointer > 1) return true;
 		lastX = downX = x;
 		lastY = downY = y;
+		if (terrainMode()) {
+			dragHandle = -1;
+			dragAxis = -1;
+			if (terrain.navigate) orbiting = true;
+			else terrain.touchDown(x, y);
+			return true;
+		}
 		dragHandle = editor.isLocked3D() ? -1 : hitHandle(x, y);
 		if (dragHandle >= 0) {
 			startCollider = colliderState(selected3D().getPropertySet());
@@ -753,6 +774,10 @@ public class Editor3D {
 		if (Math.abs(x - downX) > 8 || Math.abs(y - downY) > 8) moved = true;
 		lastX = x;
 		lastY = y;
+		if (terrainMode() && !terrain.navigate) {
+			terrain.touchDragged(x, y);
+			return true;
+		}
 		if (dragHandle >= 0) {
 			dragHandleBy(dx, dy);
 			return true;
@@ -775,6 +800,11 @@ public class Editor3D {
 			panning = false;
 			pinchDist = -1;
 			pinchStartDist = -1;
+			orbiting = false;
+			return true;
+		}
+		if (terrainMode()) {
+			terrain.touchUp();
 			orbiting = false;
 			return true;
 		}

@@ -191,6 +191,8 @@ public class Physics3D implements Disposable {
 			sh = new btCylinderShape(new Vector3(size.x * s.x * 0.5f, size.y * s.y * 0.5f, size.z * s.z * 0.5f));
 		} else if ("CONE".equals(c)) {
 			sh = new btConeShape(0.5f * Math.max(size.x * s.x, size.z * s.z), size.y * s.y);
+		} else if ("MESH".equals(c) && o.terrain != null) {
+			return terrainShape(o, own);
 		} else if ("MESH".equals(c) && o.instance != null) {
 			btCollisionShape ms = Bullet.obtainStaticNodeShape(o.instance.nodes);
 			if (ms == null) return new btBoxShape(new Vector3(Math.max(0.005f, size.x * s.x * 0.5f), Math.max(0.005f, size.y * s.y * 0.5f), Math.max(0.005f, size.z * s.z * 0.5f)));
@@ -215,6 +217,40 @@ public class Physics3D implements Disposable {
 		}
 		own.add(sh);
 		return sh;
+	}
+
+	/**
+	 * Terrain: an exact Bullet heightfield (same triangles as the drawn grid, much cheaper than a triangle mesh) plus a
+	 * cylinder for every scattered object that blocks (trees, rocks), all in one static compound.
+	 */
+	private static btCollisionShape terrainShape(Object3D o, Array<Disposable> own) {
+		Terrain3D t = o.terrain;
+		float sx = Math.abs(o.scale.x), sy = Math.abs(o.scale.y), sz = Math.abs(o.scale.z);
+		float mn = Float.MAX_VALUE, mx = -Float.MAX_VALUE;
+		for (float v : t.h) {
+			mn = Math.min(mn, v);
+			mx = Math.max(mx, v);
+		}
+		mn *= t.maxHeight;
+		mx *= t.maxHeight;
+		if (mx - mn < 0.001f) mx = mn + 0.001f;
+		int n = t.res + 1;
+		com.badlogic.gdx.physics.bullet.collision.btHeightfieldTerrainShape hf = new com.badlogic.gdx.physics.bullet.collision.btHeightfieldTerrainShape(n, n, t.field(), 1f, mn, mx, 1, false);
+		hf.setLocalScaling(new Vector3(sx / t.res, sy, sz / t.res));
+		btCompoundShape comp = new btCompoundShape();
+		comp.addChildShape(new Matrix4().setToTranslation(0, (mn + mx) * 0.5f * sy, 0), hf);
+		own.add(hf);
+		if (t.foliage != null) {
+			com.badlogic.gdx.utils.FloatArray cs = t.foliage.colliders(o);
+			for (int i = 0; i + 4 < cs.size; i += 5) {
+				float r = cs.get(i + 3), hh = cs.get(i + 4);
+				btCylinderShape cy = new btCylinderShape(new Vector3(r, hh * 0.5f, r));
+				comp.addChildShape(new Matrix4().setToTranslation(cs.get(i), cs.get(i + 1) + hh * 0.5f - 0.1f, cs.get(i + 2)), cy);
+				own.add(cy);
+			}
+		}
+		own.add(comp);
+		return comp;
 	}
 
 	private static btConvexHullShape convexHull(Model m, Vector3 scale) {

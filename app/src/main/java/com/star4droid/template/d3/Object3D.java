@@ -56,6 +56,11 @@ public class Object3D extends Actor implements PlayerItem {
 	Water3D.WaterAttribute water;
 	UserShader.Program program;
 	Terrain3D terrain;
+
+	/** Engine / editor: the terrain of a TERRAIN element (null otherwise). */
+	public Terrain3D terrain() {
+		return terrain;
+	}
 	public boolean outline;
 	public final Color outlineColor = new Color(Color.WHITE);
 	public float outlineWidth = 0.03f;
@@ -151,8 +156,9 @@ public class Object3D extends Actor implements PlayerItem {
 				}
 			} else instance = new ModelInstance(Shapes3D.get(Shapes3D.CUBE, 0, 0)); // missing file: a placeholder cube
 		} else if ("TERRAIN".equals(shape)) {
-			terrain = Terrain3D.build(def);
+			terrain = Terrain3D.build(def, world != null && world.editor);
 			instance = new ModelInstance(terrain.model);
+			if (terrain.foliage != null) terrain.foliage.owner = this;
 		} else if ("WATER".equals(shape)) {
 			int res = (int) def.Water_Resolution;
 			String q = def.Water_Quality == null ? "AUTO" : def.Water_Quality;
@@ -183,7 +189,7 @@ public class Object3D extends Actor implements PlayerItem {
 		if (oldTerrain != null && oldTerrain.model != null) {
 			// a MESH body reads the old terrain's vertices: remove it before freeing them (setShape / setModel rebuild it)
 			if (rigid != null && world != null) world.physics().removeBody(this);
-			oldTerrain.model.dispose();
+			oldTerrain.dispose();
 		}
 		applyLook();
 		if (anim != null && def.Animation != null && def.Animation.length() > 0)
@@ -206,18 +212,22 @@ public class Object3D extends Actor implements PlayerItem {
 
 	/** Frees what this element owns alone (the terrain mesh). Its body must be gone already. */
 	void disposeOwned() {
-		if (terrain != null && terrain.model != null) {
+		if (terrain != null) {
 			try {
-				terrain.model.dispose();
+				terrain.dispose();
 			} catch (Throwable ignored) {
 			}
-			terrain.model = null;
 		}
 	}
 
 	/** Material from the definition (color, texture, opacity...). */
 	public void applyLook() {
 		if (instance == null || water != null) return;
+		if (terrain != null && terrain.painted) {
+			terrain.applyMaterial(instance, def);
+			program = null;
+			return;
+		}
 		Materials3D.Look look = new Materials3D.Look();
 		look.color = Materials3D.color(def.Color, Color.WHITE);
 		look.texture = Assets3D.texture(def.Texture, def.Texture_Repeat_X != 1 || def.Texture_Repeat_Y != 1);

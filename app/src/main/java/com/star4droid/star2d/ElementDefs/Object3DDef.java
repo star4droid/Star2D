@@ -68,6 +68,17 @@ public class Object3DDef extends ItemDef {
 	// ---- terrain
 	public String Heightmap = "";
 	public float Terrain_Height = 4, Terrain_Resolution = 64, Terrain_Noise = 0, Terrain_Seed = 1;
+	/** Painted terrain file of the project ("/island.s2t" in terrains/), made by the terrain editor / generator. */
+	public String Terrain_Data = "";
+	/** Ground layers of a painted terrain: texture ("builtin:grass", a project image, "" = default), tint, repeats over the terrain. */
+	public String Layer_1_Texture = "", Layer_2_Texture = "", Layer_3_Texture = "", Layer_4_Texture = "";
+	public String Layer_1_Color = "#FFFFFF", Layer_2_Color = "#FFFFFF", Layer_3_Color = "#FFFFFF", Layer_4_Color = "#FFFFFF";
+	public float Layer_1_Tiling = 24, Layer_2_Tiling = 20, Layer_3_Tiling = 12, Layer_4_Tiling = 20;
+	/** Grass on a layer of a painted terrain: tufts per square meter (0 = none), height (m), color, layer (1..4), distance (m). */
+	public float Grass_Density = 0, Grass_Height = 0.45f, Grass_Layer = 1, Grass_Distance = 28;
+	public String Grass_Color = "#78B83C";
+	/** Trees / rocks of a painted terrain are not drawn farther than this (m, 0 = the quality's view distance). */
+	public float Foliage_Distance = 0;
 
 	// ---- water
 	public String Water_Color = "#2E8FD8", Water_Deep_Color = "#0B3D6B", Foam_Color = "#FFFFFF";

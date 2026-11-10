@@ -369,6 +369,14 @@ public class PropertiesPanel implements PanelHost.Panel {
                 sec.texts.add(searchText(f));
             }
         }
+        if ("Terrain".equals(title) && "OBJ3D".equals(values.get("TYPE")) && "TERRAIN".equalsIgnoreCase(String.valueOf(values.get("Mesh")))) {
+            // professional terrain editor: brushes, paint, trees, generator
+            LinearLayout b = Ui.button(c, R.drawable.ic_s2_terrain, Tr.t("ter_edit", "Edit terrain (brushes, paint, trees)"), true,
+                    x -> com.star4droid.star2d.ui.TerrainPanel.open(shell));
+            body.addView(b, Ui.margins(Ui.matchWrap(), c, 0, 4, 0, 10));
+            sec.rows.add(b);
+            sec.texts.add((Tr.t("ter_edit", "Edit terrain") + " terrain brush paint").toLowerCase());
+        }
         if ("Physics 3D".equals(title) && "OBJ3D".equals(values.get("TYPE")) && values.get("Body") != null && !"NONE".equalsIgnoreCase(values.get("Body"))
                 && !"EMPTY".equalsIgnoreCase(String.valueOf(values.get("Mesh")))) {
             // collider editor: handles on the collider faces in the 3D view
@@ -434,7 +442,7 @@ public class PropertiesPanel implements PanelHost.Panel {
     /** The values that decide which 3D properties are shown: a change rebuilds the panel. */
     private static String shapeSignature(Map<String, String> v) {
         return v.get("Mesh") + "," + v.get("Light Kind") + "," + v.get("Orthographic") + "," + v.get("Body") + "," + v.get("Collider")
-                + "," + v.get("Outline") + "," + v.get("Follow Mode") + "," + (num(v.get("Flicker")) != 0) + "," + v.get("Touch Look");
+                + "," + v.get("Outline") + "," + v.get("Follow Mode") + "," + (num(v.get("Flicker")) != 0) + "," + v.get("Touch Look") + "," + String.valueOf(v.get("Terrain Data")).isEmpty();
     }
 
     private static float num(String s) {
@@ -457,7 +465,15 @@ public class PropertiesPanel implements PanelHost.Panel {
                 case "Animation": case "Animation Loop": case "Animation Speed": return model;
                 case "Detail": return in(mesh, "SPHERE", "CYLINDER", "CAPSULE", "CONE", "TORUS", "HEMISPHERE", "TUBE", "DISC");
                 case "Steps": return mesh.equals("STAIRS");
-                case "Heightmap": case "Terrain Height": case "Terrain Resolution": case "Terrain Noise": case "Terrain Seed": return mesh.equals("TERRAIN");
+                case "Terrain Height": case "Terrain Data": return mesh.equals("TERRAIN");
+                case "Heightmap": case "Terrain Resolution": case "Terrain Noise": case "Terrain Seed":
+                    // older terrains (height image / noise); a painted terrain keeps everything in its file
+                    return mesh.equals("TERRAIN") && String.valueOf(v.get("Terrain Data")).isEmpty();
+                case "Layer 1 Texture": case "Layer 2 Texture": case "Layer 3 Texture": case "Layer 4 Texture":
+                case "Layer 1 Color": case "Layer 2 Color": case "Layer 3 Color": case "Layer 4 Color":
+                case "Layer 1 Tiling": case "Layer 2 Tiling": case "Layer 3 Tiling": case "Layer 4 Tiling":
+                case "Grass Density": case "Grass Height": case "Grass Color": case "Grass Layer": case "Grass Distance": case "Foliage Distance":
+                    return mesh.equals("TERRAIN") && !String.valueOf(v.get("Terrain Data")).isEmpty();
                 case "Water Color": case "Water Deep Color": case "Foam Color": case "Wave Height": case "Wave Speed": case "Wave Length":
                 case "Wave Direction": case "Water Clarity": case "Water Resolution": case "Foam": case "Water Quality": case "Buoyancy":
                     return mesh.equals("WATER");

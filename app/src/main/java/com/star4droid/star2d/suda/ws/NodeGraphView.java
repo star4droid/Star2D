@@ -721,6 +721,7 @@ public class NodeGraphView extends View {
                 else if (previewRect(n).contains(px, py)) host.openResult(n);
                 return;
         }
+        if (Graph.FAILED.equals(n.state) && !n.error.isEmpty() && py < generateRect(n).top && px >= n.x && px <= n.x + W) { showError(n); return; }
         if (generateRect(n).contains(px, py)) { if (n.def().onDevice || !busy(n)) host.generate(n); }
         else if (hasPreview(n) && previewRect(n).contains(px, py)) host.openResult(n);
         else if (paramsPencil(n).contains(px, py)) host.editParams(n);
@@ -728,6 +729,21 @@ public class NodeGraphView extends View {
             n.paramsOpen = !n.paramsOpen;
             host.changed(false);
         }
+    }
+
+    /** Tapping a failed node's status line shows the complete error (the line itself is cut to the node width). */
+    private void showError(Graph.Node n) {
+        final android.widget.TextView tv = new android.widget.TextView(getContext());
+        tv.setText(n.error);
+        tv.setTextIsSelectable(true);
+        tv.setTextSize(15);
+        int pad = (int) (20 * dp);
+        tv.setPadding(pad, pad / 2, pad, 0);
+        new android.app.AlertDialog.Builder(getContext())
+            .setTitle(Tr.t("s3d_st_failed", "Failed"))
+            .setView(tv)
+            .setPositiveButton(android.R.string.ok, null)
+            .show();
     }
 
     private void tapEmpty(float px, float py) {

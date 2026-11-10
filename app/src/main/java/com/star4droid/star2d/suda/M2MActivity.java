@@ -104,8 +104,6 @@ public class M2MActivity extends Activity implements OutputView.SafHost {
         root.addView(cr, Ui.matchWrap());
         SudaUi.setup(this, root);
         retargetMode = model != null && hasSkeleton(model);
-        if (retargetMode && b == null)
-            Ui.toast(this, Tr.t("m2m_rigged_auto", "This model already has a skeleton: it is used as it is. Use the top-right button to change the mode."));
 
         WebSettings s = web.getSettings();
         s.setJavaScriptEnabled(true);
@@ -315,6 +313,16 @@ public class M2MActivity extends Activity implements OutputView.SafHost {
         public void endFile(String id) {
             File f = close(id);
             if (f != null) runOnUiThread(() -> onResult(f));
+        }
+
+        /** The page asks for a translated toast (e.g. after the bones were mapped automatically). */
+        @JavascriptInterface
+        public void notify(String kind, int a, int b) {
+            if (!"automap".equals(kind)) return;
+            String m = a <= 0 ? Tr.t("m2m_automap_none", "No bones could be matched automatically. Map them by hand, then press Continue.")
+                    : a >= b ? Tr.t("m2m_automap_all", "Skeleton recognised: all bones were mapped automatically.")
+                    : String.format(Locale.ROOT, Tr.t("m2m_automap_some", "Skeleton recognised: %1$d of %2$d bones were mapped automatically. Check the list, then press Continue."), a, b);
+            runOnUiThread(() -> Ui.toast(M2MActivity.this, m));
         }
 
         @JavascriptInterface

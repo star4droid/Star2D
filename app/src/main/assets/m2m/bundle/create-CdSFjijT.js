@@ -1,1 +1,0 @@
-import{t as e,w as t}from"./offline-J7xy797A.js";new class{constructor(){this.mesh2motion_engine=new e}},t.install();

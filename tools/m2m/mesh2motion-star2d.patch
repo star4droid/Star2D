@@ -50,10 +50,10 @@ index 048939c..c0bce21 100644
            const error_message = error instanceof Error ? error.message : 'Failed to export file.'
 diff --git a/src/lib/M2MAppBridge.ts b/src/lib/M2MAppBridge.ts
 new file mode 100644
-index 0000000..29b9c0d
+index 0000000..f480770
 --- /dev/null
 +++ b/src/lib/M2MAppBridge.ts
-@@ -0,0 +1,117 @@
+@@ -0,0 +1,123 @@
 +/**
 + * Star2D app bridge (added for the Star2D "M2M Motion" tool; Mesh2Motion itself is MIT © Scott Petrovic).
 + *
@@ -71,6 +71,7 @@ index 0000000..29b9c0d
 +  appendChunk: (id: string, base64: string) => boolean
 +  endFile: (id: string) => void
 +  failFile: (id: string, message: string) => void
++  notify?: (kind: string, a: number, b: number) => void
 +}
 +
 +declare global {
@@ -98,6 +99,11 @@ index 0000000..29b9c0d
 +
 +  static active (): boolean {
 +    return typeof window !== 'undefined' && window.M2MHost !== undefined
++  }
++
++  /** Star2D app: ask the app to show a (translated) toast. */
++  static notify (kind: string, a: number = 0, b: number = 0): void {
++    window.M2MHost?.notify?.(kind, a, b)
 +  }
 +
 +  static install (): void {
@@ -171,6 +177,19 @@ index 0000000..29b9c0d
 +    })
 +  }
 +}
+diff --git a/src/lib/processes/animations-listing/AnimationLoader.ts b/src/lib/processes/animations-listing/AnimationLoader.ts
+index 5942f3d..97abdc9 100644
+--- a/src/lib/processes/animations-listing/AnimationLoader.ts
++++ b/src/lib/processes/animations-listing/AnimationLoader.ts
+@@ -71,7 +71,7 @@ export class AnimationLoader extends EventTarget {
+     skeleton_scale: number,
+     metadata_override: Partial<AnimationClipMetadata> = {}
+   ): Promise<TransformedAnimationClipPair[]> {
+-    const gltf = await this.gltf_loader.loadAsync(`${this.static_root_path}${file_path}`)
++    const gltf = await this.gltf_loader.loadAsync(file_path.startsWith('/') ? file_path : `${this.static_root_path}${file_path}`) // app build: absolute /m2mdata/ path
+     return this.process_loaded_animations(gltf.animations, skeleton_scale, metadata_override)
+   }
+ 
 diff --git a/src/lib/processes/export-to-file/StepExportToFile.ts b/src/lib/processes/export-to-file/StepExportToFile.ts
 index 5b62c25..d6a3a6c 100644
 --- a/src/lib/processes/export-to-file/StepExportToFile.ts
@@ -258,6 +277,40 @@ index 6dab65b..8dd2912 100644
  
  const retarget_app = new RetargetModule()
 +
+diff --git a/src/retarget/steps/StepBoneMapping.ts b/src/retarget/steps/StepBoneMapping.ts
+index 2dfc3e3..043809f 100644
+--- a/src/retarget/steps/StepBoneMapping.ts
++++ b/src/retarget/steps/StepBoneMapping.ts
+@@ -1,4 +1,5 @@
+ import { type Scene, type SkinnedMesh } from 'three'
++import { M2MAppBridge } from '../../lib/M2MAppBridge.ts'
+ import { BoneAutoMapper } from '../bone-automap/BoneAutoMapper.ts'
+ import { AnimationRetargetService } from '../AnimationRetargetService.ts'
+ import { TargetBoneMappingType } from '../bone-automap/TargetBoneMappingType.ts'
+@@ -83,12 +84,23 @@ export class StepBoneMapping extends EventTarget {
+   public source_armature_updated (): void {
+     this.update_source_bones_list()
+     this.update_auto_map_button_visibility()
++    this.auto_map_in_app()
+   }
+ 
+   public target_armature_updated (): void {
+     this.update_target_bones_list()
+     this.update_auto_map_button_visibility()
+     this.update_view_bone_tree_button_visibility()
++
++    this.auto_map_in_app()
++  }
++
++  /** Star2D app: map the bones automatically as soon as both rigs are known, then tell the user */
++  private auto_map_in_app (): void {
++    if (!M2MAppBridge.active() || !this.has_both_skeletons()) return
++    this.auto_map_bones()
++    const mapped = AnimationRetargetService.getInstance().get_bone_mappings().size
++    M2MAppBridge.notify('automap', mapped, this.get_source_bone_names().length)
+   }
+ 
+   public has_source_skeleton (): boolean {
 diff --git a/src/retarget/steps/StepExportRetargetedAnimations.ts b/src/retarget/steps/StepExportRetargetedAnimations.ts
 index 5c99774..035262f 100644
 --- a/src/retarget/steps/StepExportRetargetedAnimations.ts

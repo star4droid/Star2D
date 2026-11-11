@@ -91,6 +91,8 @@ public final class BuiltIns {
 			Shooter3D.class,
 			SlideIn.class,
 			SlimeHop3D.class,
+			SmartChase.class,
+			SmartChase3D.class,
 			SpaceShip.class,
 			Spawner.class,
 			Spawner3D.class,

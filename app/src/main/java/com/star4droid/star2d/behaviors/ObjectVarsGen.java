@@ -17,7 +17,9 @@ public final class ObjectVarsGen {
 
 	public static final String PROPERTY = "objectVars";
 	/** Types offered by the editor (same names as the Variables dialog + list / element). */
-	public static final String[] TYPES = {"int", "float", "double", "String", "boolean", "List", "PlayerItem"};
+	public static final String[] TYPES = {"int", "float", "double", "String", "boolean", "List", "PlayerItem", "PathHolder"};
+	private static final String PATH = "com.star4droid.template.nav.PathHolder";
+	private static final Pattern NUMBERS = Pattern.compile("[-+0-9.eE,;\\s]*");
 	private static final String OV = "com.star4droid.template.Utils.ObjectVars";
 	private static final Pattern MARKER = Pattern.compile("/\\*@objvar ([^|*]*)\\|([^|*]*)\\|(.*?)\\*/");
 	private static final Pattern NAME = Pattern.compile("[A-Za-z_][A-Za-z0-9_]*");
@@ -30,6 +32,8 @@ public final class ObjectVarsGen {
 
 	public static final class Var {
 		public String name = "", type = "int", value = "";
+		/** Kept the same on every phone of a network game (the element must be networked). */
+		public boolean sync;
 		/** True when it comes from an "object variable" block (not stored in the properties). */
 		public transient boolean fromBlocks;
 
@@ -57,6 +61,7 @@ public final class ObjectVarsGen {
 			case "bool": case "yes/no": return "boolean";
 			case "list": case "arraylist": return "List";
 			case "element": case "body": return "PlayerItem";
+			case "path": case "pathholder": case "points": return "PathHolder";
 		}
 		return "int";
 	}
@@ -73,6 +78,7 @@ public final class ObjectVarsGen {
 				if (!e.isJsonObject()) continue;
 				com.google.gson.JsonObject o = e.getAsJsonObject();
 				Var v = new Var(str(o, "name"), str(o, "type"), str(o, "value"));
+				v.sync = o.has("sync") && !o.get("sync").isJsonNull() && "true".equals(o.get("sync").getAsString());
 				if (validName(v.name) && find(out, v.name) == null) out.add(v);
 			}
 		} catch (Exception ignored) {
@@ -93,6 +99,7 @@ public final class ObjectVarsGen {
 			o.addProperty("name", v.name);
 			o.addProperty("type", v.type);
 			o.addProperty("value", v.value);
+			if (v.sync) o.addProperty("sync", true);
 			a.add(o);
 		}
 		return a.size() == 0 ? "" : a.toString();
@@ -128,6 +135,7 @@ public final class ObjectVarsGen {
 	public static String javaType(String type) {
 		switch (normType(type)) {
 			case "List": return "java.util.ArrayList<Object>";
+			case "PathHolder": return PATH;
 			default: return normType(type);
 		}
 	}
@@ -186,6 +194,11 @@ public final class ObjectVarsGen {
 			}
 			case "PlayerItem":
 				return s.isEmpty() ? "null" : "findItem(" + ValueEmit.javaLiteral(s) + ")";
+			case "PathHolder":
+				// points "x1,y1,x2,y2..." (drawn on the canvas), or any Java expression giving a path
+				if (s.isEmpty()) return "new " + PATH + "()";
+				if (NUMBERS.matcher(s).matches()) return PATH + ".parse(" + ValueEmit.javaLiteral(s) + ")";
+				return s;
 		}
 		return "null";
 	}
@@ -207,6 +220,9 @@ public final class ObjectVarsGen {
 		for (Var v : vars)
 			if ("PlayerItem".equals(normType(v.type)) && !v.value.trim().isEmpty())
 				b.append(OV).append(".set(").append(element).append(", \"").append(v.name).append("\", ").append(literal(v)).append(");\n");
+		// synced variables: the same value on every phone of a network game
+		for (Var v : vars)
+			if (v.sync) b.append("com.star4droid.template.net.Net.syncVar(").append(element).append(", \"").append(v.name).append("\");\n");
 		return b.toString();
 	}
 

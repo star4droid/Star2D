@@ -11,6 +11,7 @@ import com.star4droid.star2d.Helpers.Project;
 import com.star4droid.template.Items.*;
 import com.star4droid.template.Utils.PlayerItem;
 import com.star4droid.template.Utils.ProjectAssetLoader;
+import com.star4droid.template.nav.PathHolder;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import box2dLight.*;
 import box2dLight.RayHandler;

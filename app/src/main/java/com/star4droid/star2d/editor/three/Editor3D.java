@@ -55,6 +55,8 @@ public class Editor3D {
 	private final ShapeRenderer screen = new ShapeRenderer();
 	/** Terrain editor (brushes) while a terrain is being edited, else idle. */
 	public final TerrainSession terrain = new TerrainSession(this);
+	/** NavGrid elements on the ground (draw, pick, paint, move). */
+	private final NavGrid3D navGrids = new NavGrid3D(this);
 
 	public boolean terrainMode() {
 		return terrain.item != null;
@@ -94,7 +96,8 @@ public class Editor3D {
 		edit2D = on;
 		colliderEdit = false;
 		Actor sel = editor.getSelectedActor();
-		if (sel != null && ((sel instanceof Editor3DItem) == on)) editor.deselect3D();
+		boolean side3D = sel instanceof Editor3DItem || sel instanceof com.star4droid.star2d.editor.items.EditorNavGridItem;
+		if (sel != null && side3D == on) editor.deselect3D();
 	}
 
 	/** Turns the collider editor on / off for the selected element; false when it has no collider. */
@@ -238,6 +241,10 @@ public class Editor3D {
 		shapes.setProjectionMatrix(cam.combined);
 		if (showGrid) drawGrid();
 		drawIcons();
+		navGrids.draw(shapes);
+		shapes.setProjectionMatrix(cam.combined);
+		editor.pathDraw.draw3D(shapes, cam);
+		shapes.setProjectionMatrix(cam.combined);
 		Gdx.gl.glDisable(GL20.GL_DEPTH_TEST);
 		Editor3DItem sel = selected3D();
 		if (colliderEdit && (sel == null || sel != colliderTarget || !hasCollider(sel))) colliderEdit = false;
@@ -715,6 +722,7 @@ public class Editor3D {
 		if (pointer == 1) {
 			// second finger: pan + pinch, cancel a gizmo drag
 			if (terrainMode()) terrain.cancelStroke();
+			navGrids.cancel();
 			cancelDrag();
 			if (dragHandle >= 0) endHandleDrag();
 			orbiting = false;
@@ -731,6 +739,12 @@ public class Editor3D {
 		if (pointer > 1) return true;
 		lastX = downX = x;
 		lastY = downY = y;
+		if (!terrainMode() && navGrids.touchDown(x, y)) {
+			dragAxis = -1;
+			dragHandle = -1;
+			orbiting = false;
+			return true;
+		}
 		if (terrainMode()) {
 			dragHandle = -1;
 			dragAxis = -1;
@@ -780,6 +794,13 @@ public class Editor3D {
 			return true;
 		}
 		if (pointer != 0) return true;
+		if (navGrids.busy()) {
+			navGrids.touchDragged(x, y);
+			lastX = x;
+			lastY = y;
+			moved = true;
+			return true;
+		}
 		float dx = x - lastX, dy = y - lastY;
 		if (Math.abs(x - downX) > 8 || Math.abs(y - downY) > 8) moved = true;
 		lastX = x;
@@ -810,6 +831,11 @@ public class Editor3D {
 			panning = false;
 			pinchDist = -1;
 			pinchStartDist = -1;
+			orbiting = false;
+			return true;
+		}
+		if (navGrids.busy()) {
+			navGrids.touchUp();
 			orbiting = false;
 			return true;
 		}
@@ -845,6 +871,8 @@ public class Editor3D {
 
 	/** Element under a screen point: lights / cameras icons first, then models. */
 	public Actor pick(float x, float y) {
+		Actor grid = navGrids.pick(x, y);
+		if (grid != null) return grid;
 		Ray ray = cam.getPickRay(x, y);
 		Actor best = null;
 		float bestD = Float.MAX_VALUE;

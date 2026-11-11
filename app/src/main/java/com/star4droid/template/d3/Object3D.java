@@ -719,6 +719,9 @@ public class Object3D extends Actor implements PlayerItem {
 		setColor3(Materials3D.color(hex, Color.WHITE));
 	}
 
+	/** Last color set by a timeline / tween (null = the one of the properties). */
+	public Color lastColor;
+
 	public void setColor3(Color c) {
 		if (instance == null) return;
 		for (Material m : instance.materials) {

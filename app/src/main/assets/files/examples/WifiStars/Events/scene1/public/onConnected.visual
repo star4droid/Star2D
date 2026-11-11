@@ -1,0 +1,58 @@
+[
+  {
+    "id": "0",
+    "title": "First >",
+    "x": "40.0",
+    "y": "0.0",
+    "else": "false",
+    "next": "1",
+    "next_id": "null",
+    "else_id": "",
+    "nf": "[]",
+    "code": "%1$s",
+    "color": -16678317,
+    "close": "false"
+  },
+  {
+    "id": "1",
+    "title": "if",
+    "x": "40.0",
+    "y": "-233.33",
+    "else": "true",
+    "next": "2",
+    "next_id": "null",
+    "else_id": "3",
+    "nf": "[{\"name\": \"boolean(Boolean)\", \"value\": \"\", \"block\": {\"template\": \"com.star4droid.template.net.Net.isHost()\", \"displayTemplate\": \"I am the host\", \"innerFields\": []}}]",
+    "code": "if(%1$s){\n%2$s\n} else {\n%3$s\n}\n%4$s",
+    "color": -16678317,
+    "close": "true"
+  },
+  {
+    "id": "2",
+    "title": "showText",
+    "x": "40.0",
+    "y": "-466.66",
+    "else": "false",
+    "next": "null",
+    "next_id": "null",
+    "else_id": "",
+    "nf": "[{\"name\": \"ui(Body)\", \"value\": \"status\"}, {\"name\": \"text\", \"value\": \"\\\"Your game is open: friends can find it now.\\\"\"}]",
+    "code": "%1$s.setItemText(String.valueOf(%2$s));\n%3$s",
+    "color": -8708190,
+    "close": "true"
+  },
+  {
+    "id": "3",
+    "title": "showText",
+    "x": "40.0",
+    "y": "-699.99",
+    "else": "false",
+    "next": "null",
+    "next_id": "null",
+    "else_id": "",
+    "nf": "[{\"name\": \"ui(Body)\", \"value\": \"status\"}, {\"name\": \"text\", \"value\": \"\\\"Joined! Waiting for the host to start...\\\"\"}]",
+    "code": "%1$s.setItemText(String.valueOf(%2$s));\n%3$s",
+    "color": -8708190,
+    "close": "true"
+  }
+]

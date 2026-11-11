@@ -76,6 +76,20 @@ public class LibgdxEditor extends Stage {
 	// the descendants of the selected element move / rotate with it: they and their start pose (for one undo step)
 	private final ArrayList<Actor> dragKids = new ArrayList<>();
 	private ArrayList<String[]> dragKidsStart = new ArrayList<>();
+	/** Painting the cells of a NavGrid (path finding), off while its item is null. */
+	public final NavPaint navPaint = new NavPaint(this);
+	/** Drawing the points of a path (path variables), off while not active. */
+	public final PathDraw pathDraw = new PathDraw(this);
+
+	/** The canvas tool that takes the touches now (NavGrid painter, path drawing), or null. */
+	public CanvasTool activeTool(){
+		if(pathDraw.active()) return pathDraw;
+		if(navPaint.active()) return navPaint;
+		return null;
+	}
+	/** Where / when the last single touch started (a tap on a NavGrid badge selects it). */
+	private float tapX, tapY;
+	private long tapTime;
 	float prevDistance = -1,startAngle=0,ratioScale =1,gridSizeX=50,logicalWidth=1600,logicalHeight=720,gridSizeY=50;
 	
 	// ------------------------------------------------------------------ 3D scenes
@@ -259,6 +273,25 @@ public class LibgdxEditor extends Stage {
 	public boolean touchUp(int arg0, int arg1, int arg2, int arg3) {
 		if(e3d!=null && !e3d.edit2D && !loadingScene) return e3d.touchUp(arg0,arg1,arg2);
 		if(loadingScene || com.star4droid.star2d.remote.RemoteSession.isLocked()) return true;
+		CanvasTool tool = activeTool();
+		if(tool != null){
+			// painting a NavGrid / drawing a path: the finger uses the tool, two fingers move / zoom the view
+			if(!tool.navigate() && arg2 == 0){
+				Vector2 sp = screenToStageCoordinates(new Vector2(arg0,arg1));
+				tool.up(sp.x,sp.y);
+			}
+			if(!Gdx.input.isTouched(1)) prevDistance = -1;
+			return true;
+		}
+		if(arg2 == 0 && Math.abs(arg0 - tapX) < 14 && Math.abs(arg1 - tapY) < 14 && System.currentTimeMillis() - tapTime < 350){
+			// a tap on the badge of a NavGrid selects it (its area lets the taps through to the elements below)
+			Vector2 sp = screenToStageCoordinates(new Vector2(arg0,arg1));
+			EditorNavGridItem nav = EditorNavGridItem.badgeAt(this,sp.x,sp.y);
+			if(nav != null && nav != selectedActor){
+				selectActor(nav);
+				return true;
+			}
+		}
 	    // save the end position if touch type is grid and push it to the events for undo redo.. 
 		if(touch_mode!=TOUCHMODE.GRID && getSelectedActor()!=null){
 			PropertySet<String,Object> ps = PropertySet.getPropertySet(selectedActor);
@@ -302,6 +335,20 @@ public class LibgdxEditor extends Stage {
 	public boolean touchDown(int arg0, int arg1, int arg2, int arg3) {
 		if(e3d!=null && !e3d.edit2D && !loadingScene) return e3d.touchDown(arg0,arg1,arg2);
 		if(loadingScene || com.star4droid.star2d.remote.RemoteSession.isLocked()) return true; // locked: an AI is editing, the camera can still be moved
+		if(arg2 == 0){
+			tapX = arg0;
+			tapY = arg1;
+			tapTime = System.currentTimeMillis();
+		}
+		CanvasTool tool = activeTool();
+		if(tool != null){
+			if(tool.navigate()) return true;
+			if(arg2 == 0 && !Gdx.input.isTouched(1)){
+				Vector2 sp = screenToStageCoordinates(new Vector2(arg0,arg1));
+				tool.down(sp.x,sp.y);
+			} else tool.cancel();
+			return true;
+		}
 		if(selectedActor == null){
 		    ArrayList<String> bodies = getBodiesList();
 		    if(bodies.size()>0)
@@ -487,6 +534,8 @@ public class LibgdxEditor extends Stage {
 			case "UIHOLDER": return new EditorUIHolderItem(this);
 			case "OBJ3D": case "LIGHT3D": case "CAMERA3D": ensure3D(); return new Editor3DItem(this,propertySet.getString("TYPE"));
 			case "CAMERAVIEW": return new EditorCameraViewItem(this);
+			case "NAVGRID": return new EditorNavGridItem(this);
+			case "NETWORK": return new EditorNetworkItem(this);
 		}
 		return null;
 	}
@@ -751,6 +800,7 @@ public class LibgdxEditor extends Stage {
 	
 	public ArrayList<String> getBodiesList() {
 		ArrayList<String> bodies = new ArrayList<>();
+		ArrayList<String> fixed = new ArrayList<>();
 		List<Pair<Float, PropertySet<String,Object>>> zValues = new ArrayList<>();
 		Array<Actor> childs = getActors();
 		for (int x = 0; x < childs.size; x++) {
@@ -760,6 +810,11 @@ public class LibgdxEditor extends Stage {
 				PropertySet<String,Object> propertySet = PropertySet.getPropertySet(v);
 				if (propertySet == null)
 					continue;
+				if (v instanceof Editor3DItem || (v instanceof EditorNavGridItem && is3DScene())) {
+					// "z" of a 3D element is a position (meters), not a drawing order: listed, never renumbered
+					if (propertySet.containsKey("name")) fixed.add(propertySet.getString("name"));
+					continue;
+				}
 				if (propertySet.containsKey("name")) {
 					float z = propertySet.getFloat("z");
 					String name = propertySet.getString("name");
@@ -783,6 +838,7 @@ public class LibgdxEditor extends Stage {
 			pair.second.put("z",z);
 			z++;
 		}
+		bodies.addAll(fixed);
 		
 		return bodies;
 	}
@@ -956,12 +1012,25 @@ public class LibgdxEditor extends Stage {
 	String currentState = "";
     
     // this method get the properties of items then added them to json and return it...
+	/** Values to save instead of the shown ones (a timeline being previewed shows other values than the scene's). */
+	public interface SaveFilter {
+		PropertySet<String,Object> forSave(Actor actor, PropertySet<String,Object> shown);
+	}
+	public SaveFilter saveFilter;
+	/** The timeline being edited (Timeline panel), null when none. */
+	public TimelineSession timeline;
+
 	public String getSaveState() {
 		ArrayList<PropertySet<String, Object>> items = new ArrayList<>();
+		SaveFilter filter = saveFilter;
 		for (int x = 0; x < getChildren().size; x++) {
 			if (!Utils.isEditorItem(getChild(x)))
 				continue;
-			items.add(PropertySet.getPropertySet(getChild(x)));
+			PropertySet<String, Object> ps = PropertySet.getPropertySet(getChild(x));
+			if (filter != null) {
+				try { ps = filter.forSave(getChild(x), ps); } catch (Throwable ignored) {}
+			}
+			items.add(ps);
 		}
 		String save = new Gson().toJson(items);
 		if (getChildren().size == 0)
@@ -1232,6 +1301,17 @@ public class LibgdxEditor extends Stage {
 	public boolean touchDragged(int arg0, int arg1, int arg2) {
 		if(e3d!=null && !e3d.edit2D && !loadingScene) return e3d.touchDragged(arg0,arg1,arg2);
 		if(loadingScene) return true;
+		CanvasTool tool = activeTool();
+		if(tool != null){
+			if(!tool.navigate() && arg2 == 0 && !Gdx.input.isTouched(1)){
+				Vector2 sp = screenToStageCoordinates(new Vector2(arg0,arg1));
+				tool.drag(sp.x,sp.y);
+				return true;
+			}
+			tool.cancel();
+			handleTouch(); // one finger with "move the view" on, or two fingers: pan / zoom
+			return true;
+		}
 		if(com.star4droid.star2d.remote.RemoteSession.isLocked()){
 			handleTouch();
 			return true;
@@ -1248,7 +1328,7 @@ public class LibgdxEditor extends Stage {
 			float deltaX = lockY ? 0 : (-Gdx.input.getDeltaX() * camera.zoom * 0.5f);
 			float deltaY = lockX ? 0 : (Gdx.input.getDeltaY() * camera.zoom * 0.5f);
 			boolean locked = propertySet != null && Hierarchy.isLocked(propertySet);
-			if(touch_mode == TOUCHMODE.GRID || com.star4droid.star2d.remote.RemoteSession.isLocked() || selectedActor == null || locked || !(selectedActor instanceof EditorItem)){
+			if(touch_mode == TOUCHMODE.GRID || activeTool() != null || com.star4droid.star2d.remote.RemoteSession.isLocked() || selectedActor == null || locked || !(selectedActor instanceof EditorItem)){
 				//movement
 				camera.translate(deltaX,deltaY);
 			} else if(touch_mode == TOUCHMODE.MOVE){
@@ -1367,6 +1447,8 @@ public class LibgdxEditor extends Stage {
 			updateChilds();
 			childsUpdated = true;
 		}
+		// timeline being edited: preview of the playhead, keys of the recorded changes
+		if(timeline != null && !loadingScene) try { timeline.frame(Math.min(0.05f, Gdx.graphics.getDeltaTime())); } catch(Throwable t){ Gdx.app.error("Star2D","timeline: "+t); }
 		if(cameraController.isMoving())
 			cameraController.update(Gdx.graphics.getDeltaTime());
 		OrthographicCamera camera = (OrthographicCamera)getCamera();
@@ -1467,7 +1549,9 @@ public class LibgdxEditor extends Stage {
 			rayHandler.setCombinedMatrix(camera.combined,0,0,1,1);
 			rayHandler.updateAndRender();
 		} catch(Exception e){}
-		
+		// path finding grids on top of everything (outline + badge, cells of the selected one)
+		if(e3d==null) try { EditorNavGridItem.drawAll(this,shapeRenderer,getBatch()); } catch(Throwable t){ Gdx.app.error("Star2D","navgrid draw: "+t); }
+		if(e3d==null) try { pathDraw.draw2D(shapeRenderer,camera); } catch(Throwable t){ Gdx.app.error("Star2D","path draw: "+t); }
 	}
 	
 	// ---- scene frame (dashed orange + light grey stroke), constant on screen: widths and dash length are in screen pixels ----

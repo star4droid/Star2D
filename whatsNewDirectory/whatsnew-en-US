@@ -1,5 +1,4 @@
-New: Market - share your projects or "game only" versions and download others' work.
-New: small ads on the projects screen and in the editor. No ads while your balance is $1 or more, or for 1 hour after watching a video.
-Fixed: crash when opening the editor.
-Fixed: Mesh2Motion screen on phones and tablets.
-Improved: AI Workspace.
+New: path finding - a Path grid element, smart enemies that walk around walls (Smart Chase), patrol paths and Navigation blocks (2D and 3D).
+New: Timeline - keyframe animations with record mode, transitions and markers, plus quick Tween blocks.
+New: local multiplayer over Wi-Fi or a hotspot - Network element, ready lobby, synced elements and Network blocks.
+New examples: Maze Chase and Wi-Fi Stars.

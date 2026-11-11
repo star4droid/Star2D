@@ -12,5 +12,6 @@
  "Water Quality": "AUTO,LOW,MEDIUM,HIGH",
  "Light Kind": "POINT,SPOT,DIRECTIONAL",
  "Follow Mode": "NONE,THIRD_PERSON,FIRST_PERSON,ORBIT,TOP_DOWN,SIDE,LOOK_AT",
- "Text Align": "LEFT,CENTER,RIGHT"
+ "Text Align": "LEFT,CENTER,RIGHT",
+ "Cell Shape": "SQUARE,HEX"
 }

@@ -41,6 +41,8 @@ final class ItemDefaults {
             case "LIGHT3D": file = "light3d.json"; break;
             case "CAMERA3D": file = "camera3d.json"; break;
             case "CAMERAVIEW": file = "cameraview.json"; break;
+            case "NAVGRID": file = "navgrid.json"; break;
+            case "NETWORK": file = "network.json"; break;
             case "LIGHT": file = "Lights/" + key.substring(key.indexOf('/') + 1) + ".json"; break;
             default: file = null;
         }

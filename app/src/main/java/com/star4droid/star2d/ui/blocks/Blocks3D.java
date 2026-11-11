@@ -22,7 +22,7 @@ public final class Blocks3D {
 		void def(String cat, int color, String title, String fields, String defaults, boolean isIf, String code, int dims,
 				String en, String ar, String infoEn, String infoAr);
 
-		/** {@code slots}: one letter per ___ : e element, n number, t text, b condition (for checkers / the AI). */
+		/** {@code slots}: one letter per ___ : e element, n number, t text, b condition, p path variable (for checkers / the AI). */
 		void reporter(String group, String display, String template, char shape, String slots, int dims, String displayAr,
 				String infoEn, String infoAr);
 

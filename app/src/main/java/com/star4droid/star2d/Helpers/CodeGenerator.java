@@ -370,7 +370,7 @@ public class CodeGenerator {
                             
                             // Skip certain properties
                             // Script: the runtime never reads ItemDef.Script (the script object is attached by the generated setScript below)
-                            if ("(TYPE)(Shape)(lock)(parent)(prefab)(pid)(pbase)(Script)(behaviors)(scriptVars)(objectVars)".contains("(" + propertyKey + ")")) {
+                            if ("(TYPE)(Shape)(lock)(parent)(prefab)(pid)(pbase)(Script)(behaviors)(scriptVars)(objectVars)(net)".contains("(" + propertyKey + ")")) {
                                 continue;
                             }
                             if (propertyKey.equals("lock")) {
@@ -442,7 +442,7 @@ public class CodeGenerator {
                         
                         // Add Z-index fixing code for non-light objects
                         // (3D elements: z is a position in meters, not a drawing order)
-                        if (!isLight && !java.util.Arrays.asList("OBJ3D", "LIGHT3D", "CAMERA3D").contains(propertySet.getString("TYPE"))) {
+                        if (!isLight && !java.util.Arrays.asList("OBJ3D", "LIGHT3D", "CAMERA3D", "NAVGRID", "NETWORK").contains(propertySet.getString("TYPE"))) {
                             fixZ = fixZ + String.format(fixZIndexDefault, name);
                         }
 
@@ -496,6 +496,8 @@ public class CodeGenerator {
                         } catch (Exception behaviorEx) {
                             behaviorCode.append("\n// behaviors of ").append(name).append(": ").append(behaviorEx).append("\n");
                         }
+                        // Network card of the element: the same on every phone of a network game
+                        if (!isLight) behaviorCode.append(com.star4droid.star2d.behaviors.NetSpec.register(name, propertySet.getString(com.star4droid.star2d.behaviors.NetSpec.PROPERTY)));
                         
                         // Add variable declarations
                         if (!propertySet.getString("TYPE").equals("LIGHT")) {
@@ -557,6 +559,16 @@ public class CodeGenerator {
                         onStep = readTraced(trace, project, scene, "", "OnStep", scene + " › OnStep"),
                         onCollStart = readTraced(trace, project, scene, "", "onCollisionStart", scene + " › onCollisionStart"),
                         onCollEnd = readTraced(trace, project, scene, "", "onCollisionEnd", scene + " › onCollisionEnd");
+                // scene events of the path finding / animation / network systems (overrides of StageImp hooks)
+                final SourceTrace fTrace = trace;
+                final com.star4droid.star2d.Helpers.editor.Project fProject = project;
+                final String fScene = scene;
+                String extraEvents = com.star4droid.star2d.behaviors.SceneEventsExt.overrides(new com.star4droid.star2d.behaviors.SceneEventsExt.Reader() {
+                    @Override
+                    public String code(String ev) {
+                        return readTraced(fTrace, fProject, fScene, "", ev, fScene + " › " + ev);
+                    }
+                });
                 String codeResult = String.format(
                         playerCode,
                         scene.toLowerCase(),
@@ -567,7 +579,7 @@ public class CodeGenerator {
                         onStep,
                         onCollStart,
                         onCollEnd,
-                        scriptBuilder.toString());
+                        scriptBuilder.toString() + extraEvents);
                 // Format the code using Palantir Java Format (returns the input when it fails)
                 String finalCode = format ? formatWithPalantir(codeResult) : codeResult;
                 trace.finish(finalCode);
@@ -950,6 +962,8 @@ public class CodeGenerator {
             case "LIGHT3D": return "Light3DDef";
             case "CAMERA3D": return "Camera3DDef";
             case "CAMERAVIEW": return "CameraViewDef";
+            case "NAVGRID": return "NavGridDef";
+            case "NETWORK": return "NetworkDef";
             default: return "Unknown";
         }
     }

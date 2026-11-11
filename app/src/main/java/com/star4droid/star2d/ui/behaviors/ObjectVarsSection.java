@@ -144,7 +144,10 @@ public final class ObjectVarsSection {
 		n.setTypeface(Typeface.DEFAULT_BOLD);
 		texts.addView(n);
 		String val = v.value == null || v.value.isEmpty() ? "—" : v.value;
-		TextView d = Ui.text(ctx, typeLabel(v.type) + " · " + val + (blocks ? "  ·  " + Tr.t("ov_from_blocks", "made by a block") : ""), 12, Ui.TEXT_3);
+		if ("PathHolder".equals(ObjectVarsGen.normType(v.type)) && v.value != null && !v.value.isEmpty())
+			val = (v.value.split(",").length / 2) + " " + Tr.t("path_points", "points");
+		TextView d = Ui.text(ctx, typeLabel(v.type) + " · " + val + (v.sync ? "  ·  " + Tr.t("ov_synced", "synced") : "")
+				+ (blocks ? "  ·  " + Tr.t("ov_from_blocks", "made by a block") : ""), 12, Ui.TEXT_3);
 		d.setMaxLines(1);
 		texts.addView(d);
 		r.addView(texts, Ui.weight(1));
@@ -178,6 +181,7 @@ public final class ObjectVarsSection {
 			case "boolean": return Tr.t("ov_t_bool", "Yes / no");
 			case "List": return Tr.t("ov_t_list", "List");
 			case "PlayerItem": return Tr.t("ov_t_element", "Element");
+			case "PathHolder": return Tr.t("ov_t_path", "Path (points)");
 		}
 		return type;
 	}
@@ -203,12 +207,48 @@ public final class ObjectVarsSection {
 		box.addView(value, Ui.matchWrap());
 		TextView hint = Ui.text(ctx, "", 11.5f, Ui.TEXT_3);
 		box.addView(hint);
+		// path: drawn on the canvas (tap to add points)
+		final AlertDialog[] dlg = new AlertDialog[1];
+		LinearLayout draw = Ui.button(ctx, R.drawable.ic_s2_navgrid, Tr.t("path_draw", "Draw on the canvas"), false, x -> {
+			String nm = name.getText().toString().trim();
+			if (!ObjectVarsGen.validName(nm)) {
+				name.setError(Tr.t("ov_bad_name", "Use letters, digits and _ (not starting with a digit, not a Java word)"));
+				return;
+			}
+			if (dlg[0] != null) dlg[0].dismiss();
+			com.star4droid.star2d.ui.EditorShell sh = com.star4droid.star2d.ui.EditorShell.current;
+			if (sh == null) return;
+			if (sh.panels != null) sh.panels.hide();
+			final boolean sync0 = cur.sync;
+			com.star4droid.star2d.ui.PathDrawPanel.open(sh, nm, value.getText().toString(), pts -> {
+				List<ObjectVarsGen.Var> now = ObjectVarsGen.parse(json);
+				ObjectVarsGen.Var nv = new ObjectVarsGen.Var(nm, "PathHolder", pts);
+				nv.sync = sync0;
+				int at = -1;
+				for (int i = 0; i < now.size(); i++) if (now.get(i).name.equals(idx >= 0 && idx < l.size() ? l.get(idx).name : nm)) at = i;
+				if (at >= 0) now.set(at, nv); else now.add(nv);
+				save(now);
+				sh.panels.show(sh.properties);
+			});
+		});
+		box.addView(draw, Ui.margins(Ui.matchWrap(), ctx, 0, 6, 0, 2));
+		// network games: the same value on every phone
+		androidx.appcompat.widget.SwitchCompat sync = new androidx.appcompat.widget.SwitchCompat(ctx);
+		sync.setText(Tr.t("ov_sync", "Synced over the network"));
+		sync.setTextColor(Ui.TEXT);
+		sync.setChecked(cur.sync);
+		box.addView(sync, Ui.margins(Ui.matchWrap(), ctx, 0, 6, 0, 0));
 		Runnable hintFor = () -> {
-			switch (ObjectVarsGen.normType(type[0])) {
+			String nt = ObjectVarsGen.normType(type[0]);
+			boolean path = "PathHolder".equals(nt);
+			draw.setVisibility(path ? View.VISIBLE : View.GONE);
+			sync.setVisibility(path || "List".equals(nt) || "PlayerItem".equals(nt) ? View.GONE : View.VISIBLE);
+			switch (nt) {
 				case "List": hint.setText(Tr.t("ov_hint_list", "Items separated by commas, e.g. 1, 2, apple")); break;
 				case "PlayerItem": hint.setText(Tr.t("ov_hint_element", "Name of an element of the scene (long-press to choose)")); break;
 				case "boolean": hint.setText("true / false"); break;
-				default: hint.setText("");
+				case "PathHolder": hint.setText(Tr.t("ov_hint_path", "Points x1,y1,x2,y2... (empty = an empty path for \"Find path\")")); break;
+				default: hint.setText(Tr.t("ov_hint_sync", "Synced: the host sends its value to every phone (network games)."));
 			}
 		};
 		hintFor.run();
@@ -230,12 +270,15 @@ public final class ObjectVarsSection {
 			});
 			return true;
 		});
+		android.widget.ScrollView sv = new android.widget.ScrollView(ctx);
+		sv.addView(box);
 		AlertDialog d = new AlertDialog.Builder(ctx)
 				.setTitle(idx < 0 ? Tr.t("ov_add", "Add variable") : Tr.t("ov_edit", "Edit variable"))
-				.setView(box)
+				.setView(sv)
 				.setPositiveButton(Tr.t("ok", "OK"), null)
 				.setNegativeButton(Tr.t("cancel", "Cancel"), null)
 				.create();
+		dlg[0] = d;
 		d.setOnShowListener(x -> d.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(b -> {
 			String nm = name.getText().toString().trim();
 			if (!ObjectVarsGen.validName(nm)) {
@@ -248,6 +291,8 @@ public final class ObjectVarsSection {
 					return;
 				}
 			ObjectVarsGen.Var nv = new ObjectVarsGen.Var(nm, type[0], value.getText().toString());
+			String nt = ObjectVarsGen.normType(type[0]);
+			nv.sync = sync.isChecked() && !"PathHolder".equals(nt) && !"List".equals(nt) && !"PlayerItem".equals(nt);
 			if (idx >= 0 && idx < l.size()) l.set(idx, nv); else l.add(nv);
 			save(l);
 			d.dismiss();

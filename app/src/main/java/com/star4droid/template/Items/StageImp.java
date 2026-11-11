@@ -44,6 +44,8 @@ public class StageImp extends ApplicationAdapter {
     public static float WORLD_SCALE = 0.25f;
 	public World world = new World(new Vector2(0,-9.8f),true);
 	public boolean playing=true, debugBox2d = false;
+	/** Name of the scene (as in the scenes folder), set when it is loaded. */
+	public String sceneName;
 	/** True while a CameraView draws the scene again: elements must not run their update a second time. */
 	public static boolean secondaryPass = false;
 	/** The 3D world of a 3D scene (null in 2D scenes until something asks for it). */
@@ -758,6 +760,7 @@ public class StageImp extends ApplicationAdapter {
 	}
 	
 	public boolean setImage(PlayerItem playerItem,String image){
+		com.star4droid.template.net.NetTrack.image(playerItem,image);
 	    String imgPath = (project.getImagesPath()+image).replace("//","/");
 		//if(!assetLoader.isFinished())
 			//assetLoader.finishLoading();
@@ -999,6 +1002,7 @@ public class StageImp extends ApplicationAdapter {
 			}
 			java.lang.reflect.Constructor<?> constructor = playerClass.getConstructor();
 			StageImp imp = ((StageImp)constructor.newInstance()).setAssetsLoader(projectAssetLoader).setProject(project).setSpriteSheetLoader(spriteSheetLoader).setPropertySet(set);
+			imp.sceneName = scene;
 			file.setWritable(true);
 			return imp;
 		} catch(Throwable e){
@@ -1032,6 +1036,7 @@ public class StageImp extends ApplicationAdapter {
 	}
 	
 	public void setAnimation(PlayerItem playerItem,String anim){
+		com.star4droid.template.net.NetTrack.anim(playerItem,anim);
 		try {
 		    playerItem.setAnimation(spriteSheetLoader.getAnimation(anim));
 		} catch(Exception ex){
@@ -1271,6 +1276,7 @@ public class StageImp extends ApplicationAdapter {
 		rayHandler.updateAndRender();
 		}
 		GameStage.getViewport().apply(); // the lights' frame buffers leave the GL viewport on the whole surface: put the fit rectangle back
+		frameSystems(getDelta());
 		onDraw();
 		if(sceneScript!=null)
 			sceneScript.onDraw();
@@ -1278,6 +1284,41 @@ public class StageImp extends ApplicationAdapter {
 		return true;
 	}
 	
+	/** Path finding, timelines / tweens and multiplayer, once per frame (after physics, before OnStep). */
+	private void frameSystems(float dt){
+		try { com.star4droid.template.net.Net.update(this, dt); } catch(Throwable t){ Gdx.app.error("Star2D","network: "+t); }
+		try { com.star4droid.template.anim.Anim.update(this, dt, playing); } catch(Throwable t){ Gdx.app.error("Star2D","animation: "+t); }
+		try { com.star4droid.template.nav.Nav.update(this, dt, playing); } catch(Throwable t){ Gdx.app.error("Star2D","navigation: "+t); }
+	}
+
+	// ---- scene events of the navigation / animation / network systems (the generated scene code overrides the ones with blocks)
+	/** An element walking a path reached its end. */
+	public void onPathEnd(PlayerItem current){}
+	/** No way to the place an element (or a search) wanted to reach. */
+	public void onNoPath(PlayerItem current){}
+	/** Something now blocks the path an element walks (it looks for another way by itself). */
+	public void onPathBlocked(PlayerItem current){}
+	/** A timeline ended (target = the element it played on, or null). */
+	public void onTimelineEnd(String timeline,PlayerItem target){}
+	/** A timeline reached one of its markers. */
+	public void onTimelineMarker(String timeline,String marker,PlayerItem target){}
+	/** A tween of an element ended. */
+	public void onTweenEnd(PlayerItem current,String property){}
+	/** Multiplayer: a player joined the room (player = its number, the host is 1). */
+	public void onPlayerJoined(int player,String name){}
+	public void onPlayerLeft(int player,String name){}
+	/** Multiplayer: a search found a room. */
+	public void onGameFound(String room,String host,int players,int maxPlayers){}
+	/** Multiplayer: in a room (joined, or hosting). */
+	public void onConnected(){}
+	public void onDisconnected(String reason){}
+	public void onHostLeft(){}
+	/** Multiplayer: a message from another phone (from = its player number). */
+	public void onNetMessage(String name,String data,int from){}
+	/** Multiplayer: the host started the game (every phone). */
+	public void onGameStarted(){}
+	public void onJoinFailed(String reason){}
+
 	public void setCameraCenter(float x,float y){
 		getCamera().position.set(x,y,0);
 	}
@@ -1355,6 +1396,9 @@ public class StageImp extends ApplicationAdapter {
 
 	private void stopScene(int depth){
 	    try { com.star4droid.template.d3.Sounds3D.stopAll(); } catch(Throwable ignored){}
+	    if(depth == 0) try { com.star4droid.template.net.Net.shutdown(); } catch(Throwable ignored){}
+	    try { com.star4droid.template.anim.Anim.dispose(this); } catch(Throwable ignored){}
+	    try { com.star4droid.template.nav.Nav.dispose(this); } catch(Throwable ignored){}
 	    try {
 	        if(assetLoader!=null){
 	            Array<Music> musics = new Array<>();

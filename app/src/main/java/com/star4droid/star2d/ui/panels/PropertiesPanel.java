@@ -74,6 +74,7 @@ public class PropertiesPanel implements PanelHost.Panel {
     private String fieldsSignature = "";
     private com.star4droid.star2d.ui.behaviors.BehaviorSection behaviorSection;
     private com.star4droid.star2d.ui.behaviors.ObjectVarsSection objectVarsSection;
+    private com.star4droid.star2d.ui.behaviors.NetSection netSection;
     private final Runnable poll = this::pollValues;
     // prefab instance bar (see updateInstanceBar)
     private LinearLayout instanceBar;
@@ -247,7 +248,9 @@ public class PropertiesPanel implements PanelHost.Panel {
         PropertySet<String, Object> ps = PropertySet.getPropertySet(a);
         String type = "";
         try { type = ((com.star4droid.star2d.editor.items.EditorItem) a).getTypeName(); } catch (Throwable ignored) {}
-        return new Object[]{a.getName(), Bridge.snapshot(ps), type};
+        boolean network = false;
+        for (Actor o : Bridge.editor().getActors()) if (o instanceof com.star4droid.star2d.editor.items.EditorNetworkItem) network = true;
+        return new Object[]{a.getName(), Bridge.snapshot(ps), type, network};
     }
 
     private void render(Object[] snap) {
@@ -261,6 +264,7 @@ public class PropertiesPanel implements PanelHost.Panel {
             behaviorFirstChild = -1;
             behaviorSection = null;
             objectVarsSection = null;
+            netSection = null;
             editors.clear();
             header.setText("");
             hideInstanceBar();
@@ -307,9 +311,14 @@ public class PropertiesPanel implements PanelHost.Panel {
         if (!extra.isEmpty()) addSection(c, "Other", extra);
         // public variables of the Body Script + "Additional behaviors" (stored in the element's scriptVars / behaviors)
         objectVarsSection = null;
-        if (!"LIGHT".equals(v.get("TYPE"))) {
+        netSection = null;
+        if (!in(String.valueOf(v.get("TYPE")), "LIGHT", "NAVGRID", "NETWORK")) {
             // object variables (property objectVars): fields of the element usable in all its events
             objectVarsSection = new com.star4droid.star2d.ui.behaviors.ObjectVarsSection(content, name, v.get(com.star4droid.star2d.behaviors.ObjectVarsGen.PROPERTY));
+            // network games: the element's Network card (a scene with a NETWORK element, or an element already networked)
+            String net = v.get(com.star4droid.star2d.behaviors.NetSpec.PROPERTY);
+            netSection = (snap.length > 3 && Boolean.TRUE.equals(snap[3])) || (net != null && !net.isEmpty())
+                    ? new com.star4droid.star2d.ui.behaviors.NetSection(content, net) : null;
             behaviorFirstChild = content.getChildCount();
             behaviorSection = new com.star4droid.star2d.ui.behaviors.BehaviorSection(shell, content, name, v.get("behaviors"), v.get("scriptVars"));
         }
@@ -377,6 +386,14 @@ public class PropertiesPanel implements PanelHost.Panel {
             sec.rows.add(b);
             sec.texts.add((Tr.t("ter_edit", "Edit terrain") + " terrain brush paint").toLowerCase());
         }
+        if ("Navigation".equals(title) && "NAVGRID".equals(values.get("TYPE"))) navigationButtons(c, body, sec);
+        if ("Network".equals(title) && "NETWORK".equals(values.get("TYPE"))) {
+            TextView hint = Ui.text(c, Tr.t("net_props_hint", "Players on the same Wi-Fi (or a phone hotspot) find this game with \"Search\". Turn on Network for the elements that must be the same on every phone (Network card of each element), and use the Network blocks for rooms, players and messages."), 12, Ui.TEXT_3);
+            hint.setPadding(Ui.dp(c, 4), Ui.dp(c, 6), Ui.dp(c, 4), Ui.dp(c, 4));
+            body.addView(hint, Ui.matchWrap());
+            sec.rows.add(hint);
+            sec.texts.add("network wifi hint");
+        }
         if ("Physics 3D".equals(title) && "OBJ3D".equals(values.get("TYPE")) && values.get("Body") != null && !"NONE".equalsIgnoreCase(values.get("Body"))
                 && !"EMPTY".equalsIgnoreCase(String.valueOf(values.get("Mesh")))) {
             // collider editor: handles on the collider faces in the 3D view
@@ -396,6 +413,55 @@ public class PropertiesPanel implements PanelHost.Panel {
             sec.rows.add(b);
             sec.texts.add((Tr.t("col3d_edit", "Edit collider") + " collider").toLowerCase());
         }
+    }
+
+    /** NavGrid: size summary, Paint cells (opens the painter), walls from the static elements. */
+    private void navigationButtons(Context c, LinearLayout body, Sec sec) {
+        TextView info = Ui.text(c, "", 12, Ui.TEXT_3);
+        info.setPadding(Ui.dp(c, 4), Ui.dp(c, 6), Ui.dp(c, 4), Ui.dp(c, 2));
+        body.addView(info, Ui.matchWrap());
+        sec.rows.add(info);
+        sec.texts.add("cells walls");
+        Bridge.query(() -> {
+            Object a = Bridge.editor().getSelectedActor();
+            if (!(a instanceof com.star4droid.star2d.editor.items.EditorNavGridItem)) return null;
+            com.star4droid.template.nav.NavGrid g = ((com.star4droid.star2d.editor.items.EditorNavGridItem) a).grid();
+            if (g == null) return null;
+            int walls = 0, slow = 0;
+            for (int i = 0; i < g.size(); i++) {
+                if (g.isWall(i)) walls++;
+                else if (g.costOf(i) > 1) slow++;
+            }
+            return new int[]{g.cols, g.rows, walls, slow};
+        }, r -> {
+            if (r == null) return;
+            info.setText(r[0] + " × " + r[1] + " " + Tr.t("nav_cells", "cells") + "  ·  " + r[2] + " " + Tr.t("nav_walls", "walls")
+                    + (r[3] > 0 ? "  ·  " + r[3] + " " + Tr.t("nav_slow", "slow") : ""));
+        });
+        LinearLayout paint = Ui.button(c, R.drawable.ic_t_paint, Tr.t("nav_paint", "Paint cells (walls, slow ground)"), true,
+                x -> com.star4droid.star2d.ui.NavPaintPanel.open(shell));
+        body.addView(paint, Ui.margins(Ui.matchWrap(), c, 0, 6, 0, 4));
+        sec.rows.add(paint);
+        sec.texts.add((Tr.t("nav_paint", "Paint cells") + " paint walls").toLowerCase());
+        LinearLayout stat = Ui.button(c, R.drawable.ic_s2_collider, Tr.t("nav_from_static", "Walls from the static elements"), false,
+                x -> Bridge.query(() -> {
+                    com.star4droid.star2d.editor.LibgdxEditor ed = Bridge.editor();
+                    Object a = ed.getSelectedActor();
+                    if (!(a instanceof com.star4droid.star2d.editor.items.EditorNavGridItem)) return -1;
+                    boolean was = ed.navPaint.active();
+                    if (!was) ed.navPaint.item = (com.star4droid.star2d.editor.items.EditorNavGridItem) a;
+                    int n = ed.navPaint.wallsFromStatic();
+                    if (!was) ed.navPaint.item = null;
+                    return n;
+                }, n -> {
+                    if (n == null || n < 0) return;
+                    Ui.toast(c, Tr.t("nav_from_static_done", "New walls") + ": " + n);
+                    fieldsSignature = "";
+                    onSelectionChanged();
+                }));
+        body.addView(stat, Ui.margins(Ui.matchWrap(), c, 0, 2, 0, 8));
+        sec.rows.add(stat);
+        sec.texts.add((Tr.t("nav_from_static", "Walls from the static elements") + " static walls").toLowerCase());
     }
 
     /** What a search matches for a field: its raw name and its (translated) label, lower case. */
@@ -424,6 +490,19 @@ public class PropertiesPanel implements PanelHost.Panel {
             l.setTextColor(com.star4droid.star2d.ui.PrefabUi.COLOR);
             l.setTypeface(Typeface.DEFAULT_BOLD);
         }
+        if (com.star4droid.star2d.ui.timeline.TimelinePanel.editing && animatable(f)) {
+            // a timeline is open: ◆ adds a key for this property at the playhead
+            LinearLayout r = Ui.row(c);
+            r.setGravity(Gravity.CENTER_VERTICAL);
+            r.addView(l, Ui.weight(1));
+            ImageView k = Ui.iconButton(c, R.drawable.ic_s2_keyframe, Tr.t("tl_key_prop", "Key at the playhead"), v -> {
+                com.star4droid.star2d.ui.timeline.TimelinePanel.keyFromProperties(f);
+                Ui.toast(c, "◆ " + Tr.t(f));
+            });
+            k.setImageTintList(android.content.res.ColorStateList.valueOf(0xFFBA68C8));
+            r.addView(k);
+            return r;
+        }
         return l;
     }
 
@@ -439,9 +518,15 @@ public class PropertiesPanel implements PanelHost.Panel {
             + "// Optional: move the vertices\n"
             + "// vec3 displace(vec3 pos, vec3 normal) { return pos + normal * sin(u_time + pos.y * 4.0) * 0.03; }\n";
 
+    private static boolean animatable(String f) {
+        for (String p : com.star4droid.star2d.editor.TimelineSession.AUTO_2D) if (p.equals(f)) return true;
+        for (String p : com.star4droid.star2d.editor.TimelineSession.AUTO_3D) if (p.equals(f)) return true;
+        return false;
+    }
+
     /** The values that decide which 3D properties are shown: a change rebuilds the panel. */
     private static String shapeSignature(Map<String, String> v) {
-        return v.get("Mesh") + "," + v.get("Light Kind") + "," + v.get("Orthographic") + "," + v.get("Body") + "," + v.get("Collider")
+        return com.star4droid.star2d.ui.timeline.TimelinePanel.editing + "," + v.get("Mesh") + "," + v.get("Light Kind") + "," + v.get("Orthographic") + "," + v.get("Body") + "," + v.get("Collider")
                 + "," + v.get("Outline") + "," + v.get("Follow Mode") + "," + (num(v.get("Flicker")) != 0) + "," + v.get("Touch Look") + "," + String.valueOf(v.get("Terrain Data")).isEmpty();
     }
 
@@ -854,7 +939,7 @@ public class PropertiesPanel implements PanelHost.Panel {
             }
             case "body": {
                 box.addView(label(c, f));
-                boolean multi = f.equals("Collision");
+                boolean multi = f.equals("Collision") || f.equals("Obstacles");
                 TextView t = chooser(c, val.isEmpty() ? "—" : val);
                 t.setOnClickListener(v -> Bridge.query(() -> Bridge.editor().getBodiesList(), bodies -> {
                     bodies.remove(selectedName);
@@ -927,6 +1012,31 @@ public class PropertiesPanel implements PanelHost.Panel {
                         })), new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
                 box.addView(t, Ui.matchWrap());
                 box.addView(r, Ui.matchWrap());
+                editors.put(f, t);
+                return box;
+            }
+            case "scene": {
+                // a scene of the project (e.g. the game scene the lobby opens)
+                box.addView(label(c, f));
+                TextView t = chooser(c, val.isEmpty() ? "—" : val);
+                t.setOnClickListener(v -> Bridge.query(() -> {
+                    ArrayList<String> scenes = new ArrayList<>();
+                    for (FileHandle fh : Gdx.files.absolute(Bridge.editor().getProject().getScenesPath()).list())
+                        if (!fh.isDirectory() && !com.star4droid.star2d.prefab.PrefabStore.isTempScene(fh.name())) scenes.add(fh.name());
+                    java.util.Collections.sort(scenes);
+                    return scenes;
+                }, scenes -> {
+                    String[] opts = new String[scenes.size() + 1];
+                    opts[0] = "— " + Tr.t("ui_none", "None");
+                    for (int i = 0; i < scenes.size(); i++) opts[i + 1] = scenes.get(i);
+                    Dialogs.choose(c, Tr.t(f), opts, i -> {
+                        String nv = i == 0 ? "" : scenes.get(i - 1);
+                        values.put(f, nv);
+                        t.setText(nv.isEmpty() ? "—" : nv);
+                        Bridge.query(() -> PropertyEditing.applyBody(Bridge.app(), f, nv), err -> { if (err != null) Ui.toast(c, err); });
+                    });
+                }));
+                box.addView(t, Ui.matchWrap());
                 editors.put(f, t);
                 return box;
             }
@@ -1192,6 +1302,7 @@ public class PropertiesPanel implements PanelHost.Panel {
             }
             if (behaviorSection != null && (f.equals("behaviors") || f.equals("scriptVars"))) behaviorSection.externalChange(f, v);
             if (objectVarsSection != null && f.equals(com.star4droid.star2d.behaviors.ObjectVarsGen.PROPERTY)) objectVarsSection.externalChange(v);
+            if (netSection != null && f.equals(com.star4droid.star2d.behaviors.NetSpec.PROPERTY)) netSection.externalChange(v);
             View ed = editors.get(f);
             if (ed == null) continue;
             String type = typeOf.get(f);

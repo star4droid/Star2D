@@ -43,6 +43,9 @@ public final class ElementTypes {
 		CLASSES.put("MapItem", new String[] {"MAP"});
 		CLASSES.put("UIHolder", new String[] {"UIHOLDER"});
 		CLASSES.put("CameraView", new String[] {"CAMERAVIEW"});
+		// path finding grid / multiplayer settings (packages com.star4droid.template.nav / .net)
+		CLASSES.put("NavGridItem", new String[] {"NAVGRID"});
+		CLASSES.put("NetworkItem", new String[] {"NETWORK"});
 		// 3D elements (package com.star4droid.template.d3)
 		CLASSES.put("Object3D", new String[] {"OBJ3D"});
 		CLASSES.put("Light3D", new String[] {"LIGHT3D"});
@@ -72,6 +75,8 @@ public final class ElementTypes {
 		if (simple.equals(UI_NODE)) return "com.star4droid.template.ui.UINodeRef";
 		if (simple.equals("PlayerItem")) return "com.star4droid.template.Utils.PlayerItem";
 		if (simple.equals("Object3D") || simple.equals("Light3D") || simple.equals("Camera3D")) return "com.star4droid.template.d3." + simple;
+		if (simple.equals("NavGridItem")) return "com.star4droid.template.nav.NavGridItem";
+		if (simple.equals("NetworkItem")) return "com.star4droid.template.net.NetworkItem";
 		return "com.star4droid.template.Items." + simple;
 	}
 }

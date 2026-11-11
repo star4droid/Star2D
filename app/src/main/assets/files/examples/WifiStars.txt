@@ -1,0 +1,1 @@
+Local multiplayer made of blocks: host or search a game on the same Wi-Fi (or a phone's hotspot), see the rooms and players, start for everybody. Each phone moves its own ball with a joystick; the host spawns the stars and counts the points, first to 10 wins.

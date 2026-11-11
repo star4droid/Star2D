@@ -5,6 +5,8 @@
 "Gravity":",friction,restitution,density,Active,Bullet,Gravity Scale,Fixed Rotation,isSensor",
 "Collider":",Points,Collision,ColliderX,ColliderY,Collider Width,Collider Height,Collider Radius",
 "Camera View":",Camera,Resolution,Refresh Rate,Touch,Border Color,Border Width,Corner Radius,Opacity,Background Color,",
+"Navigation":",Cell Shape,Cell Width,Cell Height,Diagonal,Cut Corners,Agent Size,Obstacles,Use Static Bodies,Show In Game",
+"Network":",Room Name,Max Players,Send Rate,Player Template,Spawn Radius,Game Version,Lobby,Game Scene,TCP Port,UDP Port",
 "static":"TYPE",
 "Light":",rays,Light Type,Cone Degree,Distance,color"
 }

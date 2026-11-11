@@ -189,6 +189,7 @@ public class BoxBody extends Image implements PlayerItem {
 		pressedD = resolveTouchImage(boxDef.Pressed_Image);
 		startD = resolveTouchImage(boxDef.Touch_Start_Image);
 		endD = resolveTouchImage(boxDef.Touch_End_Image);
+		com.star4droid.template.net.NetTrack.image(this, boxDef.image); // the touch images above went through setImage too
 		setName(boxDef.name);
 		setPosition((UI ? 1 : StageImp.WORLD_SCALE) * x,(UI ? 1 : StageImp.WORLD_SCALE) * y);
 		if(!boxDef.Tint.equals(tint)){

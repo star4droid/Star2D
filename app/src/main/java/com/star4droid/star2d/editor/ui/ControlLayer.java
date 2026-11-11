@@ -853,6 +853,69 @@ public class ControlLayer extends Table {
 		}
 	}
 
+	/** A free name "base1", "base2"... */
+	private static String freeName(com.star4droid.star2d.editor.LibgdxEditor ed, String base){
+		int n = 1;
+		while(ed.findActor(base + n) != null) n++;
+		return base + n;
+	}
+
+	/** Add a path finding grid (NAVGRID): the scene frame in 2D, 24 x 24 m on the ground in 3D. Selected afterwards. */
+	public com.star4droid.star2d.editor.items.EditorNavGridItem actionAddNavGrid(){
+		try {
+			com.star4droid.star2d.editor.LibgdxEditor ed = app.getEditor();
+			com.star4droid.star2d.editor.items.EditorNavGridItem item = new com.star4droid.star2d.editor.items.EditorNavGridItem(ed);
+			item.setName(freeName(ed, "navGrid"));
+			item.setDefault();
+			if(item.getPropertySet()==null){ item.remove(); return null; }
+			if(ed.is3DScene() && ed.get3D()!=null){
+				// centered where the camera looks, on the ground
+				com.badlogic.gdx.math.Vector3 p = ed.get3D().spawnPoint();
+				item.getPropertySet().put("x",String.valueOf(Math.round(p.x) - 12));
+				item.getPropertySet().put("z",String.valueOf(Math.round(p.z) - 12));
+			} else {
+				item.getPropertySet().put("z",String.valueOf(ed.getActors().size));
+			}
+			item.update();
+			ed.selectActor(item);
+			EditorAction.itemAdded(ed,item);
+			ed.getSaveState();
+			ed.afterEdit3D();
+			return item;
+		} catch(Throwable error){
+			showError("Error :\n"+Utils.getStackTraceString(error));
+			return null;
+		}
+	}
+
+	/** Add the NETWORK element (local multiplayer); a scene has one: the existing one is selected instead. */
+	public boolean actionAddNetwork(){
+		try {
+			com.star4droid.star2d.editor.LibgdxEditor ed = app.getEditor();
+			for(com.badlogic.gdx.scenes.scene2d.Actor a : ed.getActors())
+				if(a instanceof com.star4droid.star2d.editor.items.EditorNetworkItem){
+					ed.selectActor(a);
+					return false;
+				}
+			com.star4droid.star2d.editor.items.EditorNetworkItem item = new com.star4droid.star2d.editor.items.EditorNetworkItem(ed);
+			item.setName(freeName(ed, "network"));
+			item.setDefault();
+			if(item.getPropertySet()==null){ item.remove(); return false; }
+			item.getPropertySet().put("z",String.valueOf(Math.max(100, ed.getActors().size)));
+			item.getPropertySet().put("x",String.valueOf(24));
+			item.getPropertySet().put("y",String.valueOf(ed.getLogicHeight() - 120));
+			ed.selectActor(item);
+			EditorAction.itemAdded(ed,item);
+			item.update();
+			ed.getSaveState();
+			ed.afterEdit3D();
+			return true;
+		} catch(Throwable error){
+			showError("Error :\n"+Utils.getStackTraceString(error));
+			return false;
+		}
+	}
+
 	/** Add a light: 0 point, 1 directional, 2 cone. */
 	public void actionAddLight(int pos){
 		try {

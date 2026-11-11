@@ -36,7 +36,7 @@ public class VariablesPanel implements PanelHost.Panel {
     private ArrayList<VarModel> vars = new ArrayList<>();
     private String path;
 
-    private static final String[] TYPES = {"int", "float", "double", "boolean", "String", "long"};
+    private static final String[] TYPES = {"int", "float", "double", "boolean", "String", "long", "PathHolder"};
     private static final String[] ACCESS = {"", "public", "private", "protected"};
 
     public VariablesPanel(EditorShell shell) {
@@ -129,6 +129,7 @@ public class VariablesPanel implements PanelHost.Panel {
 
         col.addView(Ui.text(c, Tr.t("ui_var_type", "Type"), 12.5f, Ui.TEXT_2));
         final String[] type = {m.getType()};
+        final String[] access = {m.getAccessModifer()};
         LinearLayout chips = Ui.row(c);
         chips.setGravity(Gravity.START);
         ArrayList<TextView> chipViews = new ArrayList<>();
@@ -180,12 +181,35 @@ public class VariablesPanel implements PanelHost.Panel {
             @Override public void afterTextChanged(android.text.Editable s) { editText.setVisibility("String".equals(s.toString().trim()) ? View.VISIBLE : View.GONE); }
         });
         col.addView(valueRow, Ui.matchWrap());
+        // path variables: drawn on the canvas (PathHolder.parse("x1,y1,x2,y2..."))
+        final AlertDialog[] dlg = new AlertDialog[1];
+        LinearLayout drawPath = Ui.button(c, R.drawable.ic_s2_navgrid, Tr.t("path_draw", "Draw on the canvas"), false, v -> {
+            String n = name.getText().toString().trim();
+            String err = Dialogs.checkName(n);
+            if (err != null) { name.setError(err); return; }
+            for (int i = 0; i < vars.size(); i++)
+                if (i != pos && vars.get(i).getName().equals(n)) { name.setError(Tr.t("ui_name_used", "Name already used")); return; }
+            if (dlg[0] != null) dlg[0].dismiss();
+            shell.panels.hide();
+            com.star4droid.star2d.ui.PathDrawPanel.open(shell, n, value.getText().toString(), pts -> {
+                m.setType("PathHolder").setName(n).setValue(pathValue(pts)).setAccessModifer(access[0]);
+                if (pos < 0 && !vars.contains(m)) vars.add(m);
+                save();
+                shell.panels.show(this);
+            });
+        });
+        drawPath.setVisibility("PathHolder".equals(type[0]) ? View.VISIBLE : View.GONE);
+        col.addView(drawPath, Ui.margins(Ui.matchWrap(), c, 0, 6, 0, 0));
+        customType.addTextChangedListener(new android.text.TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int a, int b, int d) {}
+            @Override public void onTextChanged(CharSequence s, int a, int b, int d) {}
+            @Override public void afterTextChanged(android.text.Editable s) { drawPath.setVisibility("PathHolder".equals(s.toString().trim()) ? View.VISIBLE : View.GONE); }
+        });
         TextView tip = Ui.text(c, Tr.t("ui_var_tip", "Text values need quotes, e.g. \"Hello\". true/false for boolean."), 11.5f, Ui.TEXT_3);
         tip.setPadding(0, Ui.dp(c, 4), 0, 0);
         col.addView(tip);
 
         col.addView(Ui.text(c, Tr.t("ui_access", "Access (advanced)"), 12.5f, Ui.TEXT_2));
-        final String[] access = {m.getAccessModifer()};
         TextView acc = Ui.text(c, access[0].isEmpty() ? "—" : access[0], 14, Ui.TEXT);
         acc.setPadding(Ui.dp(c, 10), Ui.dp(c, 8), Ui.dp(c, 10), Ui.dp(c, 8));
         acc.setBackground(Ui.ripple(0xFF121417, Ui.dp(c, 7)));
@@ -203,6 +227,7 @@ public class VariablesPanel implements PanelHost.Panel {
                 .setPositiveButton(Tr.t("save", "Save"), null)
                 .setNegativeButton(Tr.t("cancel", "Cancel"), null)
                 .create();
+        dlg[0] = d;
         d.setOnShowListener(x -> {
             com.star4droid.star2d.ui.tutorial.Tut.tag(d.getButton(AlertDialog.BUTTON_POSITIVE), "vardlg:save");
             d.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
@@ -215,6 +240,7 @@ public class VariablesPanel implements PanelHost.Panel {
                 if (i != pos && vars.get(i).getName().equals(n)) { name.setError(Tr.t("ui_name_used", "Name already used")); return; }
             String val = value.getText().toString().trim();
             if (t.equals("String") && !val.isEmpty() && !val.startsWith("\"")) val = "\"" + val + "\"";
+            if (t.equals("PathHolder")) val = pathValue(val);
             m.setType(t).setName(n).setValue(val).setAccessModifer(access[0]);
             if (pos < 0) vars.add(m);
             d.dismiss();
@@ -222,6 +248,19 @@ public class VariablesPanel implements PanelHost.Panel {
         });
         });
         d.show();
+    }
+
+    /** Value of a path variable: points "x1,y1,..." (or a PathHolder.parse(...) text) become PathHolder.parse("..."), empty a new path. */
+    static String pathValue(String v) {
+        String s = v == null ? "" : v.trim();
+        if (s.isEmpty() || s.equals("new PathHolder()")) return "new PathHolder()";
+        if (!s.matches("[-+0-9.eE,;\\s]*")) {
+            if (!s.startsWith("PathHolder.parse(\"")) return s; // an expression of the user
+            java.util.regex.Matcher q = java.util.regex.Pattern.compile("\"([^\"]*)\"").matcher(s);
+            if (!q.find()) return s;
+            s = q.group(1);
+        }
+        return "PathHolder.parse(\"" + s.replace(" ", "") + "\")";
     }
 
     private void save() {

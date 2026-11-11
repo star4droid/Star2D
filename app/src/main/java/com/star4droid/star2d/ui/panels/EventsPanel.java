@@ -3,6 +3,7 @@ package com.star4droid.star2d.ui.panels;
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.graphics.Typeface;
+import android.view.Gravity;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -102,6 +103,8 @@ public class EventsPanel implements PanelHost.Panel {
         }
         HashSet<String> withCode = new HashSet<>();
         for (String[] e : SCENE_EVENTS) if (hasCode(p.getEventPath(scene, "", e[0]))) withCode.add(e[0]);
+        for (com.star4droid.star2d.behaviors.SceneEventsExt.Ev e : com.star4droid.star2d.behaviors.SceneEventsExt.ALL)
+            if (hasCode(p.getEventPath(scene, "", e.name))) withCode.add(e.name);
         if (sel != null) for (String[] e : BODY_EVENTS) if (hasCode(p.getEventPath(bodyScene, body, e[0]))) withCode.add("body:" + e[0]);
         if (sel != null && Gdx.files.absolute(p.getBodyScriptPath(selName, scene)).exists()) withCode.add("Body Script");
         if (Gdx.files.absolute(p.getSceneScript(scene)).exists()) withCode.add("Scene Script");
@@ -157,6 +160,41 @@ public class EventsPanel implements PanelHost.Panel {
         return out;
     }
 
+    private static final HashSet<String> openGroups = new HashSet<>();
+
+    private void extraGroup(Context c, boolean ar, HashSet<String> withCode, String group, int icon, int color, String title) {
+        int used = 0, total = 0;
+        for (com.star4droid.star2d.behaviors.SceneEventsExt.Ev e : com.star4droid.star2d.behaviors.SceneEventsExt.ALL) {
+            if (!e.group.equals(group)) continue;
+            total++;
+            if (withCode.contains(e.name)) used++;
+        }
+        boolean open = openGroups.contains(group);
+        LinearLayout head = Ui.row(c);
+        head.setGravity(Gravity.CENTER_VERTICAL);
+        head.setPadding(Ui.dp(c, 8), Ui.dp(c, 10), Ui.dp(c, 8), Ui.dp(c, 6));
+        head.setBackground(Ui.ripple(0, Ui.dp(c, 8)));
+        head.addView(Ui.smallIcon(c, icon, color, 18));
+        TextView t = Ui.text(c, title + (used > 0 ? "  ·  " + used + "/" + total : ""), 13, Ui.TEXT_2);
+        t.setTypeface(Typeface.DEFAULT_BOLD);
+        t.setPadding(Ui.dp(c, 8), 0, 0, 0);
+        head.addView(t, Ui.weight(1));
+        head.addView(Ui.smallIcon(c, open ? R.drawable.ic_s2_expand_more : R.drawable.ic_s2_chevron_right, Ui.TEXT_3, 18));
+        head.setOnClickListener(v -> {
+            if (openGroups.contains(group)) openGroups.remove(group);
+            else openGroups.add(group);
+            refresh();
+        });
+        list.addView(head, Ui.matchWrap());
+        for (com.star4droid.star2d.behaviors.SceneEventsExt.Ev e : com.star4droid.star2d.behaviors.SceneEventsExt.ALL) {
+            if (!e.group.equals(group) || (!open && !withCode.contains(e.name))) continue;
+            View r = row(c, icon, color, Tr.t(e.name), Tr.t("ui_ev_desc_" + e.name, ar ? e.ar : e.en), withCode.contains(e.name),
+                    v -> VisualScriptingDialog.showFor(e.name, false, false));
+            com.star4droid.star2d.ui.tutorial.Tut.tag(r, "scene_event:" + e.name);
+            list.addView(r);
+        }
+    }
+
     private static boolean hasCode(String path) {
         FileHandle j = Gdx.files.absolute(path + ".java"), v = Gdx.files.absolute(path + ".visual");
         return (j.exists() && j.length() > 0) || (v.exists() && v.length() > 2);
@@ -193,6 +231,10 @@ public class EventsPanel implements PanelHost.Panel {
             com.star4droid.star2d.ui.tutorial.Tut.tag(r, "scene_event:" + e[0]);
             list.addView(r);
         }
+        // path finding / animation / network events (groups open when tapped or when one has code)
+        extraGroup(c, ar, withCode, com.star4droid.star2d.behaviors.SceneEventsExt.NAV, R.drawable.ic_s2_navgrid, 0xFF4DD0E1, Tr.t("ev_group_nav", "Path finding events"));
+        extraGroup(c, ar, withCode, com.star4droid.star2d.behaviors.SceneEventsExt.ANIM, R.drawable.ic_s2_timeline, 0xFFBA68C8, Tr.t("ev_group_anim", "Animation events"));
+        extraGroup(c, ar, withCode, com.star4droid.star2d.behaviors.SceneEventsExt.NET, R.drawable.ic_s2_network, 0xFF81C784, Tr.t("ev_group_net", "Network events"));
 
         // element
         list.addView(Ui.sectionLabel(c, Tr.t("ui_element_events", "Element events") + (sel == null ? "" : " · " + sel)));

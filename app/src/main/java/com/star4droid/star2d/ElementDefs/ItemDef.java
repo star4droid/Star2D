@@ -26,6 +26,8 @@ public abstract class ItemDef {
             return ((UIHolderDef) this).z;
         if (this instanceof CameraViewDef)
             return ((CameraViewDef) this).z;
+        if (this instanceof NetworkDef)
+            return ((NetworkDef) this).z;
         
         return 0; // default if no match
     }
@@ -71,6 +73,10 @@ public abstract class ItemDef {
             return ((Light3DDef) this).type;
         if (this instanceof Camera3DDef)
             return ((Camera3DDef) this).type;
+        if (this instanceof NavGridDef)
+            return ((NavGridDef) this).type;
+        if (this instanceof NetworkDef)
+            return ((NetworkDef) this).type;
         return "";
     }
     

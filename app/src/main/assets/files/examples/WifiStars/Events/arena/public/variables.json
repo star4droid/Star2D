@@ -1,0 +1,1 @@
+[{"EQUAL": "=", "SEMICOLON": ";", "SPACE": " ", "accessModifer": "", "name": "list", "type": "String", "value": "\"\""}, {"EQUAL": "=", "SEMICOLON": ";", "SPACE": " ", "accessModifer": "", "name": "winner", "type": "String", "value": "\"\""}, {"EQUAL": "=", "SEMICOLON": ";", "SPACE": " ", "accessModifer": "", "name": "over", "type": "boolean", "value": "false"}]

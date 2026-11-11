@@ -25,6 +25,17 @@ An **event** is a block sequence (or Java) that runs when something happens. Sce
 | `OnStep` | Every frame, after the physics step (about 60 times per second). Keep it light. Use the reporter `frame time` for seconds per frame. | none |
 | `onCollisionStart` | When two bodies begin touching (sensors included). | `body1`, `body2` (PlayerItems, either order) |
 | `onCollisionEnd` | When two bodies stop touching. | `body1`, `body2` |
+| `onPathEnd` | A walker finished its path (ONCE). See `navigation`. | `current` |
+| `onNoPath` | No way to the target for a walker. | `current` |
+| `onPathBlocked` | A walker's way got blocked (it re-plans by itself). | `current` |
+| `onTimelineEnd` | A ONCE timeline finished. See `timeline`. | `timeline`, `current` |
+| `onTimelineMarker` | A playing timeline passed a marker. | `timeline`, `marker`, `current` |
+| `onTweenEnd` | A tween finished. | `current`, `property` |
+| `onPlayerJoined` / `onPlayerLeft` | A player joined / left the network game. See `network`. | `player`, `name` |
+| `onGameFound` | Search found a game. | `room`, `host`, `players`, `maxPlayers` |
+| `onConnected` / `onHostLeft` / `onGameStarted` | Joined (or hosting) / host closed the game / host pressed Start. | none |
+| `onDisconnected` / `onJoinFailed` | Connection lost / joining failed. | `reason` |
+| `onNetMessage` | A network message arrived (`netSendAll`, `netRunAll`...). | `name`, `data`, `from` |
 | `OnPause` | The game screen is paused (the app goes to the background). | none |
 | `OnResume` | The game screen comes back. | none |
 

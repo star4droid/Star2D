@@ -42,8 +42,8 @@ android {
         applicationId "com.star4droid.star2d.evo"
         minSdk 24
         targetSdk 36
-        versionCode 56
-        versionName "0.5.6Beta"
+        versionCode 57
+        versionName "0.5.7Beta"
         // AdMob ids come from -P properties / env (GitHub secrets). With no ids the build has NO ads (a small dismissible
         // notice is shown instead). -PADMOB_TEST=true (or env) uses Google's test ids to try ads locally.
         def prop = { String key -> (project.findProperty(key) ?: System.getenv(key) ?: '').toString().trim() }
@@ -138,6 +138,8 @@ dependencies {
     implementation("com.badlogicgames.gdx:gdx-bullet:$gdxVersion")
     implementation("com.github.mgsx-dev.gdx-gltf:gltf:2.2.1")
     implementation("com.kotcrab.vis:vis-ui:1.5.9")
+    // multiplayer on the local network (com.star4droid.template.net): TCP/UDP + host discovery
+    implementation("com.esotericsoftware:kryonet:2.22.0-RC1")
     
     natives "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-arm64-v8a"
     natives "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-armeabi-v7a"

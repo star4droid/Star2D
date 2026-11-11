@@ -82,6 +82,11 @@ public class AddItemPanel implements PanelHost.Panel {
             {"s3_camera", "Camera 3D", "CAMERA3D", "What the player sees; follow, orbit, first person.", "ما يراه اللاعب: تتبع، دوران، منظور أول.", "CAMERA3D", ""},
             {"s3_cameraview", "Camera view", "CAMERAVIEW", "Shows a camera live on screen (mirror, minimap).", "يعرض كاميرا مباشرة على الشاشة (مرآة، خريطة مصغرة).", "CAMERAVIEW", ""},
     };
+    /** Game systems of both scene kinds: path finding grid, local multiplayer. */
+    private static final String[][] SYSTEMS = {
+            {"s3_navgrid", "Path grid", "NAVGRID", "Smart enemies find their way around walls: paint where they can walk.", "الأعداء الأذكياء يجدون طريقهم حول الجدران: ارسم أين يمكنهم المشي.", "NAVGRID", ""},
+            {"s3_network", "Network play", "NETWORK", "Multiplayer on the same Wi-Fi or a phone hotspot: rooms, players, sync.", "لعب جماعي على نفس الواي فاي أو نقطة اتصال الهاتف: غرف ولاعبون ومزامنة.", "NETWORK", ""},
+    };
     /** 2D layer of a 3D scene: indexes of BODIES that make sense on top of 3D. */
     private static final int[] OVERLAY_2D = {2, 3, 4, 0, 10};
 
@@ -108,6 +113,8 @@ public class AddItemPanel implements PanelHost.Panel {
             col.addView(grid3d(c, LIGHTS_3D, ar));
             col.addView(Ui.sectionLabel(c, Tr.t("s3_cameras", "Cameras")));
             col.addView(grid3d(c, CAMERAS_3D, ar));
+            col.addView(Ui.sectionLabel(c, Tr.t("s3_systems", "Game systems")));
+            col.addView(grid3d(c, SYSTEMS, ar));
             col.addView(Ui.sectionLabel(c, Tr.t("s3_overlay", "Screen (2D layer: HUD, buttons, menus)")));
             String[][] overlay = new String[OVERLAY_2D.length][];
             for (int i = 0; i < OVERLAY_2D.length; i++) overlay[i] = BODIES[OVERLAY_2D[i]];
@@ -119,6 +126,8 @@ public class AddItemPanel implements PanelHost.Panel {
         col.addView(Ui.sectionLabel(c, Tr.t("newBody", "Elements")));
         col.addView(grid(c, BODIES, ar, false, null));
         col.addView(grid3d(c, new String[][]{CAMERAS_3D[1]}, ar));
+        col.addView(Ui.sectionLabel(c, Tr.t("s3_systems", "Game systems")));
+        col.addView(grid3d(c, SYSTEMS, ar));
         col.addView(Ui.sectionLabel(c, Tr.t("newLight", "Lights")));
         col.addView(grid(c, LIGHTS, ar, true, null));
         if (!shell.inPrefabMode() && shell.projectPath() != null) {
@@ -286,6 +295,23 @@ public class AddItemPanel implements PanelHost.Panel {
                     }, ok -> {
                         com.star4droid.star2d.ui.TerrainPanel.openGenerator = true;
                         com.star4droid.star2d.ui.TerrainPanel.open(shell);
+                    });
+                    return;
+                }
+                if ("NETWORK".equals(it[5])) {
+                    // one per scene: an existing one is selected instead
+                    Bridge.query(() -> Bridge.controls().actionAddNetwork(), added -> {
+                        Ui.toast(c, Boolean.TRUE.equals(added) ? Tr.t("ui_added", "Added") + ": " + Tr.t(it[0], it[1])
+                                : Tr.t("net_one_per_scene", "A scene has one Network element: it is selected."));
+                        shell.panels.show(shell.properties);
+                    });
+                    return;
+                }
+                if ("NAVGRID".equals(it[5])) {
+                    Bridge.query(() -> Bridge.controls().actionAddNavGrid() != null, ok -> {
+                        if (!Boolean.TRUE.equals(ok)) return;
+                        Ui.toast(c, Tr.t("nav_added_hint", "Path grid added: press \"Paint cells\" to draw the walls."));
+                        shell.panels.show(shell.properties);
                     });
                     return;
                 }

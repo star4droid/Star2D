@@ -105,6 +105,9 @@ public class ExportThread extends Thread {
                 zipFile.removeFile("log");
 			} catch(Exception exception){}
 			String manifest = String.format(Utils.readAssetFile("java/manifest.xml",context),(Object[])manifest_values);
+			// a network game (NETWORK element / Network blocks) may wake the Wi-Fi multicast to find the rooms of the other phones
+			if(NetExport.usesNetwork(project))
+				manifest = NetExport.addMulticastPermission(manifest);
 			FileUtil.writeFile(export_temp+"/manifest",manifest);
 			if (img != null && !img.isEmpty() && FileUtil.isExistFile(img)) {
             // The template's resources.arsc points at res/drawable/icon.jpg, so the custom icon must be stored under

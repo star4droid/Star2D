@@ -1,0 +1,30 @@
+[
+  {
+    "id": "0",
+    "title": "First >",
+    "x": "40.0",
+    "y": "0.0",
+    "else": "false",
+    "next": "1",
+    "next_id": "null",
+    "else_id": "",
+    "nf": "[]",
+    "code": "%1$s",
+    "color": -16678317,
+    "close": "false"
+  },
+  {
+    "id": "1",
+    "title": "OpenScene",
+    "x": "40.0",
+    "y": "-233.33",
+    "else": "false",
+    "next": "null",
+    "next_id": "null",
+    "else_id": "",
+    "nf": "[{\"name\": \"scene(scene)\", \"value\": \"scene1\"}]",
+    "code": "openScene(\"%1$s\");\n%2$s",
+    "color": -16678317,
+    "close": "true"
+  }
+]

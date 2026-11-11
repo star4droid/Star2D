@@ -314,6 +314,8 @@ final class EditTools {
     static String[] kind3D(String type, JsonObject props, boolean scene3D) {
         String t = upper(type).replace(" ", "").replace("_", "").replace("-", "");
         String mesh = props != null && props.has("Mesh") ? upper(str(props.get("Mesh"))) : "";
+        if (t.equals("NAVGRID") || t.equals("PATHGRID") || t.equals("NAVMESH") || t.equals("PATHFINDING") || t.equals("NAV")) return new String[]{"NAVGRID", null};
+        if (t.equals("NETWORK") || t.equals("MULTIPLAYER") || t.equals("NET") || t.equals("LAN")) return new String[]{"NETWORK", null};
         if (t.equals("CAMERAVIEW") || t.equals("CAMVIEW") || t.equals("MINIMAP") || t.equals("MIRROR")) return new String[]{"CAMERAVIEW", null};
         if (t.equals("CAMERA3D") || t.equals("3DCAMERA") || (scene3D && t.equals("CAMERA"))) return new String[]{"CAMERA3D", null};
         if (t.equals("LIGHT3D") || t.equals("3DLIGHT") || t.endsWith("LIGHT3D") || t.equals("SUN") || t.equals("SPOT") || t.equals("SPOTLIGHT")
@@ -344,7 +346,11 @@ final class EditTools {
     static String add3D(TestApp app, LibgdxEditor ed, String[] k3) {
         Actor before = ed.getSelectedActor();
         if (k3[0].equals("CAMERAVIEW")) app.getControlLayer().actionAddCameraView();
-        else {
+        else if (k3[0].equals("NAVGRID")) app.getControlLayer().actionAddNavGrid();
+        else if (k3[0].equals("NETWORK")) {
+            if (!app.getControlLayer().actionAddNetwork())
+                return "scene '" + ed.getScene() + "' already has a NETWORK element (one per scene): set its properties instead";
+        } else {
             if (!ed.is3DScene())
                 return k3[0] + " is a 3D element and scene '" + ed.getScene() + "' is 2D. Make a 3D scene first: scenes {action:'create', name:'...', type:'3D'}";
             if (k3[0].equals("OBJ3D") && !java.util.Arrays.asList(MESHES).contains(k3[1]))
@@ -496,7 +502,7 @@ final class EditTools {
             switch (op) {
                 case "add": {
                     String type = CoreTools.s(o, "type");
-                    if (type.isEmpty()) return res(op, name, false, "type is required (BOX, CIRCLE, TEXT, JOYSTICK, PROGRESS, CUSTOM, PARTICLE, CAMERA, MAP, GROUP, UIHOLDER, LIGHT, CAMERAVIEW; 3D scenes: OBJ3D, LIGHT3D, CAMERA3D)");
+                    if (type.isEmpty()) return res(op, name, false, "type is required (BOX, CIRCLE, TEXT, JOYSTICK, PROGRESS, CUSTOM, PARTICLE, CAMERA, MAP, GROUP, UIHOLDER, LIGHT, CAMERAVIEW, NAVGRID (path finding grid), NETWORK (Wi-Fi multiplayer); 3D scenes: OBJ3D, LIGHT3D, CAMERA3D)");
                     if (!name.isEmpty() && ed.getBodiesList().contains(name)) return res(op, name, false, "an element named '" + name + "' already exists (use set)");
                     if (!name.isEmpty() && !name.matches("[A-Za-z_][A-Za-z0-9_]*")) return res(op, name, false, "name must be letters, digits and _ (not starting with a digit)");
                     String t = type.toUpperCase(Locale.ROOT).replace(" ", "");
@@ -517,7 +523,7 @@ final class EditTools {
                         app.getControlLayer().actionAddLight(idx);
                     } else {
                         int idx = kindIndex(type);
-                        if (idx < 0) return res(op, name, false, "unknown type '" + type + "'. Use BOX, CIRCLE, TEXT, JOYSTICK, PROGRESS, CUSTOM, PARTICLE, CAMERA, MAP, GROUP, UIHOLDER, LIGHT or CAMERAVIEW"
+                        if (idx < 0) return res(op, name, false, "unknown type '" + type + "'. Use BOX, CIRCLE, TEXT, JOYSTICK, PROGRESS, CUSTOM, PARTICLE, CAMERA, MAP, GROUP, UIHOLDER, LIGHT, CAMERAVIEW, NAVGRID or NETWORK"
                                 + (scene3D ? "; 3D: OBJ3D (or a shape: CUBE, SPHERE, CAPSULE, PLANE, MODEL, TERRAIN, WATER...), LIGHT3D, CAMERA3D" : "; 3D elements need a 3D scene (scenes create {type:'3D'})"));
                         app.getControlLayer().actionAddBody(idx);
                     }

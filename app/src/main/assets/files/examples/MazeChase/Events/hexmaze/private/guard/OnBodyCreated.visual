@@ -1,0 +1,30 @@
+[
+  {
+    "id": "0",
+    "title": "First >",
+    "x": "40.0",
+    "y": "0.0",
+    "else": "false",
+    "next": "1",
+    "next_id": "null",
+    "else_id": "",
+    "nf": "[]",
+    "code": "%1$s",
+    "color": -16678317,
+    "close": "false"
+  },
+  {
+    "id": "1",
+    "title": "navFollow",
+    "x": "40.0",
+    "y": "-233.33",
+    "else": "false",
+    "next": "null",
+    "next_id": "null",
+    "else_id": "",
+    "nf": "[{\"name\": \"body(Body)\", \"value\": \"current\"}, {\"name\": \"path\", \"value\": \"route\"}, {\"name\": \"speed\", \"value\": \"90\"}, {\"name\": \"mode(pathMode)\", \"value\": \"PING_PONG\"}]",
+    "code": "com.star4droid.template.nav.Nav.follow(%1$s, %2$s, (float)(%3$s), \"%4$s\");\n%5$s",
+    "color": -16742021,
+    "close": "true"
+  }
+]

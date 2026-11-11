@@ -316,6 +316,8 @@ public class ElementsPanel implements PanelHost.Panel {
             case "LIGHT3D": case "Light3d": return R.drawable.ic_s2_light;
             case "CAMERA3D": case "Camera3d": return R.drawable.ic_s2_videocam;
             case "CAMERAVIEW": case "Cameraview": return R.drawable.ic_s2_camera;
+            case "NAVGRID": case "Navgrid": return R.drawable.ic_s2_navgrid;
+            case "NETWORK": case "Network": return R.drawable.ic_s2_network;
         }
         return R.drawable.ic_s2_square;
     }
@@ -343,6 +345,8 @@ public class ElementsPanel implements PanelHost.Panel {
             case "LIGHT3D": case "Light3d": return 0xFFFFD54F;
             case "CAMERA3D": case "Camera3d": return 0xFFB0BEC5;
             case "CAMERAVIEW": case "Cameraview": return 0xFF90A4AE;
+            case "NAVGRID": case "Navgrid": return 0xFF4DD0E1;
+            case "NETWORK": case "Network": return 0xFF81C784;
         }
         return Ui.ACCENT;
     }

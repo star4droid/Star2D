@@ -28,7 +28,9 @@ import java.util.regex.Pattern;
 final class LogicTools {
     private LogicTools() {}
 
-    static final String[] SCENE_EVENTS = {"OnCreate", "OnStep", "OnPause", "OnResume", "onCollisionStart", "onCollisionEnd"};
+    static final String[] SCENE_EVENTS = {"OnCreate", "OnStep", "OnPause", "OnResume", "onCollisionStart", "onCollisionEnd",
+            "onPathEnd", "onNoPath", "onPathBlocked", "onTimelineEnd", "onTimelineMarker", "onTweenEnd", "onPlayerJoined", "onPlayerLeft",
+            "onGameFound", "onConnected", "onDisconnected", "onHostLeft", "onNetMessage", "onGameStarted", "onJoinFailed"};
     static final String[] ELEMENT_EVENTS = {"onClick", "OnBodyCreated", "OnBodyUpdate", "onTouchStart", "onTouchEnd", "onBodyCollided", "onBodyCollideEnd"};
 
     private static Context ctx() {

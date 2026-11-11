@@ -396,7 +396,7 @@ public class ProjectsHomeView extends FrameLayout {
         } catch (Exception ignored) {}
 
         // Known templates first, in the designed order; any other example after them.
-        String[] order = {"City3D", "HorrorHouse3D", "EndlessRoad3D", "SeaDock3D", "StarValley", "platformer", "CarsExample", "Paul", "example1"};
+        String[] order = {"MazeChase", "WifiStars", "City3D", "HorrorHouse3D", "EndlessRoad3D", "SeaDock3D", "StarValley", "platformer", "CarsExample", "Paul", "example1"};
         List<String> sorted = new ArrayList<>();
         for (String o : order) if (examples.remove(o)) sorted.add(o);
         sorted.addAll(examples);
@@ -440,6 +440,12 @@ public class ProjectsHomeView extends FrameLayout {
             case "SeaDock3D":
                 return new String[]{"3D Sea Dock", "3D / Relax",
                         "A pier on a calm sea with customizable water simulation. Walk to the bench and tap Sit: the camera sits down and stands up again."};
+            case "MazeChase":
+                return new String[]{"Maze Chase", "Path finding",
+                        "Tap where to go: the player walks the shortest way through the maze. Smart Chase ghosts find their way around the walls, a guard walks a drawn patrol path, and the key opens a door so the ghosts find new ways. A second scene plays on a hexagon grid."};
+            case "WifiStars":
+                return new String[]{"Wi-Fi Stars", "Multiplayer / Wi-Fi",
+                        "Local multiplayer made of blocks: host or search a game on the same Wi-Fi (or a phone's hotspot), see the rooms and players, start for everybody. Each phone moves its own ball with a joystick; the host spawns the stars and counts the points, first to 10 wins."};
             case "example1":
                 return new String[]{"2D Starter Core", "Starter",
                         "Clean empty scene with 2D camera viewport, physics world, gravity and joints ready to build on."};

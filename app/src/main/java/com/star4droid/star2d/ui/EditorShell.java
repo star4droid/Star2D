@@ -69,6 +69,7 @@ public class EditorShell extends FrameLayout implements ControlLayer.NativeUi, T
     public final EventsPanel events;
     public final JointsPanel joints;
     public final VariablesPanel variables;
+    public final com.star4droid.star2d.ui.timeline.TimelinePanel timeline;
     public final FilesPanel files;
     public final AiPanel ai;
     public final com.star4droid.star2d.ui.panels.GitPanel git;
@@ -131,6 +132,7 @@ public class EditorShell extends FrameLayout implements ControlLayer.NativeUi, T
         events = new EventsPanel(this);
         joints = new JointsPanel(this);
         variables = new VariablesPanel(this);
+        timeline = new com.star4droid.star2d.ui.timeline.TimelinePanel(this);
         files = new FilesPanel(this);
         ai = new AiPanel(this);
         git = new com.star4droid.star2d.ui.panels.GitPanel(this);
@@ -138,7 +140,7 @@ public class EditorShell extends FrameLayout implements ControlLayer.NativeUi, T
         addItem = new AddItemPanel(this);
         remote = new com.star4droid.star2d.ui.panels.RemotePanel(this);
         aiHub = new com.star4droid.star2d.ui.panels.AiHubPanel(this, remote, ai);
-        panels.setNavigator(java.util.Arrays.asList(elements, properties, events, joints, variables, files, aiHub, git, settings),
+        panels.setNavigator(java.util.Arrays.asList(elements, properties, events, joints, variables, timeline, files, aiHub, git, settings),
                 p -> { if (com.star4droid.star2d.remote.RemoteSession.isLocked() && p != files && p != aiHub) togglePanel(p); else panels.show(p); });
         com.star4droid.star2d.remote.RemoteSession.addListener(sessionListener);
         com.star4droid.star2d.remote.RemoteClient.get().addListener((st, d) -> applyRemoteLock());
@@ -454,6 +456,7 @@ public class EditorShell extends FrameLayout implements ControlLayer.NativeUi, T
         }
         addRail(c, rail, joints);
         addRail(c, rail, variables);
+        addRail(c, rail, timeline);
         addRail(c, rail, files);
         addRail(c, rail, aiHub);
         addRail(c, rail, git);

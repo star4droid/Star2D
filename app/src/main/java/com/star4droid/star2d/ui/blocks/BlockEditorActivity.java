@@ -945,7 +945,7 @@ public class BlockEditorActivity extends AppCompatActivity implements BlockCanva
             "x", "y", "dx", "dy", "speed", "power", "seconds", "delay", "times", "by", "strength", "degrees", "alpha",
             "scale", "scaleX", "scaleY", "zoom", "angle", "velocity", "xVelocity", "yVelocity", "impulse", "torque",
             "offsetX", "offsetY", "GravityScale", "progress", "max", "splits", "step", "pointX", "pointY", "frequency",
-            "ratio", "torque", "ms", "repeat"));
+            "ratio", "torque", "ms", "repeat", "startDelay", "cost", "index", "player", "x1", "y1", "x2", "y2"));
 
     /** The value block that holds this field, or null for a field of the block itself. */
     private static BlockModel.Param parentOf(BlockModel.Node n, BlockModel.Field f) {
@@ -1468,6 +1468,8 @@ public class BlockEditorActivity extends AppCompatActivity implements BlockCanva
             }
         }
         if (e.equals("onCollisionStart") || e.equals("onCollisionEnd")) return new String[]{"body1", "body2"};
+        com.star4droid.star2d.behaviors.SceneEventsExt.Ev x = com.star4droid.star2d.behaviors.SceneEventsExt.find(e);
+        if (x != null) return x.params;
         return new String[0];
     }
 
@@ -1580,6 +1582,22 @@ public class BlockEditorActivity extends AppCompatActivity implements BlockCanva
             s.add("body2");
             s.addAll(items);
             out.put(elements, s);
+        } else if (t.equals("timeline")) {
+            // timelines of the project (Timeline panel: timelines/<name>.s2tl)
+            ArrayList<String> s = new ArrayList<>();
+            File[] fs = new File(projectKey, "timelines").listFiles();
+            if (fs != null) for (File f : fs) if (f.getName().endsWith(".s2tl")) s.add(f.getName().substring(0, f.getName().length() - 5));
+            java.util.Collections.sort(s);
+            out.put(Tr.t("blk_timelines", "Timelines"), s);
+        } else if (l.equals("grid") || l.equals("path")) {
+            // a NavGrid element ("" = the scene's grid) / a path variable
+            if (l.equals("grid")) {
+                ArrayList<String> g = new ArrayList<>();
+                g.add("\"\"");
+                for (String it : items) g.add(it);
+                out.put(elements, g);
+            }
+            out.put(vars, variables);
         } else if (l.equals("node")) {
             // ids of the inner elements of the .ui files of the project
             ArrayList<String> s = uiNodeIds();

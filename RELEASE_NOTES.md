@@ -1,3 +1,34 @@
+## Star2D 0.5.7 Beta
+
+### What's new
+
+**Path finding**
+- New element "Path grid" (NAVGRID) in Add > Game systems, for 2D and 3D scenes: square or hexagon cells.
+- Paint walls and slow ground (mud, water) on the canvas, or make walls from the static elements in one tap. Obstacles (doors, crates) are followed when they move and open their cells when they are destroyed.
+- "Smart Chase" behaviors (2D and 3D): enemies run after the player along the shortest way, find a new way when a door closes, or run away.
+- New variable type PathHolder: draw patrol paths on the canvas, or fill them with "Find path".
+- 21 Navigation blocks (walk to, chase, flee, follow path, obstacles, cells...) and path events.
+
+**Timeline**
+- Timeline panel: keyframe animations of position, rotation, size, color, opacity, image, text and variables, for 2D and 3D elements.
+- Record mode: move the playhead and change the element, keys are added by themselves. 10 transitions with a preview, markers, loop / ping-pong, relative timelines, play on another element (@self).
+- Timeline blocks and quick Tween blocks (with delay, repeat and back-and-forth).
+
+**Local multiplayer (Wi-Fi / hotspot)**
+- New element "Network play" (NETWORK): rooms, max players, player template copied for each player, ready-made lobby.
+- "Network" card on every element: the same on every phone, moved by the host or by a player.
+- Network blocks: host, search, join, start for everybody, messages, spawn, ownership, and 20 value blocks; network events.
+
+**Examples**
+- Maze Chase: tap to walk, smart ghosts, a guard on a patrol path, a key that opens a door, and a hexagon maze.
+- Wi-Fi Stars: lobby + arena, each phone moves its own ball, the host spawns the stars and counts the points.
+
+### العربية
+- **إيجاد المسار:** عنصر شبكة المسارات (مربعة أو سداسية) لـ 2D و 3D، رسم الجدران والأرض البطيئة، عوائق متحركة، سلوك المطاردة الذكية، نوع متغير PathHolder لمسارات الدوريات، و21 بلوك ملاحة.
+- **الخط الزمني:** تحريك بالإطارات المفتاحية مع وضع التسجيل، 10 انتقالات، علامات، تكرار وذهاب وإياب، وبلوكات Tween.
+- **اللعب الجماعي عبر الواي فاي:** عنصر الشبكة، صالة انتظار جاهزة، بطاقة الشبكة لكل عنصر، وبلوكات وأحداث الشبكة.
+- **أمثلة جديدة:** Maze Chase و Wi-Fi Stars.
+
 ## Star2D 0.5.6 Beta
 
 ### What's new

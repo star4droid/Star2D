@@ -8,7 +8,7 @@ Star2D is a 2D game-engine editor on an Android phone (LibGDX + Box2D). Do NOT r
 3. Batch: many ops per call; every call costs shared quota. Check `status.scene_rev` before re-reading a scene. Change code with `files` search / read `from_line,to_line` / edit (and `events` edit), never by rewriting a file.
 4. Units: editor px, origin BOTTOM-LEFT, y UP, x/y = element's bottom-left corner. Raw Box2D/Java: world = px * 0.25. Names: letters, digits, `_`. FIRST read `status.frame` (orientation + width x height) and keep every element inside it; a new scene copies the project orientation, pass `orientation:'portrait'` to `scenes create` for vertical games.
 4b. Draw order: higher z = on top, UI is not automatically above the world. Background 0, ground 10, actors 20, effects 40, UI box 100, TEXT 110, JOYSTICK 120, never negative.
-5. Event names. Scene: `OnCreate` `OnStep` `onCollisionStart` `onCollisionEnd` `OnPause` `OnResume`. Element: `onClick` `onTouchStart` `onTouchEnd` `OnBodyCreated` `OnBodyUpdate` `onBodyCollided` `onBodyCollideEnd`.
+5. Event names. Scene: `OnCreate` `OnStep` `onCollisionStart` `onCollisionEnd` `OnPause` `OnResume`. Systems (scene events too): path finding `onPathEnd` `onNoPath` `onPathBlocked`, animation `onTimelineEnd` `onTimelineMarker` `onTweenEnd`, network `onPlayerJoined` `onPlayerLeft` `onGameFound` `onConnected` `onDisconnected` `onHostLeft` `onNetMessage` `onGameStarted` `onJoinFailed`. Element: `onClick` `onTouchStart` `onTouchEnd` `OnBodyCreated` `OnBodyUpdate` `onBodyCollided` `onBodyCollideEnd`.
 6. Physics: first block of a physical scene's `OnCreate` is `setWorldGravity` (about 800 platformer, 0 top-down); positive velocity Y moves UP; no speed limit in blocks or behaviors (very fast bodies may tunnel: set Bullet true (CCD) and keep walls thick); call `physics_info` before choosing jump power, gravity, speeds or platform gaps; use scene collision events, `isSensor` pickups, `hide` + `destroyLater` to remove things.
 7. Images: `create_image` `hero.png` -> element `image` `/hero.png`.
 8. TEXT wraps if narrower than its content (about 10 px per letter x Font Scale): resize with `set`. A TEXT/PROGRESS without touch events is click-through: put the event on the BOX button only.
@@ -35,6 +35,9 @@ Star2D is a 2D game-engine editor on an Android phone (LibGDX + Box2D). Do NOT r
 - `joints`: the `joints` tool, which types are safe.
 - `groups`: the GROUP element and `parent`: children follow the parent (world/UI rules), hide/destroy cascade. Before building anything with moving parts (a car with wheels, a HUD panel).
 - `prefabs`: reusable groups of elements saved as files: the `prefabs` tool (create, add, apply, revert, unpack, link), overrides, scripts. Before repeating the same enemy/UI piece.
+- `navigation`: path finding: NAVGRID element (cells, obstacles, static walls), Smart Chase behaviors, Navigation blocks, PathHolder paths and patrols. Before any enemy that must find its way around walls, tap-to-walk, or patrols.
+- `timeline`: keyframe animations (timelines/*.s2tl, Timeline panel, record mode) and tween blocks. Before animating doors, coins, menus, cut-scenes.
+- `network`: local Wi-Fi multiplayer: NETWORK element, lobby, synced elements (net property), Network blocks and events. Before any multiplayer game.
 - `java-api`: Java API, file locations, package rules (only for raw Java).
 - `recipes`, `recipes-2`: complete small games as ordered tool calls (platformer, shooter, clicker, breakout, runner, ...). Read ONE recipe section.
 - `testing`: `run_test` / `game_input` examples and limits.

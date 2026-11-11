@@ -67,6 +67,27 @@ public final class PropertyTips {
         t("rays", "Light quality (more rays = smoother, slower).", "جودة الضوء (أشعة أكثر = أنعم وأبطأ).");
         t("Static Light", "Static lights are cheaper (don't move).", "الضوء الثابت أخف على الأداء.");
         t("attach To", "Attach the light to an element so it follows it.", "اربط الضوء بعنصر ليتبعه.");
+        // path finding grid (NAVGRID)
+        t("Cell Shape", "SQUARE: square cells (4 or 8 directions). HEX: hexagons (6 directions, rounder paths).", "SQUARE: خلايا مربعة (4 أو 8 اتجاهات). HEX: خلايا سداسية (6 اتجاهات، مسارات أنعم).");
+        t("Cell Width", "Width of a cell (px in 2D, meters in 3D). Smaller cells = more precise paths but more work. Hexagons: the distance between two cells of a row.", "عرض الخلية (بكسل في 2D، متر في 3D). خلايا أصغر = مسارات أدق لكن عمل أكثر. السداسية: المسافة بين خليتين في الصف.");
+        t("Cell Height", "Height of a cell. Hexagons: the distance between two rows (a regular hexagon = width x 0.866).", "ارتفاع الخلية. السداسية: المسافة بين صفين (السداسي المنتظم = العرض × 0.866).");
+        t("Diagonal", "Square cells: walkers may also move diagonally (8 directions).", "الخلايا المربعة: يمكن للمشاة التحرك قطرياً أيضاً (8 اتجاهات).");
+        t("Cut Corners", "Diagonal moves may pass the corner of a wall (off: they go around it).", "الحركة القطرية يمكنها المرور بزاوية الجدار (معطّل: تلتف حولها).");
+        t("Agent Size", "Width of the walkers: paths keep this far from the walls. 0 = paths may touch the walls.", "عرض المشاة: تبقى المسارات بعيدة عن الجدران بهذا القدر. 0 = يمكن للمسارات ملامسة الجدران.");
+        t("Obstacles", "Elements that block the cells they cover. They are followed when they move, and their cells open again when they are destroyed (doors, crates).", "عناصر تسد الخلايا التي تغطيها. تُتابَع عندما تتحرك، وتنفتح خلاياها عندما تُحذف (أبواب، صناديق).");
+        t("Use Static Bodies", "When the game starts, every STATIC physical element blocks the cells it covers.", "عند بدء اللعبة، كل عنصر فيزيائي ثابت (STATIC) يسد الخلايا التي يغطيها.");
+        t("Show In Game", "Draw the grid while playing (to test the paths).", "ارسم الشبكة أثناء اللعب (لاختبار المسارات).");
+        // local multiplayer (NETWORK)
+        t("Room Name", "Name the other players see when they search for games (empty = the device name).", "الاسم الذي يراه اللاعبون الآخرون عند البحث عن الألعاب (فارغ = اسم الجهاز).");
+        t("Max Players", "Most players in one game, the host included.", "أقصى عدد للاعبين في اللعبة، والمضيف منهم.");
+        t("Send Rate", "Updates sent per second: 20 is smooth on Wi-Fi, less saves battery.", "عدد التحديثات المرسلة في الثانية: 20 سلس على الواي فاي، والأقل يوفر البطارية.");
+        t("Player Template", "An element copied for every player who joins; each copy is moved by its own player. Empty = make the players yourself with blocks.", "عنصر يُنسخ لكل لاعب ينضم، وكل نسخة يحركها لاعبها. فارغ = اصنع اللاعبين بنفسك بالبلوكات.");
+        t("Spawn Radius", "The copies of the player template appear around it, up to this distance.", "تظهر نسخ قالب اللاعب حوله ضمن هذه المسافة.");
+        t("Game Version", "Only players with the same version can join: change it when you change the game.", "ينضم فقط اللاعبون بنفس الإصدار: غيّره عندما تغيّر اللعبة.");
+        t("Lobby", "Show the ready-made lobby (host, rooms, players, start) when the scene starts.", "اعرض صالة الانتظار الجاهزة (استضافة، غرف، لاعبون، ابدأ) عند بدء المشهد.");
+        t("Game Scene", "The scene the lobby opens for everybody when the host presses Start.", "المشهد الذي تفتحه صالة الانتظار للجميع عندما يضغط المضيف ابدأ.");
+        t("TCP Port", "Network port for reliable messages (keep the default unless another app uses it).", "منفذ الشبكة للرسائل المؤكدة (اتركه كما هو إلا إذا استعمله تطبيق آخر).");
+        t("UDP Port", "Network port for fast updates and for finding games (keep the default).", "منفذ الشبكة للتحديثات السريعة والبحث عن الألعاب (اتركه كما هو).");
     }
 
     public static String tip(String field, boolean arabic) {

@@ -1,0 +1,1 @@
+Tap where to go: the player walks the shortest way through the maze. Smart Chase ghosts find their way around the walls, a guard walks a drawn patrol path, and the key opens a door so the ghosts find new ways. A second scene plays on a hexagon grid.

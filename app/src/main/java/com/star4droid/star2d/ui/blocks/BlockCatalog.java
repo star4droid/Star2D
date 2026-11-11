@@ -771,9 +771,15 @@ public final class BlockCatalog {
 
     private static final ArrayList<Reporter> PENDING_3D = new ArrayList<>();
 
-    /** The 3D blocks (and Inventory) of {@link Blocks3D}. */
+    /** The 3D blocks (and Inventory) of {@link Blocks3D}, then the Navigation / Timeline / Network blocks of {@link BlocksSystems}. */
     private static void add3D() {
-        Blocks3D.register(new Blocks3D.Sink() {
+        Blocks3D.Sink sink = builtinSink();
+        Blocks3D.register(sink);
+        BlocksSystems.register(sink);
+    }
+
+    private static Blocks3D.Sink builtinSink() {
+        return new Blocks3D.Sink() {
             @Override
             public void category(String name, int color, String en, String ar) {
                 CATEGORY_COLOR.put(name, color);
@@ -818,7 +824,7 @@ public final class BlockCatalog {
             public void choices(String type, String[] values) {
                 CHOICES.put(type, values);
             }
-        });
+        };
     }
 
     /** Ids of every behavior that has blocks (built-in and the project's). */

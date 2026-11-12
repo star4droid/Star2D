@@ -57,9 +57,10 @@ public class NajmaEditorActivity extends AppCompatActivity {
     private String path, javaRoot, saved = "";
     private Code edit;
     private TextView status, title;
-    private android.widget.PopupWindow pop;
     private LinearLayout popList;
     private ScrollView popScroll;
+    private android.widget.FrameLayout editFrame;
+    private int popCursor = -1, popRows;
     private final Handler ui = new Handler(Looper.getMainLooper());
     private final ExecutorService bg = Executors.newSingleThreadExecutor();
     private Najma.Options options;
@@ -162,7 +163,27 @@ public class NajmaEditorActivity extends AppCompatActivity {
         root.addView(top, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(46)));
 
         edit = new Code(rtl(this));
-        root.addView(edit, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
+        // the suggestions list lives INSIDE the editor area: under the line being typed, moving with the text when it
+        // scrolls, and cut by the bars / keyboard below instead of covering them
+        editFrame = new android.widget.FrameLayout(this);
+        editFrame.setLayoutDirection(View.LAYOUT_DIRECTION_LTR);
+        editFrame.addView(edit, new android.widget.FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        popList = new LinearLayout(this);
+        popList.setOrientation(LinearLayout.VERTICAL);
+        popScroll = new ScrollView(this);
+        popScroll.addView(popList);
+        android.graphics.drawable.GradientDrawable bgd = new android.graphics.drawable.GradientDrawable();
+        bgd.setColor(0xFF2F3136);
+        bgd.setCornerRadius(dp(12));
+        bgd.setStroke(dp(1), 0xFF4A4D55);
+        popScroll.setBackground(bgd);
+        popScroll.setPadding(dp(4), dp(4), dp(4), dp(4));
+        popScroll.setClipToOutline(true);
+        popScroll.setElevation(dp(8));
+        popScroll.setVisibility(View.GONE);
+        editFrame.addView(popScroll, new android.widget.FrameLayout.LayoutParams(dp(280), dp(200)));
+        edit.setOnScrollChangeListener((v, x, y, ox, oy) -> placePopup());
+        root.addView(editFrame, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
 
         status = new TextView(this);
         status.setTextSize(13);
@@ -401,31 +422,12 @@ public class NajmaEditorActivity extends AppCompatActivity {
     }
 
     private void hidePopup() {
-        if (pop != null && pop.isShowing()) try { pop.dismiss(); } catch (Throwable ignored) { }
+        popCursor = -1;
+        if (popScroll != null) popScroll.setVisibility(View.GONE);
     }
 
     private void showPopup(List<Najma.Suggestion> list, final int from, int cursor) {
-        Layout l = edit.getLayout();
-        if (list.isEmpty() || l == null || isFinishing()) { hidePopup(); return; }
-        if (pop == null) {
-            popList = new LinearLayout(this);
-            popList.setOrientation(LinearLayout.VERTICAL);
-            popScroll = new ScrollView(this);
-            popScroll.addView(popList);
-            android.graphics.drawable.GradientDrawable bgd = new android.graphics.drawable.GradientDrawable();
-            bgd.setColor(0xFF2F3136);
-            bgd.setCornerRadius(dp(12));
-            bgd.setStroke(dp(1), 0xFF4A4D55);
-            popScroll.setBackground(bgd);
-            popScroll.setPadding(dp(4), dp(4), dp(4), dp(4));
-            popScroll.setClipToOutline(true);
-            pop = new android.widget.PopupWindow(popScroll, dp(280), dp(200), false);
-            pop.setTouchable(true);
-            pop.setOutsideTouchable(false);
-            pop.setInputMethodMode(android.widget.PopupWindow.INPUT_METHOD_NEEDED);
-            pop.setElevation(dp(10));
-            pop.setAnimationStyle(0);
-        }
+        if (list.isEmpty() || edit.getLayout() == null || isFinishing()) { hidePopup(); return; }
         popList.removeAllViews();
         for (final Najma.Suggestion sg : list) {
             LinearLayout row = new LinearLayout(this);
@@ -454,24 +456,31 @@ public class NajmaEditorActivity extends AppCompatActivity {
             popList.addView(row, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(38)));
         }
         popScroll.scrollTo(0, 0);
-        int rows = Math.min(list.size(), 5);
-        int w = Math.min(dp(290), edit.getWidth() - dp(16)), h = rows * dp(38) + dp(8);
-        int line = l.getLineForOffset(Math.min(cursor, edit.length()));
-        int[] loc = new int[2];
-        edit.getLocationInWindow(loc);
-        int cx = loc[0] + edit.getTotalPaddingLeft() + (int) l.getPrimaryHorizontal(Math.min(cursor, edit.length())) - edit.getScrollX();
-        int below = loc[1] + edit.getTotalPaddingTop() + l.getLineBottom(line) - edit.getScrollY() + dp(4);
-        int above = loc[1] + edit.getTotalPaddingTop() + l.getLineTop(line) - edit.getScrollY() - h - dp(4);
-        int y = below + h <= loc[1] + edit.getHeight() || above < loc[1] ? below : above;
-        int x = Math.max(loc[0] + dp(8), Math.min(cx - w / 2, loc[0] + edit.getWidth() - w - dp(8)));
-        try {
-            if (pop.isShowing()) pop.update(x, y, w, h);
-            else {
-                pop.setWidth(w);
-                pop.setHeight(h);
-                pop.showAtLocation(edit, Gravity.NO_GRAVITY, x, y);
-            }
-        } catch (Throwable ignored) { }
+        popCursor = cursor;
+        popRows = Math.min(list.size(), 5);
+        popScroll.setVisibility(View.VISIBLE);
+        placePopup();
+    }
+
+    /** Right under the line of the cursor (a small gap), following the text when it scrolls. */
+    private void placePopup() {
+        Layout l = edit.getLayout();
+        if (popCursor < 0 || l == null || popScroll.getVisibility() != View.VISIBLE) return;
+        int line = l.getLineForOffset(Math.min(popCursor, edit.length()));
+        int w = Math.min(dp(300), editFrame.getWidth() - dp(24)), h = popRows * dp(38) + dp(8);
+        int y = edit.getTotalPaddingTop() + l.getLineBottom(line) - edit.getScrollY() + dp(6);
+        int cx = edit.getTotalPaddingLeft() + (int) l.getPrimaryHorizontal(Math.min(popCursor, edit.length())) - edit.getScrollX();
+        // its right edge near the cursor (text runs right-to-left), kept inside the editor
+        int x = Math.max(dp(8), Math.min(cx - w + dp(40), editFrame.getWidth() - w - dp(8)));
+        android.widget.FrameLayout.LayoutParams lp = (android.widget.FrameLayout.LayoutParams) popScroll.getLayoutParams();
+        if (lp.width != w || lp.height != h || lp.leftMargin != x || lp.topMargin != y) {
+            lp.width = w;
+            lp.height = h;
+            lp.leftMargin = x;
+            lp.topMargin = y;
+            lp.gravity = Gravity.TOP | Gravity.LEFT;
+            popScroll.setLayoutParams(lp);
+        }
     }
 
     private static boolean isWord(char c) { return Character.isLetterOrDigit(c) || c == '_' || (c >= 'ً' && c <= 'ْ'); }

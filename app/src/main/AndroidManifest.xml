@@ -83,6 +83,11 @@
 			android:windowSoftInputMode="adjustResize"
 			android:exported="false"/>
 		<activity
+			android:name="com.star4droid.star2d.najma.NajmaGuideActivity"
+			android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout"
+			android:theme="@style/AppTheme"
+			android:exported="false"/>
+		<activity
 			android:name="com.star4droid.star2d.najma.NajmaEditorActivity"
 			android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout"
 			android:hardwareAccelerated="true"

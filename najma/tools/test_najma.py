@@ -22,7 +22,7 @@ shutil.copytree(ROOT + '/src/main/resources/najma', CL + '/najma')
 # the scene's generated Refs classes (the editor writes them from the scene)
 T = tempfile.mkdtemp()
 os.makedirs(T + '/refs/com/star4droid/Game/Refs')
-EL = 'player enemy coin scoreText bar stick'.split()
+EL = 'player enemy coin scoreText bar stick ground bullet door button1 title'.split()
 for kind, base in (('Item', 'ItemScript'), ('Scene', 'SceneScript')):
     open(T + '/refs/com/star4droid/Game/Refs/main%sRefs.java' % kind, 'w').write('package com.star4droid.Game.Refs; public abstract class main%sRefs extends com.star4droid.template.Utils.%s { %s }' % (kind, base, ' '.join('public com.star4droid.template.Utils.PlayerItem %s;' % e for e in EL)))
 os.makedirs(T + '/rc')
@@ -30,8 +30,21 @@ r = sh('javac', '-nowarn', '-Xlint:-options', '--release', '8', '-cp', CP, '-d',
 if r.returncode: print(r.stderr); sys.exit(1)
 open(T + '/Run.java', 'w').write('public class Run { public static void main(String[] a) throws Exception { System.out.print(Class.forName(a[0]).getMethod("اختبار").invoke(null)); } }')
 sh('javac', '-d', T + '/rc', T + '/Run.java')
+# every code block of the in-app guide is a test case too (kinds: عنصر item, مشهد scene, صنف plain, جزء statements inside an event)
+GUIDE = os.path.join(os.path.dirname(ROOT), 'app/src/main/assets/najma/guide.md')
+os.makedirs(T + '/guide')
+if os.path.isfile(GUIDE):
+    g = open(GUIDE, encoding='utf-8').read()
+    for i, m in enumerate(re.finditer(r'^```(\S*)\n(.*?)^```$', g, re.M | re.S)):
+        kind, code = m.group(1), m.group(2)
+        if kind == 'ناتج': continue
+        k = {'عنصر': 'item', 'مشهد': 'scene', 'صنف': 'plain', 'جزء': 'item'}.get(kind)
+        if k is None: print('FAIL guide block %d: unknown kind %r' % (i, kind)); sys.exit(1)
+        if kind == 'جزء': code = 'عند البدء {\n' + code + '}\n'
+        line = g[:m.start()].count('\n') + 1
+        open(T + '/guide/guide_%03d_line%d.njm' % (i, line), 'w', encoding='utf-8').write('# kind: %s\n# elements: known\n%s' % (k, code))
 fails = 0; n = 0
-for case in sorted(glob.glob(ROOT + '/src/test/cases/*.njm')):
+for case in sorted(glob.glob(ROOT + '/src/test/cases/*.njm')) + sorted(glob.glob(T + '/guide/*.njm')):
     name = os.path.basename(case)[:-4]
     if ONLY and ONLY != name: continue
     n += 1
@@ -63,6 +76,6 @@ for case in sorted(glob.glob(ROOT + '/src/test/cases/*.njm')):
     if runs:
         r = sh('java', '-cp', CP + ':' + T + '/rc:' + T + '/out_' + name, 'Run', rel[:-4].replace('/', '.'))
         if r.stdout != runs[0]: bad('run: expected %r got %r %s' % (runs[0], r.stdout, r.stderr[-600:])); continue
-    print('ok   %-22s' % name)
+    if not name.startswith('guide_'): print('ok   %-22s' % name)
 print('%d cases, %d failed' % (n, fails))
 sys.exit(1 if fails else 0)

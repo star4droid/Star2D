@@ -52,12 +52,14 @@ import java.util.concurrent.Executors;
  */
 public class NajmaEditorActivity extends AppCompatActivity {
     private static final int BG = 0xFF1E1F22, FG = 0xFFE6E6E6, BAR = 0xFF2B2D30, ACCENT = 0xFFFFB454, ERR = 0xFFFF6B68;
-    private static final int[] COLORS = {0, 0xFFFFB454, 0xFF56C8D8, 0xFFB5CEA8, 0xFF9CDC8C, 0xFF7A7E85, 0xFF82AAFF, 0xFFBBBBBB, 0xFF9AA0A6};
+    static final int[] COLORS = {0, 0xFFFFB454, 0xFF56C8D8, 0xFFB5CEA8, 0xFF9CDC8C, 0xFF7A7E85, 0xFF82AAFF, 0xFFBBBBBB, 0xFF9AA0A6};
 
     private String path, javaRoot, saved = "";
     private Code edit;
     private TextView status, title;
-    private LinearLayout chips;
+    private android.widget.PopupWindow pop;
+    private LinearLayout popList;
+    private ScrollView popScroll;
     private final Handler ui = new Handler(Looper.getMainLooper());
     private final ExecutorService bg = Executors.newSingleThreadExecutor();
     private Najma.Options options;
@@ -93,10 +95,13 @@ public class NajmaEditorActivity extends AppCompatActivity {
             final boolean scene = it.hasExtra("scene") && !"".equals(it.getStringExtra("scene"));
             if (path == null || !path.endsWith(".java") || (!body && !scene) || it.getBooleanExtra("najma_asked", false)) return false;
             File f = new File(path);
-            if (f.isFile() && f.length() > 0) return false;
+            // an existing script is asked about only while it is still the untouched Java template
+            final android.content.SharedPreferences sp = from.getSharedPreferences("najma", Context.MODE_PRIVATE);
+            if (f.isFile() && f.length() > 0 && (sp.getBoolean("java:" + path, false) || !pristine(NajmaProject.read(f)))) return false;
             new AlertDialog.Builder(from).setTitle("لغة السكربت  ·  Script language")
                     .setItems(new CharSequence[]{"نجمة (عربي)", "Java"}, (d, which) -> {
                         if (which == 1) {
+                            sp.edit().putBoolean("java:" + path, true).apply();
                             it.putExtra("najma_asked", true);
                             from.recreate();
                             return;
@@ -112,6 +117,13 @@ public class NajmaEditorActivity extends AppCompatActivity {
         } catch (Throwable e) {
             return false;
         }
+    }
+
+    /** True for a Java script that has no code of the user yet (only the empty methods of the template). */
+    static boolean pristine(String java) {
+        String t = java.replaceAll("(?s)/\\*.*?\\*/", "").replaceAll("//[^\n]*", "");
+        t = t.replaceAll("(?m)^\\s*(package|import)\\s[^;]*;", "");
+        return t.indexOf(';') < 0 && t.indexOf('=') < 0;
     }
 
     private int dp(float v) { return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, v, getResources().getDisplayMetrics()); }
@@ -141,7 +153,7 @@ public class NajmaEditorActivity extends AppCompatActivity {
         title.setText(new File(path).getName());
         title.setPadding(dp(8), 0, dp(8), 0);
         top.addView(title, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
-        top.addView(button("؟", v -> help()));
+        top.addView(button("؟  الشرح", v -> help()));
         top.addView(button("Java", v -> showJava()));
         top.addView(button("⌨", v -> toggleKeyboard()));
         TextView save = button("حفظ", v -> save(true));
@@ -149,7 +161,7 @@ public class NajmaEditorActivity extends AppCompatActivity {
         top.addView(save);
         root.addView(top, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(46)));
 
-        edit = new Code(this);
+        edit = new Code(rtl(this));
         root.addView(edit, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
 
         status = new TextView(this);
@@ -160,12 +172,6 @@ public class NajmaEditorActivity extends AppCompatActivity {
         status.setTextDirection(View.TEXT_DIRECTION_RTL);
         status.setOnClickListener(v -> { Najma.Result r = last; if (r != null && !r.errors.isEmpty()) goTo(r.errors.get(0).line, r.errors.get(0).col); });
         root.addView(status, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-
-        chips = new LinearLayout(this);
-        HorizontalScrollView chipScroll = new HorizontalScrollView(this);
-        chipScroll.setHorizontalScrollBarEnabled(false);
-        chipScroll.addView(chips);
-        root.addView(chipScroll, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(40)));
 
         LinearLayout symbols = new LinearLayout(this);
         symbols.setLayoutDirection(View.LAYOUT_DIRECTION_LTR);
@@ -204,7 +210,6 @@ public class NajmaEditorActivity extends AppCompatActivity {
         edit.clearHistory();
         recolor();
         check();
-        suggest();
         bg.execute(() -> { try { Najma.warmUp(); } catch (Throwable ignored) { } });
 
         edit.addTextChangedListener(new TextWatcher() {
@@ -323,7 +328,7 @@ public class NajmaEditorActivity extends AppCompatActivity {
     }
 
     // ------------------------------------------------------------------ colours, errors
-    private static final class Tint extends ForegroundColorSpan { Tint(int c) { super(c); } }
+    static final class Tint extends ForegroundColorSpan { Tint(int c) { super(c); } }
 
     private void recolor() {
         Editable t = edit.getText();
@@ -361,48 +366,112 @@ public class NajmaEditorActivity extends AppCompatActivity {
         });
     }
 
-    // ------------------------------------------------------------------ suggestions
+    // ------------------------------------------------------------------ suggestions (a bubble at the cursor)
+    /**
+     * The views of this editor behave as in an app with right-to-left support (the editor app itself declares
+     * supportsRtl=false, which would force every line without letters, like a lone brace, to the left).
+     */
+    static Context rtl(Context base) {
+        return new android.content.ContextWrapper(base) {
+            android.content.pm.ApplicationInfo info;
+            @Override public android.content.pm.ApplicationInfo getApplicationInfo() {
+                if (info == null) {
+                    info = new android.content.pm.ApplicationInfo(super.getApplicationInfo());
+                    info.flags |= android.content.pm.ApplicationInfo.FLAG_SUPPORTS_RTL;
+                }
+                return info;
+            }
+        };
+    }
+
     private void suggest() {
         Editable t = edit.getText();
         int c = edit.getSelectionStart();
-        if (t == null || c < 0 || c != edit.getSelectionEnd()) { chips.removeAllViews(); return; }
+        if (t == null || c < 0 || c != edit.getSelectionEnd() || !edit.hasFocus()) { hidePopup(); return; }
         int s = c;
         while (s > 0 && isWord(t.charAt(s - 1))) s--;
-        final int from = s;
-        String prefix = t.subSequence(s, c).toString();
-        List<Najma.Suggestion> list = null;
-        if (s > 0 && t.charAt(s - 1) == '.') { // after a dot: members of the name before it
-            int e = s - 1, b = e;
-            while (b > 0 && isWord(t.charAt(b - 1))) b--;
-            String recv = t.subSequence(b, e).toString();
-            Najma.Result r = last;
-            String type = null;
-            if (r != null) for (Map.Entry<String, String> n : r.names.entrySet()) if (sameName(n.getKey(), recv)) { type = n.getValue(); break; }
-            if (type != null) list = Najma.members(type, prefix);
+        Najma.Result r = last;
+        List<Najma.Suggestion> list;
+        try {
+            list = Najma.completeAt(t.toString(), c, options.kind, r == null ? null : r.names);
+        } catch (Throwable e) {
+            list = new ArrayList<>();
         }
-        if (list == null) {
-            List<String> names = new ArrayList<>();
-            Najma.Result r = last;
-            if (r != null) names.addAll(r.names.keySet());
-            boolean lineStart = true;
-            for (int k = s - 1; k >= 0 && t.charAt(k) != '\n'; k--) if (t.charAt(k) != ' ' && t.charAt(k) != '\t') { lineStart = false; break; }
-            list = prefix.isEmpty() && !lineStart ? new ArrayList<Najma.Suggestion>() : Najma.complete(prefix, options.kind, names);
+        showPopup(list, s, c);
+    }
+
+    private void hidePopup() {
+        if (pop != null && pop.isShowing()) try { pop.dismiss(); } catch (Throwable ignored) { }
+    }
+
+    private void showPopup(List<Najma.Suggestion> list, final int from, int cursor) {
+        Layout l = edit.getLayout();
+        if (list.isEmpty() || l == null || isFinishing()) { hidePopup(); return; }
+        if (pop == null) {
+            popList = new LinearLayout(this);
+            popList.setOrientation(LinearLayout.VERTICAL);
+            popScroll = new ScrollView(this);
+            popScroll.addView(popList);
+            android.graphics.drawable.GradientDrawable bgd = new android.graphics.drawable.GradientDrawable();
+            bgd.setColor(0xFF2F3136);
+            bgd.setCornerRadius(dp(12));
+            bgd.setStroke(dp(1), 0xFF4A4D55);
+            popScroll.setBackground(bgd);
+            popScroll.setPadding(dp(4), dp(4), dp(4), dp(4));
+            popScroll.setClipToOutline(true);
+            pop = new android.widget.PopupWindow(popScroll, dp(280), dp(200), false);
+            pop.setTouchable(true);
+            pop.setOutsideTouchable(false);
+            pop.setInputMethodMode(android.widget.PopupWindow.INPUT_METHOD_NEEDED);
+            pop.setElevation(dp(10));
+            pop.setAnimationStyle(0);
         }
-        chips.removeAllViews();
+        popList.removeAllViews();
         for (final Najma.Suggestion sg : list) {
-            TextView chip = new TextView(this);
-            chip.setText(sg.label);
-            chip.setTextColor(FG);
-            chip.setTextSize(14);
-            chip.setSingleLine(true);
-            chip.setGravity(Gravity.CENTER);
-            chip.setPadding(dp(12), 0, dp(12), 0);
-            chip.setBackgroundColor(0xFF34373C);
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(32));
-            lp.setMargins(dp(4), dp(4), dp(4), dp(4));
-            chip.setOnClickListener(v -> accept(from, sg));
-            chips.addView(chip, lp);
+            LinearLayout row = new LinearLayout(this);
+            row.setLayoutDirection(View.LAYOUT_DIRECTION_LTR);
+            row.setGravity(Gravity.CENTER_VERTICAL);
+            row.setPadding(dp(10), 0, dp(10), 0);
+            TextView note = new TextView(this);
+            note.setText(sg.note == null ? "" : sg.note);
+            note.setTextColor(0xFF8A8F98);
+            note.setTextSize(11);
+            note.setSingleLine(true);
+            note.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            note.setMaxWidth(dp(120));
+            TextView label = new TextView(this);
+            label.setText(sg.label);
+            label.setTextColor(FG);
+            label.setTextSize(15);
+            label.setSingleLine(true);
+            label.setEllipsize(android.text.TextUtils.TruncateAt.START);
+            label.setGravity(Gravity.RIGHT | Gravity.CENTER_VERTICAL);
+            row.addView(note, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1);
+            lp.leftMargin = dp(8);
+            row.addView(label, lp);
+            row.setOnClickListener(v -> accept(from, sg));
+            popList.addView(row, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(38)));
         }
+        popScroll.scrollTo(0, 0);
+        int rows = Math.min(list.size(), 5);
+        int w = Math.min(dp(290), edit.getWidth() - dp(16)), h = rows * dp(38) + dp(8);
+        int line = l.getLineForOffset(Math.min(cursor, edit.length()));
+        int[] loc = new int[2];
+        edit.getLocationInWindow(loc);
+        int cx = loc[0] + edit.getTotalPaddingLeft() + (int) l.getPrimaryHorizontal(Math.min(cursor, edit.length())) - edit.getScrollX();
+        int below = loc[1] + edit.getTotalPaddingTop() + l.getLineBottom(line) - edit.getScrollY() + dp(4);
+        int above = loc[1] + edit.getTotalPaddingTop() + l.getLineTop(line) - edit.getScrollY() - h - dp(4);
+        int y = below + h <= loc[1] + edit.getHeight() || above < loc[1] ? below : above;
+        int x = Math.max(loc[0] + dp(8), Math.min(cx - w / 2, loc[0] + edit.getWidth() - w - dp(8)));
+        try {
+            if (pop.isShowing()) pop.update(x, y, w, h);
+            else {
+                pop.setWidth(w);
+                pop.setHeight(h);
+                pop.showAtLocation(edit, Gravity.NO_GRAVITY, x, y);
+            }
+        } catch (Throwable ignored) { }
     }
 
     private static boolean isWord(char c) { return Character.isLetterOrDigit(c) || c == '_' || (c >= 'ً' && c <= 'ْ'); }
@@ -446,6 +515,7 @@ public class NajmaEditorActivity extends AppCompatActivity {
     }
 
     private void back() {
+        hidePopup();
         if (edit == null || saved.equals(edit.getText().toString())) { finish(); return; }
         new AlertDialog.Builder(this).setMessage("هل تريد حفظ التعديلات؟")
                 .setPositiveButton("حفظ", (d, w) -> { save(false); finish(); })
@@ -454,6 +524,7 @@ public class NajmaEditorActivity extends AppCompatActivity {
     }
 
     private void showJava() {
+        hidePopup();
         Najma.Result r = last;
         TextView tv = new TextView(this);
         tv.setTypeface(Typeface.MONOSPACE);
@@ -468,30 +539,14 @@ public class NajmaEditorActivity extends AppCompatActivity {
     }
 
     private void help() {
-        String h = "• كل أمر في سطر، والكتل بين { }\n"
-                + "• متغير النقاط = ٠      (النوع يُعرف تلقائياً)\n"
-                + "• رقم_صحيح ، رقم_عشري ، نص ، منطقي ، قائمة من نص\n"
-                + "• اجعل النقاط = ٥   •   زد النقاط بمقدار ١\n"
-                + "• إذا النقاط أكبر من ١٠ { } وإلا { }\n"
-                + "• كرر ٥ مرات { }   •   لكل ع في القائمة { }\n"
-                + "• بعد ٣ ثواني { }   •   كل ثانية { }\n"
-                + "• مهمة اقفز(قوة) { }   ثم   اقفز(٥٠٠)\n"
-                + "• س اللاعب ، ص اللاعب ، سرعة_س اللاعب ، نص العنصر\n"
-                + "• حرك نفسي يميناً بسرعة ٢٠٠\n"
-                + "• احذف الآخر   •   شغل صوت \"جمع\"\n"
-                + "• \"النقاط: {النقاط}\"  يضع قيمة المتغير داخل النص\n"
-                + "• عشوائي_صحيح(١، ١٠)   •   احتمال(٣٠٪)\n"
-                + "• جافا { ... }  لكتابة Java مباشرة\n\n"
-                + "اكتب أول حرف من أي أمر وستظهر الاقتراحات فوق لوحة المفاتيح.";
-        TextView tv = new TextView(this);
-        tv.setText(h);
-        tv.setTextSize(15);
-        tv.setTextDirection(View.TEXT_DIRECTION_RTL);
-        tv.setLineSpacing(dp(4), 1);
-        tv.setPadding(dp(18), dp(12), dp(18), dp(4));
-        ScrollView sv = new ScrollView(this);
-        sv.addView(tv);
-        new AlertDialog.Builder(this).setTitle("لغة نجمة باختصار").setView(sv).setPositiveButton("فهمت", null).show();
+        hidePopup();
+        startActivity(new android.content.Intent(this, NajmaGuideActivity.class));
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        hidePopup();
     }
 
     @Override
@@ -507,6 +562,7 @@ public class NajmaEditorActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        hidePopup();
         ui.removeCallbacksAndMessages(null);
         bg.shutdown();
     }
@@ -537,7 +593,8 @@ public class NajmaEditorActivity extends AppCompatActivity {
             setImeOptions(EditorInfo.IME_FLAG_NO_EXTRACT_UI | EditorInfo.IME_FLAG_NO_FULLSCREEN);
             setHorizontallyScrolling(false);
             setLineSpacing(4 * d, 1f);
-            setPaddingRelative(gutter + (int) (6 * d), (int) (8 * d), (int) (10 * d), (int) (120 * d));
+            // no large bottom padding: a text view does not draw inside its padding (lines would look cut)
+            setPaddingRelative(gutter + (int) (6 * d), (int) (8 * d), (int) (10 * d), (int) (10 * d));
             setVerticalScrollBarEnabled(true);
             num.setColor(0xFF6E737A);
             num.setTextSize(11 * d);

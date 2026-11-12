@@ -436,7 +436,13 @@ final class Parser {
                     n.a = condition();
                     return n;
                 }
-                case "كرر": return parseRepeat();
+                case "كرر": {
+                    if (peek(1).word("صوت")) { // «كرر صوت ...» is a sentence, not a loop
+                        Node s = sentence(true);
+                        if (s != null) return s;
+                    }
+                    return parseRepeat();
+                }
                 case "لكل": return parseFor();
                 case "اخرج": next(); return new Node("break", t);
                 case "تخطي": next(); return new Node("continue", t);

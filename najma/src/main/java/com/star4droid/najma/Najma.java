@@ -234,6 +234,220 @@ public final class Najma {
         return b.toString();
     }
 
+    private static final String[] VALUE_AFTER = {"=", "(", ",", "+", "-", "*", "/", "%", "÷", "<", ">", "==", "!=", "<=", ">=", "&&", "||", "!", "[", ":", "?", "+=", "-=", "←"};
+    private static final java.util.Set<String> VALUE_WORDS = new java.util.HashSet<>(java.util.Arrays.asList(
+            "اذا", "طالما", "ارجع", "و", "او", "ليس", "بمقدار", "الي", "يساوي", "من", "في", "بين", "يحتوي", "تحتوي", "حسب", "حالة", "ارم", "بخطوة", "كرر", "وجد"));
+
+    private static void add(List<Suggestion> out, String p, String label, String insert, String note) {
+        String key = Data.canon(Lexer.norm(label));
+        if (!p.isEmpty() && !key.startsWith(p) && !label.toLowerCase().startsWith(p.toLowerCase())) return;
+        if (!p.isEmpty() && key.equals(p) && insert.equals(label)) return;
+        for (Suggestion s : out) if (s.label.equals(label)) return;
+        out.add(new Suggestion(label, insert, note));
+    }
+
+    private static void values(List<Suggestion> out, String p, Map<String, String> names, boolean withFunctions) {
+        Data data = Data.get();
+        if (names != null) for (String n : names.keySet()) add(out, p, n, n, "اسم");
+        if (p.isEmpty()) return;
+        for (String w : new String[]{"صح", "خطأ", "لا_شيء", "نفسي"}) add(out, p, w, w, "");
+        add(out, p, "جديد", "جديد {نوع}()", "");
+        for (Map.Entry<String, List<Data.Prop>> e : data.allProps().entrySet()) add(out, p, e.getKey(), e.getKey() + " {عنصر}", "خاصية عنصر");
+        if (withFunctions)
+            for (Map.Entry<String, List<Data.Fn>> e : data.allFunctions().entrySet()) {
+                Data.Fn f = e.getValue().get(0);
+                add(out, p, f.shown, f.shown + "(" + holes(f.arity) + ")", "مهمة جاهزة");
+            }
+        for (Map.Entry<String, Data.Global> e : data.allGlobals().entrySet()) add(out, p, e.getValue().name, e.getValue().name, "قيمة جاهزة");
+        for (Map.Entry<String, String> e : data.classShown.entrySet()) add(out, p, e.getValue(), e.getValue(), "نوع");
+    }
+
+    private static void types(List<Suggestion> out, String p) {
+        for (String t : new String[]{"رقم_صحيح", "رقم_عشري", "نص", "منطقي", "قائمة من {نوع}", "قاموس من {نوع} إلى {نوع}", "مصفوفة من {نوع}", "عنصر", "رقم_طويل", "عشري_دقيق", "حرف",
+                "قائمة_مرتبطة من {نوع}", "مجموعة من {نوع}", "طابور من {نوع}", "مكدس من {نوع}", "كائن"})
+            add(out, p, t.contains(" ") ? t.substring(0, t.indexOf(' ')) : t, t, "نوع");
+        for (Map.Entry<String, String> e : Data.get().classShown.entrySet()) add(out, p, e.getValue(), e.getValue(), "نوع");
+    }
+
+    /**
+     * Suggestions for the cursor position, from what is written before it on the line: members after a dot, the next
+     * word of a sentence («حرك نفسي» gives يميناً، يساراً، نحو ...), comparison words after a value, names and ready
+     * functions where a value is expected, events and declarations at the top of the file. The word being typed
+     * (letters right before the cursor) is what an accepted suggestion replaces. Empty list = show nothing.
+     */
+    public static synchronized List<Suggestion> completeAt(String src, int cursor, String kind, Map<String, String> names) {
+        List<Suggestion> out = new ArrayList<>();
+        try {
+            Data data = Data.get();
+            cursor = Math.max(0, Math.min(cursor, src.length()));
+            int ls = src.lastIndexOf('\n', cursor - 1) + 1;
+            int p0 = cursor;
+            while (p0 > ls && Lexer.idPart(src.charAt(p0 - 1))) p0--;
+            String before = src.substring(ls, p0);
+            boolean inStr = false;
+            for (int i = 0; i < before.length(); i++) {
+                char c = before.charAt(i);
+                if (c == '"') inStr = !inStr;
+                else if (!inStr && (c == '#' || (c == '/' && i + 1 < before.length() && before.charAt(i + 1) == '/'))) return out;
+            }
+            if (inStr) return out;
+            String p = Data.canon(Lexer.norm(src.substring(p0, cursor)));
+            List<Lexer.Tok> ctx = new ArrayList<>();
+            for (Lexer.Tok t : Lexer.lex(before, null)) if (t.type != Lexer.EOF && t.type != Lexer.NL) ctx.add(t);
+            int depth = 0;
+            boolean q = false;
+            for (int i = 0; i < ls; i++) {
+                char c = src.charAt(i);
+                if (c == '"') q = !q;
+                else if (c == '\n') q = false;
+                else if (!q && c == '{') depth++;
+                else if (!q && c == '}') depth--;
+            }
+            Lexer.Tok last = ctx.isEmpty() ? null : ctx.get(ctx.size() - 1);
+
+            // 1) after a dot: members of what is before it
+            if (last != null && last.is(".")) {
+                String type = null;
+                Lexer.Tok r = ctx.size() > 1 ? ctx.get(ctx.size() - 2) : null;
+                if (r != null && r.type == Lexer.ID) {
+                    if (names != null) for (Map.Entry<String, String> n : names.entrySet()) if (Data.same(Lexer.norm(n.getKey()), r.norm)) { type = n.getValue(); break; }
+                    if (type == null && data.global(r.norm) != null) type = data.global(r.norm).type;
+                    if (type == null && r.norm.equals("نفسي")) type = "com.star4droid.template.Utils.PlayerItem";
+                    if (type == null) type = data.classAlias(r.norm);
+                    if (type == null && r.text.charAt(0) < 0x80) type = index().bySimple(r.text);
+                } else if (r != null && r.type == Lexer.STR) type = "java.lang.String";
+                return type == null ? out : members(type, src.substring(p0, cursor));
+            }
+            // 2) start of a line
+            if (ctx.isEmpty() || (ctx.size() == 1 && last.is("}"))) {
+                if (p.isEmpty()) {
+                    if (last != null) add(out, p, "وإلا", "وإلا {\n    \n}", "");
+                    return out;
+                }
+                if (last != null) { add(out, p, "وإلا", "وإلا {\n    \n}", ""); add(out, p, "وإلا إذا", "وإلا إذا {شرط} {\n    \n}", ""); return out; }
+                if (depth <= 0) {
+                    for (Data.Event e : data.events) if (e.kind.equals(kind)) add(out, p, e.shown, e.shown + " {\n    \n}", "حدث");
+                    for (String[] s : SNIPPETS) if ("متغير ثابت خاصية مهمة صنف تعداد رقم_صحيح رقم_عشري نص منطقي قائمة قاموس جافا".contains(s[0])) add(out, p, s[0], s[1], "");
+                    add(out, p, "واجهة", "واجهة {اسم} {\n    \n}", "");
+                    add(out, p, "استورد", "استورد {اسم_الصنف}", "");
+                    types(out, p);
+                    return out;
+                }
+                for (String[] s : SNIPPETS) if (!"خاصية صنف تعداد".contains(s[0])) add(out, p, s[0], s[1], "");
+                for (Map.Entry<String, List<Data.Tmpl>> e : data.allSentences().entrySet())
+                    if (e.getKey().startsWith(p)) for (Data.Tmpl t : e.getValue()) add(out, "", t.shown, t.shown, "جملة");
+                if (names != null) for (String n : names.keySet()) add(out, p, n, n, "اسم");
+                for (Map.Entry<String, List<Data.Fn>> e : data.allFunctions().entrySet()) {
+                    Data.Fn f = e.getValue().get(0);
+                    add(out, p, f.shown, f.shown + "(" + holes(f.arity) + ")", "مهمة جاهزة");
+                }
+                return limit(out);
+            }
+            Lexer.Tok first = ctx.get(0);
+            // 3) an event being written: عند ...
+            if (depth <= 0 && (first.word("عند") || first.word("كل"))) {
+                StringBuilder typed = new StringBuilder();
+                for (Lexer.Tok t : ctx) typed.append(typed.length() > 0 ? " " : "").append(Data.canon(t.norm));
+                for (Data.Event e : data.events) {
+                    if (!e.kind.equals(kind) || !e.phrase.startsWith(typed + " ")) continue;
+                    String[] shown = e.shown.split(" ");
+                    StringBuilder rest = new StringBuilder();
+                    for (int i = ctx.size(); i < shown.length; i++) rest.append(rest.length() > 0 ? " " : "").append(shown[i]);
+                    add(out, p, rest.toString(), rest + " {\n    \n}", "حدث");
+                }
+                return out;
+            }
+            // 4) a sentence in progress: its next word
+            boolean wantValue = false;
+            List<Data.Tmpl> tms = depth > 0 ? data.sentences(first.norm) : null;
+            if (tms != null && first.type == Lexer.ID) {
+                int bestScore = -1;
+                List<String[]> found = new ArrayList<>();
+                for (Data.Tmpl tm : tms) {
+                    String[] shown = tm.shown.split("\\s+");
+                    int i = 1, k = 1, score = 0;
+                    while (k < tm.parts.length) {
+                        String lit = tm.parts[k];
+                        if (lit != null) {
+                            if (i >= ctx.size()) { found.add(new String[]{shown[k], tm.shown, String.valueOf(score)}); break; }
+                            if (ctx.get(i).type != Lexer.ID || !Data.same(ctx.get(i).norm, lit)) break;
+                            i++; k++; score++;
+                            continue;
+                        }
+                        String nextLit = k + 1 < tm.parts.length ? tm.parts[k + 1] : null;
+                        int start = i;
+                        while (i < ctx.size() && !(nextLit != null && i > start && ctx.get(i).type == Lexer.ID && Data.same(ctx.get(i).norm, nextLit))) i++;
+                        if (i >= ctx.size()) {
+                            if (i == start) { wantValue = true; bestScore = Math.max(bestScore, score); }
+                            else if (nextLit != null) found.add(new String[]{shown[k + 1], tm.shown, String.valueOf(score)});
+                            break;
+                        }
+                        k++;
+                    }
+                }
+                for (String[] f : found) bestScore = Math.max(bestScore, Integer.parseInt(f[2]));
+                for (String[] f : found) if (Integer.parseInt(f[2]) == bestScore) add(out, p, f[0], f[0], f[1]);
+                if (wantValue || first.word("اجعل")) {
+                    values(out, p, names, !first.word("اجعل"));
+                    if (first.word("اجعل") && ctx.size() == 1) for (Map.Entry<String, List<Data.Prop>> e : data.allProps().entrySet()) add(out, p, e.getKey(), e.getKey() + " {عنصر}", "خاصية عنصر");
+                }
+                if (!out.isEmpty()) return limit(out);
+            }
+            // 5) small fixed continuations
+            if (first.word("لكل") && ctx.size() == 2) { add(out, p, "في", "في {قائمة} {\n    \n}", "كل عنصر في قائمة"); add(out, p, "من", "من {بداية} إلى {نهاية} {\n    \n}", "عدّ بين رقمين"); return out; }
+            if (first.word("كرر") && ctx.size() >= 2 && !has(ctx, "مرات") && !has(ctx, "مرة") && valueLike(last)) { add(out, p, "مرات", "مرات {\n    \n}", ""); add(out, p, "مرة", "مرة {\n    \n}", ""); }
+            if (first.word("كرر") && (last.word("مرات") || last.word("مرة"))) { add(out, p, "باستخدام", "باستخدام {عداد}", "اسم لرقم الدورة"); return out; }
+            if ((first.word("بعد") || first.word("كل")) && depth > 0) {
+                if (ctx.size() == 1) for (String w : new String[]{"ثانية", "ثانيتين", "نصف ثانية"}) add(out, p, w, w + " {\n    \n}", "");
+                else if (valueLike(last)) for (String w : new String[]{"ثواني", "ثانية", "ملي ثانية", "دقائق"}) add(out, p, w, w + " {\n    \n}", "");
+                if (!out.isEmpty()) return out;
+            }
+            if ((first.word("زد") || first.word("انقص")) && ctx.size() >= 2 && valueLike(last) && !has(ctx, "بمقدار")) add(out, p, "بمقدار", "بمقدار {قيمة}", "");
+            if (last.word("جديد") || last.word("يرث") || last.word("ينفذ") || (last.word("من") && ctx.size() >= 2 && Parser.BUILTIN_TYPES.contains(ctx.get(ctx.size() - 2).norm))
+                    || (last.word("الي") && Parser.BUILTIN_TYPES.contains(first.norm))) { types(out, p); return limit(out); }
+            // 6) after a value: words that continue it
+            if (valueLike(last)) {
+                boolean cond = first.word("اذا") || first.word("طالما") || has(ctx, "اذا");
+                if (cond) for (String[] w : new String[][]{{"أكبر من", ""}, {"أصغر من", ""}, {"يساوي", ""}, {"لا يساوي", ""}, {"و", "الشرطان معاً"}, {"أو", "أحد الشرطين"}, {"بين", "بين {أدنى} و {أعلى}"}, {"تحتوي", ""}, {"موجود", "ليس فارغاً"}, {"من نوع", ""}})
+                    add(out, p, w[0], w[1].contains("{") ? w[1] : w[0], w[1].contains("{") ? "" : w[1]);
+                // «س اللاعب»: a property name is followed by the element
+                if (last.type == Lexer.ID && data.props(last.norm) != null && names != null && !nameKnown(names, last.norm)) for (String n : names.keySet()) add(out, p, n, n, "عنصر");
+                if (!p.isEmpty() && last.type == Lexer.ID && names != null) for (String n : names.keySet()) add(out, p, n, n, "اسم");
+                return limit(out);
+            }
+            // 7) a value is expected
+            boolean valueCtx = last.type == Lexer.ID && (VALUE_WORDS.contains(last.norm) || last.word("اجعل") || last.word("زد") || last.word("انقص"));
+            if (last.type == Lexer.SYM) for (String v : VALUE_AFTER) if (last.text.equals(v)) valueCtx = true;
+            if (valueCtx) {
+                if (last.word("اجعل") || last.word("زد") || last.word("انقص")) {
+                    if (names != null) for (String n : names.keySet()) add(out, p, n, n, "اسم");
+                    for (Map.Entry<String, List<Data.Prop>> e : data.allProps().entrySet()) add(out, p, e.getKey(), e.getKey() + " {عنصر}", "خاصية عنصر");
+                } else values(out, p, names, true);
+                return limit(out);
+            }
+            if (!p.isEmpty()) values(out, p, names, true);
+        } catch (RuntimeException ignored) { }
+        return limit(out);
+    }
+
+    private static List<Suggestion> limit(List<Suggestion> l) { return l.size() > 40 ? new ArrayList<>(l.subList(0, 40)) : l; }
+
+    private static boolean has(List<Lexer.Tok> ctx, String word) {
+        for (Lexer.Tok t : ctx) if (t.word(word)) return true;
+        return false;
+    }
+
+    private static boolean nameKnown(Map<String, String> names, String norm) {
+        for (String n : names.keySet()) if (Data.same(Lexer.norm(n), norm)) return true;
+        return false;
+    }
+
+    private static boolean valueLike(Lexer.Tok t) {
+        if (t == null) return false;
+        if (t.type == Lexer.NUM || t.type == Lexer.STR || t.type == Lexer.CHR || t.is(")") || t.is("]")) return true;
+        return t.type == Lexer.ID && (!Parser.KEYWORDS.contains(t.norm) || t.norm.equals("انا") || t.norm.equals("صح") || t.norm.equals("خطا"));
+    }
+
     /** Members of a Java type (as given by {@link Result#names}) with their Arabic names, for the list after a dot. */
     public static synchronized List<Suggestion> members(String javaType, String prefix) {
         List<Suggestion> out = new ArrayList<>();

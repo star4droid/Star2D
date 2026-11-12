@@ -24,9 +24,15 @@ on:
         type: boolean
         required: true
         default: false
+      patch_base_artifact:
+        description: 'Patch from an older build: link of its APK artifact (https://github.com/<owner>/<repo>/actions/runs/<run>/artifacts/<id>). Empty = from the previous release, only when releasing'
+        type: string
+        required: false
+        default: ''
 
 permissions:
   contents: write
+  actions: read
 
 jobs:
   build:
@@ -131,7 +137,6 @@ jobs:
 
       # 🏷 Read version name
       - name: Read version name
-        if: ${{ github.event.inputs.upload_to_releases == 'true' }}
         run: |
           V=$(grep -m1 versionName app/build.gradle | sed -E 's/.*"([^"]+)".*/\1/')
           echo "VERSION_NAME=$V" >> $GITHUB_ENV
@@ -150,22 +155,47 @@ jobs:
           generate_release_notes: false
           files: Star2D-${{ env.VERSION_NAME }}.apk
 
-      # 🩹 xdelta patch ONLY when releasing: from the PREVIOUS release's APK (not this version) to this APK
-      - name: Make and upload xdelta patch
-        if: ${{ github.event.inputs.upload_to_releases == 'true' }}
+      # 📥 Optional patch base: the APK inside an artifact of an older run (the link typed in "patch_base_artifact")
+      - name: Download the patch base APK from an artifact
+        if: ${{ github.event.inputs.patch_base_artifact != '' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ART_URL: ${{ github.event.inputs.patch_base_artifact }}
+        run: |
+          ID=$(echo "$ART_URL" | sed -nE 's#.*/artifacts/([0-9]+).*#\1#p')
+          REPO=$(echo "$ART_URL" | sed -nE 's#^https?://github\.com/([^/]+/[^/]+)/.*#\1#p')
+          [ -z "$REPO" ] && REPO="$GITHUB_REPOSITORY"
+          if [ -z "$ID" ]; then echo "::error::patch_base_artifact must look like https://github.com/<owner>/<repo>/actions/runs/<run>/artifacts/<id>"; exit 1; fi
+          mkdir -p base-apk
+          if ! gh api "repos/$REPO/actions/artifacts/$ID/zip" > base-apk/base.zip; then echo "::error::Could not download artifact $ID of $REPO (expired, or not readable by this workflow)"; exit 1; fi
+          unzip -o -q base-apk/base.zip -d base-apk
+          APK=$(find base-apk -type f -name '*.apk' | head -1)
+          if [ -z "$APK" ]; then echo "::error::No .apk inside artifact $ID"; ls -R base-apk; exit 1; fi
+          echo "Patch base: $APK"
+          echo "PATCH_BASE_APK=$GITHUB_WORKSPACE/$APK" >> $GITHUB_ENV
+
+      # 🩹 xdelta patch to the APK just built: from the artifact above when a link was given, otherwise (only when
+      #    releasing) from the PREVIOUS release's APK
+      - name: Make xdelta patch
+        if: ${{ github.event.inputs.upload_to_releases == 'true' || github.event.inputs.patch_base_artifact != '' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash tools/ci_make_patch.sh app/build/outputs/apk/release/app-release.apk patch-out "$VERSION_NAME" "v$VERSION_NAME"
+
+      - name: Attach the patch to the release
+        if: ${{ github.event.inputs.upload_to_releases == 'true' && hashFiles('patch-out/*.xdelta') != '' }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           TAG="v${{ env.VERSION_NAME }}"
-          bash tools/ci_make_patch.sh app/build/outputs/apk/release/app-release.apk patch-out "$VERSION_NAME" "$TAG"
-          if ! ls patch-out/*.xdelta >/dev/null 2>&1; then echo "No patch."; exit 0; fi
           for a in $(gh release view "$TAG" --json assets --jq '.assets[].name' | grep -E '\.xdelta(\.txt)?$' || true); do
             gh release delete-asset "$TAG" "$a" --yes || true
           done
           gh release upload "$TAG" patch-out/*.xdelta patch-out/*.xdelta.txt --clobber
 
+      # the patch is always an artifact of this run too (with or without a release)
       - name: Upload patch as artifact
-        if: ${{ github.event.inputs.upload_to_releases == 'true' && hashFiles('patch-out/*.xdelta') != '' }}
+        if: ${{ hashFiles('patch-out/*.xdelta') != '' }}
         uses: actions/upload-artifact@v4
         with:
           name: engine.xdelta

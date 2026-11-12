@@ -1,0 +1,24 @@
+// نجمة (Najma): the Arabic programming language of Star2D. Pure Java (no Android, no libGDX): it turns .njm files
+// into .java files inside the editor; nothing of it ships inside a game. Tests: python3 najma/tools/test_najma.py
+plugins {
+    id 'java-library'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+sourceSets {
+    main {
+        java.srcDirs = ['src/main/java']
+        resources.srcDirs = ['src/main/resources']
+    }
+    test {
+        java.srcDirs = []
+    }
+}

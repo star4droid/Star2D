@@ -23,5 +23,6 @@ include(
    ":app",
    ":formatter",
    ":template",
-   ":desktop"
+   ":desktop",
+   ":najma"
 )

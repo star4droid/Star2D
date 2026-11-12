@@ -1,0 +1,370 @@
+package najma;
+
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
+import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.physics.box2d.Body;
+import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.star4droid.template.Items.StageImp;
+import com.star4droid.template.Utils.PlayerItem;
+import com.star4droid.template.behaviors.Behavior;
+import com.star4droid.template.behaviors.GameplaySupport;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Helpers used by code written in Najma (the Arabic language of Star2D). GENERATED: the editor rewrites this file,
+ * do not edit it. Positions, sizes and speeds are in editor pixels (y up), angles in degrees.
+ */
+public final class N {
+    private N() {}
+
+    public interface Fn<A, R> { R call(A a); }
+    public interface Pred<A> { boolean test(A a); }
+    public interface Act<A> { void run(A a); }
+
+    // ---------------------------------------------------------------- random
+    public static int randInt(int min, int max) { return max < min ? MathUtils.random(max, min) : MathUtils.random(min, max); }
+    public static float randFloat(float min, float max) { return MathUtils.random(min, max); }
+    public static boolean chance(float p) { return MathUtils.random() < p; }
+    public static <T> T pick(List<T> l) { return l == null || l.isEmpty() ? null : l.get(MathUtils.random(l.size() - 1)); }
+    public static <T> T pick(T[] a) { return a == null || a.length == 0 ? null : a[MathUtils.random(a.length - 1)]; }
+    public static <T> List<T> shuffle(List<T> l) { Collections.shuffle(l); return l; }
+
+    // ---------------------------------------------------------------- math
+    public static int round(double v) { return (int) Math.round(v); }
+    public static int ceil(double v) { return (int) Math.ceil(v); }
+    public static int floor(double v) { return (int) Math.floor(v); }
+    public static float abs(float v) { return Math.abs(v); }
+    public static int abs(int v) { return Math.abs(v); }
+    public static float sqrt(double v) { return (float) Math.sqrt(v); }
+    public static float pow(double a, double b) { return (float) Math.pow(a, b); }
+    public static float max(float a, float b) { return Math.max(a, b); }
+    public static int max(int a, int b) { return Math.max(a, b); }
+    public static float min(float a, float b) { return Math.min(a, b); }
+    public static int min(int a, int b) { return Math.min(a, b); }
+    public static float clamp(float v, float lo, float hi) { return v < lo ? lo : v > hi ? hi : v; }
+    public static int clamp(int v, int lo, int hi) { return v < lo ? lo : v > hi ? hi : v; }
+    public static float lerp(float a, float b, float t) { return a + (b - a) * t; }
+    public static float sin(float deg) { return MathUtils.sinDeg(deg); }
+    public static float cos(float deg) { return MathUtils.cosDeg(deg); }
+    public static float tan(float deg) { return (float) Math.tan(deg * MathUtils.degreesToRadians); }
+    public static float atan2(float y, float x) { return MathUtils.atan2(y, x) * MathUtils.radiansToDegrees; }
+    public static boolean between(double v, double lo, double hi) { return lo <= hi ? v >= lo && v <= hi : v >= hi && v <= lo; }
+    public static int idiv(int a, int b) { return b == 0 ? 0 : a / b; }
+    public static float dist(float x1, float y1, float x2, float y2) { return (float) Math.sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1)); }
+
+    // ---------------------------------------------------------------- comparing / converting
+    public static boolean eq(Object a, Object b) {
+        if (a == b) return true;
+        if (a == null || b == null) return false;
+        if (a instanceof Number && b instanceof Number) return ((Number) a).doubleValue() == ((Number) b).doubleValue();
+        if (a instanceof Character && b instanceof String) return b.equals(String.valueOf(a));
+        if (b instanceof Character && a instanceof String) return a.equals(String.valueOf(b));
+        return a.equals(b);
+    }
+
+    public static boolean has(Object box, Object v) {
+        if (box == null) return false;
+        if (box instanceof String) return ((String) box).contains(String.valueOf(v));
+        if (box instanceof Collection) { for (Object o : (Collection<?>) box) if (eq(o, v)) return true; return false; }
+        if (box instanceof Map) return ((Map<?, ?>) box).containsKey(v);
+        if (box instanceof Iterable) { for (Object o : (Iterable<?>) box) if (eq(o, v)) return true; return false; }
+        if (box.getClass().isArray()) {
+            int n = java.lang.reflect.Array.getLength(box);
+            for (int i = 0; i < n; i++) if (eq(java.lang.reflect.Array.get(box, i), v)) return true;
+        }
+        return false;
+    }
+
+    /** A number as people write it: 5 instead of 5.0, at most 2 decimals. */
+    public static String show(double v) {
+        if (v == Math.rint(v) && Math.abs(v) < 1e15) return String.valueOf((long) v);
+        String s = String.valueOf(Math.round(v * 100.0) / 100.0);
+        return s;
+    }
+
+    public static int toInt(Object o) {
+        if (o instanceof Number) return ((Number) o).intValue();
+        if (o instanceof Boolean) return ((Boolean) o) ? 1 : 0;
+        try { return (int) Double.parseDouble(digits(String.valueOf(o))); } catch (Exception e) { return 0; }
+    }
+
+    public static float toFloat(Object o) {
+        if (o instanceof Number) return ((Number) o).floatValue();
+        try { return Float.parseFloat(digits(String.valueOf(o))); } catch (Exception e) { return 0; }
+    }
+
+    public static boolean toBool(Object o) {
+        if (o instanceof Boolean) return (Boolean) o;
+        String s = String.valueOf(o).trim();
+        return s.equals("true") || s.equals("صح") || s.equals("1") || s.equals("نعم");
+    }
+
+    /** Arabic digits and decimal mark typed by a player become Latin ones. */
+    private static String digits(String s) {
+        StringBuilder b = new StringBuilder();
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            if (c >= '٠' && c <= '٩') c = (char) ('0' + (c - '٠'));
+            else if (c == '٫') c = '.';
+            if (c != ' ') b.append(c);
+        }
+        return b.toString();
+    }
+
+    // ---------------------------------------------------------------- text
+    public static int len(Object o) {
+        if (o == null) return 0;
+        if (o instanceof CharSequence) return ((CharSequence) o).length();
+        if (o instanceof Collection) return ((Collection<?>) o).size();
+        if (o instanceof Map) return ((Map<?, ?>) o).size();
+        if (o instanceof com.badlogic.gdx.utils.Array) return ((com.badlogic.gdx.utils.Array<?>) o).size;
+        if (o.getClass().isArray()) return java.lang.reflect.Array.getLength(o);
+        return 0;
+    }
+
+    public static String sub(String s, int from, int to) {
+        if (s == null) return "";
+        from = Math.max(0, Math.min(from, s.length()));
+        to = Math.max(from, Math.min(to, s.length()));
+        return s.substring(from, to);
+    }
+
+    public static ArrayList<String> split(String s, String sep) {
+        ArrayList<String> out = new ArrayList<String>();
+        if (s == null) return out;
+        int i = 0;
+        while (true) {
+            int k = sep.isEmpty() ? -1 : s.indexOf(sep, i);
+            if (k < 0) { out.add(s.substring(i)); return out; }
+            out.add(s.substring(i, k));
+            i = k + sep.length();
+        }
+    }
+
+    public static String join(Iterable<?> items, String sep) {
+        StringBuilder b = new StringBuilder();
+        for (Object o : items) {
+            if (b.length() > 0) b.append(sep);
+            b.append(o instanceof Float || o instanceof Double ? show(((Number) o).doubleValue()) : String.valueOf(o));
+        }
+        return b.toString();
+    }
+
+    public static String repeat(String s, int n) {
+        StringBuilder b = new StringBuilder();
+        for (int i = 0; i < n; i++) b.append(s);
+        return b.toString();
+    }
+
+    // ---------------------------------------------------------------- lists
+    public static <T> ArrayList<T> filter(Iterable<T> l, Pred<T> p) {
+        ArrayList<T> out = new ArrayList<T>();
+        for (T t : l) if (p.test(t)) out.add(t);
+        return out;
+    }
+
+    public static <T> T find(Iterable<T> l, Pred<T> p) {
+        for (T t : l) if (p.test(t)) return t;
+        return null;
+    }
+
+    public static <T> int count(Iterable<T> l, Pred<T> p) {
+        int n = 0;
+        for (T t : l) if (p.test(t)) n++;
+        return n;
+    }
+
+    public static <T> void each(Iterable<T> l, Act<T> a) {
+        ArrayList<T> copy = new ArrayList<T>();
+        for (T t : l) copy.add(t);
+        for (T t : copy) a.run(t);
+    }
+
+    public static <T> void removeIf(Collection<T> l, Pred<T> p) {
+        java.util.Iterator<T> it = l.iterator();
+        while (it.hasNext()) if (p.test(it.next())) it.remove();
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public static <T> List<T> sort(List<T> l) { Collections.sort((List) l); return l; }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public static <T> List<T> sortDesc(List<T> l) { Collections.sort((List) l, Collections.reverseOrder()); return l; }
+
+    public static <T> List<T> reverse(List<T> l) { Collections.reverse(l); return l; }
+    public static <T> T first(List<T> l) { return l == null || l.isEmpty() ? null : l.get(0); }
+    public static <T> T last(List<T> l) { return l == null || l.isEmpty() ? null : l.get(l.size() - 1); }
+
+    public static float sum(Iterable<? extends Number> l) {
+        float s = 0;
+        for (Number n : l) s += n.floatValue();
+        return s;
+    }
+
+    public static float maxOf(Iterable<? extends Number> l) {
+        float m = -Float.MAX_VALUE;
+        for (Number n : l) m = Math.max(m, n.floatValue());
+        return m;
+    }
+
+    public static float minOf(Iterable<? extends Number> l) {
+        float m = Float.MAX_VALUE;
+        for (Number n : l) m = Math.min(m, n.floatValue());
+        return m;
+    }
+
+    public static ArrayList<Integer> range(int from, int to) {
+        ArrayList<Integer> out = new ArrayList<Integer>();
+        if (from <= to) for (int i = from; i <= to; i++) out.add(i);
+        else for (int i = from; i >= to; i--) out.add(i);
+        return out;
+    }
+
+    // ---------------------------------------------------------------- time / device / storage
+    private static final long START = System.currentTimeMillis();
+    public static long now() { return System.currentTimeMillis(); }
+    public static float time() { return (System.currentTimeMillis() - START) / 1000f; }
+    public static float delta() { return Gdx.graphics.getDeltaTime(); }
+    public static String date() { return new java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(new java.util.Date()); }
+    public static String clock() { return new java.text.SimpleDateFormat("HH:mm", java.util.Locale.US).format(new java.util.Date()); }
+    public static void vibrate(int ms) { try { Gdx.input.vibrate(ms); } catch (Throwable ignored) { } }
+    public static void print(Object o) { Gdx.app.log("najma", o instanceof Float || o instanceof Double ? show(((Number) o).doubleValue()) : String.valueOf(o)); }
+
+    private static com.badlogic.gdx.Preferences prefs() { return Gdx.app.getPreferences("najma_save"); }
+
+    public static void save(String key, Object value) {
+        com.badlogic.gdx.Preferences p = prefs();
+        if (value instanceof Integer) p.putInteger(key, (Integer) value);
+        else if (value instanceof Number) p.putFloat(key, ((Number) value).floatValue());
+        else if (value instanceof Boolean) p.putBoolean(key, (Boolean) value);
+        else p.putString(key, String.valueOf(value));
+        p.flush();
+    }
+
+    public static int load(String key, int def) { try { return prefs().getInteger(key, def); } catch (Throwable e) { return (int) load(key, (float) def); } }
+    public static float load(String key, float def) { try { return prefs().getFloat(key, def); } catch (Throwable e) { return def; } }
+    public static boolean load(String key, boolean def) { try { return prefs().getBoolean(key, def); } catch (Throwable e) { return def; } }
+    public static String load(String key, String def) { try { return prefs().getString(key, def); } catch (Throwable e) { return def; } }
+    public static void forget(String key) { com.badlogic.gdx.Preferences p = prefs(); p.remove(key); p.flush(); }
+
+    // ---------------------------------------------------------------- input
+    public static boolean touched() { return Gdx.input.isTouched(); }
+    public static boolean justTouched() { return Gdx.input.justTouched(); }
+    public static float touchX(StageImp s) { return s.getTouch().x / StageImp.WORLD_SCALE; }
+    public static float touchY(StageImp s) { return s.getTouch().y / StageImp.WORLD_SCALE; }
+
+    private static int keyCode(String name) {
+        String n = name == null ? "" : name.trim();
+        if (n.equals("يمين") || n.equals("اليمين")) return Input.Keys.RIGHT;
+        if (n.equals("يسار") || n.equals("اليسار")) return Input.Keys.LEFT;
+        if (n.equals("اعلى") || n.equals("أعلى") || n.equals("فوق")) return Input.Keys.UP;
+        if (n.equals("اسفل") || n.equals("أسفل") || n.equals("تحت")) return Input.Keys.DOWN;
+        if (n.equals("مسافة")) return Input.Keys.SPACE;
+        if (n.equals("ادخال") || n.equals("إدخال")) return Input.Keys.ENTER;
+        if (n.equals("رجوع")) return Input.Keys.BACK;
+        int k = Input.Keys.valueOf(n);
+        if (k < 0) k = Input.Keys.valueOf(n.toUpperCase());
+        if (k < 0 && n.length() > 1) k = Input.Keys.valueOf(n.substring(0, 1).toUpperCase() + n.substring(1).toLowerCase());
+        return k;
+    }
+
+    public static boolean key(String name) { int k = keyCode(name); return k >= 0 && Gdx.input.isKeyPressed(k); }
+    public static boolean keyJust(String name) { int k = keyCode(name); return k >= 0 && Gdx.input.isKeyJustPressed(k); }
+
+    // ---------------------------------------------------------------- elements (pixels, y up, degrees)
+    public static boolean alive(PlayerItem it) { return Behavior.alive(it); }
+    public static float x(PlayerItem it) { return Behavior.cx(it); }
+    public static float y(PlayerItem it) { return Behavior.cy(it); }
+    public static float width(PlayerItem it) { return Behavior.wPx(it); }
+    public static float height(PlayerItem it) { return Behavior.hPx(it); }
+    public static void setPos(PlayerItem it, float x, float y) { if (alive(it)) GameplaySupport.moveCenter(it, x, y); }
+    public static void setX(PlayerItem it, float x) { if (alive(it)) GameplaySupport.moveCenter(it, x, Behavior.cy(it)); }
+    public static void setY(PlayerItem it, float y) { if (alive(it)) GameplaySupport.moveCenter(it, Behavior.cx(it), y); }
+    public static float vx(StageImp s, PlayerItem it) { return alive(it) ? GameplaySupport.velX(s, it) : 0; }
+    public static float vy(StageImp s, PlayerItem it) { return alive(it) ? GameplaySupport.velY(s, it) : 0; }
+
+    /** Velocity in px/s. Elements without a physical body (UI, static) are moved by hand every frame instead. */
+    public static void setVel(StageImp s, PlayerItem it, float vx, float vy) {
+        if (!alive(it)) return;
+        Body b = it.getBody();
+        if (b == null || b.getType() == com.badlogic.gdx.physics.box2d.BodyDef.BodyType.StaticBody) {
+            float dt = Gdx.graphics.getDeltaTime();
+            GameplaySupport.moveCenter(it, Behavior.cx(it) + vx * dt, Behavior.cy(it) + vy * dt);
+        } else GameplaySupport.setVel(s, it, vx, vy);
+    }
+
+    public static void setVx(StageImp s, PlayerItem it, float v) { setVel(s, it, v, isPhysical(it) ? vy(s, it) : 0); }
+    public static void setVy(StageImp s, PlayerItem it, float v) { setVel(s, it, isPhysical(it) ? vx(s, it) : 0, v); }
+    public static void stop(StageImp s, PlayerItem it) { if (isPhysical(it)) GameplaySupport.setVel(s, it, 0, 0); }
+
+    private static boolean isPhysical(PlayerItem it) {
+        return alive(it) && it.getBody() != null && it.getBody().getType() != com.badlogic.gdx.physics.box2d.BodyDef.BodyType.StaticBody;
+    }
+
+    /** Moves by (dx, dy) pixels right now (a jump in place, not a speed). */
+    public static void shift(PlayerItem it, float dx, float dy) { if (alive(it)) GameplaySupport.moveCenter(it, Behavior.cx(it) + dx, Behavior.cy(it) + dy); }
+
+    /** Heads to the point (tx, ty) at speed px/s; stops on it. True once it is there. */
+    public static boolean moveToward(StageImp s, PlayerItem it, float tx, float ty, float speed) {
+        if (!alive(it)) return true;
+        float dx = tx - Behavior.cx(it), dy = ty - Behavior.cy(it);
+        float d = (float) Math.sqrt(dx * dx + dy * dy), step = speed * Gdx.graphics.getDeltaTime();
+        if (d <= Math.max(step, 0.5f)) {
+            GameplaySupport.moveCenter(it, tx, ty);
+            if (isPhysical(it)) GameplaySupport.setVel(s, it, 0, 0);
+            return true;
+        }
+        setVel(s, it, dx / d * speed, dy / d * speed);
+        return false;
+    }
+
+    public static float rotation(PlayerItem it) {
+        if (!alive(it)) return 0;
+        Body b = it.getBody();
+        return b != null ? b.getAngle() * MathUtils.radiansToDegrees : it.getActor().getRotation();
+    }
+
+    public static void setRotation(PlayerItem it, float deg) {
+        if (!alive(it)) return;
+        Body b = it.getBody();
+        if (b != null) b.setTransform(b.getPosition(), deg * MathUtils.degreesToRadians);
+        else it.getActor().setRotation(deg);
+    }
+
+    public static boolean visible(PlayerItem it) { return alive(it) && it.getActor().isVisible(); }
+    public static void setVisible(PlayerItem it, boolean v) { if (alive(it)) it.getActor().setVisible(v); }
+    public static float alpha(PlayerItem it) { return alive(it) ? it.getActor().getColor().a : 0; }
+    public static void setAlpha(PlayerItem it, float a) { if (alive(it)) { Actor ac = it.getActor(); Color c = ac.getColor(); ac.setColor(c.r, c.g, c.b, clamp(a, 0, 1)); } }
+    public static float scale(PlayerItem it) { return alive(it) ? it.getActor().getScaleX() : 1; }
+    public static void setScale(PlayerItem it, float s) { if (alive(it)) it.getActor().setScale(s); }
+    public static void setText(PlayerItem it, Object text) { if (alive(it)) it.setItemText(text instanceof Float || text instanceof Double ? show(((Number) text).doubleValue()) : String.valueOf(text)); }
+    public static void setTint(PlayerItem it, Object color) { if (!alive(it)) return; if (color instanceof Color) it.setTint((Color) color); else it.setTint(String.valueOf(color)); }
+    public static String name(PlayerItem it) { return it == null ? "" : String.valueOf(it.getName()); }
+    public static float dist(PlayerItem a, PlayerItem b) { return alive(a) && alive(b) ? dist(Behavior.cx(a), Behavior.cy(a), Behavior.cx(b), Behavior.cy(b)) : Float.MAX_VALUE; }
+    public static float angle(PlayerItem from, PlayerItem to) { return alive(from) && alive(to) ? atan2(Behavior.cy(to) - Behavior.cy(from), Behavior.cx(to) - Behavior.cx(from)) : 0; }
+    public static boolean touching(PlayerItem a, PlayerItem b) { return alive(a) && alive(b) && Behavior.overlaps(a, b); }
+
+    /** Removes an element safely: also from inside a collision event (it is removed right after the physics step). */
+    public static void destroy(final PlayerItem it) {
+        if (!alive(it)) return;
+        it.getActor().setVisible(false);
+        Gdx.app.postRunnable(new Runnable() { public void run() { GameplaySupport.remove(it); } });
+    }
+
+    public static PlayerItem copy(PlayerItem it, float x, float y) { return GameplaySupport.spawnClone(it, x, y); }
+
+    public static boolean nameStarts(PlayerItem it, String prefix) { return it != null && it.getName() != null && it.getName().startsWith(prefix); }
+    public static boolean pressed(PlayerItem it) {
+        if (!alive(it) || !Gdx.input.isTouched()) return false;
+        Actor a = it.getActor();
+        com.badlogic.gdx.math.Vector2 p = a.screenToLocalCoordinates(new com.badlogic.gdx.math.Vector2(Gdx.input.getX(), Gdx.input.getY()));
+        return p.x >= 0 && p.y >= 0 && p.x <= a.getWidth() && p.y <= a.getHeight();
+    }
+}

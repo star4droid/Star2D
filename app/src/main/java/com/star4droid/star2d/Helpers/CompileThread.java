@@ -65,6 +65,10 @@ public class CompileThread extends Thread {
 		try {
 			SourceTrace.resolveAll(found);
 		} catch(Throwable ignored){}
+		// errors inside a file generated from Najma (.njm): same line of the .njm file, message in Arabic
+		try {
+			com.star4droid.star2d.najma.NajmaProject.mapErrors(found);
+		} catch(Throwable ignored){}
 		lastErrors = found;
 	}
 	
@@ -117,6 +121,18 @@ public class CompileThread extends Thread {
 		//FileUtil.deleteFile(filesPath+"/com/star4droid/star2d/player/PlayerItem.java");
 		//Utils.extractAssetFile(context,"java/game.zip",dataDir+"/bin/addition.jar");
 		Gdx.files.internal("java/game.zip").copyTo(Gdx.files.absolute(dataDir+"/bin/addition.jar"));
+		// Najma (.njm) files become .java files first; their own errors stop the build here
+		try {
+			java.util.List<BuildError> najmaErrors = com.star4droid.star2d.najma.NajmaProject.sync(filesPath);
+			if(!najmaErrors.isEmpty()){
+				lastErrors = najmaErrors;
+				push(CHANGE_ERROR, com.star4droid.star2d.najma.NajmaProject.describe(najmaErrors));
+				return;
+			}
+		} catch(Throwable najmaFailure){
+			push(CHANGE_ERROR, "Najma : " + Utils.getStackTraceString(najmaFailure));
+			return;
+		}
 		if(EngineSettings.get().getString("compiler","javac").equals("ecj")){
 			opt.add(jv);
 			opt.add("-nowarn");
@@ -126,6 +142,8 @@ public class CompileThread extends Thread {
 			opt.add("-cp");
 			opt.add(dataDir.concat("/bin/cp.jar")+":"+dataDir.concat("/bin/addition.jar"));
 			opt.add("-proc:none");
+			opt.add("-encoding");
+			opt.add("UTF-8");
 			opt.add("-sourcepath");
 			opt.add("ignore");
 			addJavaFilesFrom(filesPath,opt);

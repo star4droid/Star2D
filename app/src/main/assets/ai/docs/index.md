@@ -39,6 +39,7 @@ Star2D is a 2D game-engine editor on an Android phone (LibGDX + Box2D). Do NOT r
 - `timeline`: keyframe animations (timelines/*.s2tl, Timeline panel, record mode) and tween blocks. Before animating doors, coins, menus, cut-scenes.
 - `network`: local Wi-Fi multiplayer: NETWORK element, lobby, synced elements (net property), Network blocks and events. Before any multiplayer game.
 - `java-api`: Java API, file locations, package rules (only for raw Java).
+- `najma`: Najma (نجمة), the Arabic scripting language: `.njm` files next to the Java classes (syntax, events, sentences, functions, Arabic libGDX names). Only when the user wants Arabic code or the project has `.njm` files.
 - `recipes`, `recipes-2`: complete small games as ordered tool calls (platformer, shooter, clicker, breakout, runner, ...). Read ONE recipe section.
 - `testing`: `run_test` / `game_input` examples and limits.
 - `pitfalls`: the mistakes that cost the most time (skim once).

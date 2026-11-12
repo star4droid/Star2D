@@ -99,6 +99,7 @@ Gemini / OpenRouter inside the editor, a Remote connector for external assistant
 - **Editor:** scenes, elements, Bodies list, files manager, undo/redo, safe-area aware layouts for portrait and landscape.
 - **Visual scripting:** event-driven blocks (touch, step, collisions...), nested blocks, search, custom blocks.
 - **Code editor:** Java with syntax highlighting, auto-complete, error panel, copy all errors.
+- **Najma (نجمة):** an Arabic programming language for scripts (`.njm`), turned into Java before the build, with its own right-to-left editor. See [docs/NAJMA.md](docs/NAJMA.md).
 - **Physics:** Box2D bodies, joints, sensors, custom collider and road editor, lights (point / cone / directional).
 - **Behaviors:** 56 built-in, configurable through script variables.
 - **UI tools:** UI Maker, Button Maker, themes, UI holders.
@@ -119,6 +120,7 @@ Gemini / OpenRouter inside the editor, a Remote connector for external assistant
 | `template/` | The game runtime used by exported games (generated template, see [docs/TEMPLATE.md](docs/TEMPLATE.md)) |
 | `desktop/` | Experimental desktop runtime |
 | `formatter/` | Code formatter used by the code editor |
+| `najma/` | Najma, the Arabic scripting language: compiler from `.njm` to `.java` (pure Java, editor only) |
 | `server/` | AI / Remote connector server ([README](server/README.md)) |
 | `tools/` | Build, template and i18n helper scripts |
 | `docs/` | Behaviors, UI, script variables, CI and template docs |

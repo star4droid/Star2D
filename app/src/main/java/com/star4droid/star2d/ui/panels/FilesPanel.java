@@ -307,7 +307,7 @@ public class FilesPanel implements PanelHost.Panel {
         if (f.isDirectory()) return R.drawable.ic_s2_folder;
         if (n.endsWith(".prefab")) return com.star4droid.star2d.ui.PrefabUi.ICON;
         if (FilePickerDialog.isImage(n)) return R.drawable.ic_s2_image;
-        if (n.endsWith(".java") || n.endsWith(".code") || n.endsWith(".json") || n.endsWith(".visual") || n.endsWith(".xml")) return R.drawable.ic_s2_code;
+        if (n.endsWith(".java") || n.endsWith(".njm") || n.endsWith(".code") || n.endsWith(".json") || n.endsWith(".visual") || n.endsWith(".xml")) return R.drawable.ic_s2_code;
         if (n.endsWith(".ui")) return R.drawable.ic_s2_widgets;
         if (isSound(n)) return f.getAbsolutePath().equals(playingPath) ? R.drawable.ic_s2_stop : R.drawable.ic_s2_sound;
         if (n.endsWith(".ttf") || n.endsWith(".otf") || n.endsWith(".s2df") || n.endsWith(".fnt")) return R.drawable.ic_s2_font;
@@ -495,7 +495,7 @@ public class FilesPanel implements PanelHost.Panel {
         } else if (n.endsWith(".s2df")) {
             shell.panels.hide();
             Bridge.gl(() -> Bridge.app().getFileBrowser().openFontEditor(Gdx.files.absolute(f.getParent()), Gdx.files.absolute(f.getAbsolutePath())));
-        } else if (n.endsWith(".java") && !logsMode) {
+        } else if ((n.endsWith(".java") || n.endsWith(".njm")) && !logsMode) {
             shell.host().openJava(f.getAbsolutePath());
         } else if (FilePickerDialog.isImage(n)) {
             imagePreview(c, f);

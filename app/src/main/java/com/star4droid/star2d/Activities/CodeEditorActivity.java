@@ -74,6 +74,19 @@ public class CodeEditorActivity extends AppCompatActivity {
 		save_info = findViewById(R.id.save_info);
 		path = getIntent().getStringExtra("path");
 		editor = findViewById(R.id.editor);
+		// Najma (the Arabic language): X.njm is the source and has its own editor, X.java beside it is generated
+		if(com.star4droid.star2d.najma.NajmaEditorActivity.openInstead(this, path, getIntent())){
+			finish();
+			return;
+		}
+		// a new element / scene script: Java or Najma? (the scene's Refs class must exist first: both extend it)
+		try {
+			if(!new File(path).exists()){
+				if(getIntent().getBooleanExtra("body",false)) writeSceneRefs(Editor.getCurrentEditor().getScene());
+				else if(getIntent().hasExtra("scene") && !getIntent().getStringExtra("scene").equals("")) writeSceneRefs(getIntent().getStringExtra("scene"));
+			}
+		} catch(Throwable ignored){}
+		if(com.star4droid.star2d.najma.NajmaEditorActivity.askLanguage(this, path, getIntent())) return;
 		// a binary or huge file would freeze / crash the editor: show it by pages instead
 		try {
 			File big = new File(path);

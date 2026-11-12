@@ -2,6 +2,13 @@
 
 ### What's new
 
+**Najma (نجمة): code your game in Arabic**
+- A new way to write scripts: plain Arabic sentences such as "حرك نفسي يميناً بسرعة ٢٠٠" (move me right at speed 200). Easy enough for children, complete enough for experienced developers.
+- When you create an element script or a scene script you choose: Najma (Arabic) or Java. Both can live in the same project.
+- Its own editor made for Arabic: colors, mistakes explained in Arabic as you type, and smart suggestions that know what comes next.
+- A full guide inside the editor (the "؟" button): from "Hello world" to advanced topics, with more than 20 ready examples you can copy (player movement, coins, enemies, shooting, timers, saving the best score...).
+- Games run exactly as fast as before and are not bigger.
+
 **Path finding**
 - New element "Path grid" (NAVGRID) in Add > Game systems, for 2D and 3D scenes: square or hexagon cells.
 - Paint walls and slow ground (mud, water) on the canvas, or make walls from the static elements in one tap. Obstacles (doors, crates) are followed when they move and open their cells when they are destroyed.
@@ -24,6 +31,7 @@
 - Wi-Fi Stars: lobby + arena, each phone moves its own ball, the host spawns the stars and counts the points.
 
 ### العربية
+- **لغة نجمة، اكتب كود لعبتك بالعربية:** جمل عربية بسيطة مثل «حرك نفسي يميناً بسرعة ٢٠٠»، سهلة للأطفال وكاملة للمحترفين. عند إنشاء سكربت لعنصر أو مشهد تختار: نجمة (عربي) أو Java. لها محرر خاص بالعربية بألوان واقتراحات ذكية وأخطاء مشروحة بالعربية، وشرح كامل داخل المحرر (زر «؟») من «مرحباً بالعالم» حتى الاحتراف مع أكثر من ٢٠ مثالاً جاهزاً للنسخ. والألعاب تعمل بنفس السرعة والحجم.
 - **إيجاد المسار:** عنصر شبكة المسارات (مربعة أو سداسية) لـ 2D و 3D، رسم الجدران والأرض البطيئة، عوائق متحركة، سلوك المطاردة الذكية، نوع متغير PathHolder لمسارات الدوريات، و21 بلوك ملاحة.
 - **الخط الزمني:** تحريك بالإطارات المفتاحية مع وضع التسجيل، 10 انتقالات، علامات، تكرار وذهاب وإياب، وبلوكات Tween.
 - **اللعب الجماعي عبر الواي فاي:** عنصر الشبكة، صالة انتظار جاهزة، بطاقة الشبكة لكل عنصر، وبلوكات وأحداث الشبكة.

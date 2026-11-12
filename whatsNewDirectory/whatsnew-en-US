@@ -1,4 +1,5 @@
-New: path finding - a Path grid element, smart enemies that walk around walls (Smart Chase), patrol paths and Navigation blocks (2D and 3D).
-New: Timeline - keyframe animations with record mode, transitions and markers, plus quick Tween blocks.
-New: local multiplayer over Wi-Fi or a hotspot - Network element, ready lobby, synced elements and Network blocks.
+New: Najma, write your game code in Arabic! Simple sentences a child can read, with its own editor, smart suggestions while you type and a full guide with ready examples.
+New: smart enemies that find their way around walls, and patrol paths.
+New: Timeline to animate anything with keyframes.
+New: play together over Wi-Fi or a hotspot.
 New examples: Maze Chase and Wi-Fi Stars.

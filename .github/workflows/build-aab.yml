@@ -25,7 +25,7 @@ on:
         required: true
         default: false
       patch_base_artifact:
-        description: 'Patch from an older build: link of its APK artifact (https://github.com/<owner>/<repo>/actions/runs/<run>/artifacts/<id>). Empty = from the previous release, only when releasing'
+        description: 'Patch base (optional): link of an older build APK artifact (https://github.com/<owner>/<repo>/actions/runs/<run>/artifacts/<id>). Empty = the latest release APK. The patch is always uploaded to this run artifacts'
         type: string
         required: false
         default: ''
@@ -174,10 +174,9 @@ jobs:
           echo "Patch base: $APK"
           echo "PATCH_BASE_APK=$GITHUB_WORKSPACE/$APK" >> $GITHUB_ENV
 
-      # 🩹 xdelta patch to the APK just built: from the artifact above when a link was given, otherwise (only when
-      #    releasing) from the PREVIOUS release's APK
+      # 🩹 xdelta patch to the APK just built, on EVERY run (release or not): from the artifact above when a link was
+      #    given, otherwise from the newest release APK that is not the version being released
       - name: Make xdelta patch
-        if: ${{ github.event.inputs.upload_to_releases == 'true' || github.event.inputs.patch_base_artifact != '' }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: bash tools/ci_make_patch.sh app/build/outputs/apk/release/app-release.apk patch-out "$VERSION_NAME" "v$VERSION_NAME"

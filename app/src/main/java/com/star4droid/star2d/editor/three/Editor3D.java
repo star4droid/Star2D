@@ -572,7 +572,7 @@ public class Editor3D {
 				it.camera.cam.far = far;
 			} else if (it.obj != null && it.obj.instance == null) {
 				// EMPTY: a small cross
-				shapes.setColor(sel ? Color.WHITE : Color.LIGHT_GRAY);
+				shapes.setColor(sel ? Color.WHITE : (it.obj.particles != null ? new Color(1f, 0.45f, 0.7f, 1f) : Color.LIGHT_GRAY));
 				Vector3 p = it.obj.position;
 				shapes.line(p.x - s, p.y, p.z, p.x + s, p.y, p.z);
 				shapes.line(p.x, p.y - s, p.z, p.x, p.y + s, p.z);

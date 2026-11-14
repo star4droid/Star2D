@@ -6,7 +6,7 @@
  "layout": "free,screen",
  "anchor": "topleft,top,topright,left,center,right,bottomleft,bottom,bottomright",
  "Pivot": "center,left,right,top,bottom,topleft,topright,bottomleft,bottomright,custom",
- "Mesh": "CUBE,SPHERE,CYLINDER,CAPSULE,CONE,PLANE,TORUS,RAMP,STAIRS,PYRAMID,HEMISPHERE,TUBE,WEDGE,QUAD,DISC,MODEL,TERRAIN,WATER,EMPTY",
+ "Mesh": "CUBE,SPHERE,CYLINDER,CAPSULE,CONE,PLANE,TORUS,RAMP,STAIRS,PYRAMID,HEMISPHERE,TUBE,WEDGE,QUAD,DISC,MODEL,TERRAIN,WATER,EMPTY,PARTICLES",
  "Body": "NONE,STATIC,DYNAMIC,KINEMATIC,TRIGGER",
  "Collider": "AUTO,BOX,SPHERE,CAPSULE,CYLINDER,CONE,MESH,CONVEX",
  "Water Quality": "AUTO,LOW,MEDIUM,HIGH",

@@ -128,6 +128,8 @@ public final class Blocks3D {
 		fd("camera", "camera", "الكاميرا");
 		fd("place", "place", "المكان");
 		fd("forward", "forward", "للأمام");
+		fd("on", "on", "تشغيل");
+		fd("file", "file", "الملف");
 		fd("right", "right", "لليمين");
 		fd("up", "up", "للأعلى");
 		fd("height", "height", "الارتفاع");
@@ -351,6 +353,15 @@ public final class Blocks3D {
 		st("resumeAnimation3D", "body(Body)", "current", B + "resumeAnimation(%1$s);", "Resume animation", "تابع الحركة", "Continues a paused clip.", "يتابع مقطعاً موقوفاً مؤقتاً.");
 		st("animationSpeed3D", "body(Body) speed", "current|1", B + "setAnimationSpeed(%1$s, " + f(2) + ");",
 				"Animation speed", "سرعة الحركة", "1 = normal, 2 = twice as fast, 0.5 = slow motion.", "1 = طبيعي، 2 = ضعف السرعة، 0.5 = حركة بطيئة.");
+		st("playParticles3D", "body(Body)", "current", X + "playParticles(%1$s);", "Play particle effect", "شغّل المؤثر",
+				"Plays a 3D particle effect again from its start (explosions, bursts).", "يشغّل مؤثر الجسيمات من بدايته (انفجارات، دفعات).");
+		st("particlesEmitting3D", "body(Body) on(Boolean)", "current|false", X + "setParticlesEmitting(%1$s, %2$s);", "Particles on / off", "تشغيل / إيقاف الجسيمات",
+				"false: no new particles (the ones alive finish), true: emits again.", "false: لا جسيمات جديدة (الموجودة تكمل)، true: يطلق من جديد.");
+		st("particleFile3D", "body(Body) file", "current|\"/fx3d/fire/campfire.p3d\"", X + "setParticleFile(%1$s, " + str(2) + ");", "Set particle effect", "غيّر المؤثر",
+				"Shows another .p3d effect of the project files.", "يعرض مؤثر ‎.p3d آخر من ملفات المشروع.");
+		st("particleScale3D", "body(Body) scale", "current|1", X + "setParticleScale(%1$s, " + f(2) + ");", "Particle effect size", "حجم المؤثر",
+				"Size of the whole effect, 1 = as made.", "حجم المؤثر كله، 1 = كما صُمم.");
+		rp("particles of ___ finished", X + "particlesFinished(%1$s)", 'b', "e", "انتهت جسيمات ___", "True when a one shot effect ended.", "صحيح عندما ينتهي مؤثر يعمل مرة واحدة.");
 		rp("___ is animating (3D)", B + "isAnimationPlaying(%1$s)", 'b', "e", "___ يتحرك (ثلاثي)", "True while a clip plays.", "صحيح أثناء تشغيل مقطع.");
 		rp("3D clip of ___", B + "animation(%1$s)", 't', "e", "مقطع ___", "Name of the clip playing now.", "اسم المقطع المشغّل الآن.");
 		rp("3D clip names of ___", B + "animationNames(%1$s)", 't', "e", "أسماء مقاطع ___", "All clip names of the model, separated by commas.", "أسماء كل مقاطع المجسم مفصولة بفواصل.");

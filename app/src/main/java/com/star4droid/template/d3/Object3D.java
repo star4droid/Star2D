@@ -44,6 +44,8 @@ public class Object3D extends Actor implements PlayerItem {
 	public AnimationController anim;
 	public final Vector3 position = new Vector3(), scale = new Vector3(1, 1, 1);
 	public final Quaternion rotation = new Quaternion();
+	/** Mesh PARTICLES: the 3D particle effect of this element (null for the other meshes). */
+	public Particles3D particles;
 	/** Last rotation set in degrees (x, y, z) - what the blocks read back. */
 	public final Vector3 euler = new Vector3();
 	public final Matrix4 transform = new Matrix4();
@@ -105,6 +107,52 @@ public class Object3D extends Actor implements PlayerItem {
 		return def;
 	}
 
+	// ------------------------------------------------------------------ particles (Mesh PARTICLES)
+
+	/** Shows another .p3d effect ("/fx3d/fire/campfire.p3d"; "" = built in fire). Other meshes become a particle effect. */
+	public void setParticleFile(String file) {
+		def.Particle_File = file == null ? "" : file;
+		if (!"PARTICLES".equals(def.Mesh)) {
+			def.Mesh = "PARTICLES";
+			buildModel();
+		} else if (particles != null) particles.setFile(def.Particle_File);
+	}
+
+	/** Starts / stops new particles (the ones alive finish their life). */
+	public void setEmitting(boolean on) {
+		def.Emitting = on;
+		if (particles != null) particles.emitting = on;
+	}
+
+	public boolean isEmitting() {
+		return particles != null && particles.emitting;
+	}
+
+	/** Plays the effect again from its start (bursts, explosions). */
+	public void restartParticles() {
+		if (particles != null) {
+			particles.emitting = true;
+			def.Emitting = true;
+			particles.restart();
+		}
+	}
+
+	/** Size of the whole effect (1 = as made) and its time speed. */
+	public void setParticleScale(float s) {
+		def.Particle_Scale = s;
+		if (particles != null) particles.scale = s;
+	}
+
+	public void setParticleSpeed(float s) {
+		def.Particle_Speed = s;
+		if (particles != null) particles.speed = s;
+	}
+
+	/** A one shot effect ended (no looping emitter left and no particle alive). */
+	public boolean particlesFinished() {
+		return particles == null || particles.isComplete();
+	}
+
 	// ------------------------------------------------------------------ build
 
 	private void setup() {
@@ -137,6 +185,7 @@ public class Object3D extends Actor implements PlayerItem {
 		terrain = null;
 		boundsDone = false;
 		String shape = def.Mesh == null ? Shapes3D.CUBE : def.Mesh.toUpperCase();
+		if (!"PARTICLES".equals(shape)) particles = null;
 		int detail = (int) def.Detail;
 		if ("MODEL".equals(shape)) {
 			SceneAsset a = null;
@@ -181,6 +230,13 @@ public class Object3D extends Actor implements PlayerItem {
 			}
 		} else if ("EMPTY".equals(shape)) {
 			instance = null;
+		} else if ("PARTICLES".equals(shape)) {
+			instance = null;
+			if (particles == null) particles = new Particles3D();
+			particles.setFile(def.Particle_File);
+			particles.scale = def.Particle_Scale;
+			particles.speed = def.Particle_Speed;
+			particles.emitting = def.Emitting;
 		} else {
 			if (!Shapes3D.isShape(shape)) shape = Shapes3D.CUBE;
 			instance = new ModelInstance(Shapes3D.get(shape, detail, (int) def.Steps));

@@ -14,12 +14,18 @@ public class Object3DDef extends ItemDef {
 	public String name = "", parentName = "", Script = "", type = "STATIC";
 
 	// ---- what it is
-	/** CUBE SPHERE CYLINDER CAPSULE CONE PLANE TORUS RAMP STAIRS PYRAMID HEMISPHERE TUBE WEDGE QUAD DISC, MODEL, TERRAIN, WATER, EMPTY */
+	/** CUBE SPHERE CYLINDER CAPSULE CONE PLANE TORUS RAMP STAIRS PYRAMID HEMISPHERE TUBE WEDGE QUAD DISC, MODEL, TERRAIN, WATER, EMPTY, PARTICLES */
 	public String Mesh = "CUBE";
 	/** MODEL: project path of the .glb / .gltf (e.g. "models/car.glb"). */
 	public String Model = "";
 	/** MODEL: only this node of the model ("" = all). */
 	public String Model_Node = "";
+	/** PARTICLES: the .p3d effect in the project files ("/fx3d/fire/campfire.p3d"; "" = built in fire). */
+	public String Particle_File = "";
+	/** PARTICLES: size of the whole effect and its time speed (1 = as made). */
+	public float Particle_Scale = 1, Particle_Speed = 1;
+	/** PARTICLES: new particles are made (false: stopped until setEmitting(true) / restartParticles()). */
+	public boolean Emitting = true;
 	/** Round shapes: 0 low, 1 normal, 2 high. STAIRS: number of steps. */
 	public float Detail = 1, Steps = 6;
 

@@ -71,6 +71,7 @@ public class AddItemPanel implements PanelHost.Panel {
             {"s3_terrain", "Terrain", "Terrain", "Hills and valleys: sculpt, paint, trees (Edit terrain).", "تلال ووديان: نحت وتلوين وأشجار (تعديل التضاريس).", "OBJ3D", "TERRAIN"},
             {"s3_gen_terrain", "Generated world", "Terrain", "Random terrain with trees, grass, a road and water.", "أرض عشوائية بأشجار وعشب وطريق وماء.", "OBJ3D", "TERRAIN_GEN"},
             {"s3_water", "Water", "Water", "Animated water with waves; things can float.", "ماء متحرك بأمواج، والأشياء تطفو عليه.", "OBJ3D", "WATER"},
+            {"s3_particles", "Particle effect", "Particle", "Fire, smoke, magic, rain... in 3D (.p3d files).", "مؤثرات ثلاثية الأبعاد: نار، دخان، سحر، مطر... (ملفات ‎.p3d).", "OBJ3D", "PARTICLES"},
             {"s3_empty", "Empty", "Cube", "Invisible point: parent, spawn point, target.", "نقطة غير مرئية: أب، نقطة ظهور، هدف.", "OBJ3D", "EMPTY"},
     };
     private static final String[][] LIGHTS_3D = {

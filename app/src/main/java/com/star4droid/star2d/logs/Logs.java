@@ -195,9 +195,9 @@ public final class Logs {
 							java.io.ByteArrayOutputStream bo = new java.io.ByteArrayOutputStream();
 							byte[] b = new byte[8192];
 							int n, total = 0;
-							while ((n = in.read(b)) > 0 && total < 200000) { bo.write(b, 0, n); total += n; }
+							while ((n = in.read(b)) > 0 && total < 4000000) { bo.write(b, 0, n); total += n; }
 							in.close();
-							sb.append("\n").append(r == android.app.ApplicationExitInfo.REASON_ANR ? new String(bo.toByteArray(), "UTF-8") : nativeSummary(bo.toByteArray()));
+							sb.append("\n").append(r == android.app.ApplicationExitInfo.REASON_ANR ? new String(bo.toByteArray(), 0, Math.min(bo.size(), 400000), "UTF-8") : nativeSummary(bo.toByteArray()));
 						}
 					} catch (Throwable ignored) {
 					}
@@ -210,20 +210,28 @@ public final class Logs {
 		}
 	}
 
-	/** The native tombstone is a protobuf; keep its readable strings (signal, abort message, backtrace frames). */
-	private static String nativeSummary(byte[] proto) {
-		StringBuilder sb = new StringBuilder("Native trace (readable parts):\n");
-		StringBuilder cur = new StringBuilder();
-		int lines = 0;
-		for (byte x : proto) {
-			char ch = (char) (x & 0xff);
-			if (ch >= 32 && ch < 127) cur.append(ch);
-			else {
-				if (cur.length() >= 6) { sb.append(cur).append('\n'); if (++lines > 400) break; }
-				cur.setLength(0);
+	/**
+	 * The native tombstone is a protobuf (frameworks tombstone.proto). It is decoded here: signal, abort message, causes,
+	 * the full backtrace of the crashing thread first, short backtraces of the other threads, then the last log lines
+	 * of the process. Falls back to the readable strings when the decoding fails.
+	 */
+	static String nativeSummary(byte[] proto) {
+		try {
+			return Tombstone.format(proto);
+		} catch (Throwable t) {
+			StringBuilder sb = new StringBuilder("Native trace (readable parts, decode failed: " + t + "):\n");
+			StringBuilder cur = new StringBuilder();
+			int lines = 0;
+			for (byte x : proto) {
+				char ch = (char) (x & 0xff);
+				if (ch >= 32 && ch < 127) cur.append(ch);
+				else {
+					if (cur.length() >= 6) { sb.append(cur).append('\n'); if (++lines > 1500) break; }
+					cur.setLength(0);
+				}
 			}
+			return sb.toString();
 		}
-		return sb.toString();
 	}
 
 	private static String reasonName(int r) {

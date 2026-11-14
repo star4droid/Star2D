@@ -65,7 +65,7 @@ public class CircleItem extends Image implements PlayerItem {
 	public CircleItem setDef(CircleDef def){
 		circleDef = def;
 		if(body!=null) {
-		    body.getWorld().destroyBody(body);
+		    com.star4droid.template.Utils.Utils.destroyBody(body);
 		    body = null;
 		}
 		setup();

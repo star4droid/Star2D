@@ -142,6 +142,12 @@ public class Editor3DItem extends Actor implements EditorItem {
 					obj.applyLook();
 					if (obj.isWater()) obj.buildModel();
 				}
+				if (obj.particles != null) {
+					obj.particles.setFile(d.Particle_File);
+					obj.particles.scale = d.Particle_Scale;
+					obj.particles.speed = d.Particle_Speed;
+					obj.particles.emitting = d.Emitting;
+				}
 				obj.setPosition3(d.x, d.y, d.z);
 				obj.setRotation3(d.Rotation_X, d.Rotation_Y, d.Rotation_Z);
 				obj.setScale3(d.Scale_X, d.Scale_Y, d.Scale_Z);

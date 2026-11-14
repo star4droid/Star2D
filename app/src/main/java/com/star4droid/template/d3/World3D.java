@@ -700,6 +700,12 @@ public class World3D implements Disposable {
 			}
 			Outline3D.free(outlines);
 		}
+		// particle effects: after the solid elements, depth tested, without depth writes
+		try {
+			Particles3D.renderAll(cam, objects, editor);
+		} catch (Throwable t) {
+			Gdx.app.error("Star2D-3D", "particles: " + t);
+		}
 		if (useFbo) {
 			fbo.end();
 			if (post == null) post = new PostFx3D();

@@ -300,7 +300,7 @@ final class EditTools {
     private static final String[] KINDS = {"BOX", "CIRCLE", "TEXT", "JOYSTICK", "PROGRESS", "CUSTOM", "PARTICLE", "CAMERA", "MAP", "GROUP", "UIHOLDER"};
 
     private static final String[] MESHES = {"CUBE", "SPHERE", "CYLINDER", "CAPSULE", "CONE", "PLANE", "TORUS", "RAMP", "STAIRS", "PYRAMID", "HEMISPHERE",
-            "TUBE", "WEDGE", "QUAD", "DISC", "MODEL", "TERRAIN", "WATER", "EMPTY"};
+            "TUBE", "WEDGE", "QUAD", "DISC", "MODEL", "TERRAIN", "WATER", "EMPTY", "PARTICLES"};
 
     private static String upper(String s) {
         return s == null ? "" : s.trim().toUpperCase(Locale.ROOT);
@@ -332,6 +332,8 @@ final class EditTools {
             return new String[]{"OBJ3D", mesh.isEmpty() ? "CUBE" : mesh};
         }
         if (t.equals("GLB") || t.equals("GLTF") || t.equals("MODEL3D") || t.equals("3DMODEL")) return new String[]{"OBJ3D", "MODEL"};
+        if (scene3D && (t.equals("PARTICLE") || t.equals("PARTICLES") || t.equals("PARTICLE3D") || t.equals("PARTICLES3D") || t.equals("EFFECT3D") || t.equals("FX3D")))
+            return new String[]{"OBJ3D", "PARTICLES"};
         if (t.equals("BALL") && scene3D) return new String[]{"OBJ3D", "SPHERE"};
         if (t.equals("GROUND") && scene3D) return new String[]{"OBJ3D", "PLANE"};
         for (String m : MESHES) {

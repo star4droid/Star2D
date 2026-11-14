@@ -38,6 +38,34 @@ public class Utils {
 			return new TextureRegionDrawable(new TextureRegion(texture));
 		}
 		
+		/**
+		 * Destroys a Box2D body without crashing the game. Inside a collision event (or any other world callback) the
+		 * world is locked: Box2D ignores the destroy there while libGDX already recycles the Body and its fixtures, and
+		 * later steps then work on freed memory (native SIGSEGV). A locked world gets the destroy after the step instead,
+		 * and a body that is no longer in its world (destroyed twice) is skipped.
+		 */
+		public static void destroyBody(final com.badlogic.gdx.physics.box2d.Body body){
+			if(body == null) return;
+			try {
+				final com.badlogic.gdx.physics.box2d.World w = body.getWorld();
+				if(w == null) return;
+				if(w.isLocked()){
+					Gdx.app.postRunnable(() -> destroyBody(body));
+					return;
+				}
+				com.badlogic.gdx.utils.Array<com.badlogic.gdx.physics.box2d.Body> all = TMP_BODIES.get();
+				all.clear();
+				w.getBodies(all);
+				boolean alive = all.contains(body, true);
+				all.clear();
+				if(alive) w.destroyBody(body);
+			} catch(Throwable t){
+				GameLog.error("physics", "destroyBody failed", t);
+			}
+		}
+		private static final ThreadLocal<com.badlogic.gdx.utils.Array<com.badlogic.gdx.physics.box2d.Body>> TMP_BODIES =
+				ThreadLocal.withInitial(com.badlogic.gdx.utils.Array::new);
+
 		public static FileHandle absolute(String file){
 			FileHandle fileHandle = Gdx.files.absolute(file);
 			return (fileHandle.exists()?fileHandle:Gdx.files.internal("images/logo.png"));

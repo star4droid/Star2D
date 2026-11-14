@@ -543,9 +543,10 @@ public class PropertiesPanel implements PanelHost.Panel {
     static boolean shows3d(String type, String f, Map<String, String> v) {
         if ("OBJ3D".equals(type)) {
             String mesh = v.get("Mesh") == null ? "CUBE" : v.get("Mesh").toUpperCase();
-            boolean model = mesh.equals("MODEL"), empty = mesh.equals("EMPTY");
+            boolean model = mesh.equals("MODEL"), particles = mesh.equals("PARTICLES"), empty = mesh.equals("EMPTY") || particles;
             switch (f) {
                 case "Light Kind": return false;
+                case "Particle File": case "Particle Scale": case "Particle Speed": case "Emitting": return particles;
                 case "Model": case "Model Node": case "Keep Model Material":
                 case "Animation": case "Animation Loop": case "Animation Speed": return model;
                 case "Detail": return in(mesh, "SPHERE", "CYLINDER", "CAPSULE", "CONE", "TORUS", "HEMISPHERE", "TUBE", "DISC");
@@ -885,6 +886,27 @@ public class PropertiesPanel implements PanelHost.Panel {
                             Bridge.query(() -> {
                                 com.star4droid.template.d3.Assets3D.reload(nv);
                                 if (!"MODEL".equals(values.get("Mesh"))) PropertyEditing.applyString(Bridge.app(), "Mesh", "MODEL");
+                                return PropertyEditing.applyString(Bridge.app(), f, nv);
+                            }, err -> { if (err != null) Ui.toast(c, err); });
+                        })));
+                box.addView(t, Ui.matchWrap());
+                editors.put(f, t);
+                return box;
+            }
+            case "particle3d": {
+                // a .p3d effect of the project's files folder ("" = the built in fire)
+                box.addView(label(c, f));
+                TextView t = chooser(c, val.isEmpty() ? "[" + Tr.t("choose", "choose") + "]" : val);
+                t.setOnClickListener(v -> Bridge.query(() -> {
+                            String root = Bridge.editor().getProject().getPath() + "/files";
+                            new java.io.File(root).mkdirs();
+                            return root;
+                        }, rootPath -> FilePickerDialog.show(c, Tr.t(f), rootPath, new String[]{"p3d"}, false, (file, rel) -> {
+                            String nv = rel.startsWith("/") ? rel : "/" + rel;
+                            values.put(f, nv);
+                            t.setText(nv);
+                            Bridge.query(() -> {
+                                if (!"PARTICLES".equals(values.get("Mesh"))) PropertyEditing.applyString(Bridge.app(), "Mesh", "PARTICLES");
                                 return PropertyEditing.applyString(Bridge.app(), f, nv);
                             }, err -> { if (err != null) Ui.toast(c, err); });
                         })));

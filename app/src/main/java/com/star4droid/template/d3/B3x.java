@@ -340,6 +340,33 @@ public final class B3x {
 		return o == null ? 0 : o.getAnimationCount();
 	}
 
+	// ---------------------------------------------------------------- particle effects (Mesh PARTICLES)
+
+	public static void playParticles(Object item) {
+		Object3D o = B3.o(item);
+		if (o != null) o.restartParticles();
+	}
+
+	public static void setParticlesEmitting(Object item, boolean on) {
+		Object3D o = B3.o(item);
+		if (o != null) o.setEmitting(on);
+	}
+
+	public static void setParticleFile(Object item, String file) {
+		Object3D o = B3.o(item);
+		if (o != null) o.setParticleFile(file);
+	}
+
+	public static void setParticleScale(Object item, float scale) {
+		Object3D o = B3.o(item);
+		if (o != null) o.setParticleScale(scale);
+	}
+
+	public static boolean particlesFinished(Object item) {
+		Object3D o = B3.o(item);
+		return o == null || o.particlesFinished();
+	}
+
 	// ---------------------------------------------------------------- lights / sky
 
 	public static boolean isLightOn(Object item) {

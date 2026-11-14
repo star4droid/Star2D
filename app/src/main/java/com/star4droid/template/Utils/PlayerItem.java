@@ -233,6 +233,6 @@ public interface PlayerItem {
 	    if(getActor()!=null)
 	        getActor().remove();
 	    if(getBody()!=null)
-	        getBody().getWorld().destroyBody(getBody());
+	        Utils.destroyBody(getBody());
 	}
 }

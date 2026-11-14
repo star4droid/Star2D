@@ -315,9 +315,43 @@ public class EditorField {
 				} else EditorAction.propertiesChanged(editor,editor.getSelectedActor().getName(),getName(),new String[]{getName(),inputField.getValue()},new String[]{getName(),old}).updateItemProperties();
 			});
 		}
-		if(inputField!=null)
-			inputField.setNameText(name);
-		else Gdx.files.external("logs/app_logs.txt").writeString("return null, type: " + type+", name : "+name+",spinner : "+type.equals("spinner")+"\n",true);
+		if(inputField == null && type.equals("scene")){
+			// a scene of the project (e.g. the scene the NETWORK lobby opens): pick one from the scenes folder
+			final SpinnerInput sceneInput = new SpinnerInput();
+			inputField = sceneInput;
+			sceneInput.value.addListener(new ClickListener() {
+				@Override
+				public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
+					boolean handled = super.touchDown(event, x, y, pointer, button);
+					java.util.ArrayList<String> scenes = new java.util.ArrayList<>();
+					scenes.add("");
+					try {
+						for(FileHandle fh : Gdx.files.absolute(app.getEditor().getProject().getScenesPath()).list())
+							if(!fh.isDirectory() && !com.star4droid.star2d.prefab.PrefabStore.isTempScene(fh.name())) scenes.add(fh.name());
+					} catch(Throwable ignored){}
+					sceneInput.setData(scenes.toArray(new String[0]));
+					return handled;
+				}
+			});
+			inputField.setOnChange(()->{
+				String old = getPropertySet().getString(getName());
+				getPropertySet().put(getName(),inputField.getValue());
+				EditorAction.propertiesChanged(app.getEditor(),app.getEditor().getSelectedActor().getName(),getName(),new String[]{getName(),inputField.getValue()},new String[]{getName(),old});
+				app.getEditor().getSaveState();
+			});
+		}
+		if(inputField == null){
+			// unknown field type (a new property not handled here yet): edit it as plain text instead of breaking the whole panel
+			com.star4droid.star2d.logs.Logs.editor("properties", "Unknown field type '" + type + "' for '" + name + "', shown as text");
+			inputField = new StringInput();
+			inputField.setOnChange(()->{
+				String old = getPropertySet().getString(getName());
+				getPropertySet().put(getName(),inputField.getValue());
+				EditorAction.propertiesChanged(app.getEditor(),app.getEditor().getSelectedActor().getName(),getName(),new String[]{getName(),inputField.getValue()},new String[]{getName(),old});
+				app.getEditor().getSaveState();
+			});
+		}
+		inputField.setNameText(name);
 	}
 	
 	PropertySet<String,Object> getPropertySet(){
@@ -369,7 +403,7 @@ public class EditorField {
 					if(propsMap.containsKey(set1.getString("parent"))){
 						set1.setParent(propsMap.get(set1.getString("parent")));
 					} else {
-						Gdx.files.external("logs/parent.error.txt").writeString("parent not found for : "+set1.getString("name")+", parent name : "+set1.getString("parent")+"\n",true);
+						com.star4droid.star2d.logs.Logs.editor("parents", "parent not found for : "+set1.getString("name")+", parent name : "+set1.getString("parent")+"\n");
 						set1.put("parent","");
 					}
 				}

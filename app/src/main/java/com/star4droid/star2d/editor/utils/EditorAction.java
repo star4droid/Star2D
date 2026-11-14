@@ -116,7 +116,7 @@ public class EditorAction {
 				((EditorItem)editor.findActor(get("name"))).update();
 		} catch(Exception exception){
 			exception.printStackTrace();
-			Gdx.files.external("logs/app_logs.txt").writeString("undo error : action :\n"+toString()+"\n"+Utils.getStackTraceString(exception)+"\n"+"__".repeat(5)+"\n",true);
+			com.star4droid.star2d.logs.Logs.editor("undo", "undo error : action :\n"+toString()+"\n"+Utils.getStackTraceString(exception)+"\n"+"__".repeat(5)+"\n");
 			editor.toast("Undo Error : "+exception.toString());
 		}
 		return this;
@@ -219,7 +219,7 @@ public class EditorAction {
 				((EditorItem)editor.findActor(get("name"))).update();
 		} catch(Exception exception){
 			exception.printStackTrace();
-			Gdx.files.external("logs/app_logs.txt").writeString("redo err : action : \n"+toString()+"\n"+Utils.getStackTraceString(exception)+"\n"+"__".repeat(5)+"\n",true);
+			com.star4droid.star2d.logs.Logs.editor("undo", "redo err : action : \n"+toString()+"\n"+Utils.getStackTraceString(exception)+"\n"+"__".repeat(5)+"\n");
 			editor.toast("Redo Error : "+exception.toString());
 		}
 		return this;
@@ -234,7 +234,7 @@ public class EditorAction {
 					for(String json : list)
 						subs.add(getFrom(json, editor));
 			} catch(Exception ex){
-				Gdx.files.external("logs/app_logs.txt").writeString("batch parse error : "+ex+"\n",true);
+				com.star4droid.star2d.logs.Logs.editor("undo", "batch parse error : "+ex+"\n");
 			}
 		}
 		return subs;
@@ -295,7 +295,7 @@ public class EditorAction {
 			return null;
 		}
 		if(propertySet==null){
-			Gdx.files.external("logs/app_logs.txt").writeString("\nnull props at editor action",true);
+			com.star4droid.star2d.logs.Logs.editor("undo", "\nnull props at editor action");
 		}
 		
 		((Actor)item).setName(propertySet.getString("name"));

@@ -38,12 +38,13 @@ When a scene starts (also when you `OpenScene` the same scene again) its variabl
 
 ## Persistent data (between scenes and between runs)
 
-Stored on the phone as text (SharedPreferences `prefs`, shared by all scenes of the app).
+Stored on the phone as text in the game's own save file (`game_<project folder>`, shared by all scenes of the game, separate from the editor's settings and from other games).
 
 - Save: block `saveData(key, value)`: `{"block":"saveData","fields":{"key":"best","value":"score"}}`. The key is plain text (no quotes); the value is a Java expression.
 - Read a number: reporter `saved number ___` (int; missing or non-numeric = 0): `{"r":"saved number ___","args":["best"]}`.
 - Read text: reporter `saved text ___` (missing = empty string).
 - Java: `setValue("key","text")`, `getValue("key")`, `getNumber("key")` (int).
+- Clear everything the game saved: block `clearSaves` (no fields): `{"block":"clearSaves"}`. Java: `clearSaves()`.
 - Do not use the blocks `saveValue` / `setsplits` (they do not compile).
 - Saved data persists between game runs on the phone, so a test that depends on a clean start should write the value first (`saveData` with 0 in `OnCreate`) or accept the old value.
 

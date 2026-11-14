@@ -91,7 +91,7 @@ public class EventsItem extends Table {
 		try {
 			return VisUI.getSkin().getDrawable(namePure);
 		} catch(Exception e){
-			Gdx.files.external("logs/events item.txt").writeString("events item drawable : "+namePure+", full : "+name+"\n error : "+e.toString()+"\n\n",true);
+			com.star4droid.star2d.logs.Logs.editor("drawables", "events item drawable : "+namePure+", full : "+name+"\n error : "+e.toString()+"\n\n");
 			return Utils.getDrawable(Gdx.files.internal("images/"+name));
 		}
 	}

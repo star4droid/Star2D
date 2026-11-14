@@ -219,7 +219,7 @@ public class CustomItem extends Image implements EditorItem {
             		newBody.setProperties(propertySet);
             		editor.selectActor((Actor)newBody);
             		newBody.update();
-		        } catch(Exception e){ com.badlogic.gdx.Gdx.files.external("logs/shape.error.txt").writeString(com.star4droid.template.Utils.Utils.getStackTraceString(e)+"\n",true); }
+		        } catch(Exception e){ com.star4droid.star2d.logs.Logs.editor("shapes", com.star4droid.template.Utils.Utils.getStackTraceString(e)+"\n"); }
 		    }
 		    return;
 		}

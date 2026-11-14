@@ -65,7 +65,7 @@ public class ProjectsHomeView extends FrameLayout {
 
     private static final String[] LANG_NAMES = {"English", "العربيه", "Français", "Português", "Русский", "Español"};
     private static final String[] LANG_CODES = {"en", "ar", "fr", "br", "ru", "es"};
-    private static final String[] COMPILERS = {"javac", "ecj"};
+    private static final String[] COMPILERS = {"ecj", "javac"};
 
     private final Activity activity;
     private final Host host;
@@ -522,9 +522,18 @@ public class ProjectsHomeView extends FrameLayout {
 
         Spinner compiler = findViewById(R.id.setting_compiler);
         compiler.setAdapter(spinnerAdapter(COMPILERS));
-        compiler.setSelection(Math.max(0, Arrays.asList(COMPILERS).indexOf(prefs.getString("compiler", "javac"))));
+        compiler.setSelection(Math.max(0, Arrays.asList(COMPILERS).indexOf(prefs.getString("compiler", "ecj"))));
         compiler.setOnItemSelectedListener(new SimpleSelection(position ->
                 prefs().edit().putString("compiler", COMPILERS[position]).apply()));
+
+        // dex builder: D8 (default) or the old dx (Java 7 code only)
+        Spinner dexer = findViewById(R.id.setting_dexer);
+        String[] dexerLabels = {T("dexer_d8", "D8 (recommended)"), T("dexer_dx", "dx (old, Java 7 code only)")};
+        dexer.setAdapter(spinnerAdapter(dexerLabels));
+        dexer.setSelection("dx".equals(prefs.getString("dexer", "d8")) ? 1 : 0);
+        dexer.setOnItemSelectedListener(new SimpleSelection(position ->
+                prefs().edit().putString("dexer", position == 1 ? "dx" : "d8").apply()));
+        ((TextView) findViewById(R.id.setting_dexer_label)).setText(T("dexer", "Dex builder"));
 
         bindSwitch(R.id.setting_completion, "Auto Completion");
         bindSwitch(R.id.setting_autosave, "AutoSave");

@@ -552,14 +552,18 @@ public class ControlLayer extends Table {
 			app.toast("please wait, the scene is still loading...");
 			return;
 		}
-		if(compilingSince != 0 && System.currentTimeMillis() - compilingSince < 5 * 60 * 1000){
+		if((compilingSince != 0 && System.currentTimeMillis() - compilingSince < 5 * 60 * 1000) || com.star4droid.star2d.Helpers.CompileThread.isBuilding()){
 			app.toast(com.star4droid.star2d.ui.Tr.t("build_running", "A build is already running, please wait..."));
 			return;
 		}
+		// taken now (code generation included) and released on every way out: a second Play, a remote run or a build-only
+		// used to start a second build in parallel, and the two builds broke each other ("classes.dex is missing")
+		compilingSince = System.currentTimeMillis();
 		String path = app.getEditor().getProject().getPath();
 		// get project name...
 		final String projectName = path.contains("/") ? path.substring(path.lastIndexOf("/"),path.length()) : path;
-		final FileHandle errorLog = Gdx.files.external("logs/"+projectName+"/compile error.txt");
+		// last compile errors of this project: logs/build/<project>/compile_errors.txt (removed with its folder when the build succeeds)
+		final FileHandle errorLog = Gdx.files.absolute(com.star4droid.star2d.logs.Logs.buildFile(projectName, "compile_errors").getAbsolutePath());
 		if(nativeUi == null){
 			textShow.setEnabled(false);
 			textShow.setText(getTrans("generatingCode"));
@@ -571,6 +575,13 @@ public class ControlLayer extends Table {
 		//disable all inputs...
 		Gdx.input.setInputProcessor(null);
 		CodeGenerator.generateAllFor(app.getEditor(),(allScenes, anyChanged)->{
+			if(allScenes == null){
+				compilingSince = 0;
+				Gdx.input.setInputProcessor(inputProcessor);
+				playStatus(1, "Code generation failed. See logs/build/code_generation.txt");
+				playStatus(2, "");
+				return;
+			}
 			CompileThread compileThread = new CompileThread(app.getEditor().getProject().get("java"),false);
 			compileThread.setOnChangeStatus(new CompileThread.OnStatusChanged(){
 				@Override
@@ -601,20 +612,27 @@ public class ControlLayer extends Table {
 
 				@Override
 				public void onSuccess(String message) {
-					if(errorLog.exists()) errorLog.delete();
+					if(errorLog.exists()) com.star4droid.star2d.logs.Logs.delete(errorLog.file());
 					textShow.remove();
 					FileHandle fileHandle = new FileHandle(app.getEditor().getProject().getDex());
 					FileHandle built = Gdx.files.absolute(app.getEditor().getProject().getPath()+"/java/classes.dex");
 					if(!built.exists() || built.length() == 0){
+						com.star4droid.star2d.logs.Logs.build(projectName, "build", "build reported success but java/classes.dex is missing or empty");
 						// the dex is missing (another build moved it, or D8 wrote nothing): keep the previous game dex, ask for a new build
 						try { app.getEditor().getProject().get("java"); Gdx.files.absolute(app.getEditor().getProject().getChangesJson()).delete(); } catch(Throwable ignored){}
 						playStatus(1, com.star4droid.star2d.ui.Tr.t("build_no_dex", "The build finished but its output (classes.dex) is missing. Press Play again to rebuild."));
 						return;
 					}
 					try {
-						if(fileHandle.exists()) fileHandle.file().setWritable(true);
-						built.copyTo(fileHandle);
-						built.delete();
+						// replace dex/scenes.dex in one step (write a temp file, then rename it): the old file is never
+						// truncated or half written while a game or the export may be reading it
+						java.io.File target = fileHandle.file();
+						target.getParentFile().mkdirs();
+						java.io.File tmp = new java.io.File(target.getParentFile(), "scenes.dex.tmp");
+						tmp.delete();
+						if(!built.file().renameTo(tmp)){ built.copyTo(Gdx.files.absolute(tmp.getAbsolutePath())); built.delete(); }
+						if(target.exists()){ target.setWritable(true); target.delete(); }
+						if(!tmp.renameTo(target)) throw new java.io.IOException("could not rename " + tmp + " to " + target);
 					} catch(Throwable t){
 						playStatus(1, "Error : " + t);
 						return;
@@ -637,6 +655,7 @@ public class ControlLayer extends Table {
 						if(!filesChanged){
 						    textShow.remove();
 							Gdx.app.postRunnable(()->{
+								compilingSince = 0;
 								if(errorLog.exists()){
 									Gdx.input.setInputProcessor(inputProcessor);
 									BuildObserver bo2 = buildObserver;
@@ -753,7 +772,7 @@ public class ControlLayer extends Table {
 				method.invoke(item,objs);
 			} catch(Exception e){
 				Throwable c = e.getCause() != null ? e.getCause() : e;
-				Gdx.files.external("logs/add_body.error.txt").writeString(Utils.getStackTraceString(c)+"\n",true);
+				com.star4droid.star2d.logs.Logs.editor("add_element", Utils.getStackTraceString(c)+"\n");
 			}
 			if(item.getPropertySet()==null){
 				((Actor)item).remove();
@@ -1161,7 +1180,7 @@ public class ControlLayer extends Table {
 			com.star4droid.star2d.ui.Scene3DSettings.defaults(cfg);
 			f.writeString(cfg.toString(),false);
 		} catch(Throwable t){
-			Gdx.files.external("logs/scene3d.error.txt").writeString(Utils.getStackTraceString(t)+"\n",true);
+			com.star4droid.star2d.logs.Logs.editor("scene3d", Utils.getStackTraceString(t)+"\n");
 		}
 	}
 
@@ -1197,7 +1216,7 @@ public class ControlLayer extends Table {
 		try {
 			propertiesItem.refresh();
 		} catch(Exception e){
-			Gdx.files.external("logs/app_logs.txt").writeString("error on control layer code for refreshing : "+e.toString()+"\n",true);
+			com.star4droid.star2d.logs.Logs.editor("properties", "error on control layer code for refreshing : "+e.toString()+"\n");
 		}
 		if(nativeUi != null) nativeUi.onSelectionChanged();
 	}
@@ -1208,7 +1227,7 @@ public class ControlLayer extends Table {
 		try {
 			return VisUI.getSkin().getDrawable(namePure);
 		} catch(Exception e){
-			Gdx.files.external("logs/control drawable.txt").writeString("control drawbale : "+namePure+", full : "+name+"\n error : "+e.toString()+"\n\n",true);
+			com.star4droid.star2d.logs.Logs.editor("drawables", "control drawbale : "+namePure+", full : "+name+"\n error : "+e.toString()+"\n\n");
 			return new TextureRegionDrawable(new Texture(Gdx.files.internal("images/"+name)));
 		}
 	}

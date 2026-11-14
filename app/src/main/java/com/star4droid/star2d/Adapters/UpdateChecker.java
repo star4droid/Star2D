@@ -24,10 +24,10 @@ public class UpdateChecker {
         executorService.execute(() -> {
             String latestVersion = fetchLatestVersion();
             if(latestVersion!=null)
-				com.badlogic.gdx.Gdx.files.external("logs/update/latest.txt").writeString("version : "+latestVersion+"\n",false);
+				com.badlogic.gdx.Gdx.files.external("update/latest.txt").writeString("version : "+latestVersion+"\n",false);
             Gdx.app.postRunnable(() -> {
                 if (latestVersion != null && isLarger(latestVersion, CURRENT_VERSION)) {
-                    Gdx.files.external("logs/update/"+CURRENT_VERSION+".txt").writeString(latestVersion,false);
+                    Gdx.files.external("update/"+CURRENT_VERSION+".txt").writeString(latestVersion,false);
 					showUpdateDialog(testApp);
                 }
             });
@@ -57,7 +57,8 @@ public class UpdateChecker {
 
     private static String fetchLatestVersion() {
         String response = null;
-		FileHandle folder = Gdx.files.external("logs/update");
+		try { FileHandle oldFolder = Gdx.files.external("logs/update"); if(oldFolder.exists()) oldFolder.deleteDirectory(); } catch(Throwable ignored){}
+		FileHandle folder = Gdx.files.external("update");
 		FileHandle version = folder.child(CURRENT_VERSION+".txt");
 		if(folder.exists() && folder.isDirectory() && version.exists() && !version.readString().equals("")){
 			return version.readString();
@@ -81,13 +82,13 @@ public class UpdateChecker {
                 reader.close();
                 response = result.toString().trim();
             } else {
-                com.badlogic.gdx.Gdx.files.external("logs/update/log.txt").writeString("response not ok\n",true);
+                com.star4droid.star2d.logs.Logs.editor("update", "response not ok");
             }
             connection.disconnect();
         } catch (Exception e) {
             e.printStackTrace();
 			if(!e.toString().toLowerCase().contains("no address"))
-            	com.badlogic.gdx.Gdx.files.external("logs/update/log.txt").writeString("Error : "+e.toString()+"\n",true);
+            	com.star4droid.star2d.logs.Logs.editor("update", "Error : "+e);
            // throw new RuntimeException(e.toString());
         }
         return response;

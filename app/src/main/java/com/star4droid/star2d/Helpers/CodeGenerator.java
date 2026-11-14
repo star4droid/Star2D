@@ -141,11 +141,12 @@ public class CodeGenerator {
                 }
                 if (deleteStaleRefs(project, keep)) changed = true;
             } catch (Throwable t) {
-                Gdx.files.external("logs/code generation.txt").writeString(Utils.getStackTraceString(t), false);
+                com.star4droid.star2d.logs.Logs.write(com.star4droid.star2d.logs.Logs.BUILD, "code_generation", Utils.getStackTraceString(t));
             }
             final ArrayList<SceneCode> res = all;
             final boolean ch = changed;
-            if (res != null) Gdx.app.postRunnable(() -> listener.onGenerate(res, ch));
+            // null = code generation failed (see logs/build/code_generation.txt): the caller must still end its "building" state
+            Gdx.app.postRunnable(() -> listener.onGenerate(res, ch));
         }).start();
     }
 
@@ -168,7 +169,7 @@ public class CodeGenerator {
                 result = build(project, scene, properties);
                 writeRefs(project, scene, properties);
             } catch (Throwable t) {
-                Gdx.files.external("logs/code generation.txt").writeString(Utils.getStackTraceString(t), false);
+                com.star4droid.star2d.logs.Logs.write(com.star4droid.star2d.logs.Logs.BUILD, "code_generation", Utils.getStackTraceString(t));
             }
             final String code = result;
             if (generateListener != null && code != null)
@@ -732,7 +733,7 @@ public class CodeGenerator {
                 }
             }
         } catch (Throwable t) {
-            Gdx.files.external("logs/code generation.txt").writeString(Utils.getStackTraceString(t), false);
+            com.star4droid.star2d.logs.Logs.write(com.star4droid.star2d.logs.Logs.BUILD, "code_generation", Utils.getStackTraceString(t));
         }
         return changed;
     }
@@ -829,7 +830,7 @@ public class CodeGenerator {
             try {
                 sc.code = build(project, scene, props);
             } catch (Throwable t) {
-                Gdx.files.external("logs/code generation.txt").writeString(Utils.getStackTraceString(t), false);
+                com.star4droid.star2d.logs.Logs.write(com.star4droid.star2d.logs.Logs.BUILD, "code_generation", Utils.getStackTraceString(t));
                 continue;
             }
             out.add(sc);
@@ -932,7 +933,7 @@ public class CodeGenerator {
         } catch (Error | Exception e) {
             if (e instanceof LinkageError) palantirOk = Boolean.FALSE; // missing JDK classes: never try again
             System.err.println("Error formatting code: " + e.getMessage());
-            Gdx.files.external("logs/code format.txt").writeString(com.star4droid.template.Utils.Utils.getStackTraceString(e),false);
+            com.star4droid.star2d.logs.Logs.write(com.star4droid.star2d.logs.Logs.BUILD, "code_format", com.star4droid.template.Utils.Utils.getStackTraceString(e));
             // Return original code if formatting fails
             return code;
         }

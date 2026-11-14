@@ -93,7 +93,7 @@ public class BodiesList extends Group {
 	try {
 		return VisUI.getSkin().getDrawable(namePure);
 		} catch(Exception e){
-		Gdx.files.external("logs/bodies list drawable.txt").writeString("bodies list drawbale : "+namePure+", full : "+name+"\n error : "+e.toString()+"\n\n",true);
+		com.star4droid.star2d.logs.Logs.editor("drawables", "bodies list drawbale : "+namePure+", full : "+name+"\n error : "+e.toString()+"\n\n");
 	}
     return new TextureRegionDrawable(new Texture(Gdx.files.internal("images/" + name)));
   }
@@ -185,7 +185,7 @@ public class BodiesList extends Group {
       int padding = 0;
       PropertySet pst = getPropertyObj(hashMap.get("item"));
       /*if((!pst.getString("parent").equals(""))&&pst.getParent()==null){
-		  Gdx.files.external("logs/parent.txt").writeString("\n\nfixing : "+pst.getString("name")+", parent : "+pst.getString("parent"),true);
+		  com.star4droid.star2d.logs.Logs.editor("parents", "\n\nfixing : "+pst.getString("name")+", parent : "+pst.getString("parent"));
 		  boolean fixed = false;
 		  String parents = "";
 		  for(Actor actor : app.getEditor().getActors()){
@@ -198,7 +198,7 @@ public class BodiesList extends Group {
 				  } else parents += actor.getName()+"\n";
 			  }
 		  }
-		  Gdx.files.external("logs/parent.txt").writeString(((fixed)? "" : "not ")+"fixed : "+pst.getString("name")+", parents : "+parents,true); 
+		  com.star4droid.star2d.logs.Logs.editor("parents", ((fixed)? "" : "not ")+"fixed : "+pst.getString("name")+", parents : "+parents); 
 		  
 	  }*/
 	  while (pst.getParent() != null) {

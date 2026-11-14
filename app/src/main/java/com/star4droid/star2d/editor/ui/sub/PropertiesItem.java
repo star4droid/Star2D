@@ -52,7 +52,7 @@ public class PropertiesItem extends Group {
 			map = new Gson().fromJson(Utils.internal("map.json").readString(), new TypeToken<HashMap<String, Object>>(){}.getType());
 		} catch(Exception ex){
 			app.toast("editor map.json error : "+ex.toString());
-			com.badlogic.gdx.Gdx.files.external("logs/app_logs.txt").writeString("editor map.json error : "+ex.toString()+"\n",true);
+			com.star4droid.star2d.logs.Logs.editor("properties", "editor map.json error : "+ex.toString()+"\n");
 		}
 		
 		for(String s:map.keySet()){
@@ -70,7 +70,7 @@ public class PropertiesItem extends Group {
 				} catch(Exception ex){
 					String msg = "field error : "+ex.toString()+",name : "+str+",type : "+propertiesMap.get(str);
 					app.toast(msg);
-					com.badlogic.gdx.Gdx.files.external("logs/app_logs.txt").writeString(msg+"\n",true);
+					com.star4droid.star2d.logs.Logs.editor("properties", msg+"\n");
 					//Log.e(Utils.error_tag,"key : "+str+"\n"+ex.toString());
 				}
 			}
@@ -93,7 +93,7 @@ public class PropertiesItem extends Group {
 					sectionItem.update(propertySet);
 				}
 			} catch(Exception exception){
-				com.badlogic.gdx.Gdx.files.external("logs/app_logs.txt").writeString("properties item error : "+exception.toString()+"\n",true);
+				com.star4droid.star2d.logs.Logs.editor("properties", "properties item error : "+exception.toString()+"\n");
 			}
 		}
 	}

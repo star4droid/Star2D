@@ -6,7 +6,6 @@ import android.os.Build;
 import android.os.Bundle;
 import com.badlogic.gdx.backends.android.AndroidApplication;
 import com.badlogic.gdx.backends.android.AndroidApplicationConfiguration;
-import android.widget.TextView;
 import com.star4droid.template.Items.StageImp;
 
 public class MainActivity extends AndroidApplication {
@@ -21,16 +20,22 @@ public class MainActivity extends AndroidApplication {
 		}
 		AndroidApplicationConfiguration configuration= new AndroidApplicationConfiguration();
 		configuration.depth = 24; // 3D scenes: no z-fighting between close surfaces
-		StageImp dex = StageImp.getFromDex((getIntent().hasExtra("path")&&(!getIntent().getStringExtra("path").equals("")))?getIntent().getStringExtra("path"):firstGameDir(),
-		(getIntent().hasExtra("scene")&&(!getIntent().getStringExtra("scene").equals("")))?getIntent().getStringExtra("scene"):"scene1",null,null);
-		if(dex != null)
-		    initialize(dex,configuration);
-		else {
-		    TextView text = new TextView(this);
-		    text.setText("Error....!!!");
-		    setContentView(text);
-			text.setTextIsSelectable(true);
-		}
+		final String path = (getIntent().hasExtra("path")&&(!getIntent().getStringExtra("path").equals("")))?getIntent().getStringExtra("path"):firstGameDir();
+		final String scene = (getIntent().hasExtra("scene")&&(!getIntent().getStringExtra("scene").equals("")))?getIntent().getStringExtra("scene"):"scene1";
+		// The scene makes its SpriteBatch/shaders while it is built, so build it in create() on the GL thread:
+		// building it here in onCreate (no OpenGL context yet) failed with "Error compiling shader" and an empty log.
+		initialize(new com.badlogic.gdx.ApplicationListener() {
+			StageImp game;
+			@Override public void create() {
+				game = StageImp.getFromDex(path, scene, null, null);
+				game.create();
+			}
+			@Override public void resize(int w, int h) { if (game != null) game.resize(w, h); }
+			@Override public void render() { if (game != null) game.render(); }
+			@Override public void pause() { if (game != null) game.pause(); }
+			@Override public void resume() { if (game != null) game.resume(); }
+			@Override public void dispose() { if (game != null) game.dispose(); }
+		}, configuration);
 	}
 	
 	private String firstGameDir() {

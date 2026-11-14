@@ -70,7 +70,7 @@ public final class Bridge {
 
     private static void report(Throwable t) {
         try {
-            Gdx.files.external("logs/native_ui_errors.txt").writeString(android.util.Log.getStackTraceString(t) + "\n----\n", true);
+            com.star4droid.star2d.logs.Logs.editor("native_ui_errors", android.util.Log.getStackTraceString(t) + "\n----\n");
         } catch (Throwable ignored) {}
         if (com.star4droid.star2d.evo.star2dApp.getContext() != null)
             Ui.toast(com.star4droid.star2d.evo.star2dApp.getContext(), "Error: " + t);

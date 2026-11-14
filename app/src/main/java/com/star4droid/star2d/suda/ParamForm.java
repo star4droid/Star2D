@@ -71,8 +71,9 @@ public final class ParamForm {
                 e.addTextChangedListener(QuickGen.watcher(s -> { values.put(p.key, s); changed.run(); }));
                 if (p.type == Ops.T.TEXT) {
                     LinearLayout col = Ui.column(a);
+                    r.removeView(label); // detach first: a view can have only one parent
+                    if (label.getParent() instanceof android.view.ViewGroup) ((android.view.ViewGroup) label.getParent()).removeView(label);
                     col.addView(label);
-                    r.removeView(label);
                     col.addView(e, Ui.matchWrap());
                     r.addView(col, Ui.weight(1));
                 } else r.addView(e, new LinearLayout.LayoutParams(Ui.dp(a, 110), -2));

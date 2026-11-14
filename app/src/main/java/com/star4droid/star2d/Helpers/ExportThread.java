@@ -71,6 +71,13 @@ public class ExportThread extends Thread {
 				return;
 			}
             */
+			// compile first: a project must never be exported without its dex (or with an old one)
+			onProgress(com.star4droid.star2d.ui.Tr.t("export_p_compile","Compiling the game..."));
+			CompileThread.Result build = CompileThread.buildNow(project);
+			if(!build.ok){
+				onError(buildErrorSummary(build));
+				return;
+			}
 			onProgress(com.star4droid.star2d.ui.Tr.t("export_p_prepare","Preparing the project..."));
 			
 			FileUtil.deleteFile(export_temp+"/assets");
@@ -223,6 +230,23 @@ public class ExportThread extends Thread {
 		});
 	}
 	
+	/** "There are errors. Open the project and fix them." + the first error + "+N" for the others. */
+	private String buildErrorSummary(CompileThread.Result build){
+		StringBuilder sb = new StringBuilder(com.star4droid.star2d.ui.Tr.t("export_has_errors", "There are errors. Open the project and fix them."));
+		java.util.List<com.star4droid.star2d.CodeEditor.smart.BuildError> errs = build.errors;
+		if(errs != null && !errs.isEmpty()){
+			com.star4droid.star2d.CodeEditor.smart.BuildError e = errs.get(0);
+			String where = e.file == null ? "" : new java.io.File(e.file).getName() + (e.line > 0 ? ":" + e.line : "");
+			sb.append("\n\n").append(where.isEmpty() ? "" : where + "\n").append(e.message == null ? "" : e.message.trim());
+			if(errs.size() > 1) sb.append("\n+").append(errs.size() - 1);
+		} else if(build.message != null && !build.message.trim().isEmpty()){
+			String first = build.message.trim();
+			int nl = first.indexOf('\n', 300);
+			sb.append("\n\n").append(first.length() > 300 ? first.substring(0, nl > 0 ? Math.min(nl, 400) : 300) + "..." : first);
+		}
+		return sb.toString();
+	}
+
 	public void onError(final String message){
 		post(()->{
 			dialog = Utils.updateMessage(dialog,message,true);

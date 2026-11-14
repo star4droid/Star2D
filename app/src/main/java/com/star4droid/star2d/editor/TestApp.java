@@ -272,7 +272,7 @@ public class TestApp implements ApplicationListener {
 						try {
 						    onLoad(project);
 						} catch(Exception ex){
-						    Gdx.files.external("logs/load.error.txt").writeString(ex.toString(),false);
+						    com.star4droid.star2d.logs.Logs.editor("scene_loading", ex.toString());
 						}
 					}
 				},1.5f);
@@ -818,7 +818,7 @@ public class TestApp implements ApplicationListener {
 	    try {
 	        renderIn();
 	    } catch(Exception ex){
-	        Gdx.files.external("logs/renderIn.error.txt").writeString(Utils.getStackTraceString(ex)+"\n",false);
+	        com.star4droid.star2d.logs.Logs.editor("render", Utils.getStackTraceString(ex)+"\n");
 	    }
 	    Runnable hook = frameHook;
 	    if(hook != null){
@@ -855,7 +855,7 @@ public class TestApp implements ApplicationListener {
 				stageImp.render();
 			} catch(Exception e){
 				if(!isPlaying())
-					Gdx.files.external("logs/render.error.txt").writeString(Utils.getStackTraceString(e)+"\n"+"_".repeat(10)+"\n",false);
+					com.star4droid.star2d.logs.Logs.editor("render", Utils.getStackTraceString(e)+"\n"+"_".repeat(10)+"\n");
 				else {
 					play(null);
 					showErrorText("Error:\n"+Utils.getStackTraceString(e));

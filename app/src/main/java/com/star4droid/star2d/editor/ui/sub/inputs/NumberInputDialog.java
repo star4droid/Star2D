@@ -120,7 +120,7 @@ public class NumberInputDialog extends VisDialog {
 		try {
 			return VisUI.getSkin().getDrawable(namePure);
 		} catch(Exception e){
-			Gdx.files.external("logs/numbers dialog drawable.txt").writeString("numbers input drawable : "+namePure+", full : "+name+"\n error : "+e.toString()+"\n\n",true);
+			com.star4droid.star2d.logs.Logs.editor("drawables", "numbers input drawable : "+namePure+", full : "+name+"\n error : "+e.toString()+"\n\n");
 			return Utils.getDrawable(Gdx.files.internal("images/"+name));
 		}
 	}

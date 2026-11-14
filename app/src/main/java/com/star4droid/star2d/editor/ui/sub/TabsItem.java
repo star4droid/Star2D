@@ -88,7 +88,7 @@ public class TabsItem extends Table {
 		try {
 			return VisUI.getSkin().getDrawable(namePure);
 		} catch(Exception e){
-			Gdx.files.external("logs/tabs drawbale.txt").writeString("tabs drawable : "+namePure+", full : "+name+"\n error : "+e.toString()+"\n\n",true);
+			com.star4droid.star2d.logs.Logs.editor("drawables", "tabs drawable : "+namePure+", full : "+name+"\n error : "+e.toString()+"\n\n");
 			return new TextureRegionDrawable(new Texture(Gdx.files.internal("images/"+name)));
 		}
 	}

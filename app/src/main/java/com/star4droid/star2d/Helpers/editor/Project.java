@@ -84,7 +84,7 @@ public class Project {
 			f.writeString(code,false);
 			return true;
 		} catch(Throwable t){
-			try { Gdx.files.absolute(path+"/logs/codewrite.error.txt").writeString(scene+": "+t+"\n",true); } catch(Throwable ignored){}
+			com.star4droid.star2d.logs.Logs.build(new java.io.File(path).getName(), "code_write", scene+": "+t);
 			return false;
 		}
 	}

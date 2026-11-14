@@ -29,19 +29,7 @@ public class StarApp extends Application {
             // PendingIntent pendingIntent =
                 // PendingIntent.getActivity(
                     // getApplicationContext(), 11111, intent, PendingIntent.FLAG_ONE_SHOT);
-            int x = 0;
-            String str =
-                getExternalFilesDir(null)
-                    .getAbsolutePath()
-                    .concat("/logs/log")
-                    .concat("%1$s")
-                    .concat(".txt");
-            while (FileUtil.isExistFile(String.format(str,x+""))) {
-              x++;
-            }
-            String log = Log.getStackTraceString(throwable);
-            // if(!FileUtil.readFile(String.format(str,(x-1)+"")).equals(log))
-            FileUtil.writeFile(String.format(str, String.valueOf(x)), log);
+            com.star4droid.star2d.logs.Logs.crash(thread, throwable);
             // AlarmManager am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
             // am.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, 1000, pendingIntent);
             // //Process.killProcess(Process.myPid());

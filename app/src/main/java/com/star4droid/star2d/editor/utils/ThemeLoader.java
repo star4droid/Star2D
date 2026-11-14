@@ -252,10 +252,7 @@ public class ThemeLoader {
         continue;
       }
       if (!fh.name().contains(".")) {
-        Gdx.files
-            .external("logs/drawable.txt")
-            .writeString(
-                "not contains \".\" name : " + fh.name() + "\n" + "__".repeat(10) + "\n", true);
+        com.star4droid.star2d.logs.Logs.editor("drawables", "not contains \".\" name : " + fh.name() + "\n" + "__".repeat(10) + "\n");
         continue;
       }
       String name = fh.name().substring(0, fh.name().indexOf("."));
@@ -280,7 +277,7 @@ public class ThemeLoader {
   }
 
   public static void log(String tag, String log, boolean append) {
-    Gdx.files.external("logs/" + tag + ".txt").writeString(log + "\n", append);
+    com.star4droid.star2d.logs.Logs.editor(tag, log);
   }
 
   private static NinePatch ninePatch(FileHandle fileHandle, int[] splits) {

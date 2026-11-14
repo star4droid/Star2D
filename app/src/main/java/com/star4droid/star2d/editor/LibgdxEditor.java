@@ -505,7 +505,7 @@ public class LibgdxEditor extends Stage {
 		ArrayList<Runnable> cbs = new ArrayList<>(loadedCallbacks);
 		loadedCallbacks.clear();
 		for(Runnable r:cbs){
-			try { r.run(); } catch(Throwable t){ Gdx.files.external("logs/load.error.txt").writeString(Utils.getStackTraceString(t)+"\n",true); }
+			try { r.run(); } catch(Throwable t){ com.star4droid.star2d.logs.Logs.editor("scene_loading", Utils.getStackTraceString(t)+"\n"); }
 		}
 	}
 	
@@ -556,7 +556,7 @@ public class LibgdxEditor extends Stage {
 			loadUndoRedo();
 		} catch(Exception ex){
 			toast("loading undo redo lists error : "+ex.toString(),9);
-			Gdx.files.external("logs/undo loading.error.txt").writeString(ex.toString()+"\n",true);
+			com.star4droid.star2d.logs.Logs.editor("scene_loading", ex.toString()+"\n");
 		}
 		// parsing a big file is slow too, so it runs off the GL thread
 		new Thread(()->{
@@ -565,7 +565,7 @@ public class LibgdxEditor extends Stage {
 				sets = new Gson().fromJson(jsonSave,
 					new TypeToken<ArrayList<PropertySet<String, Object>>>() {}.getType());
 			} catch(Throwable t){
-				Gdx.files.external("logs/load.error.txt").writeString(Utils.getStackTraceString(t)+"\n",true);
+				com.star4droid.star2d.logs.Logs.editor("scene_loading", Utils.getStackTraceString(t)+"\n");
 			}
 			final ArrayList<PropertySet<String, Object>> parsed = sets == null ? new ArrayList<>() : sets;
 			Gdx.app.postRunnable(()->{
@@ -595,7 +595,7 @@ public class LibgdxEditor extends Stage {
 				if(System.nanoTime() > end) break;
 			}
 		} catch(Exception e){
-			Gdx.files.external("logs/load.error.txt").writeString(Utils.getStackTraceString(e)+"\n",true);
+			com.star4droid.star2d.logs.Logs.editor("scene_loading", Utils.getStackTraceString(e)+"\n");
 		}
 		if(index < sets.size()){
 			reportLoading(index / (float) total);
@@ -612,7 +612,7 @@ public class LibgdxEditor extends Stage {
 						if(propsMap.containsKey(set1.getString("parent"))){
 							set1.setParent(propsMap.get(set1.getString("parent")));
 						} else {
-							Gdx.files.external("logs/parent.error.txt").writeString("parent not found for : "+set1.getString("name")+", parent name : "+set1.getString("parent")+"\n",true);
+							com.star4droid.star2d.logs.Logs.editor("parents", "parent not found for : "+set1.getString("name")+", parent name : "+set1.getString("parent")+"\n");
 							set1.put("parent","");
 						}
 					}
@@ -896,7 +896,7 @@ public class LibgdxEditor extends Stage {
     		if(orienationChangeListener!=null)
     			orienationChangeListener.onChange(b);
 	    } catch(Exception ex){
-	        Gdx.files.external("logs/config.error.txt").writeString(ex.toString(),false);
+	        com.star4droid.star2d.logs.Logs.editor("scene_loading", ex.toString());
 	    }
 	}
 	
@@ -1132,7 +1132,7 @@ public class LibgdxEditor extends Stage {
 				loadUndoRedo();
 			} catch(Exception ex){
 				toast("loading undo redo lists error : "+ex.toString(),9);
-				Gdx.files.external("logs/undo loading.error.txt").writeString(ex.toString()+"\n",true);
+				com.star4droid.star2d.logs.Logs.editor("scene_loading", ex.toString()+"\n");
 			}
 			ArrayList<PropertySet<String, Object>> propertySets = new Gson().fromJson(jsonSave,
 					new TypeToken<ArrayList<PropertySet<String, Object>>>() {
@@ -1182,7 +1182,7 @@ public class LibgdxEditor extends Stage {
 				if (item == null)
 					continue;
 				if(propertySet==null){
-					Gdx.files.external("logs/load.error.txt").writeString("\nnull props : "+propertySet.toString()+"\n",true);
+					com.star4droid.star2d.logs.Logs.editor("scene_loading", "\nnull props : "+propertySet.toString()+"\n");
 					continue;
 				}
 				propsMap.put(propertySet.getString("name"),propertySet);
@@ -1201,7 +1201,7 @@ public class LibgdxEditor extends Stage {
 							if(propsMap.containsKey(set1.getString("parent"))){
 								set1.setParent(propsMap.get(set1.getString("parent")));
 							} else {
-							    Gdx.files.external("logs/parent.error.txt").writeString("parent not found for : "+set1.getString("name")+", parent name : "+set1.getString("parent")+"\n",true);
+							    com.star4droid.star2d.logs.Logs.editor("parents", "parent not found for : "+set1.getString("name")+", parent name : "+set1.getString("parent")+"\n");
 							    set1.put("parent","");
 							}
 						}
@@ -1223,7 +1223,7 @@ public class LibgdxEditor extends Stage {
 			}
 		} catch(Exception e){
 			e.printStackTrace();
-			Gdx.files.external("logs/load.error.txt").writeString(Utils.getStackTraceString(e)+"\n",true);
+			com.star4droid.star2d.logs.Logs.editor("scene_loading", Utils.getStackTraceString(e)+"\n");
 		}
 		//addActor(pointPicker);
 	}

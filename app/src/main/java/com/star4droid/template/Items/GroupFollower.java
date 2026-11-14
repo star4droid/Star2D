@@ -360,8 +360,7 @@ public class GroupFollower {
         disabled = true;
         try {
             Gdx.app.error("GroupFollower", "parent following switched off: " + t);
-            Gdx.files.external("logs/group_follower.txt").writeString(
-                    "GroupFollower disabled: " + android.util.Log.getStackTraceString(t) + "\n", true);
+            com.star4droid.template.Utils.GameLog.write("group_follower", "GroupFollower disabled: " + android.util.Log.getStackTraceString(t) + "\n");
         } catch (Throwable ignored) {}
     }
 }

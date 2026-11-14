@@ -29,6 +29,8 @@ public class star2dApp extends Application {
 		return uncaughtExceptionHandler;
 	}
 	public void onCreate() {
+		com.star4droid.star2d.logs.Logs.init(this);
+		com.star4droid.star2d.logs.Logs.recordLastExit(this);
 		EngineSettings.init(this);
 		Utils.setLanguage(this);
 		com.star4droid.star2d.ui.Snack.install(this);
@@ -37,14 +39,8 @@ public class star2dApp extends Application {
 		new com.github.anrwatchdog.ANRWatchDog(7000).setANRListener(new ANRWatchDog.ANRListener() {
     		@Override
     		public void onAppNotResponding(ANRError error) {
-        		error.fillInStackTrace();
-				try {
-					FileUtil.writeFile(getExternalFilesDir("logs")+"/not.respond.txt","");
-					error.printStackTrace(new java.io.PrintStream(new java.io.File(getExternalFilesDir("logs")+"/not.respond.txt")));
-				} catch(Exception e){}
-				//FileUtil.writeFile(getExternalFilesDir("logs")+"/error.txt",error.toString() + ",full :\n"+Utils.getStackTraceString(error));
-        		Process.killProcess(Process.myPid());
-				System.exit(1);
+        		// record it only: killing the app here closed it silently (lost work) whenever the UI was busy for a few seconds
+				com.star4droid.star2d.logs.Logs.editorError("not_responding", "The UI thread did not respond for 7 seconds", error);
 				//ExceptionHandler.saveException(error, new CrashManager());
     		}
 		}).start();
@@ -58,14 +54,7 @@ public class star2dApp extends Application {
 				intent.putExtra("error", Log.getStackTraceString(throwable));
 				intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
 				//PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(), 11111, intent, PendingIntent.FLAG_ONE_SHOT);
-				int x=0;
-				String str=FileUtil.getPackageDataDir(star2dApp.this)+"/logs/log"+"%1$s"+".txt";
-				while(FileUtil.isExistFile(FileUtil.getPackageDataDir(star2dApp.this)+"/logs/log"+x+".txt")){
-					x++;
-				}
-				String log=Log.getStackTraceString(throwable);
-				if(!FileUtil.readFile(String.format(str,(x-1)+"")).equals(log))
-				FileUtil.writeFile(String.format(str,x+""),log);
+				com.star4droid.star2d.logs.Logs.crash(thread, throwable);
 				//AlarmManager am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
 				//am.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, 1000, pendingIntent);
 				new Handler(Looper.getMainLooper()).postDelayed(()->mApplicationContext.startActivity(intent),1500);

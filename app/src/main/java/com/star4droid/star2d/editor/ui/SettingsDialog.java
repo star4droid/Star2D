@@ -72,7 +72,7 @@ public class SettingsDialog extends VisDialog {
 		SpinnerInput compiler = new SpinnerInput();
 		compiler.setNameText("Compiler");
 		compiler.setData("javac","ecj");
-		compiler.setValue(preferences.getString("compiler","javac"));
+		compiler.setValue(preferences.getString("compiler","ecj"));
 		table.add(compiler).padTop(10).row();
 		
 		CheckInput saveUndoRedo = new CheckInput();

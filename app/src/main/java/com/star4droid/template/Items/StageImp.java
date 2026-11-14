@@ -138,7 +138,7 @@ public class StageImp extends ApplicationAdapter {
 		    viewport = new FitViewport(width,height);
 		    //else viewport.setWorldSize(width,height);
 		needsUpdate = (propertySet==null);
-		preferences = Gdx.app.getPreferences("prefs");
+		preferences = gamePrefs();
 		Gdx.input.setCatchKey(4,true);//back key
 		UiStage = new Stage(new FitViewport(width,height));
 		toastManager = new ToastManager(UiStage);
@@ -571,7 +571,7 @@ public class StageImp extends ApplicationAdapter {
 		if(needsUpdate) return;
 		syncScreenSize();
 		if(preferences==null)
-		    preferences = Gdx.app.getPreferences("prefs");
+		    preferences = gamePrefs();
 		// PlayerItem item= findItem("Box1");
 		// if(item!=null){
 		    // GameStage.getCamera().position.x = item.getActorX();
@@ -982,13 +982,40 @@ public class StageImp extends ApplicationAdapter {
 	}
 	public void onCollisionEnd(PlayerItem body1,PlayerItem body2){}
 	
+	/**
+	 * Loads the scene class from the project's dex WITHOUT keeping that file mapped: on Android 8+ from memory, on 7 from a
+	 * private copy with a new name each time. Mapping dex/scenes.dex itself made the next build (which replaces the file)
+	 * crash the editor natively (SIGBUS, no Java log) as soon as the previous game's classes were touched.
+	 */
+	private static Class<?> loadSceneClass(java.io.File dex, String scene) throws Exception {
+		ClassLoader parent = StageImp.class.getClassLoader();
+		String name = "com.star4droid.Game." + scene.toLowerCase();
+		if(android.os.Build.VERSION.SDK_INT >= 26){
+			byte[] bytes = java.nio.file.Files.readAllBytes(dex.toPath());
+			return new dalvik.system.InMemoryDexClassLoader(java.nio.ByteBuffer.wrap(bytes), parent).loadClass(name);
+		}
+		java.io.File dir = new java.io.File(System.getProperty("java.io.tmpdir", "/data/local/tmp"), "scene-dex");
+		dir.mkdirs();
+		java.io.File[] old = dir.listFiles();
+		if(old != null) for(java.io.File f : old) if(f.isFile() && System.currentTimeMillis() - f.lastModified() > 60_000) { f.setWritable(true); f.delete(); }
+		java.io.File copy = new java.io.File(dir, "scenes-" + System.nanoTime() + ".dex");
+		java.io.InputStream in = new java.io.FileInputStream(dex);
+		java.io.OutputStream out = new java.io.FileOutputStream(copy);
+		byte[] buf = new byte[65536]; int n;
+		while((n = in.read(buf)) > 0) out.write(buf, 0, n);
+		in.close(); out.close();
+		copy.setReadOnly(); // Android 14+ refuses writable dex files
+		java.io.File odex = new java.io.File(dir, "odex"); odex.mkdirs(); // Android 7 needs a folder for the optimized dex
+		return new dalvik.system.DexClassLoader(copy.getAbsolutePath(), odex.getAbsolutePath(), null, parent).loadClass(name);
+	}
+
 	public static StageImp getFromDex(String path,String scene,ProjectAssetLoader projectAssetLoader,SpriteSheetLoader spriteSheetLoader){
 		try {
 			Project project = new Project(path);
 			String read = Utils.readFile(project.getConfig(scene));
 			PropertySet<String,Object> set = PropertySet.getFrom(read);
 			if(set == null){
-			    Gdx.files.external("logs/set.null.txt").writeString(String.format("path : %1$s, read : \n%2$s\n\n"),true);
+			    com.star4droid.template.Utils.GameLog.write("scene_config", String.format("Scene config could not be read. path : %1$s, read : \n%2$s\n\n", path, read));
 			}
 			String optimizedDir = null;// star2dApp.getContext().getDir("odex", android.content.Context.MODE_PRIVATE).getAbsolutePath();
 			java.io.File file = new java.io.File(project.getDex());
@@ -996,14 +1023,11 @@ public class StageImp extends ApplicationAdapter {
 			// an exported game has its scenes in the APK (classesN.dex): use them directly
 			try { playerClass = Class.forName("com.star4droid.Game."+scene.toLowerCase(), true, StageImp.class.getClassLoader()); } catch(Throwable ignored){}
 			if(playerClass == null){
-				file.setReadOnly();
-				dalvik.system.DexClassLoader dcl = new dalvik.system.DexClassLoader(project.getDex(), optimizedDir, null, StageImp.class.getClassLoader() );
-				playerClass = dcl.loadClass("com.star4droid.Game."+scene.toLowerCase());
+				playerClass = loadSceneClass(file, scene);
 			}
 			java.lang.reflect.Constructor<?> constructor = playerClass.getConstructor();
 			StageImp imp = ((StageImp)constructor.newInstance()).setAssetsLoader(projectAssetLoader).setProject(project).setSpriteSheetLoader(spriteSheetLoader).setPropertySet(set);
 			imp.sceneName = scene;
-			file.setWritable(true);
 			return imp;
 		} catch(Throwable e){
 		String err = "path : "+path+"\n scene : "
@@ -1132,7 +1156,8 @@ public class StageImp extends ApplicationAdapter {
 	}
 	
 	public void debug(String string, boolean append){
-	    Gdx.files.external("game-logs/log.txt").writeString(string,append);
+	    // the game console (debug blocks): logs/game/console.txt, made only when the game prints something
+	    try { com.star4droid.template.Utils.GameLog.file("console").writeString(string,append); } catch(Throwable ignored){}
 	}
 	
 	public StageImp prevStage = null;
@@ -1323,11 +1348,55 @@ public class StageImp extends ApplicationAdapter {
 		getCamera().position.set(x,y,0);
 	}
 	
+	/**
+	 * The game's own saves: "game_<project folder>". They used to go to "prefs", the same file as the editor's settings,
+	 * so a game could overwrite the engine settings (and all games shared one save file).
+	 * An exported game moves its old saves from "prefs" once, so players keep their progress after an update.
+	 */
+	private Preferences gamePrefs(){
+		String name = "prefs";
+		try {
+			if(project != null && project.getPath() != null){
+				String folder = new java.io.File(project.getPath()).getName().replaceAll("[^A-Za-z0-9_]", "_");
+				if(!folder.isEmpty()) name = "game_" + folder;
+			}
+		} catch(Throwable ignored){}
+		Preferences p = Gdx.app.getPreferences(name);
+		if(!name.equals("prefs") && !insideEditor()){
+			try {
+				Preferences meta = Gdx.app.getPreferences("star2d_game_meta");
+				if(!meta.getBoolean("moved_" + name, false)){
+					Preferences old = Gdx.app.getPreferences("prefs");
+					if(!old.get().isEmpty() && p.get().isEmpty()) { p.put(old.get()); p.flush(); }
+					meta.putBoolean("moved_" + name, true).flush();
+				}
+			} catch(Throwable ignored){}
+		}
+		return p;
+	}
+
+	private static Boolean insideEditor;
+	private static boolean insideEditor(){
+		if(insideEditor == null){
+			try { Class.forName("com.star4droid.star2d.evo.star2dApp"); insideEditor = true; } catch(Throwable t){ insideEditor = false; }
+		}
+		return insideEditor;
+	}
+
+	/** Block "clear saves": deletes everything this game saved (only this game's file). */
+	public void clearSaves(){
+		if(preferences == null) preferences = gamePrefs();
+		preferences.clear();
+		preferences.flush();
+	}
+
 	public void setValue(String name,String value){
+		if(preferences == null) preferences = gamePrefs();
 		preferences.putString(name,value). flush();
 	}
 	
 	public String getValue(String name){
+		if(preferences == null) preferences = gamePrefs();
 		return preferences.getString(name,"");
 	}
 	
@@ -1357,7 +1426,7 @@ public class StageImp extends ApplicationAdapter {
 	public void act() {
 	    //if(finished) return;
 		if(preferences==null) {
-		    preferences = Gdx.app.getPreferences("prefs");
+		    preferences = gamePrefs();
 		    if(preferences==null) return;
 		}
 		UiStage.act();

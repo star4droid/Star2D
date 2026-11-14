@@ -316,7 +316,7 @@ public class FilePicker extends VisWindow implements Disposable {
 		super.act(arg0);
 		if(getX()!=0 || getY()!=0)
 			setPosition(0,0);
-		Gdx.files.external("logs/filepicker.txt").writeString(" w : "+getWidth()+",h : "+getHeight()+",x : "+getX()+", y : "+getY(),false);
+		com.star4droid.star2d.logs.Logs.editor("filepicker", " w : "+getWidth()+",h : "+getHeight()+",x : "+getX()+", y : "+getY());
 	}
 	*/
 

@@ -325,6 +325,7 @@ public final class BlockCatalog {
         def("Variables", vars, "setObjectVariable", "element(Body) variable value", "body2|health|0", false, "com.star4droid.template.Utils.ObjectVars.set(%1$s,\"%2$s\",%3$s);\n%4$s");
         def("Variables", vars, "changeObjectVariable", "element(Body) variable by", "body2|health|-1", false, "com.star4droid.template.Utils.ObjectVars.add(%1$s,\"%2$s\",%3$s);\n%4$s");
         def("Variables", vars, "saveData", "key value", "best|score", false, "setValue(\"%1$s\",String.valueOf(%2$s));\n%3$s");
+        def("Variables", vars, "clearSaves", "", "", false, "clearSaves();\n%1$s");
 
         // Motion (distances in editor pixels, speeds in pixels per second)
         String ws = "com.star4droid.template.Items.StageImp.WORLD_SCALE";

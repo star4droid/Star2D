@@ -95,13 +95,22 @@ public class SettingsPanel implements PanelHost.Panel {
         col.addView(sw(c, p, "Auto Completion", Tr.t("codeCompletion", "Script code completion"), null));
 
         col.addView(Ui.text(c, Tr.t("ui_compiler", "Java compiler"), 13, Ui.TEXT_2));
-        TextView comp = chooser(c, p.getString("compiler", "javac"));
-        comp.setOnClickListener(v -> Dialogs.choose(c, "Compiler", new String[]{"javac", "ecj"}, i -> {
-            String s = i == 0 ? "javac" : "ecj";
-            p.edit().putString("compiler", s).apply();
-            comp.setText(s);
+        String[] compilers = {Tr.t("compiler_ecj", "ECJ (recommended, Java 8+)"), Tr.t("compiler_javac", "javac (old, Java 7)")};
+        TextView comp = chooser(c, "javac".equals(p.getString("compiler", "ecj")) ? compilers[1] : compilers[0]);
+        comp.setOnClickListener(v -> Dialogs.choose(c, Tr.t("ui_compiler", "Java compiler"), compilers, i -> {
+            p.edit().putString("compiler", i == 1 ? "javac" : "ecj").apply();
+            comp.setText(compilers[i]);
         }));
         col.addView(comp, Ui.matchWrap());
+
+        col.addView(Ui.text(c, Tr.t("dexer", "Dex builder"), 13, Ui.TEXT_2));
+        String[] dexers = {Tr.t("dexer_d8", "D8 (recommended)"), Tr.t("dexer_dx", "dx (old, Java 7 code only)")};
+        TextView dex = chooser(c, "dx".equals(p.getString("dexer", "d8")) ? dexers[1] : dexers[0]);
+        dex.setOnClickListener(v -> Dialogs.choose(c, Tr.t("dexer", "Dex builder"), dexers, i -> {
+            p.edit().putString("dexer", i == 1 ? "dx" : "d8").apply();
+            dex.setText(dexers[i]);
+        }));
+        col.addView(dex, Ui.matchWrap());
 
         // ---- scene (logic size)
         col.addView(Ui.sectionLabel(c, Tr.t("ui_scene", "Scene")));

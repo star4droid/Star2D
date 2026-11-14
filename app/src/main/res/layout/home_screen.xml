@@ -391,6 +391,26 @@
                             android:textSize="16sp" />
                     </FrameLayout>
 
+                    <TextView style="@style/HomeFieldLabel" android:id="@+id/setting_dexer_label" android:text="Dex Builder" />
+
+                    <FrameLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <Spinner
+                            android:id="@+id/setting_dexer"
+                            style="@style/HomeSpinner" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="end|center_vertical"
+                            android:layout_marginEnd="14dp"
+                            android:text="▾"
+                            android:textColor="@color/home_text_secondary"
+                            android:textSize="16sp" />
+                    </FrameLayout>
+
                     <androidx.appcompat.widget.SwitchCompat
                         android:id="@+id/setting_completion"
                         style="@style/HomeSwitch"

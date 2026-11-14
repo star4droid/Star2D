@@ -49,7 +49,7 @@ public interface PlayerItem {
                 return nameV != null ? nameV.toString() : actorN;
             }
         } catch (NoSuchFieldException | IllegalAccessException e) {
-            com.badlogic.gdx.Gdx.files.external("logs/reflection.txt").writeString("Error : "+Utils.getStackTraceString(e),false);
+            com.star4droid.template.Utils.GameLog.write("reflection", "Error : "+Utils.getStackTraceString(e));
         }
         return actorN;
     }

@@ -115,7 +115,7 @@ public class EditorUIHolderItem extends Group implements EditorItem {
 					addActor(view);
 				} catch(Throwable t){
 					view = null;
-					try { Gdx.files.external("logs/ui_holder.txt").writeString("load error : " + t + "\n", true); } catch(Throwable ignored){}
+					try { com.star4droid.star2d.logs.Logs.editor("ui_holder", "load error : " + t + "\n"); } catch(Throwable ignored){}
 				}
 			}
 			loadedFit = null;

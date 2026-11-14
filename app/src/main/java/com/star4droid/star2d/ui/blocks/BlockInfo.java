@@ -237,6 +237,7 @@ public final class BlockInfo {
         b("setObjectVariable", "Set variable of object", "اضبط متغير كائن", "Sets an object variable of another element (inside the object's own events just use its name).", "يضبط متغير كائن لعنصر آخر (داخل أحداث الكائن نفسه استخدم اسمه مباشرة).");
         b("changeObjectVariable", "Change variable of object", "غيّر متغير كائن", "Adds to an object variable of another element (use -1 to subtract).", "يضيف إلى متغير كائن لعنصر آخر (استخدم -1 للطرح).");
         b("saveData", "Save data", "احفظ بيانات", "Saves a value permanently (high score...). Read it with 'saved number'.", "يحفظ قيمة بشكل دائم (أعلى نتيجة...). اقرأها بـ «الرقم المحفوظ».");
+        b("clearSaves", "Clear saves", "امسح المحفوظات", "Deletes everything this game saved with 'save data' (high scores, progress...). Other games and the engine are not touched.", "يحذف كل ما حفظته هذه اللعبة بـ «احفظ بيانات» (أعلى نتيجة، التقدم...). لا يمس الألعاب الأخرى ولا المحرك.");
         // motion
         b("moveBy", "Move by", "تحرك بمقدار", "Moves an element by dx, dy.", "يحرك العنصر بمقدار dx و dy.");
         b("goTo", "Go to x, y", "اذهب إلى x, y", "Teleports an element.", "ينقل العنصر فوراً.");

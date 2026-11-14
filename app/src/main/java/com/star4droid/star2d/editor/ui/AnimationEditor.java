@@ -193,7 +193,7 @@ public class AnimationEditor extends VisWindow {
 	}
 	
 	private void log(String log){
-		Gdx.files.external("logs/animationEditor.txt").writeString(log+"\n"+"_".repeat(10)+"\n",true);
+		com.star4droid.star2d.logs.Logs.editor("animation_editor", log+"\n"+"_".repeat(10)+"\n");
 	}
 	
 	private void refreshList(){

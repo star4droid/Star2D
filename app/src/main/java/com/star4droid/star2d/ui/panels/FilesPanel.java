@@ -128,6 +128,7 @@ public class FilesPanel implements PanelHost.Panel {
     public void openLogs() {
         File logs = shell.activity().getExternalFilesDir("logs");
         if (logs == null) return;
+        com.star4droid.star2d.logs.Logs.cleanEmptyFolders();
         logs.mkdirs();
         logsMode = true;
         rootDir = logs;
@@ -663,7 +664,14 @@ public class FilesPanel implements PanelHost.Panel {
                         break;
                     }
                     Dialogs.confirm(c, Tr.t("delete", "Delete"), f.getName() + "\n" + Tr.t("areYouSure", "Are you sure?"), Tr.t("delete", "Delete"), () -> {
+                        File parentDir = f.getParentFile();
                         deleteRec(f);
+                        if (logsMode) {
+                            // a log folder left empty goes too; stay in the nearest folder that still exists
+                            com.star4droid.star2d.logs.Logs.removeEmptyParents(parentDir);
+                            while (dir != null && !dir.exists() && !dir.equals(rootDir)) dir = dir.getParentFile();
+                            if (rootDir != null) rootDir.mkdirs();
+                        }
                         reload();
                     });
                     break;

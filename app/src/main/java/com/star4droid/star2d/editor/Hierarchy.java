@@ -297,6 +297,6 @@ public final class Hierarchy {
     }
 
     public static void log(String s) {
-        try { Gdx.files.external("logs/hierarchy.txt").writeString(s + "\n", true); } catch (Throwable ignored) {}
+        try { com.star4droid.star2d.logs.Logs.editor("hierarchy", s + "\n"); } catch (Throwable ignored) {}
     }
 }

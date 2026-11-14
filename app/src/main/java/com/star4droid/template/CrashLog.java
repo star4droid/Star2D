@@ -26,9 +26,8 @@ public class CrashLog {
 	public static File dir(Context c) {
 		File base = c.getExternalFilesDir(null);
 		if (base == null) base = c.getFilesDir();
-		File d = new File(base, "crash");
-		d.mkdirs();
-		return d;
+		// made only when a crash is written (dir(c).mkdirs() there), so a game that never crashed leaves no empty folder
+		return new File(base, "crash");
 	}
 
 	public static void install(final Context ctx) {
@@ -45,6 +44,7 @@ public class CrashLog {
 					try { ver = app.getPackageManager().getPackageInfo(app.getPackageName(), 0).versionName; } catch (Throwable ignored) { }
 					String text = "Time: " + new Date() + "\nPackage: " + app.getPackageName() + " " + ver + "\nDevice: " + Build.MANUFACTURER + " " + Build.MODEL
 							+ " (Android " + Build.VERSION.RELEASE + ", API " + Build.VERSION.SDK_INT + ")\nThread: " + t.getName() + "\n\n" + sw;
+					dir(app).mkdirs();
 					File f = new File(dir(app), new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date()) + ".txt");
 					FileOutputStream out = new FileOutputStream(f);
 					out.write(text.getBytes("UTF-8"));
@@ -91,6 +91,7 @@ public class CrashLog {
 				.setPositiveButton("Ignore and delete", new android.content.DialogInterface.OnClickListener() {
 					public void onClick(android.content.DialogInterface di, int w) {
 						for (File f : files) f.delete();
+						dir(a).delete(); // remove the folder too when it is empty
 					}
 				})
 				.setNeutralButton("Copy error", null)

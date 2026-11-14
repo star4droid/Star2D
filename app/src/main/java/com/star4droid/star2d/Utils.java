@@ -201,11 +201,6 @@ public class Utils {
 		}
 		
 		public static void log(String s,Context ctx){
-		    int x=1;
-		    while(FileUtil.isExistFile(FileUtil.getPackageDataDir(ctx)+"/logs/log"+x+".txt")){
-					x++;
-				}
-			FileUtil.writeFile(FileUtil.getPackageDataDir(ctx)+"/logs/log"+x+".txt",s);
 			Log(error_tag,s);
 		}
 		
@@ -729,14 +724,7 @@ public class Utils {
 	}
 	
 	public static void Log(String error,String string){
-		int x=0;
-		String str=star2dApp.getContext().getExternalFilesDir(null)+"/logs/log"+"%1$s"+".txt";
-		while(FileUtil.isExistFile(star2dApp.getContext().getExternalFilesDir(null)+"/logs/log"+x+".txt")){
-		    if(FileUtil.readFile(String.format(str,x+"")).equals(error+" :\n"+string))
-		    break;
-			x++;
-		}
-		FileUtil.writeFile(String.format(str,x+""),error+" :\n"+string);
+		com.star4droid.star2d.logs.Logs.editor("errors", error+" :\n"+string);
 	}
 		
 		public static String getStackTraceString2(Throwable throwable){

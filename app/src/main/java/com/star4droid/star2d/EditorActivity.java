@@ -210,7 +210,7 @@ public class EditorActivity extends AppCompatActivity implements AndroidFragment
 		new ANRWatchDog().setANRListener(new ANRWatchDog.ANRListener() {
     		@Override
     		public void onAppNotResponding(ANRError error) {
-				FileUtil.writeFile(getExternalFilesDir("logs")+"/error.txt",Utils.getStackTraceString(error));
+				com.star4droid.star2d.logs.Logs.editor("not_responding", Utils.getStackTraceString(error));
         		//ExceptionHandler.saveException(error, new CrashManager());
     		}
 		}).start();

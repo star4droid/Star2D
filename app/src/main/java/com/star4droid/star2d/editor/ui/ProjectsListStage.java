@@ -512,7 +512,7 @@ public class ProjectsListStage extends Stage {
         try {
             return VisUI.getSkin().getDrawable(namePure);
         } catch (Exception | Error e) {
-            Gdx.files.external("logs/projects drawable.txt").writeString("projects drawable : " + namePure + ", full : " + name + "\n error : " + e.toString() + "\n\n", true);
+            com.star4droid.star2d.logs.Logs.editor("drawables", "projects drawable : " + namePure + ", full : " + name + "\n error : " + e.toString() + "\n\n");
             return Utils.getDrawable(Gdx.files.internal("images/" + name));
         }
     }

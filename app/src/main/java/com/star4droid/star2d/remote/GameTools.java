@@ -141,7 +141,7 @@ final class GameTools {
                 ControlLayer.buildOnly = !start;
                 return null;
             });
-            if (start) try { Gdx.files.external("game-logs/log.txt").writeString("", false); } catch (Throwable ignored) {}
+            if (start) try { com.badlogic.gdx.files.FileHandle con = com.star4droid.template.Utils.GameLog.file("console"); if (con.exists()) com.star4droid.template.Utils.GameLog.delete(con); com.badlogic.gdx.files.FileHandle old = Gdx.files.external("game-logs"); if (old.exists()) old.deleteDirectory(); } catch (Throwable ignored) {}
             Gl.ui(() -> {
                 if (EditorShell.current != null) EditorShell.current.play();
                 else Bridge.gl(() -> Bridge.controls().actionPlay());
@@ -672,7 +672,7 @@ final class GameTools {
 
     private static String tailLog(boolean clear) {
         try {
-            com.badlogic.gdx.files.FileHandle f = Gdx.files.external("game-logs/log.txt");
+            com.badlogic.gdx.files.FileHandle f = com.star4droid.template.Utils.GameLog.file("console");
             if (!f.exists()) return "";
             String t = f.readString();
             if (clear) f.writeString("", false);

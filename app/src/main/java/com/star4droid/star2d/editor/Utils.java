@@ -148,7 +148,7 @@ public class Utils {
 					return;
 				}
 			} catch(Throwable t){
-				Gdx.files.external("logs/ninepatch.error.txt").writeString(t.toString()+"\n",true);
+				com.star4droid.star2d.logs.Logs.editor("images", t.toString()+"\n");
 			}
 		}
 		ProjectAssetLoader loader = (Editor.getCurrentEditor()!=null && Editor.getCurrentEditor().getLibgdxEditor()!=null)?Editor.getCurrentEditor().getLibgdxEditor().getAssetLoader():null;
@@ -162,7 +162,7 @@ public class Utils {
 				texture = new Texture(fileHandle.exists()?fileHandle:Gdx.files.internal("images/logo.png"));
 			} catch(Throwable bad){
 				// a corrupt / empty / unsupported image file: show the default picture instead of failing the whole edit
-				Gdx.files.external("logs/image.error.txt").writeString("bad image : "+path+" : "+bad+"\n",true);
+				com.star4droid.star2d.logs.Logs.editor("images", "bad image : "+path+" : "+bad+"\n");
 				texture = new Texture(Gdx.files.internal("images/logo.png"));
 			}
 		}

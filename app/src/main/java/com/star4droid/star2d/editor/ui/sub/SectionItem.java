@@ -62,13 +62,13 @@ public class SectionItem extends VisTable {
 		for(EditorField field:inputFields){
 			if(pr==null) break;
 			try {
-				if(field.getInputField()!=null && !pr.containsKey(field.getInputField().getFieldName()))
+				if(field.getInputField()==null || !pr.containsKey(field.getInputField().getFieldName()))
 					continue;
 				field.refresh(pr);
 				fieldsNo++;
 				content.add((Actor)field.getInputField()).growX().padBottom(15).row();
 			} catch(Exception e){
-				com.badlogic.gdx.Gdx.files.external("logs/app_logs.txt").writeString("Error on refreshing : "+e.toString()+"\n"+"__".repeat(5)+"\n",true);
+				com.star4droid.star2d.logs.Logs.editorError("properties", "Refreshing field failed", e);
 			}
 		}
 		//setVisible(fieldsNo>0);
@@ -91,7 +91,7 @@ public class SectionItem extends VisTable {
 		try {
 			return VisUI.getSkin().getDrawable(namePure);
 		} catch(Exception e){
-			Gdx.files.external("logs/projects drawable.txt").writeString("projects drawbale : "+namePure+", full : "+name+"\n error : "+e.toString()+"\n\n",true);
+			com.star4droid.star2d.logs.Logs.editor("drawables", "projects drawbale : "+namePure+", full : "+name+"\n error : "+e.toString()+"\n\n");
 			return Utils.getDrawable(Gdx.files.internal("images/"+name));
 		}
 	}

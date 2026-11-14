@@ -223,7 +223,7 @@ public final class ScriptVarWatcher {
 
 	static void log(Throwable t) {
 		try {
-			if (Gdx.files != null) Gdx.files.external("logs/script variables.txt").writeString(android.util.Log.getStackTraceString(t) + "\n----\n", true);
+			if (Gdx.files != null) com.star4droid.star2d.logs.Logs.editor("script_variables", android.util.Log.getStackTraceString(t) + "\n----\n");
 		} catch (Throwable ignored) {
 		}
 	}

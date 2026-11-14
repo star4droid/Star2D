@@ -195,6 +195,25 @@ public class CodeEditorActivity extends AppCompatActivity {
 		} catch(Error | Exception ex){
 			
 		}
+		// Format: re-indent and space the Java code (ECJ-based formatter, no extra libraries). One undo step.
+		findViewById(R.id.format).setOnClickListener(v->{
+			String src = editor.getText().toString();
+			new Thread(()->{
+				String out = com.star4droid.star2d.CodeEditor.JavaFormatter.format(src);
+				runOnUiThread(()->{
+					if(out == null || out.equals(src)){
+						android.widget.Toast.makeText(this, com.star4droid.star2d.ui.Tr.t("format_nothing", "Nothing to format (or the code has an unfinished string or comment)"), android.widget.Toast.LENGTH_SHORT).show();
+						return;
+					}
+					if(!editor.getText().toString().equals(src)) return; // edited meanwhile
+					int line = editor.getCursor().getLeftLine();
+					io.github.rosemoe.sora.text.Content c = editor.getText();
+					int last = c.getLineCount() - 1;
+					c.replace(0, 0, last, c.getColumnCount(last), out);
+					try { editor.setSelection(Math.min(line, editor.getText().getLineCount() - 1), 0); } catch(Throwable ignored){}
+				});
+			}).start();
+		});
 		findViewById(R.id.rotate).setOnClickListener(new View.OnClickListener(){
 			@Override
 			public void onClick(View arg0) {

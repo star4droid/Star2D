@@ -60,6 +60,9 @@ jobs:
       - name: Set up Android SDK
         if: steps.fresh.outputs.fresh != 'true' || inputs.force
         uses: android-actions/setup-android@v3
+        with:
+          # the default list contains 'tools', which no longer exists in the SDK repository (sdkmanager fails)
+          packages: 'platform-tools platforms;android-36 build-tools;37.0.0'
 
       - name: Build the template APK
         if: steps.fresh.outputs.fresh != 'true' || inputs.force

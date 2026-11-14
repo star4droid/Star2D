@@ -33,6 +33,9 @@ jobs:
 
       - name: Set up Android SDK (aapt2)
         uses: android-actions/setup-android@v3
+        with:
+          # the default list contains 'tools', which no longer exists in the SDK repository (sdkmanager fails)
+          packages: 'platform-tools build-tools;37.0.0'
 
       - name: Is the template older than the sources?
         run: |

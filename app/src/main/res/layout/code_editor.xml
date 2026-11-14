@@ -58,6 +58,16 @@
 				android:scaleType="fitCenter"
 				android:tint="#FFFFFF" />
 			<ImageView
+				android:id="@+id/format"
+				android:layout_width="35dp"
+				android:layout_height="match_parent"
+				android:layout_marginRight="5dp"
+				android:padding="6dp"
+				android:src="@drawable/ic_s3d_format_paint"
+				android:scaleType="fitCenter"
+				android:contentDescription="Format code"
+				android:tint="#FFFFFF" />
+			<ImageView
 				android:id="@+id/rotate"
 				android:layout_width="35dp"
 				android:layout_height="match_parent"

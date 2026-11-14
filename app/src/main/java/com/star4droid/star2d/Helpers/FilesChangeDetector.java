@@ -1,7 +1,5 @@
 package com.star4droid.star2d.Helpers;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.*;
 import java.nio.file.*;
 import java.security.*;
@@ -70,12 +68,18 @@ public class FilesChangeDetector {
         if (!Files.exists(jsonDataPath)) {
             return new HashMap<>();
         }
-        ObjectMapper mapper = new ObjectMapper();
-        return mapper.readValue(jsonDataPath.toFile(), new TypeReference<Map<String, String>>() {});
+        // Gson (Jackson came with the removed formatter module); same JSON format: {"path":"checksum",...}
+        try (Reader r = new InputStreamReader(new FileInputStream(jsonDataPath.toFile()), "UTF-8")) {
+            Map<String, String> m = new com.google.gson.Gson().fromJson(r, new com.google.gson.reflect.TypeToken<Map<String, String>>() {}.getType());
+            return m == null ? new HashMap<>() : m;
+        } catch (RuntimeException badJson) {
+            return new HashMap<>(); // unreadable file: treat every file as changed
+        }
     }
 
     private static void saveChecksums(Map<String, String> checksums, Path jsonDataPath) throws IOException {
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.writeValue(jsonDataPath.toFile(), checksums);
+        try (Writer w = new OutputStreamWriter(new FileOutputStream(jsonDataPath.toFile()), "UTF-8")) {
+            new com.google.gson.Gson().toJson(checksums, w);
+        }
     }
 }

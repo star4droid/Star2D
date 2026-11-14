@@ -4,9 +4,6 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import com.palantir.javaformat.java.JavaFormatterOptions;
-import com.squareup.javapoet.*;
-import com.palantir.javaformat.java.Formatter;
 import com.star4droid.star2d.Items.*;
 import com.star4droid.star2d.CodeEditor.smart.SourceTrace;
 import com.badlogic.gdx.files.FileHandle;
@@ -900,43 +897,11 @@ public class CodeGenerator {
     }
 
     /**
-     * Format Java code using Palantir Java Format
-     * 
-     * @param code The unformatted Java code
-     * @return The formatted Java code
+     * The generated code is used as it is. (The Palantir formatter needed the JDK compiler classes, which Android does
+     * not have, so it never ran on phones; it was removed with its ~4.8 MB of libraries.)
      */
-    private static Boolean palantirOk = null;
-
-    private static synchronized boolean palantirAvailable() {
-        if (palantirOk == null) {
-            try {
-                Class.forName("com.sun.tools.javac.parser.Tokens$TokenKind");
-                palantirOk = Boolean.TRUE;
-            } catch (Throwable t) {
-                palantirOk = Boolean.FALSE;
-            }
-        }
-        return palantirOk;
-    }
-
     private static String formatWithPalantir(String code) {
-        // The formatter needs the JDK compiler classes (com.sun.tools.javac...), which Android does not have: skip it there
-        // (the unformatted code compiles the same) instead of failing with NoClassDefFoundError on every build.
-        if (!palantirAvailable()) return code;
-        // there's bug :
-        // Runtime.version() isn't available method 
-        // check :
-        //https://www.google.com/url?sa=t&source=web&rct=j&opi=89978449&url=https://github.com/apache/lucene/issues/13078&ved=2ahUKEwiN5ZSW98iMAxU-G9AFHX0iGR8Qjjh6BAgrEAE&usg=AOvVaw1Rl2I5YdQvlP6gj3QblZ6h
-        try {
-            Formatter formatter = Formatter.createFormatter(JavaFormatterOptions.defaultOptions());
-            return formatter.formatSource(code);
-        } catch (Error | Exception e) {
-            if (e instanceof LinkageError) palantirOk = Boolean.FALSE; // missing JDK classes: never try again
-            System.err.println("Error formatting code: " + e.getMessage());
-            com.star4droid.star2d.logs.Logs.write(com.star4droid.star2d.logs.Logs.BUILD, "code_format", com.star4droid.template.Utils.Utils.getStackTraceString(e));
-            // Return original code if formatting fails
-            return code;
-        }
+        return code;
     }
     
     /**

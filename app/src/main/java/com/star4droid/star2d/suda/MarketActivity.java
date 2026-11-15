@@ -331,9 +331,7 @@ public class MarketActivity extends Activity {
         mt.setEllipsize(android.text.TextUtils.TruncateAt.END);
         mt.setGravity(gridMode ? Gravity.CENTER : Gravity.START);
         texts.addView(mt, Ui.matchWrap());
-        TextView sc = Ui.text(this, "★ " + (int) Suda3D.num(m, "stars", 0) + "   💬 " + (int) Suda3D.num(m, "comments", 0), 11.5f, 0xFFFFC107);
-        sc.setGravity(gridMode ? Gravity.CENTER : Gravity.START);
-        texts.addView(sc, Ui.matchWrap());
+        texts.addView(Social.countsRow(this, (int) Suda3D.num(m, "stars", 0), (int) Suda3D.num(m, "comments", 0), gridMode, 11.5f), Ui.matchWrap());
         if (!gridMode) {
             String d = Suda3D.str(m, "description");
             if (!d.isEmpty()) {

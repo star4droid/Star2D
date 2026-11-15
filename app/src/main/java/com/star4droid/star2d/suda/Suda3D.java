@@ -127,7 +127,7 @@ public final class Suda3D {
         JsonObject b = new JsonObject();
         b.addProperty("email", email);
         b.addProperty("password", password);
-        b.addProperty("device_name", "Star2D " + android.os.Build.MODEL);
+        b.addProperty("device_name", "Star3D " + android.os.Build.MODEL);
         JsonObject r = call(c, "POST", "/auth/login", b, false);
         String token = str(r, "token");
         if (token.isEmpty()) token = str(r, "api_key");
@@ -141,7 +141,7 @@ public final class Suda3D {
         JsonObject b = new JsonObject();
         b.addProperty("email", email);
         b.addProperty("password", password);
-        b.addProperty("device_name", "Star2D " + android.os.Build.MODEL);
+        b.addProperty("device_name", "Star3D " + android.os.Build.MODEL);
         b.addProperty("notif_lang", Social.deviceNotifLang()); // new accounts: notifications follow the phone's language
         call(c, "POST", "/auth/register", b, false);
     }

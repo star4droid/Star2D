@@ -19,27 +19,11 @@
         android:paddingEnd="16dp">
 
         <ImageView
-            android:id="@+id/home_back"
-            android:layout_width="42dp"
-            android:layout_height="42dp"
-            android:layout_marginStart="-10dp"
-            android:background="?android:attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Back"
-            android:padding="9dp"
-            android:src="@drawable/ic_s2_arrow_back"
-            android:tint="@color/home_text"
-            android:visibility="gone" />
-
-        <TextView
             android:id="@+id/home_logo"
-            android:layout_width="34dp"
-            android:layout_height="34dp"
-            android:background="@drawable/home_logo_bg"
-            android:gravity="center"
-            android:text="2D"
-            android:textColor="@color/home_text"
-            android:textSize="14sp"
-            android:textStyle="bold" />
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/icon" />
 
         <TextView
             android:id="@+id/home_title"
@@ -49,13 +33,65 @@
             android:layout_weight="1"
             android:ellipsize="end"
             android:maxLines="1"
-            android:text="Star2D Engine"
+            android:text="Star3D Engine"
             android:textColor="@color/home_text"
             android:textSize="19sp"
             android:textStyle="bold" />
 
+        <ImageView
+            android:id="@+id/home_blocks"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Block creator"
+            android:padding="9dp"
+            android:src="@drawable/ic_s2_blocks"
+            android:tint="@color/home_text" />
+
+        <ImageView
+            android:id="@+id/home_clone"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Clone from GitHub"
+            android:padding="9dp"
+            android:src="@drawable/ic_s2_git"
+            android:tint="@color/home_text" />
+
+        <ImageView
+            android:id="@+id/home_gear"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Settings"
+            android:padding="9dp"
+            android:src="@drawable/ic_s2_settings"
+            android:tint="@color/home_text" />
 
     </LinearLayout>
+
+    <!-- Tabs (scrollable so they never get squeezed) -->
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/home_header_bg"
+        android:fillViewport="true"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:id="@+id/home_tabs"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="5dp">
+
+            <TextView android:id="@+id/tab_home" style="@style/HomeTab" android:text="Home" />
+            <TextView android:id="@+id/tab_projects" style="@style/HomeTab" android:text="Projects" />
+            <TextView android:id="@+id/tab_learn" style="@style/HomeTab" android:text="Learn" />
+            <TextView android:id="@+id/tab_templates" style="@style/HomeTab" android:text="Templates" />
+            <TextView android:id="@+id/tab_settings" style="@style/HomeTab" android:text="Settings" />
+        </LinearLayout>
+    </HorizontalScrollView>
 
     <FrameLayout
         android:layout_width="match_parent"

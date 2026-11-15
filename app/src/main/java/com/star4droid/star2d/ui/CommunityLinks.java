@@ -18,7 +18,7 @@ public final class CommunityLinks {
     /** {id, English title, English description, url, emoji}. */
     public static String[][] all() {
         java.util.ArrayList<String[]> l = new java.util.ArrayList<>();
-        l.add(new String[]{"facebook", "Facebook Group", "Join the Star2D developers community on Facebook", "https://facebook.com/groups/995354408402399/", "👥"});
+        l.add(new String[]{"facebook", "Facebook Group", "Join the Star3D developers community on Facebook", "https://facebook.com/groups/995354408402399/", "👥"});
         l.add(new String[]{"whatsapp", "WhatsApp Group", "Live chat with developers and get quick assistance", "https://chat.whatsapp.com/Bxu3kM0b1oE9UL0iZhti4E?mode=ems_copy_c", "💬"});
         if (TELEGRAM_COMMUNITY_ENABLED)
             l.add(new String[]{"telegram", "Telegram Channel", "News, releases, asset packs, and updates", "https://t.me/+pE4VREnP04s5NDNk", "✈️"});

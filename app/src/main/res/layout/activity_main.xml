@@ -47,7 +47,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="14dp"
-            android:text="• Star2D.E •"
+            android:text="• Star3D •"
             android:textColor="#E6EDF3"
             android:textSize="16sp"
             android:textStyle="bold" />

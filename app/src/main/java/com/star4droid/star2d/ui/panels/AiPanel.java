@@ -46,7 +46,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * Star2D AI assistant: streaming chat (OpenRouter / Gemini / OpenCode / custom), engine-aware
+ * Star3D AI assistant: streaming chat (OpenRouter / Gemini / OpenCode / custom), engine-aware
  * project context, Markdown replies, and reviewed editor actions.
  */
 public class AiPanel implements PanelHost.Panel {
@@ -175,7 +175,7 @@ public class AiPanel implements PanelHost.Panel {
     private void renderWelcome() {
         Context c = messagesBox.getContext();
         boolean ar = Ui.isRtl(c);
-        TextView t = Ui.title(c, ar ? "✨ مساعد Star2D" : "✨ Star2D Assistant");
+        TextView t = Ui.title(c, ar ? "✨ مساعد Star3D" : "✨ Star3D Assistant");
         t.setPadding(0, Ui.dp(c, 10), 0, Ui.dp(c, 4));
         messagesBox.addView(t);
         messagesBox.addView(Ui.text(c, ar

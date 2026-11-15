@@ -15,7 +15,7 @@ public class SignUtil {
 		//com.googlecode.dex2jar.tools.ApkSign.main(new String[]{"-f","-o",out,in});
 		new com.android.apksig.ApkSigner.Builder(ImmutableList.of(new com.android.apksig.ApkSigner.SignerConfig.Builder("test",readPrivateKey(mInput1),List.of(readPublicKey(mInput2)))
 		.build()))
-		.setCreatedBy("Star2D Evo")
+		.setCreatedBy("Star3D Evo")
 		.setMinSdkVersion(21)
 		.setOutputApk(new File(out))
 		.setInputApk(new File(in))

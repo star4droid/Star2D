@@ -44,7 +44,7 @@ public final class AiGuide {
     private static ArrayList<Step> claude() {
         ArrayList<Step> s = new ArrayList<>();
         s.add(new Step(GuideArt.ACCOUNT, null, T("guide_s_account", "You need a GitHub account"),
-                T("guide_d_account", "Everything goes through GitHub. If you don't have an account yet, create one (it's free), then connect it in Star2D."),
+                T("guide_d_account", "Everything goes through GitHub. If you don't have an account yet, create one (it's free), then connect it in Star3D."),
                 T("guide_create_account", "Create a GitHub account"), "https://github.com/signup"));
         s.add(new Step(GuideArt.WEBSITE, "claude.ai", T("guide_s_open_claude", "Open Claude on the website"),
                 T("guide_d_open_claude", "Use claude.ai in your phone's browser and sign in. The plugins are added from the website."),
@@ -59,7 +59,7 @@ public final class AiGuide {
         s.add(new Step(GuideArt.ASK, null, T("guide_s_ask", "Ask it to change your project"),
                 T("guide_d_ask", "Write your repository name (owner/name) and what you want, for example “in me/MyGame add an enemy to scene1”. Claude edits the files and pushes them."),
                 null, null));
-        s.add(new Step(GuideArt.PULL, null, T("guide_s_pull", "Pull the changes in Star2D"),
+        s.add(new Step(GuideArt.PULL, null, T("guide_s_pull", "Pull the changes in Star3D"),
                 T("guide_d_pull", "Open your project, then the Git panel, then tap Pull. The scene reloads with the changes. You can undo anything from the history."),
                 null, null));
         return s;
@@ -68,7 +68,7 @@ public final class AiGuide {
     private static ArrayList<Step> chatgpt() {
         ArrayList<Step> s = new ArrayList<>();
         s.add(new Step(GuideArt.ACCOUNT, null, T("guide_s_account", "You need a GitHub account"),
-                T("guide_d_account", "Everything goes through GitHub. If you don't have an account yet, create one (it's free), then connect it in Star2D."),
+                T("guide_d_account", "Everything goes through GitHub. If you don't have an account yet, create one (it's free), then connect it in Star3D."),
                 T("guide_create_account", "Create a GitHub account"), "https://github.com/signup"));
         s.add(new Step(GuideArt.WEBSITE, "chatgpt.com", T("guide_s_open_gpt", "Open ChatGPT"),
                 T("guide_d_open_gpt", "Use chatgpt.com in your browser (or the app) and sign in."),
@@ -79,7 +79,7 @@ public final class AiGuide {
         s.add(new Step(GuideArt.ASK, null, T("guide_s_ask", "Ask it to change your project"),
                 T("guide_d_ask", "Write your repository name (owner/name) and what you want, for example “in me/MyGame add an enemy to scene1”. Claude edits the files and pushes them."),
                 null, null));
-        s.add(new Step(GuideArt.PULL, null, T("guide_s_pull", "Pull the changes in Star2D"),
+        s.add(new Step(GuideArt.PULL, null, T("guide_s_pull", "Pull the changes in Star3D"),
                 T("guide_d_pull", "Open your project, then the Git panel, then tap Pull. The scene reloads with the changes. You can undo anything from the history."),
                 null, null));
         return s;
@@ -91,7 +91,7 @@ public final class AiGuide {
         root.setPadding(Ui.dp(a, 14), Ui.dp(a, 10), Ui.dp(a, 14), Ui.dp(a, 24));
         sv.addView(root);
 
-        TextView intro = Ui.text(a, T("guide_intro", "Let an AI edit your game for you. It changes the files in your GitHub repository, and you pull them into Star2D."), 14, Ui.TEXT_2);
+        TextView intro = Ui.text(a, T("guide_intro", "Let an AI edit your game for you. It changes the files in your GitHub repository, and you pull them into Star3D."), 14, Ui.TEXT_2);
         intro.setPadding(Ui.dp(a, 4), 0, Ui.dp(a, 4), Ui.dp(a, 10));
         root.addView(intro);
 

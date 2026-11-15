@@ -218,8 +218,8 @@ public class ProfileActivity extends Activity implements PostView.Host {
         n.setSingleLine(true);
         n.setEllipsize(android.text.TextUtils.TruncateAt.END);
         col.addView(n);
-        col.addView(Ui.text(this, Tr.t("mk_f_" + ("game".equals(Suda3D.str(p, "kind")) ? "games" : "projects"), "game".equals(Suda3D.str(p, "kind")) ? "Game" : "Project")
-                + "  ·  ★ " + (int) Suda3D.num(p, "stars", 0) + "  ·  💬 " + (int) Suda3D.num(p, "comments", 0), 12, Ui.TEXT_3));
+        col.addView(Ui.text(this, Tr.t("mk_f_" + ("game".equals(Suda3D.str(p, "kind")) ? "games" : "projects"), "game".equals(Suda3D.str(p, "kind")) ? "Game" : "Project"), 12, Ui.TEXT_3));
+        col.addView(Social.countsRow(this, (int) Suda3D.num(p, "stars", 0), (int) Suda3D.num(p, "comments", 0), false, 12));
         r.addView(col, Ui.weight(1));
         if (Suda3D.bool(p, "editor_choice")) r.addView(Social.plainIcon(this, R.drawable.ic_s2_star_badge, 22));
         long pid = (long) Suda3D.num(p, "id", 0);

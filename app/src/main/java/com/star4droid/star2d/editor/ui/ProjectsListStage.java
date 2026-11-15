@@ -69,7 +69,7 @@ public class ProjectsListStage extends Stage {
         VisImage logoImg = new VisImage(mainLogo);
         logoImg.setColor(Color.WHITE);
         table.add(logoImg).size(60, 60).padBottom(10).align(Align.topLeft).row();
-        VisLabel welcomeLabel = new VisLabel("Welcome to Star2D.E");
+        VisLabel welcomeLabel = new VisLabel("Welcome to Star3D");
         welcomeLabel.setColor(Color.WHITE);
         welcomeLabel.setFontScale(1.4f);
         table.add(welcomeLabel).align(Align.topLeft).padBottom(40).row();
@@ -273,7 +273,7 @@ public class ProjectsListStage extends Stage {
         VisImage logoImg = new VisImage(mainLogo);
         topSection.add(logoImg).size(30, 30);
 
-        VisLabel titleLabel = new VisLabel("Star2D.E");
+        VisLabel titleLabel = new VisLabel("Star3D");
         titleLabel.setFontScale(1.1f);
         topSection.add(titleLabel).padLeft(10).align(Align.left).expandX();
 

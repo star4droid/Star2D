@@ -294,7 +294,7 @@ public final class Logs {
 			ver = c.getPackageManager().getPackageInfo(c.getPackageName(), 0).versionName;
 		} catch (Throwable ignored) {
 		}
-		return "Time: " + new Date() + "\nStar2D: " + ver + "\nDevice: " + Build.MANUFACTURER + " " + Build.MODEL
+		return "Time: " + new Date() + "\nStar3D: " + ver + "\nDevice: " + Build.MANUFACTURER + " " + Build.MODEL
 				+ " (Android " + Build.VERSION.RELEASE + ", API " + Build.VERSION.SDK_INT + ")\n";
 	}
 

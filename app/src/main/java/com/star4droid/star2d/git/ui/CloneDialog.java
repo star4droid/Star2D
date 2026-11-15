@@ -260,7 +260,7 @@ public final class CloneDialog {
                 }
                 boolean looksLikeProject = new File(dir, "scenes").isDirectory() || new File(dir, "Events").isDirectory();
                 Snack.show(looksLikeProject ? T("gh_cloned", "Project copied")
-                        : T("gh_cloned_not_project", "Copied, but this does not look like a Star2D project"));
+                        : T("gh_cloned_not_project", "Copied, but this does not look like a Star3D project"));
                 page.close();
                 done.on(dir);
             });

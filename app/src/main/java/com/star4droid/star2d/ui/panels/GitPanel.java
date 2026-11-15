@@ -621,7 +621,7 @@ public class GitPanel implements PanelHost.Panel {
 
     private void prepareAi() {
         Dialogs.confirm(shell.activity(), T("git_ai_prepare", "Prepare for Claude / ChatGPT"),
-                T("git_ai_prepare_q", "Two Markdown files are added to your project: ENGINE.md explains how Star2D projects work, STATE.md lists your scenes, elements, events and the last build errors. They are updated on every commit."),
+                T("git_ai_prepare_q", "Two Markdown files are added to your project: ENGINE.md explains how Star3D projects work, STATE.md lists your scenes, elements, events and the last build errors. They are updated on every commit."),
                 T("ok", "OK"), () -> g.workWithProgress(T("git_working", "Working..."), false, (r, p) -> {
                     AiDocs.generate(r.dir(), true);
                     java.util.ArrayList<String> files = new java.util.ArrayList<>(java.util.Arrays.asList(AiDocs.ENGINE, AiDocs.STATE));

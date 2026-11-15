@@ -47,10 +47,10 @@ public final class Social {
 
     /** key, emoji, colour. Titles come from the translations (bd_<key>). */
     public static final String[][] BADGES = {
-            {"first_upload", "📦", "#43A047"}, {"first_post", "📝", "#1E88E5"}, {"first_comment", "💬", "#00ACC1"},
-            {"first_star", "🌟", "#FDD835"}, {"editor_choice", "🏆", "#FB8C00"},
-            {"helper", "🤝", "#7CB342"}, {"creative", "🎨", "#EC407A"}, {"top_creator", "👑", "#FFB300"}, {"bug_hunter", "🐞", "#E53935"},
-            {"early_supporter", "🚀", "#7E57C2"}, {"translator", "🌍", "#00897B"}, {"champion", "🥇", "#FF7043"}, {"legend", "🔥", "#F4511E"}};
+            {"first_upload", "", "#43A047"}, {"first_post", "", "#1E88E5"}, {"first_comment", "", "#00ACC1"},
+            {"first_star", "", "#FDD835"}, {"editor_choice", "", "#FB8C00"},
+            {"helper", "", "#7CB342"}, {"creative", "", "#EC407A"}, {"top_creator", "", "#FFB300"}, {"bug_hunter", "", "#E53935"},
+            {"early_supporter", "", "#7E57C2"}, {"translator", "", "#00897B"}, {"champion", "", "#FF7043"}, {"legend", "", "#F4511E"}};
     /** The ones a moderator can give. */
     public static final String[] MANUAL = {"helper", "creative", "top_creator", "bug_hunter", "early_supporter", "translator", "champion", "legend"};
     private static final String[] BADGE_EN = {"First upload", "First post", "First comment", "First star", "Editor's Choice", "Helper", "Creative",
@@ -62,9 +62,10 @@ public final class Social {
     public static SharedPreferences prefs(Context c) { return c.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE); }
 
     // ------------------------------------------------------------------ language
-    /** Language of the phone, as one of the server's notification languages. */
+    /** Language of the app, as one of the server's notification languages (the app's "br" is Portuguese = "pt"). */
     public static String deviceNotifLang() {
-        String l = Locale.getDefault().getLanguage();
+        String l = com.star4droid.star2d.ui.Tr.lang();
+        if ("br".equals(l)) return "pt";
         for (String c : NOTIF_CODES) if (c.equals(l)) return c;
         return "en";
     }
@@ -75,18 +76,49 @@ public final class Social {
         return key;
     }
 
-    public static TextView badgeView(Context c, String key, int sizeDp) {
-        String emoji = "🏅";
+    /** Round badge: a vector glyph (white) on a coloured disc with a lighter ring. */
+    public static ImageView badgeView(Context c, String key, int sizeDp) {
         int col = 0xFF90A4AE;
-        for (String[] b : BADGES) if (b[0].equals(key)) { emoji = b[1]; col = Color.parseColor(b[2]); }
-        TextView t = new TextView(c);
-        t.setText(emoji);
-        t.setGravity(Gravity.CENTER);
-        t.setTextSize(sizeDp * 0.46f);
-        t.setIncludeFontPadding(false);
-        t.setBackground(Ui.rounded((col & 0x00FFFFFF) | 0x33000000, Ui.dp(c, sizeDp), col, Ui.dp(c, 2)));
-        t.setLayoutParams(new LinearLayout.LayoutParams(Ui.dp(c, sizeDp), Ui.dp(c, sizeDp)));
-        return t;
+        for (String[] b : BADGES) if (b[0].equals(key)) col = Color.parseColor(b[2]);
+        int res = c.getResources().getIdentifier("bdg_" + key, "drawable", c.getPackageName());
+        ImageView v = new ImageView(c);
+        v.setImageResource(res != 0 ? res : R.drawable.ic_s2_star);
+        if (res == 0) v.setImageTintList(android.content.res.ColorStateList.valueOf(0xFFFFFFFF));
+        int pad = Ui.dp(c, sizeDp * 0.24f);
+        v.setPadding(pad, pad, pad, pad);
+        android.graphics.drawable.GradientDrawable g = new android.graphics.drawable.GradientDrawable(
+                android.graphics.drawable.GradientDrawable.Orientation.TL_BR, new int[]{lighten(col), col});
+        g.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+        g.setStroke(Ui.dp(c, 2), (col & 0x00FFFFFF) | 0x88000000);
+        v.setBackground(g);
+        v.setLayoutParams(new LinearLayout.LayoutParams(Ui.dp(c, sizeDp), Ui.dp(c, sizeDp)));
+        return v;
+    }
+
+    private static int lighten(int c) {
+        int r = Math.min(255, ((c >> 16) & 255) + 50), g = Math.min(255, ((c >> 8) & 255) + 50), b = Math.min(255, (c & 255) + 50);
+        return 0xFF000000 | (r << 16) | (g << 8) | b;
+    }
+
+    /** Small "star count + comment count" row with vector icons. */
+    public static LinearLayout countsRow(Context c, int stars, int comments, boolean center, float sp) {
+        LinearLayout r = Ui.row(c);
+        r.setGravity(center ? Gravity.CENTER : Gravity.START | Gravity.CENTER_VERTICAL);
+        int sz = Ui.dp(c, sp + 3);
+        ImageView st = new ImageView(c);
+        st.setImageResource(R.drawable.ic_s2_star);
+        r.addView(st, new LinearLayout.LayoutParams(sz, sz));
+        TextView a = Ui.text(c, String.valueOf(stars), sp, 0xFFFFC107);
+        a.setPadding(Ui.dp(c, 4), 0, Ui.dp(c, 14), 0);
+        r.addView(a);
+        ImageView cm = new ImageView(c);
+        cm.setImageResource(R.drawable.ic_s2_comment);
+        cm.setImageTintList(android.content.res.ColorStateList.valueOf(Ui.TEXT_2));
+        r.addView(cm, new LinearLayout.LayoutParams(sz, sz));
+        TextView b = Ui.text(c, String.valueOf(comments), sp, Ui.TEXT_2);
+        b.setPadding(Ui.dp(c, 4), 0, 0, 0);
+        r.addView(b);
+        return r;
     }
 
     /** Icon drawn in its own colours (no tint). */
@@ -347,9 +379,12 @@ public final class Social {
                 setConfig(CommunityApi.config(a));
                 JsonObject me = CommunityApi.me(a);
                 Suda3D.setIdentity(a, me);
+                // not chosen yet (old account): take the language of the app, silently; it can be changed in Settings
+                if (Suda3D.notifLang(a).isEmpty()) {
+                    try { Suda3D.setIdentity(a, CommunityApi.updateMe(a, null, deviceNotifLang())); } catch (Exception ignored) {}
+                }
                 Ui.ui(() -> {
                     if (a.isFinishing()) return;
-                    if (Suda3D.notifLang(a).isEmpty()) askNotifLang(a, null);
                     Push.register(a);
                 });
             } catch (Exception e) { started = false; }
@@ -367,7 +402,7 @@ public final class Social {
         final int[] pick = {sel};
         new AlertDialog.Builder(a).setTitle(Tr.t("sc_notif_lang", "Notification language"))
                 .setSingleChoiceItems(NOTIF_NAMES, sel, (d, w) -> pick[0] = w)
-                .setCancelable(Suda3D.notifLang(a).isEmpty() ? false : true)
+                
                 .setPositiveButton(Tr.t("ok", "OK"), (d, w) -> Suda3D.IO.execute(() -> {
                     try {
                         JsonObject me = CommunityApi.updateMe(a, null, NOTIF_CODES[pick[0]]);

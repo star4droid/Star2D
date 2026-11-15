@@ -160,7 +160,7 @@ public class MarketDetailActivity extends Activity {
     private String meta() {
         String v = Suda3D.str(m, "engine_version");
         return "↓ " + (int) Suda3D.num(m, "downloads", 0) + "  •  " + MarketActivity.sizeText(Suda3D.num(m, "size_bytes", 0))
-                + (v.isEmpty() ? "" : "  •  " + Tr.t("mk_made_with", "Star2D") + " " + v);
+                + (v.isEmpty() ? "" : "  •  " + Tr.t("mk_made_with", "Star3D") + " " + v);
     }
 
     /** The list row may be old: fetch the current data (version, description) quietly. */
@@ -176,7 +176,7 @@ public class MarketDetailActivity extends Activity {
     private void start() {
         int code = (int) Suda3D.num(m, "engine_version_code", 0);
         if (code != 0 && code != BuildConfig.VERSION_CODE) {
-            String msg = String.format(Locale.US, Tr.t("mk_version_warn", "This %1$s was made with Star2D %2$s, you have %3$s. It may not work correctly. Continue?"),
+            String msg = String.format(Locale.US, Tr.t("mk_version_warn", "This %1$s was made with Star3D %2$s, you have %3$s. It may not work correctly. Continue?"),
                     game ? Tr.t("mk_game", "Game").toLowerCase(Locale.ROOT) : Tr.t("mk_project", "Project").toLowerCase(Locale.ROOT),
                     Suda3D.str(m, "engine_version"), BuildConfig.VERSION_NAME);
             new AlertDialog.Builder(this).setTitle(Tr.t("mk_other_version", "Different version")).setMessage(msg)

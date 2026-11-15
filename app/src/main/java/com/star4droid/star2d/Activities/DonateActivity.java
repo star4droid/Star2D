@@ -141,7 +141,7 @@ public class DonateActivity extends AppCompatActivity implements PurchasesUpdate
         for (ObjectAnimator o : new ObjectAnimator[]{sx, sy}) {
             o.setDuration(1500); o.setRepeatCount(ObjectAnimator.INFINITE); o.start();
         }
-        TextView title = text(T("support_title", "Support Star2D"), 26, Color.WHITE, true);
+        TextView title = text(T("support_title", "Support Star3D"), 26, Color.WHITE, true);
         title.setGravity(Gravity.CENTER);
         hero.addView(title);
         TextView sub = text(T("support_sub", "Your support keeps the engine growing. Thank you for being part of the journey!"), 14, 0xFFC9C9E6, false);
@@ -221,7 +221,7 @@ public class DonateActivity extends AppCompatActivity implements PurchasesUpdate
         if (com.star4droid.star2d.evo.BuildConfig.ADS_ENABLED && !com.star4droid.star2d.ads.AdsManager.adFreeByPurchase(this)) {
             LinearLayout ad = card();
             ad.addView(sectionTitle("\uD83C\uDFAC  " + T("ads_reward_title", "Watch a video to support me")));
-            TextView adSub = text(T("ads_reward_sub", "Optional. Watch one short video ad, it helps fund Star2D, and you get 1 hour without ads."), 13, 0xFFC9C9E6, false);
+            TextView adSub = text(T("ads_reward_sub", "Optional. Watch one short video ad, it helps fund Star3D, and you get 1 hour without ads."), 13, 0xFFC9C9E6, false);
             adSub.setPadding(0, dp(4), 0, dp(10));
             ad.addView(adSub);
             TextView adBtn = text("", 15, Color.WHITE, true);

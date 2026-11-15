@@ -1,0 +1,4 @@
+{"name": "Fireflies Field", "emitters": [
+  {"img": "glow", "blend": "add", "rate": 14, "shape": "box", "shapeSize": [8, 2, 8], "offset": [0, 1.0, 0], "spread": 180, "speed": [0.05, 0.25], "life": [3, 5], "size": [0.12, 0.18], "tint": "#d8ff60", "alpha": [[0, 0], [0.2, 1], [0.35, 0.3], [0.55, 1], [0.75, 0.4], [1, 0]], "max": 400, "turbulence": 0.6},
+  {"img": "dot", "blend": "add", "rate": 14, "shape": "box", "shapeSize": [8, 2, 8], "offset": [0, 1.0, 0], "spread": 180, "speed": [0.05, 0.25], "life": [3, 5], "size": [0.04, 0.05], "tint": "#ffffc0", "alpha": [[0, 0], [0.2, 1], [0.35, 0.3], [0.55, 1], [0.75, 0.4], [1, 0]], "max": 400, "turbulence": 0.6}
+]}

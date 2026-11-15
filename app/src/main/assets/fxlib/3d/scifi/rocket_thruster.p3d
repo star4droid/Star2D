@@ -1,0 +1,4 @@
+{"name": "Rocket Thruster", "emitters": [
+  {"img": "glow", "rate": 100, "life": [0.25, 0.35], "offset": [0, 1.5, 0], "dir": [0, -1, 0], "spread": 4, "speed": [5, 6], "size": [0.5, 0.6], "sizeCurve": [[0, 1], [1, 0]], "tint": [[0, "#ffffff"], [0.2, "#80d0ff"], [0.5, "#ff9030"], [1, "#801000"]], "alpha": [[0, 1], [1, 0]]},
+  {"img": "smoke", "blend": "alpha", "rate": 16, "life": [1.6, 2.2], "offset": [0, 0.3, 0], "shape": "disc", "shapeSize": [0.2, 0, 0.2], "spread": 80, "speed": [1, 2], "speedCurve": [[0, 1], [1, 0.1]], "size": [0.6, 1.8], "sizeCurve": [[0, 0.3], [1, 1]], "rot": [0, 360], "tint": "#909090", "alpha": [[0, 0], [0.3, 0.45], [1, 0]]}
+]}

@@ -1,0 +1,4 @@
+{"name": "Debris Burst", "emitters": [
+  {"img": "shard", "blend": "alpha", "burst": 36, "rate": 0, "loop": true, "duration": 2.4, "spread": 55, "speed": [4, 8], "life": [1.3, 1.8], "size": [0.1, 0.25], "rot": [0, 360], "spin": [-720, 720], "gravity": [0, -9.8, 0], "tint": "#5a4a3a", "alpha": [[0, 1], [0.6, 1], [1, 0]]},
+  {"img": "smoke", "blend": "alpha", "burst": 14, "rate": 0, "loop": true, "duration": 2.4, "spread": 60, "speed": [1, 2.5], "speedCurve": [[0, 1], [1, 0.05]], "life": [1.2, 1.8], "size": [0.8, 1.5], "sizeCurve": [[0, 0.3], [1, 1]], "tint": "#8a7a68", "alpha": [[0, 0.6], [1, 0]]}
+]}

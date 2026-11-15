@@ -1,0 +1,6 @@
+{"name": "Drone Thrusters", "emitters": [
+  {"img": "glow", "rate": 50, "life": [0.15, 0.2], "offset": [-0.5, 1.2, -0.5], "dir": [0, -1, 0], "spread": 5, "speed": [3, 4], "size": [0.18, 0.22], "sizeCurve": [[0, 1], [1, 0]], "tint": [[0, "#ffffff"], [1, "#40a0ff"]], "alpha": [[0, 1], [1, 0]]},
+  {"img": "glow", "rate": 50, "life": [0.15, 0.2], "offset": [0.5, 1.2, -0.5], "dir": [0, -1, 0], "spread": 5, "speed": [3, 4], "size": [0.18, 0.22], "sizeCurve": [[0, 1], [1, 0]], "tint": [[0, "#ffffff"], [1, "#40a0ff"]], "alpha": [[0, 1], [1, 0]]},
+  {"img": "glow", "rate": 50, "life": [0.15, 0.2], "offset": [-0.5, 1.2, 0.5], "dir": [0, -1, 0], "spread": 5, "speed": [3, 4], "size": [0.18, 0.22], "sizeCurve": [[0, 1], [1, 0]], "tint": [[0, "#ffffff"], [1, "#40a0ff"]], "alpha": [[0, 1], [1, 0]]},
+  {"img": "glow", "rate": 50, "life": [0.15, 0.2], "offset": [0.5, 1.2, 0.5], "dir": [0, -1, 0], "spread": 5, "speed": [3, 4], "size": [0.18, 0.22], "sizeCurve": [[0, 1], [1, 0]], "tint": [[0, "#ffffff"], [1, "#40a0ff"]], "alpha": [[0, 1], [1, 0]]}
+]}

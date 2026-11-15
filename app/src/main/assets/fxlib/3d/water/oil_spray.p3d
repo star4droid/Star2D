@@ -1,0 +1,3 @@
+{"name": "Oil Spray", "emitters": [
+  {"img": "drop", "blend": "alpha", "rate": 60, "life": [0.8, 1.1], "dir": [1, 0.6, 0], "spread": 12, "speed": [4, 5], "gravity": [0, -9.8, 0], "size": [0.05, 0.09], "stretch": 0.03, "tint": "#1a1a10", "alpha": [[0, 0], [0.12, 1], [0.6, 1], [1, 0]], "offset": [0, 0.5, 0]}
+]}

@@ -867,6 +867,21 @@ public class PropertiesPanel implements PanelHost.Panel {
                     editors.put(f, t);
                     return box;
                 }
+                if (f.equals("file")) {
+                    // a 2D particle element: the effects library (pictures, sections, search) next to the file chooser
+                    LinearLayout pr = Ui.row(c);
+                    pr.addView(t, Ui.weight(1));
+                    pr.addView(Ui.iconButton(c, R.drawable.ic_s2_particle, Tr.t("fx_title", "Particle effects"), v -> Bridge.query(
+                            () -> Bridge.editor().getProject().get("files"),
+                            filesPath -> com.star4droid.star2d.ui.ParticleBrowser.show(shell.activity(), new File(filesPath), false, values.get(f), rel -> {
+                                values.put(f, rel);
+                                t.setText(rel);
+                                commit(() -> PropertyEditing.applyFile(Bridge.app(), f, rel));
+                            }))));
+                    box.addView(pr, Ui.matchWrap());
+                    editors.put(f, t);
+                    return box;
+                }
                 box.addView(t, Ui.matchWrap());
                 editors.put(f, t);
                 return box;
@@ -910,7 +925,22 @@ public class PropertiesPanel implements PanelHost.Panel {
                                 return PropertyEditing.applyString(Bridge.app(), f, nv);
                             }, err -> { if (err != null) Ui.toast(c, err); });
                         })));
-                box.addView(t, Ui.matchWrap());
+                // the effects library (pictures, sections, search) next to the file chooser
+                LinearLayout pr3 = Ui.row(c);
+                pr3.addView(t, Ui.weight(1));
+                pr3.addView(Ui.iconButton(c, R.drawable.ic_s2_particle, Tr.t("fx_title", "Particle effects"), v -> Bridge.query(() -> {
+                            String root = Bridge.editor().getProject().getPath() + "/files";
+                            new java.io.File(root).mkdirs();
+                            return root;
+                        }, rootPath -> com.star4droid.star2d.ui.ParticleBrowser.show(shell.activity(), new File(rootPath), true, values.get(f), nv -> {
+                            values.put(f, nv);
+                            t.setText(nv);
+                            Bridge.query(() -> {
+                                if (!"PARTICLES".equals(values.get("Mesh"))) PropertyEditing.applyString(Bridge.app(), "Mesh", "PARTICLES");
+                                return PropertyEditing.applyString(Bridge.app(), f, nv);
+                            }, err -> { if (err != null) Ui.toast(c, err); });
+                        }))));
+                box.addView(pr3, Ui.matchWrap());
                 editors.put(f, t);
                 return box;
             }

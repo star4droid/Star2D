@@ -1,0 +1,4 @@
+{"name": "Hologram", "emitters": [
+  {"img": "rect", "blend": "add", "rate": 25, "shape": "disc", "shapeSize": [0.6, 0, 0.6], "speed": [0.4, 0.8], "spread": 4, "life": [1.5, 2], "size": [0.06, 0.1], "tint": [[0, "#60e0ff"], [1, "#60e0ff"]], "alpha": [[0, 0], [0.2, 1], [0.35, 0.3], [0.55, 1], [0.75, 0.4], [1, 0]]},
+  {"img": "glow", "rate": 20, "life": [0.6, 0.8], "shape": "ring", "shapeSize": [0.65, 1.8, 0.65], "offset": [0, 1, 0], "size": [0.1, 0.14], "tint": "#80f0ff", "alpha": [[0, 0], [0.2, 1], [0.35, 0.3], [0.55, 1], [0.75, 0.4], [1, 0]]}
+]}

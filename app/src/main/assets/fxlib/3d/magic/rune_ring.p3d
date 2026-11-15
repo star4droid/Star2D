@@ -1,0 +1,4 @@
+{"name": "Rune Ring", "emitters": [
+  {"img": "sparkle", "rate": 50, "life": [1, 1.4], "shape": "ring", "shapeSize": [1.2, 0, 1.2], "offset": [0, 1, 0], "orbit": [60, 60], "size": [0.15, 0.25], "tint": [[0, "#80ffff"], [1, "#4080ff"]], "alpha": [[0, 0], [0.5, 1], [1, 0]]},
+  {"img": "glow", "rate": 80, "life": [1, 1.4], "shape": "ring", "shapeSize": [1.2, 0, 1.2], "offset": [0, 1, 0], "orbit": [60, 60], "size": [0.12, 0.16], "tint": "#40a0ff", "alpha": [[0, 0], [0.5, 1], [1, 0]], "max": 200}
+]}

@@ -182,13 +182,13 @@ public class CompileThread extends Thread {
 				// }
 			// });
 			
-			final StringBuilder errs = new StringBuilder();
+			final java.io.ByteArrayOutputStream errs = new java.io.ByteArrayOutputStream(); // UTF-8 bytes (Arabic names stay readable)
 			
 			PrintWriter printWriter2 = new PrintWriter(new OutputStream() {
 				@Override
 				public void write(int p1) throws IOException
 				{
-					errs.append((char)p1);
+					errs.write(p1);
 				}
 			});
 			
@@ -213,7 +213,7 @@ public class CompileThread extends Thread {
 			
 			if(main.globalErrorsCount > 0) {
 				publishErrors(found);
-				push(CHANGE_ERROR,"errors : "+errs.toString());
+				push(CHANGE_ERROR,"errors : "+errs.toString("UTF-8"));
 				return;
 			}
 		} else {

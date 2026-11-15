@@ -1,0 +1,4 @@
+{"name": "Wave Spray", "emitters": [
+  {"img": "dot", "rate": 80, "life": [0.8, 1.1], "shape": "box", "shapeSize": [4, 0, 0.3], "dir": [0, 1, 0.5], "spread": 25, "speed": [2, 3.5], "gravity": [0, -9.8, 0], "size": [0.04, 0.07], "tint": "#ffffff", "alpha": [[0, 1], [0.6, 1], [1, 0]]},
+  {"img": "smoke", "rate": 8, "life": [1.2, 1.6], "shape": "box", "shapeSize": [4, 0, 0.3], "speed": [0.4, 0.8], "spread": 40, "size": [0.6, 1], "tint": "#e8f6ff", "alpha": [[0, 0], [0.3, 0.4], [1, 0]]}
+]}

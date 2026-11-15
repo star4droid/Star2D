@@ -1,0 +1,4 @@
+{"name": "Geyser", "emitters": [
+  {"img": "glow", "rate": 120, "life": [1.1, 1.3], "shape": "disc", "shapeSize": [0.15, 0, 0.15], "speed": [8, 9], "spread": 3, "gravity": [0, -9.8, 0], "size": [0.2, 0.4], "sizeCurve": [[0, 0.3], [1, 1]], "tint": [[0, "#ffffff"], [1, "#80c0ff"]], "alpha": [[0, 0], [0.12, 1], [0.6, 1], [1, 0]], "max": 300},
+  {"img": "smoke", "blend": "alpha", "rate": 8, "life": [2, 2.6], "shape": "disc", "shapeSize": [0.3, 0, 0.3], "speed": [3, 4], "spread": 6, "drag": 0.5, "size": [0.8, 2], "sizeCurve": [[0, 0.3], [1, 1]], "tint": "#ffffff", "alpha": [[0, 0], [0.3, 0.45], [1, 0]]}
+]}

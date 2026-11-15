@@ -18,7 +18,20 @@
         android:paddingStart="16dp"
         android:paddingEnd="16dp">
 
+        <ImageView
+            android:id="@+id/home_back"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:layout_marginStart="-10dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Back"
+            android:padding="9dp"
+            android:src="@drawable/ic_s2_arrow_back"
+            android:tint="@color/home_text"
+            android:visibility="gone" />
+
         <TextView
+            android:id="@+id/home_logo"
             android:layout_width="34dp"
             android:layout_height="34dp"
             android:background="@drawable/home_logo_bg"
@@ -29,77 +42,40 @@
             android:textStyle="bold" />
 
         <TextView
-            android:layout_width="wrap_content"
+            android:id="@+id/home_title"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="12dp"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:maxLines="1"
             android:text="Star2D Engine"
             android:textColor="@color/home_text"
             android:textSize="19sp"
             android:textStyle="bold" />
 
-        <View
-            android:layout_width="0dp"
-            android:layout_height="1dp"
-            android:layout_weight="1" />
 
-        <ImageView
-            android:id="@+id/home_blocks"
-            android:layout_width="42dp"
-            android:layout_height="42dp"
-            android:background="?android:attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Block creator"
-            android:padding="9dp"
-            android:src="@drawable/ic_s2_blocks"
-            android:tint="@color/home_text" />
-
-        <ImageView
-            android:id="@+id/home_clone"
-            android:layout_width="42dp"
-            android:layout_height="42dp"
-            android:background="?android:attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Clone from GitHub"
-            android:padding="9dp"
-            android:src="@drawable/ic_s2_git"
-            android:tint="@color/home_text" />
-
-        <ImageView
-            android:id="@+id/home_gear"
-            android:layout_width="42dp"
-            android:layout_height="42dp"
-            android:background="?android:attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Settings"
-            android:padding="9dp"
-            android:src="@drawable/ic_s2_settings"
-            android:tint="@color/home_text" />
     </LinearLayout>
-
-    <!-- Tabs (scrollable so they never get squeezed) -->
-    <HorizontalScrollView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@drawable/home_header_bg"
-        android:fillViewport="true"
-        android:scrollbars="none">
-
-        <LinearLayout
-            android:id="@+id/home_tabs"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:padding="5dp">
-
-            <TextView android:id="@+id/tab_projects" style="@style/HomeTab" android:text="Projects" />
-            <TextView android:id="@+id/tab_learn" style="@style/HomeTab" android:text="Learn" />
-            <TextView android:id="@+id/tab_templates" style="@style/HomeTab" android:text="Templates" />
-            <TextView android:id="@+id/tab_community" style="@style/HomeTab" android:text="Community" />
-            <TextView android:id="@+id/tab_settings" style="@style/HomeTab" android:text="Settings" />
-        </LinearLayout>
-    </HorizontalScrollView>
 
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1">
+
+        <!-- ===== Home: a scrolling grid of big icon buttons ===== -->
+        <ScrollView
+            android:id="@+id/page_home"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:fillViewport="true">
+
+            <LinearLayout
+                android:id="@+id/home_grid"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="12dp" />
+        </ScrollView>
 
         <!-- ===== Projects ===== -->
         <LinearLayout
@@ -107,6 +83,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical"
+            android:visibility="gone"
             android:padding="18dp">
 
             <LinearLayout
@@ -224,18 +201,17 @@
                 android:padding="18dp">
 
                 <LinearLayout
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
+                    android:orientation="vertical">
 
-                    <TextView style="@style/HomePageTitle" android:text="Learn by making games" />
+                    <TextView style="@style/HomePageTitle" android:layout_width="match_parent" android:text="Learn by making games" />
 
                     <TextView
                         android:id="@+id/learn_experimental"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="10dp"
+                        android:layout_marginTop="6dp"
                         android:background="@drawable/home_badge_experimental"
                         android:paddingStart="10dp"
                         android:paddingTop="3dp"
@@ -251,68 +227,6 @@
                     style="@style/HomePageSubtitle"
                     android:layout_marginBottom="6dp"
                     android:text="Interactive tutorials guide every tap, step by step" />
-            </LinearLayout>
-        </ScrollView>
-
-        <!-- ===== Community ===== -->
-        <ScrollView
-            android:id="@+id/page_community"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:visibility="gone">
-
-            <LinearLayout
-                android:id="@+id/community_list"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="18dp">
-
-                <TextView style="@style/HomePageTitle" android:text="Community &amp; Support" />
-
-                <TextView
-                    style="@style/HomePageSubtitle"
-                    android:text="Connect with the Star2D developer community across the globe" />
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="18dp"
-                    android:layout_marginBottom="8dp"
-                    android:background="@drawable/home_donate_bg"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:padding="14dp">
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="💖 Support Engine Development"
-                            android:textColor="@color/home_text"
-                            android:textSize="17sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="2dp"
-                            android:text="Star2D is developed with passion. Help keep updates and features coming!"
-                            android:textColor="@color/home_text_secondary"
-                            android:textSize="13sp" />
-                    </LinearLayout>
-
-                    <TextView
-                        android:id="@+id/btn_donate"
-                        style="@style/HomeButton.Primary"
-                        android:layout_marginStart="10dp"
-                        android:text="Donate" />
-                </LinearLayout>
             </LinearLayout>
         </ScrollView>
 
@@ -410,6 +324,21 @@
                             android:textColor="@color/home_text_secondary"
                             android:textSize="16sp" />
                     </FrameLayout>
+
+                    <TextView
+                        android:id="@+id/setting_notif_label"
+                        style="@style/HomeFieldLabel"
+                        android:text="Notification language"
+                        android:visibility="gone" />
+
+                    <TextView
+                        android:id="@+id/setting_notif_lang"
+                        style="@style/HomeSpinner"
+                        android:gravity="center_vertical"
+                        android:paddingStart="12dp"
+                        android:textColor="@color/home_text"
+                        android:textSize="15sp"
+                        android:visibility="gone" />
 
                     <androidx.appcompat.widget.SwitchCompat
                         android:id="@+id/setting_completion"

@@ -1,0 +1,6 @@
+{"name": "Electric Blast", "emitters": [
+  {"img": "glow", "burst": 1, "rate": 0, "loop": true, "duration": 1.5, "life": [0.18, 0.18], "size": [4, 4], "sizeCurve": [[0, 0.6], [0.3, 1], [1, 0.8]], "tint": [[0, "#ffffff"], [0.4, "#60c0ff"]], "alpha": [[0, 1], [1, 0]]},
+  {"img": "bolt", "burst": 14, "rate": 0, "loop": true, "duration": 1.5, "spread": 180, "speed": [0.2, 0.5], "life": [0.15, 0.3], "size": [1.2, 1.8], "rot": [0, 360], "tint": [[0, "#ffffff"], [0.3, "#80d0ff"]], "alpha": [[0, 0], [0.2, 1], [0.35, 0.3], [0.55, 1], [0.75, 0.4], [1, 0]]},
+  {"img": "spark", "burst": 50, "rate": 0, "loop": true, "duration": 1.5, "life": [0.3, 0.6], "speed": [5, 10], "speedCurve": [[0, 1], [1, 0.3]], "spread": 180, "dir": [0, 1, 0], "size": [0.05, 0.08], "stretch": 0.06, "gravity": [0, -6, 0], "tint": [[0, "#ffffff"], [0.3, "#60c0ff"], [1, "#60c0ff"]], "alpha": [[0, 1], [0.6, 1], [1, 0]]},
+  {"img": "glow", "burst": 60, "rate": 0, "loop": true, "duration": 1.5, "shape": "ring", "shapeSize": [0.2, 0, 0.2], "offset": [0, 0.8, 0], "outward": true, "speed": [8, 8], "speedCurve": [[0, 1], [1, 0.3]], "life": [0.35, 0.35], "size": [0.4, 0.4], "tint": "#80c8ff", "alpha": [[0, 1], [1, 0]]}
+]}

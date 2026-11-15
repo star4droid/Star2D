@@ -1,0 +1,6 @@
+{"name": "Nebula", "emitters": [
+  {"img": "smoke", "blend": "add", "rate": 1.5, "shape": "box", "shapeSize": [8, 4, 8], "offset": [0, 2.0, 0], "spread": 180, "speed": [0.05, 0.15], "life": [6, 9], "size": [3, 5], "tint": "#a040ff", "alpha": [[0, 0], [0.5, 0.35], [1, 0]], "max": 400, "rot": [0, 360], "spin": [-10, 10]},
+  {"img": "smoke", "blend": "add", "rate": 1.5, "shape": "box", "shapeSize": [8, 4, 8], "offset": [0, 2.0, 0], "spread": 180, "speed": [0.05, 0.15], "life": [6, 9], "size": [3, 5], "tint": "#ff4090", "alpha": [[0, 0], [0.5, 0.35], [1, 0]], "max": 400, "rot": [0, 360], "spin": [-10, 10]},
+  {"img": "smoke", "blend": "add", "rate": 1.5, "shape": "box", "shapeSize": [8, 4, 8], "offset": [0, 2.0, 0], "spread": 180, "speed": [0.05, 0.15], "life": [6, 9], "size": [3, 5], "tint": "#4080ff", "alpha": [[0, 0], [0.5, 0.35], [1, 0]], "max": 400, "rot": [0, 360], "spin": [-10, 10]},
+  {"img": "dot", "blend": "add", "rate": 10, "shape": "box", "shapeSize": [8, 4, 8], "offset": [0, 2.0, 0], "spread": 180, "speed": [0.05, 0.25], "life": [3, 5], "size": [0.04, 0.07], "tint": "#ffffff", "alpha": [[0, 0], [0.5, 1], [1, 0]], "max": 400}
+]}

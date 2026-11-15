@@ -63,6 +63,8 @@ public class ProjectsHomeView extends FrameLayout {
         void openDonate();
     }
 
+    private static final int P_PROJECTS = 0, P_LEARN = 1, P_TEMPLATES = 2, P_SETTINGS = 3;
+
     private static final String[] LANG_NAMES = {"English", "العربيه", "Français", "Português", "Русский", "Español"};
     private static final String[] LANG_CODES = {"en", "ar", "fr", "br", "ru", "es"};
     private static final String[] COMPILERS = {"ecj", "javac"};
@@ -73,8 +75,9 @@ public class ProjectsHomeView extends FrameLayout {
     private final Handler ui = new Handler(Looper.getMainLooper());
     private final ExecutorService io = Executors.newSingleThreadExecutor();
 
-    private TextView[] tabs;
     private View[] pages;
+    private int current = -1; // -1 = home grid
+    private TextView notifBadge;
     private LinearLayout projectsList;
     private TextView projectsCount, projectsEmpty;
     private EditText search;
@@ -88,24 +91,14 @@ public class ProjectsHomeView extends FrameLayout {
         LayoutInflater.from(activity).inflate(R.layout.home_screen, this, true);
         translateTree(this);
         setLayoutDirection(Ui.isRtl(activity) ? LAYOUT_DIRECTION_RTL : LAYOUT_DIRECTION_LTR);
-        setupTabs();
         setupLearn();
         setupProjects();
         setupTemplates();
-        setupCommunity();
         setupSettings();
-        findViewById(R.id.home_gear).setOnClickListener(v -> selectTab(4));
-        View blocksBtn = findViewById(R.id.home_blocks);
-        blocksBtn.setContentDescription(T("home_block_creator", "Block creator"));
-        blocksBtn.setOnClickListener(v -> com.star4droid.star2d.ui.blocks.BlockCreatorActivity.open(activity));
-        androidx.appcompat.widget.TooltipCompat.setTooltipText(blocksBtn, T("home_block_creator", "Block creator"));
-        View cloneBtn = findViewById(R.id.home_clone);
-        cloneBtn.setContentDescription(T("gh_clone_title", "Clone from GitHub"));
-        cloneBtn.setOnClickListener(v -> com.star4droid.star2d.git.ui.CloneDialog.show(activity, projectsDir, dir -> {
-            refresh();
-            host.openProject(dir);
-        }));
-        selectTab(0);
+        pages = new View[]{findViewById(R.id.page_projects), findViewById(R.id.page_learn), findViewById(R.id.page_templates), findViewById(R.id.page_settings)};
+        findViewById(R.id.home_back).setOnClickListener(v -> onBack());
+        buildHomeGrid();
+        showHome();
         refresh();
         askLanguageOnFirstRun();
     }
@@ -166,45 +159,137 @@ public class ProjectsHomeView extends FrameLayout {
         }
     }
 
-    // ---------------------------------------------------------------- tabs
+    // ---------------------------------------------------------------- home grid and pages
 
-    private void setupTabs() {
-        tabs = new TextView[]{
-                findViewById(R.id.tab_projects), findViewById(R.id.tab_learn), findViewById(R.id.tab_templates),
-                findViewById(R.id.tab_community), findViewById(R.id.tab_settings)};
-        pages = new View[]{
-                findViewById(R.id.page_projects), findViewById(R.id.page_learn), findViewById(R.id.page_templates),
-                findViewById(R.id.page_community), findViewById(R.id.page_settings)};
-        // icons only (the name is shown as a tooltip / for accessibility)
-        int[] icons = {R.drawable.ic_s2_folder, R.drawable.ic_s2_school, R.drawable.ic_s2_widgets, R.drawable.ic_s2_group, R.drawable.ic_s2_settings};
-        String[][] names = {{"home_tab_projects", "Projects"}, {"home_tab_learn", "Learn"}, {"home_tab_templates", "Templates"},
-                {"home_tab_community", "Community"}, {"home_tab_settings", "Settings"}};
-        for (int i = 0; i < tabs.length; i++) {
-            final int index = i;
-            TextView t = tabs[i];
-            String label = T(names[i][0], names[i][1]);
-            t.setText("");
-            t.setContentDescription(label);
-            if (android.os.Build.VERSION.SDK_INT >= 26) t.setTooltipText(label);
-            t.setCompoundDrawablesWithIntrinsicBounds(0, icons[i], 0, 0);
-            t.setPadding(0, (int) (8 * getResources().getDisplayMetrics().density), 0, 0);
-            t.setMinWidth(0);
-            android.widget.LinearLayout.LayoutParams lp = new android.widget.LinearLayout.LayoutParams(0, t.getLayoutParams().height, 1f);
-            lp.setMargins(4, 0, 4, 0);
-            t.setLayoutParams(lp);
-            t.setOnClickListener(v -> selectTab(index));
-            t.setOnLongClickListener(v -> { toast(label); return true; });
+    /** One big icon button of the home grid. */
+    private View tile(int icon, String label, int c1, int c2, Runnable action) {
+        LinearLayout t = new LinearLayout(activity);
+        t.setOrientation(LinearLayout.VERTICAL);
+        t.setGravity(android.view.Gravity.CENTER);
+        t.setPadding(dp(8), dp(10), dp(8), dp(10));
+        android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable(
+                android.graphics.drawable.GradientDrawable.Orientation.TL_BR, new int[]{c1, c2});
+        bg.setCornerRadius(dp(18));
+        t.setBackground(new android.graphics.drawable.RippleDrawable(ColorStateList.valueOf(0x33FFFFFF), bg, null));
+        android.widget.ImageView i = new android.widget.ImageView(activity);
+        i.setImageResource(icon);
+        i.setColorFilter(0xFFFFFFFF);
+        t.addView(i, new LinearLayout.LayoutParams(dp(42), dp(42)));
+        TextView l = new TextView(activity);
+        l.setText(label);
+        l.setTextColor(0xFFFFFFFF);
+        l.setTextSize(14);
+        l.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        l.setGravity(android.view.Gravity.CENTER);
+        l.setMaxLines(2);
+        l.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        l.setIncludeFontPadding(false);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.topMargin = dp(8);
+        t.addView(l, lp);
+        t.setContentDescription(label);
+        t.setOnClickListener(v -> action.run());
+        FrameLayout f = new FrameLayout(activity);
+        f.addView(t, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        f.setTag(t);
+        return f;
+    }
+
+    private void buildHomeGrid() {
+        LinearLayout grid = findViewById(R.id.home_grid);
+        grid.removeAllViews();
+        Activity a = activity;
+        java.util.List<View> tiles = new ArrayList<>();
+        tiles.add(tile(R.drawable.ic_s2_folder, T("home_tab_projects", "Projects"), 0xFF2196F3, 0xFF1565C0, () -> show(P_PROJECTS)));
+        tiles.add(tile(R.drawable.ic_s2_school, T("home_tab_learn", "Learn"), 0xFF43A047, 0xFF1B5E20, () -> show(P_LEARN)));
+        tiles.add(tile(R.drawable.ic_s2_widgets, T("home_tab_templates", "Templates"), 0xFF00ACC1, 0xFF006064, () -> show(P_TEMPLATES)));
+        tiles.add(tile(R.drawable.ic_s2_market, T("mk_title", "Market"), 0xFF7C4DFF, 0xFF3F51B5, () -> a.startActivity(new Intent(a, com.star4droid.star2d.suda.MarketActivity.class))));
+        tiles.add(tile(R.drawable.ic_s2_group, T("sc_community", "Community"), 0xFFEC407A, 0xFFAD1457, () -> a.startActivity(new Intent(a, com.star4droid.star2d.suda.CommunityActivity.class))));
+        View bell = tile(R.drawable.ic_s2_bell, T("sc_notifications", "Notifications"), 0xFFEF5350, 0xFFB71C1C, () -> a.startActivity(new Intent(a, com.star4droid.star2d.suda.NotificationsActivity.class)));
+        notifBadge = new TextView(activity);
+        notifBadge.setTextColor(0xFFFFFFFF);
+        notifBadge.setTextSize(11);
+        notifBadge.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        notifBadge.setGravity(android.view.Gravity.CENTER);
+        notifBadge.setMinWidth(dp(22));
+        notifBadge.setPadding(dp(6), dp(1), dp(6), dp(1));
+        android.graphics.drawable.GradientDrawable nb = new android.graphics.drawable.GradientDrawable();
+        nb.setColor(0xFF212121);
+        nb.setStroke(dp(2), 0xFFFFFFFF);
+        nb.setCornerRadius(dp(12));
+        notifBadge.setBackground(nb);
+        notifBadge.setVisibility(GONE);
+        FrameLayout.LayoutParams bp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, android.view.Gravity.TOP | android.view.Gravity.END);
+        bp.setMargins(0, dp(8), dp(8), 0);
+        ((FrameLayout) bell).addView(notifBadge, bp);
+        tiles.add(bell);
+        tiles.add(tile(R.drawable.ic_s2_nodes, T("s3d_workspace", "AI Workspace"), 0xFFF5A524, 0xFFE0661B, () -> a.startActivity(new Intent(a, com.star4droid.star2d.suda.ws.WorkspacesActivity.class))));
+        tiles.add(tile(R.drawable.ic_s2_person, T("sc_profile", "Profile"), 0xFF5C6BC0, 0xFF283593, () -> {
+            if (com.star4droid.star2d.suda.Suda3D.loggedIn(a)) com.star4droid.star2d.suda.Social.openProfile(a, 0);
+            else com.star4droid.star2d.suda.Paywall.login(a, () -> { if (com.star4droid.star2d.suda.Suda3D.loggedIn(a)) com.star4droid.star2d.suda.Social.openProfile(a, 0); });
+        }));
+        tiles.add(tile(R.drawable.ic_s2_blocks, T("home_block_creator", "Block creator"), 0xFF26A69A, 0xFF00695C, () -> com.star4droid.star2d.ui.blocks.BlockCreatorActivity.open(a)));
+        tiles.add(tile(R.drawable.ic_s2_git, T("gh_clone_title", "Clone from GitHub"), 0xFF546E7A, 0xFF263238, () ->
+                com.star4droid.star2d.git.ui.CloneDialog.show(a, projectsDir, dir -> { refresh(); host.openProject(dir); })));
+        tiles.add(tile(R.drawable.ic_s2_settings, T("home_tab_settings", "Settings"), 0xFF78909C, 0xFF37474F, () -> show(P_SETTINGS)));
+
+        float wDp = getResources().getDisplayMetrics().widthPixels / getResources().getDisplayMetrics().density;
+        int cols = wDp >= 720 ? 4 : wDp >= 480 ? 3 : 2;
+        for (int i = 0; i < tiles.size(); i += cols) {
+            LinearLayout row = new LinearLayout(activity);
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            for (int j = 0; j < cols; j++) {
+                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, dp(118), 1f);
+                lp.setMargins(dp(6), dp(6), dp(6), dp(6));
+                if (i + j < tiles.size()) row.addView(tiles.get(i + j), lp);
+                else row.addView(new View(activity), lp);
+            }
+            grid.addView(row, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         }
     }
 
-    private void selectTab(int index) {
-        for (int i = 0; i < tabs.length; i++) {
-            boolean selected = i == index;
-            tabs[i].setBackgroundResource(selected ? R.drawable.home_tab_selected : 0);
-            tabs[i].setTextColor(color(selected ? R.color.home_text : R.color.home_text_secondary));
-            tabs[i].setCompoundDrawableTintList(android.content.res.ColorStateList.valueOf(color(selected ? R.color.home_text : R.color.home_text_secondary)));
-            tabs[i].setTypeface(null, selected ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
-            pages[i].setVisibility(selected ? VISIBLE : GONE);
+    private void showHome() {
+        current = -1;
+        for (View p : pages) p.setVisibility(GONE);
+        findViewById(R.id.page_home).setVisibility(VISIBLE);
+        findViewById(R.id.home_back).setVisibility(GONE);
+        findViewById(R.id.home_logo).setVisibility(VISIBLE);
+        ((TextView) findViewById(R.id.home_title)).setText("Star2D Engine");
+        refreshBadge();
+    }
+
+    private void show(int page) {
+        current = page;
+        findViewById(R.id.page_home).setVisibility(GONE);
+        for (int i = 0; i < pages.length; i++) pages[i].setVisibility(i == page ? VISIBLE : GONE);
+        findViewById(R.id.home_back).setVisibility(VISIBLE);
+        findViewById(R.id.home_logo).setVisibility(GONE);
+        String[][] names = {{"home_tab_projects", "Projects"}, {"home_tab_learn", "Learn"}, {"home_tab_templates", "Templates"}, {"home_tab_settings", "Settings"}};
+        ((TextView) findViewById(R.id.home_title)).setText(T(names[page][0], names[page][1]));
+    }
+
+    /** Hardware back / the arrow: a page goes back to the home grid. Returns false on the home grid itself. */
+    public boolean onBack() {
+        if (current < 0) return false;
+        showHome();
+        return true;
+    }
+
+    /** Red count on the Notifications button (what is newer than this phone's last visit). */
+    public void refreshBadge() {
+        if (notifBadge == null || !com.star4droid.star2d.suda.Suda3D.loggedIn(activity)) { if (notifBadge != null) notifBadge.setVisibility(GONE); return; }
+        com.star4droid.star2d.suda.Suda3D.IO.execute(() -> {
+            int n = com.star4droid.star2d.suda.Social.unread(activity);
+            ui.post(() -> { notifBadge.setVisibility(n > 0 ? VISIBLE : GONE); notifBadge.setText(n > 98 ? "99+" : String.valueOf(n)); });
+        });
+    }
+
+    @Override public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus && isShown()) {
+            com.star4droid.star2d.suda.Social.startup(activity);
+            if (current < 0) refreshBadge();
+            updateNotifLangRow();
         }
     }
 
@@ -217,7 +302,11 @@ public class ProjectsHomeView extends FrameLayout {
         search = findViewById(R.id.projects_search);
         findViewById(R.id.btn_new_project).setOnClickListener(v -> createNewProject());
         findViewById(R.id.btn_open).setOnClickListener(v -> host.importProject());
-        addWorkspaceButton();
+        View sv = (View) projectsList.getParent();
+        if (sv instanceof android.widget.ScrollView) ((android.widget.ScrollView) sv).setOnScrollChangeListener((v, x, y, ox, oy) -> {
+            View c = ((android.widget.ScrollView) v).getChildAt(0);
+            if (c != null && shownRows < filtered.size() && y + v.getHeight() >= c.getHeight() - dp(240)) appendProjects();
+        });
         search.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int a, int b, int c) {}
             @Override public void onTextChanged(CharSequence s, int a, int b, int c) {}
@@ -316,9 +405,26 @@ public class ProjectsHomeView extends FrameLayout {
         projectsList.removeAllViews();
         SimpleDateFormat format = new SimpleDateFormat("MMM d, yyyy HH:mm", Locale.ENGLISH);
         LayoutInflater inflater = LayoutInflater.from(activity);
-        int shown = 0;
-        for (File project : all) {
-            if (!project.getName().toLowerCase(Locale.ROOT).contains(query)) continue;
+        filtered.clear();
+        for (File project : all) if (project.getName().toLowerCase(Locale.ROOT).contains(query)) filtered.add(project);
+        shownRows = 0;
+        appendProjects();
+        int shown = filtered.size();
+        projectsEmpty.setText(all.isEmpty() ? T("home_no_projects", "No projects yet") : T("home_no_match", "No matching projects"));
+        projectsEmpty.setVisibility(shown == 0 ? VISIBLE : GONE);
+    }
+
+    private final List<File> filtered = new ArrayList<>();
+    private int shownRows;
+    private static final int PAGE = 25;
+
+    /** The projects list is loaded page by page: more rows are added when the scroll reaches the bottom. */
+    private void appendProjects() {
+        SimpleDateFormat format = new SimpleDateFormat("MMM d, yyyy HH:mm", Locale.ENGLISH);
+        LayoutInflater inflater = LayoutInflater.from(activity);
+        int end = Math.min(filtered.size(), shownRows + PAGE);
+        for (int i = shownRows; i < end; i++) {
+            File project = filtered.get(i);
             View row = inflater.inflate(R.layout.home_item_project, projectsList, false);
             ((TextView) row.findViewById(R.id.project_name)).setText(project.getName());
             ((TextView) row.findViewById(R.id.project_date)).setText(format.format(new Date(project.lastModified())));
@@ -326,10 +432,8 @@ public class ProjectsHomeView extends FrameLayout {
             View menu = row.findViewById(R.id.project_menu);
             menu.setOnClickListener(v -> showProjectMenu(project, menu));
             projectsList.addView(row);
-            shown++;
         }
-        projectsEmpty.setText(all.isEmpty() ? T("home_no_projects", "No projects yet") : T("home_no_match", "No matching projects"));
-        projectsEmpty.setVisibility(shown == 0 ? VISIBLE : GONE);
+        shownRows = end;
     }
 
     private void openProject(File project) {
@@ -465,7 +569,7 @@ public class ProjectsHomeView extends FrameLayout {
                     ui.post(() -> {
                         toast(T("home_created", "Project created") + ": " + name);
                         search.setText("");
-                        selectTab(0);
+                        show(P_PROJECTS);
                         refresh();
                     });
                 } catch (Exception | Error e) {
@@ -481,21 +585,6 @@ public class ProjectsHomeView extends FrameLayout {
 
     // ----------------------------------------------------------- community
 
-    private void setupCommunity() {
-        LinearLayout list = findViewById(R.id.community_list);
-        findViewById(R.id.btn_donate).setOnClickListener(v -> host.openDonate());
-        String[][] links = com.star4droid.star2d.ui.CommunityLinks.all();
-        LayoutInflater inflater = LayoutInflater.from(activity);
-        for (String[] link : links) {
-            View row = inflater.inflate(R.layout.home_item_community, list, false);
-            ((TextView) row.findViewById(R.id.community_title)).setText(T("home_c_" + link[0], link[1]));
-            ((TextView) row.findViewById(R.id.community_desc)).setText(T("home_c_" + link[0] + "_desc", link[2]));
-            ((TextView) row.findViewById(R.id.community_join)).setText(T("home_join", "Join"));
-            row.findViewById(R.id.community_join).setOnClickListener(v -> openUrl(link[3]));
-            list.addView(row);
-        }
-    }
-
     private void openUrl(String url) {
         try {
             activity.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
@@ -506,8 +595,24 @@ public class ProjectsHomeView extends FrameLayout {
 
     // ------------------------------------------------------------ settings
 
+    private void updateNotifLangRow() {
+        boolean on = com.star4droid.star2d.suda.Suda3D.loggedIn(activity);
+        findViewById(R.id.setting_notif_label).setVisibility(on ? VISIBLE : GONE);
+        TextView v = findViewById(R.id.setting_notif_lang);
+        v.setVisibility(on ? VISIBLE : GONE);
+        if (!on) return;
+        String code = com.star4droid.star2d.suda.Suda3D.notifLang(activity);
+        String[] codes = com.star4droid.star2d.suda.Social.NOTIF_CODES, names = com.star4droid.star2d.suda.Social.NOTIF_NAMES;
+        String shown = "";
+        for (int i = 0; i < codes.length; i++) if (codes[i].equals(code)) shown = names[i];
+        v.setText(shown.isEmpty() ? T("sc_not_chosen", "Not chosen yet") : shown);
+    }
+
     private void setupSettings() {
         SharedPreferences prefs = prefs();
+        ((TextView) findViewById(R.id.setting_notif_label)).setText(T("sc_notif_lang", "Notification language"));
+        findViewById(R.id.setting_notif_lang).setOnClickListener(v -> com.star4droid.star2d.suda.Social.askNotifLang(activity, this::updateNotifLangRow));
+        updateNotifLangRow();
 
         Spinner language = findViewById(R.id.setting_language);
         language.setAdapter(spinnerAdapter(LANG_NAMES));

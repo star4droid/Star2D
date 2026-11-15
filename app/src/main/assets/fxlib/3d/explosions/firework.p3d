@@ -1,0 +1,6 @@
+{"name": "Firework", "emitters": [
+  {"img": "dot", "burst": 90, "rate": 0, "loop": true, "duration": 2.7, "delay": 0.6, "offset": [0, 4, 0], "shape": "point", "spread": 180, "speed": [4.140000000000001, 4.5], "speedCurve": [[0, 1], [1, 0.15]], "life": [1.1, 1.5], "size": [0.07, 0.1], "gravity": [0, -1.5, 0], "drag": 0.6, "tint": [[0, "#ffffff"], [0.2, "#ff4060"], [1, "#ff4060"]], "alpha": [[0, 1], [0.7, 0.9], [1, 0]]},
+  {"img": "glow", "burst": 45, "rate": 0, "loop": true, "duration": 2.7, "delay": 0.6, "offset": [0, 4, 0], "spread": 180, "speed": [3.6, 4.5], "speedCurve": [[0, 1], [1, 0.15]], "life": [0.7, 1.0], "size": [0.25, 0.35], "gravity": [0, -1.2, 0], "tint": "#ff4060", "alpha": [[0, 0.6], [1, 0]]},
+  {"img": "glow", "burst": 1, "rate": 0, "loop": true, "duration": 2.7, "delay": 0.6, "offset": [0, 4, 0], "life": [0.25, 0.25], "size": [2.5, 2.5], "tint": "#ff4060", "alpha": [[0, 1], [1, 0]]},
+  {"img": "spark", "burst": 1, "rate": 0, "loop": true, "duration": 2.7, "delay": 0, "dir": [0, 1, 0], "speed": [6.666666666666667, 6.666666666666667], "speedCurve": [[0, 1], [1, 0.4]], "life": [0.6, 0.6], "size": [0.12, 0.12], "stretch": 0.08, "tint": "#ffe0a0", "alpha": [[0, 1], [0.6, 1], [1, 0]]}
+]}

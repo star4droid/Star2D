@@ -1,0 +1,6 @@
+{"name": "Ground Blast", "emitters": [
+  {"img": "glow", "burst": 1, "rate": 0, "loop": true, "duration": 2.4, "life": [0.18, 0.18], "size": [5, 5], "sizeCurve": [[0, 0.6], [0.3, 1], [1, 0.8]], "tint": [[0, "#ffffff"], [0.4, "#ffc060"]], "alpha": [[0, 1], [1, 0]]},
+  {"img": "smoke", "blend": "alpha", "burst": 40, "rate": 0, "loop": true, "duration": 2.4, "shape": "ring", "shapeSize": [0.3, 0, 0.3], "outward": true, "speed": [4, 6], "speedCurve": [[0, 1], [1, 0.05]], "life": [1.2, 1.8], "size": [0.8, 1.6], "sizeCurve": [[0, 0.3], [1, 1]], "rot": [0, 360], "tint": "#8a7660", "alpha": [[0, 0.7], [1, 0]]},
+  {"img": "smoke", "blend": "add", "burst": 20, "rate": 0, "loop": true, "duration": 2.4, "shape": "sphere", "shapeSize": [0.2, 0.2, 0.2], "outward": true, "speed": [1, 3], "speedCurve": [[0, 1], [1, 0.05]], "life": [0.5, 0.8], "size": [0.8, 1.4], "sizeCurve": [[0, 0.3], [1, 1]], "rot": [0, 360], "spin": [-90, 90], "tint": [[0, "#ffffd0"], [0.3, "#ff9020"], [1, "#300000"]], "alpha": [[0, 1], [1, 0]]},
+  {"img": "shard", "blend": "alpha", "burst": 20, "rate": 0, "loop": true, "duration": 2.4, "spread": 40, "speed": [4, 8], "life": [1, 1.4], "size": [0.1, 0.18], "rot": [0, 360], "spin": [-720, 720], "gravity": [0, -9.8, 0], "tint": "#4a3a2a", "alpha": [[0, 1], [0.6, 1], [1, 0]]}
+]}

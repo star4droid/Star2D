@@ -1,0 +1,5 @@
+{"name": "Short Circuit", "emitters": [
+  {"img": "spark", "rate": 80, "duration": 1.2, "rateCurve": [[0, 1], [0.15, 0], [0.5, 0], [0.55, 1], [0.6, 0], [1, 0]], "life": [0.3, 0.5], "spread": 180, "speed": [2, 5], "gravity": [0, -9.8, 0], "size": [0.03, 0.05], "stretch": 0.05, "tint": [[0, "#ffffff"], [0.3, "#a0e0ff"]], "alpha": [[0, 1], [0.6, 1], [1, 0]], "offset": [0, 1, 0]},
+  {"img": "glow", "rate": 40, "duration": 1.2, "rateCurve": [[0, 1], [0.15, 0], [0.5, 0], [0.55, 1], [0.6, 0], [1, 0]], "max": 3, "life": [0.08, 0.12], "offset": [0, 1, 0], "size": [1, 1.4], "tint": "#c0e8ff", "alpha": [[0, 1], [1, 0]]},
+  {"img": "smoke", "blend": "alpha", "rate": 5, "life": [2, 2.6], "offset": [0, 1, 0], "speed": [0.4, 0.6], "spread": 10, "size": [0.3, 1], "sizeCurve": [[0, 0.3], [1, 1]], "tint": "#404040", "alpha": [[0, 0], [0.3, 0.5], [1, 0]]}
+]}

@@ -1,0 +1,4 @@
+{"name": "Energy Beam", "emitters": [
+  {"img": "glow", "blend": "add", "rate": 80, "shape": "disc", "shapeSize": [0.15, 0, 0.15], "speed": [8, 9], "spread": 4, "life": [0.6, 0.7], "size": [0.4, 0.5], "tint": [[0, "#80d0ff"], [1, "#80d0ff"]], "alpha": [[0, 0], [0.1, 0.5], [1, 0]]},
+  {"img": "spark", "blend": "add", "rate": 40, "shape": "disc", "shapeSize": [0.4, 0, 0.4], "speed": [5, 7], "spread": 4, "life": [0.5, 0.8], "size": [0.05, 0.08], "tint": [[0, "#c0f0ff"], [1, "#c0f0ff"]], "alpha": [[0, 0], [0.12, 1], [0.6, 1], [1, 0]], "stretch": 0.1}
+]}

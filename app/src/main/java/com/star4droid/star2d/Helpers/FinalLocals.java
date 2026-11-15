@@ -15,7 +15,7 @@ public final class FinalLocals {
 
     // "<indent>Type name = ..." at the start of a line: Type is a primitive/String or starts with a capital (generics/arrays allowed)
     private static final Pattern DECL = Pattern.compile(
-            "^([ \\t]*(?:/\\*@b\\d+\\*/)?)((?:int|float|double|long|boolean|char|byte|short|[A-Z][\\w.]*(?:<[\\w.<>, ?\\[\\]]*>)?)(?:\\[\\])*)[ \\t]+([a-zA-Z_$][\\w$]*)[ \\t]*=(?!=)",
+            "^([ \\t]*(?:/\\*@b\\d+\\*/)?)((?:int|float|double|long|boolean|char|byte|short|[A-Z][\\w.]*(?:<[\\w.<>, ?\\[\\]]*>)?)(?:\\[\\])*)[ \\t]+([\\p{L}_$][\\p{L}\\p{Mn}\\p{Nd}_$]*)[ \\t]*=(?!=)",
             Pattern.MULTILINE);
 
     public static String apply(String code) {
@@ -49,7 +49,7 @@ public final class FinalLocals {
     private static boolean reassigned(String code, String name) {
         String n = Pattern.quote(name);
         // name = x (not ==), name += x ..., name++ / ++name / name-- / --name
-        Pattern p = Pattern.compile("(?<![\\w$.])" + n + "\\s*(?:=(?!=)|[+\\-*/%&|^]=|<<=|>>>?=|\\+\\+|--)|(?:\\+\\+|--)\\s*" + n + "(?![\\w$])");
+        Pattern p = Pattern.compile("(?<![\\p{L}\\p{Mn}\\p{Nd}_$.])" + n + "\\s*(?:=(?!=)|[+\\-*/%&|^]=|<<=|>>>?=|\\+\\+|--)|(?:\\+\\+|--)\\s*" + n + "(?![\\p{L}\\p{Mn}\\p{Nd}_$])");
         Matcher m = p.matcher(code);
         int count = 0;
         while (m.find()) {

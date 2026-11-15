@@ -1,0 +1,4 @@
+{"name": "Rain Splashes", "emitters": [
+  {"img": "dot", "rate": 150, "life": [0.3, 0.4], "shape": "box", "shapeSize": [4, 0, 4], "spread": 25, "speed": [1, 1.6], "gravity": [0, -9.8, 0], "size": [0.03, 0.05], "tint": "#d8e8ff", "alpha": [[0, 1], [0.6, 1], [1, 0]], "max": 300},
+  {"img": "streak", "blend": "add", "rate": 200, "shape": "box", "shapeSize": [4, 0.1, 4], "offset": [0, 5, 0], "dir": [0, -1, 0], "spread": 3, "speed": [10, 11], "life": [0.48, 0.5], "size": [0.03, 0.04], "stretch": 0.04, "tint": "#b0d0ff", "alpha": [[0, 0], [0.1, 0.45], [1, 0.45]], "max": 1500}
+]}

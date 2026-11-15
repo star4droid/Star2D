@@ -10,7 +10,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center_vertical"
+        android:gravity="top"
         android:orientation="horizontal">
 
         <TextView
@@ -21,31 +21,37 @@
             android:text="🎮"
             android:textSize="14sp" />
 
-        <TextView
-            android:id="@+id/template_title"
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="10dp"
             android:layout_weight="1"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:textColor="@color/home_text"
-            android:textSize="17sp"
-            android:textStyle="bold" />
+            android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/template_tag"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:background="@drawable/home_tag_bg"
-            android:paddingStart="7dp"
-            android:paddingTop="2dp"
-            android:paddingEnd="7dp"
-            android:paddingBottom="2dp"
-            android:textColor="@color/home_accent"
-            android:textSize="12sp"
-            android:textStyle="bold" />
+            <TextView
+                android:id="@+id/template_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="2"
+                android:textColor="@color/home_text"
+                android:textSize="17sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/template_tag"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:background="@drawable/home_tag_bg"
+                android:paddingStart="7dp"
+                android:paddingTop="2dp"
+                android:paddingEnd="7dp"
+                android:paddingBottom="2dp"
+                android:textColor="@color/home_accent"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+        </LinearLayout>
     </LinearLayout>
 
     <TextView

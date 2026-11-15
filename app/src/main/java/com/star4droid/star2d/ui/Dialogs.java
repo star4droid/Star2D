@@ -144,6 +144,19 @@ public final class Dialogs {
         return null;
     }
 
+    /** Element / variable names: English or Arabic letters, digits and _ (they become Java identifiers). */
+    public static String checkIdentifier(String v) {
+        String p = com.star4droid.star2d.Helpers.Names.problem(v == null ? "" : v.trim());
+        if (p == null) return null;
+        switch (p) {
+            case "empty": return Tr.t("emptyError", "Enter a name");
+            case "keyword": return Tr.t("ui_name_keyword", "This word is reserved by Java, choose another name");
+            case "digit": return Tr.t("ui_name_digit", "A name cannot start with a digit");
+            case " ": return Tr.t("ui_name_space", "No spaces in a name (use _ instead)");
+            default: return Tr.t("ui_bad_char", "Not allowed") + ": " + p;
+        }
+    }
+
     public static LinearLayout.LayoutParams lp(int w, int h) {
         return new LinearLayout.LayoutParams(w, h);
     }

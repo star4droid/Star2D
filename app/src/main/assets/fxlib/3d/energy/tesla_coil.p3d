@@ -1,0 +1,5 @@
+{"name": "Tesla Coil", "emitters": [
+  {"img": "bolt", "rate": 16, "life": [0.08, 0.14], "offset": [0, 2, 0], "size": [1.4, 2], "rot": [0, 360], "tint": [[0, "#ffffff"], [1, "#a080ff"]], "alpha": [[0, 0], [0.2, 1], [0.35, 0.3], [0.55, 1], [0.75, 0.4], [1, 0]]},
+  {"img": "glow", "rate": 10, "life": [0.2, 0.3], "offset": [0, 2, 0], "size": [0.5, 0.7], "tint": "#a0a0ff", "alpha": [[0, 0], [0.5, 1], [1, 0]]},
+  {"img": "spark", "rate": 20, "life": [0.3, 0.5], "offset": [0, 2, 0], "spread": 180, "speed": [2, 4], "gravity": [0, -9.8, 0], "size": [0.03, 0.05], "stretch": 0.05, "tint": "#c0c0ff", "alpha": [[0, 1], [0.6, 1], [1, 0]]}
+]}

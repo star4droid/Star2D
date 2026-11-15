@@ -1,0 +1,4 @@
+{"name": "Plasma Ball", "emitters": [
+  {"img": "glow", "rate": 30, "life": [0.5, 0.8], "offset": [0, 1.2, 0], "shape": "sphere", "shapeSize": [0.3, 0.3, 0.3], "spread": 180, "speed": [0.1, 0.3], "size": [0.4, 0.7], "tint": [[0, "#ffb0ff"], [1, "#7020ff"]], "alpha": [[0, 0], [0.5, 1], [1, 0]]},
+  {"img": "bolt", "rate": 12, "life": [0.12, 0.2], "offset": [0, 1.2, 0], "size": [0.8, 1.1], "rot": [0, 360], "tint": "#ffd0ff", "alpha": [[0, 0], [0.2, 1], [0.35, 0.3], [0.55, 1], [0.75, 0.4], [1, 0]]}
+]}

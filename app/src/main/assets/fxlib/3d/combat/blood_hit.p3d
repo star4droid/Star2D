@@ -1,0 +1,4 @@
+{"name": "Blood Hit", "emitters": [
+  {"img": "drop", "blend": "alpha", "burst": 26, "rate": 0, "duration": 1.5, "spread": 60, "dir": [0, 1, 0], "speed": [1.5, 3.5], "gravity": [0, -9.8, 0], "life": [0.6, 0.9], "size": [0.05, 0.1], "stretch": 0.03, "tint": [[0, "#b0101a"], [1, "#600008"]], "alpha": [[0, 1], [0.6, 1], [1, 0]], "offset": [0, 1, 0], "loop": true},
+  {"img": "glow", "blend": "alpha", "burst": 5, "rate": 0, "duration": 1.5, "spread": 180, "speed": [0.2, 0.6], "life": [0.3, 0.5], "size": [0.3, 0.5], "tint": "#8a0010", "alpha": [[0, 0.6], [1, 0]], "offset": [0, 1, 0], "loop": true}
+]}

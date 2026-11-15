@@ -1,0 +1,4 @@
+{"name": "Dark Vortex", "emitters": [
+  {"img": "smoke", "blend": "alpha", "rate": 30, "life": [1.6, 2.2], "shape": "ring", "shapeSize": [1.2, 0, 1.2], "speed": [0.4, 0.8], "spread": 5, "orbit": [120, 160], "size": [0.8, 1.2], "rot": [0, 360], "spin": [-40, 40], "tint": "#140820", "alpha": [[0, 0], [0.3, 0.7], [1, 0]]},
+  {"img": "glow", "rate": 40, "shape": "sphere", "surface": true, "shapeSize": [1.3, 1.3, 1.3], "outward": true, "speed": [-1.5166666666666666, -1.3722222222222222], "life": [0.9, 1.2], "size": [0.08, 0.12], "sizeCurve": [[0, 1], [1, 0.3]], "stretch": 0.0, "tint": [[0, "#c040ff"], [1, "#ffffff"]], "alpha": [[0, 0], [0.3, 1], [1, 0.6]]}
+]}

@@ -1,0 +1,5 @@
+{"name": "Portal", "emitters": [
+  {"img": "glow", "rate": 120, "life": [0.8, 1.1], "shape": "ring", "shapeSize": [1, 0, 1], "orbit": [90, 120], "size": [0.18, 0.3], "tint": [[0, "#d0a0ff"], [1, "#6020c0"]], "alpha": [[0, 0], [0.5, 1], [1, 0]], "max": 300},
+  {"img": "glow", "rate": 50, "shape": "sphere", "surface": true, "shapeSize": [1.0, 1.0, 1.0], "outward": true, "speed": [-1.3125, -1.1875], "life": [0.8, 1.0], "size": [0.08, 0.14], "sizeCurve": [[0, 1], [1, 0.3]], "stretch": 0.0, "tint": [[0, "#b070ff"], [1, "#ffffff"]], "alpha": [[0, 0], [0.3, 1], [1, 0.6]]},
+  {"img": "glow", "rate": 3, "life": [1, 1.2], "size": [2.2, 2.4], "tint": "#401090", "alpha": [[0, 0], [0.5, 1], [1, 0]]}
+]}

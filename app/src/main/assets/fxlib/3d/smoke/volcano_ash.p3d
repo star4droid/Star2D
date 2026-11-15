@@ -1,0 +1,4 @@
+{"name": "Volcano Ash", "emitters": [
+  {"img": "smoke", "blend": "alpha", "rate": 14, "life": [4, 5], "shape": "disc", "shapeSize": [0.5, 0, 0.5], "speed": [3, 4], "spread": 12, "drag": 0.4, "size": [1, 3], "sizeCurve": [[0, 0.3], [1, 1]], "rot": [0, 360], "spin": [-20, 20], "tint": [[0, "#3a3030"], [1, "#5a5050"]], "alpha": [[0, 0], [0.1, 0.8], [1, 0]]},
+  {"img": "glow", "rate": 20, "life": [1.2, 1.6], "shape": "disc", "shapeSize": [0.4, 0, 0.4], "speed": [4, 6], "spread": 15, "gravity": [0, -9.8, 0], "size": [0.1, 0.2], "tint": [[0, "#ffd060"], [1, "#a01000"]], "alpha": [[0, 1], [0.6, 1], [1, 0]]}
+]}

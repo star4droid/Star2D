@@ -1,0 +1,4 @@
+{"name": "Pickup Glow", "emitters": [
+  {"img": "glow", "rate": 3, "life": [1.2, 1.2], "offset": [0, 0.6, 0], "size": [1.2, 1.4], "tint": "#ffd040", "alpha": [[0, 0], [0.5, 1], [1, 0]]},
+  {"img": "sparkle", "blend": "add", "rate": 10, "shape": "disc", "shapeSize": [0.4, 0, 0.4], "speed": [0.4, 0.8], "spread": 4, "life": [1, 1.4], "size": [0.08, 0.14], "tint": [[0, "#fff0a0"], [1, "#fff0a0"]], "alpha": [[0, 0], [0.2, 1], [0.35, 0.3], [0.55, 1], [0.75, 0.4], [1, 0]]}
+]}

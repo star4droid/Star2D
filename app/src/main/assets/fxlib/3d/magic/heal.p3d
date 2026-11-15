@@ -1,0 +1,5 @@
+{"name": "Heal", "emitters": [
+  {"img": "plus", "blend": "add", "rate": 10, "shape": "disc", "shapeSize": [0.6, 0, 0.6], "speed": [0.6, 1], "spread": 4, "life": [1.2, 1.6], "size": [0.15, 0.22], "tint": [[0, "#9dff9d"], [1, "#30d060"]], "alpha": [[0, 0], [0.12, 1], [0.6, 1], [1, 0]]},
+  {"img": "glow", "blend": "add", "rate": 25, "shape": "disc", "shapeSize": [0.7, 0, 0.7], "speed": [0.5, 1], "spread": 4, "life": [1, 1.6], "size": [0.12, 0.22], "tint": [[0, "#60ff80"], [1, "#60ff80"]], "alpha": [[0, 0], [0.2, 1], [0.35, 0.3], [0.55, 1], [0.75, 0.4], [1, 0]]},
+  {"img": "glow", "rate": 40, "life": [0.8, 1], "shape": "ring", "shapeSize": [0.8, 0, 0.8], "offset": [0, 0.05, 0], "size": [0.2, 0.3], "tint": "#40ff70", "alpha": [[0, 0], [0.5, 1], [1, 0]]}
+]}

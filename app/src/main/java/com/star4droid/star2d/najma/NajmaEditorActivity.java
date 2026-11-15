@@ -69,6 +69,18 @@ public class NajmaEditorActivity extends AppCompatActivity {
     private boolean editing;
 
     /** Opens the Najma editor when the path is a .njm file or a .java file generated from one. True = opened. */
+    /** Settings key of "Enable the Najma language" (off by default). */
+    public static final String PREF_ENABLED = "najmaEnabled";
+
+    /** True when the user turned the Najma language on in the settings. */
+    public static boolean enabled(Context c) {
+        try {
+            return com.star4droid.star2d.ui.Ui.prefs(c).getBoolean(PREF_ENABLED, false);
+        } catch (Throwable e) {
+            return false;
+        }
+    }
+
     public static boolean openInstead(android.app.Activity from, String path, android.content.Intent original) {
         try {
             String njm = NajmaProject.isNajma(path) ? path : NajmaProject.sourceOf(path);
@@ -92,6 +104,7 @@ public class NajmaEditorActivity extends AppCompatActivity {
      */
     public static boolean askLanguage(final android.app.Activity from, final String path, final android.content.Intent it) {
         try {
+            if (!enabled(from)) return false; // the language is off (Settings): new scripts are Java
             final boolean body = it.getBooleanExtra("body", false);
             final boolean scene = it.hasExtra("scene") && !"".equals(it.getStringExtra("scene"));
             if (path == null || !path.endsWith(".java") || (!body && !scene) || it.getBooleanExtra("najma_asked", false)) return false;

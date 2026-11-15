@@ -1,0 +1,4 @@
+{"name": "Sakura Petals", "emitters": [
+  {"img": "petal", "blend": "alpha", "rate": 18, "shape": "box", "shapeSize": [8, 0.1, 8], "offset": [0, 7, 0], "dir": [0, -1, 0], "spread": 3, "speed": [0.6, 0.9], "life": [7, 9], "size": [0.1, 0.14], "stretch": 0.0, "tint": "#ffb8d0", "alpha": [[0, 0], [0.1, 1], [0.9, 1], [1, 0]], "max": 1500, "turbulence": 1.5, "gravity": [0.6, 0, 0], "rot": [0, 360], "spin": [-300, 300]},
+  {"img": "petal", "blend": "alpha", "rate": 18, "shape": "box", "shapeSize": [8, 0.1, 8], "offset": [0, 7, 0], "dir": [0, -1, 0], "spread": 3, "speed": [0.6, 0.9], "life": [7, 9], "size": [0.1, 0.14], "stretch": 0.0, "tint": "#ffe0ec", "alpha": [[0, 0], [0.1, 1], [0.9, 1], [1, 0]], "max": 1500, "turbulence": 1.5, "gravity": [0.6, 0, 0], "rot": [0, 360], "spin": [-300, 300]}
+]}

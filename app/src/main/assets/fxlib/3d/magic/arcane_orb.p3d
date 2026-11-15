@@ -1,0 +1,5 @@
+{"name": "Arcane Orb", "emitters": [
+  {"img": "glow", "rate": 12, "life": [0.5, 0.6], "offset": [0, 1.2, 0], "size": [0.7, 0.8], "tint": "#d0b0ff", "alpha": [[0, 0], [0.5, 1], [1, 0]]},
+  {"img": "dot", "rate": 60, "life": [0.8, 1.2], "offset": [0, 1.2, 0], "shape": "sphere", "surface": true, "shapeSize": [0.5, 0.5, 0.5], "orbit": [120, 200], "size": [0.04, 0.07], "tint": [[0, "#ffffff"], [1, "#a060ff"]], "alpha": [[0, 0], [0.5, 1], [1, 0]]},
+  {"img": "sparkle", "rate": 14, "life": [0.4, 0.7], "offset": [0, 1.2, 0], "shape": "sphere", "shapeSize": [0.3, 0.3, 0.3], "spread": 180, "speed": [0.1, 0.3], "size": [0.12, 0.18], "tint": "#ffffff", "alpha": [[0, 0], [0.2, 1], [0.35, 0.3], [0.55, 1], [0.75, 0.4], [1, 0]]}
+]}

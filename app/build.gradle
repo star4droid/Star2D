@@ -179,6 +179,8 @@ dependencies {
     implementation(platform("com.google.firebase:firebase-bom:34.3.0"))
     implementation("com.google.firebase:firebase-crashlytics-ndk")
     implementation("com.google.firebase:firebase-analytics")
+    // Push notifications (community). Needs google-services.json from the FCM_JSON secret; without it the app just runs without push.
+    implementation("com.google.firebase:firebase-messaging")
 
 
 }

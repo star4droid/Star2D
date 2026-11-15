@@ -1,0 +1,4 @@
+{"name": "Shield Hit", "emitters": [
+  {"img": "glow", "burst": 120, "rate": 0, "duration": 1.5, "offset": [0, 1, 0], "shape": "sphere", "surface": true, "shapeSize": [1, 1, 1], "life": [0.3, 0.5], "size": [0.15, 0.25], "tint": "#70d8ff", "alpha": [[0, 1], [1, 0]], "loop": true},
+  {"img": "sparkle", "burst": 14, "rate": 0, "duration": 1.5, "offset": [0, 1, 0], "spread": 180, "speed": [1, 2], "speedCurve": [[0, 1], [1, 0.1]], "life": [0.4, 0.6], "size": [0.15, 0.25], "tint": "#c0f0ff", "alpha": [[0, 1], [0.6, 1], [1, 0]], "loop": true}
+]}

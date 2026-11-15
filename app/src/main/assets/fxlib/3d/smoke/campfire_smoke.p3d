@@ -1,0 +1,3 @@
+{"name": "Campfire Smoke", "emitters": [
+  {"img": "smoke", "blend": "alpha", "rate": 10, "life": [3, 4], "shape": "disc", "shapeSize": [0.25, 0, 0.25], "speed": [0.8, 1.1], "spread": 8, "size": [0.4, 2], "sizeCurve": [[0, 0.3], [1, 1]], "rot": [0, 360], "spin": [-50, 50], "turbulence": 0.4, "tint": [[0, "#5a5a5a"], [1, "#a0a0a0"]], "alpha": [[0, 0], [0.15, 0.55], [1, 0]]}
+]}

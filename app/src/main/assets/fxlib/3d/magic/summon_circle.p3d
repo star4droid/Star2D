@@ -1,0 +1,5 @@
+{"name": "Summon Circle", "emitters": [
+  {"img": "glow", "rate": 150, "life": [1, 1.2], "shape": "ring", "shapeSize": [1.5, 0, 1.5], "offset": [0, 0.03, 0], "orbit": [40, 40], "size": [0.15, 0.2], "tint": "#ff4040", "alpha": [[0, 0], [0.5, 1], [1, 0]], "max": 300},
+  {"img": "spark", "rate": 50, "life": [0.6, 0.9], "shape": "ring", "shapeSize": [1.5, 0, 1.5], "speed": [1.5, 2.5], "spread": 3, "size": [0.07, 0.1], "stretch": 0.12, "tint": [[0, "#ffb0a0"], [1, "#ff2020"]], "alpha": [[0, 0], [0.12, 1], [0.6, 1], [1, 0]]},
+  {"img": "smoke", "rate": 10, "life": [1.4, 1.8], "shape": "disc", "shapeSize": [1.3, 0, 1.3], "speed": [0.2, 0.4], "size": [0.8, 1.2], "tint": "#801010", "alpha": [[0, 0], [0.5, 0.3], [1, 0]]}
+]}

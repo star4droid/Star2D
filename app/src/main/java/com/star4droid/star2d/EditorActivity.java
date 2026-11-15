@@ -484,6 +484,7 @@ public class EditorActivity extends AppCompatActivity implements AndroidFragment
 	}
 	@Override
 	public void onBackPressed() {
+		if(homeView != null && homeView.isShown() && homeView.onBack()) return;
 		if(shell != null && shell.onBack()) return;
 		super.onBackPressed();
 	}

@@ -1,0 +1,4 @@
+{"name": "Underwater Bubbles", "emitters": [
+  {"img": "bubble", "blend": "add", "rate": 8, "shape": "disc", "shapeSize": [0.2, 0, 0.2], "speed": [1, 1.5], "spread": 4, "life": [2.5, 3], "size": [0.06, 0.14], "tint": [[0, "#d0f0ff"], [1, "#d0f0ff"]], "alpha": [[0, 0], [0.12, 1], [0.6, 1], [1, 0]], "turbulence": 0.6},
+  {"img": "dot", "blend": "add", "rate": 12, "shape": "box", "shapeSize": [5, 3, 5], "offset": [0, 1.5, 0], "spread": 180, "speed": [0.05, 0.25], "life": [3, 5], "size": [0.03, 0.05], "tint": "#a0e0ff", "alpha": [[0, 0], [0.5, 1], [1, 0]], "max": 400}
+]}

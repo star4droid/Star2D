@@ -1,0 +1,5 @@
+{"name": "Lightning Strike", "emitters": [
+  {"img": "bolt", "rate": 1, "duration": 2.5, "rateCurve": [[0, 0], [0.4, 0], [0.41, 30], [0.45, 0]], "max": 3, "life": [0.18, 0.25], "offset": [0, 3.5, 0], "size": [7, 7], "rot": [86, 94], "tint": [[0, "#ffffff"], [1, "#a0c0ff"]], "alpha": [[0, 0], [0.2, 1], [0.35, 0.3], [0.55, 1], [0.75, 0.4], [1, 0]]},
+  {"img": "glow", "rate": 1, "duration": 2.5, "rateCurve": [[0, 0], [0.4, 0], [0.41, 30], [0.45, 0]], "max": 2, "life": [0.3, 0.3], "offset": [0, 0.2, 0], "size": [4, 4], "tint": "#c0d8ff", "alpha": [[0, 1], [1, 0]]},
+  {"img": "spark", "rate": 1, "duration": 2.5, "rateCurve": [[0, 0], [0.4, 0], [0.41, 600], [0.45, 0]], "max": 40, "life": [0.3, 0.6], "spread": 70, "speed": [3, 6], "size": [0.05, 0.08], "stretch": 0.06, "gravity": [0, -9.8, 0], "tint": [[0, "#ffffff"], [1, "#80b0ff"]], "alpha": [[0, 1], [0.6, 1], [1, 0]]}
+]}

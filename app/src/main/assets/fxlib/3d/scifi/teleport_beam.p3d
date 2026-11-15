@@ -1,0 +1,5 @@
+{"name": "Teleport Beam", "emitters": [
+  {"img": "glow", "blend": "add", "rate": 80, "shape": "disc", "shapeSize": [0.35, 0, 0.35], "speed": [4, 5], "spread": 4, "life": [0.6, 0.8], "size": [0.3, 0.4], "tint": [[0, "#80ffe0"], [1, "#80ffe0"]], "alpha": [[0, 0], [0.2, 0.35], [1, 0]]},
+  {"img": "rect", "blend": "add", "rate": 30, "shape": "disc", "shapeSize": [0.6, 0, 0.6], "speed": [1.5, 2.5], "spread": 4, "life": [0.8, 1.1], "size": [0.05, 0.08], "tint": [[0, "#c0fff0"], [1, "#c0fff0"]], "alpha": [[0, 0], [0.2, 1], [0.35, 0.3], [0.55, 1], [0.75, 0.4], [1, 0]]},
+  {"img": "glow", "rate": 60, "life": [0.6, 0.6], "shape": "ring", "shapeSize": [0.7, 0, 0.7], "offset": [0, 0.05, 0], "orbit": [120, 120], "size": [0.2, 0.25], "tint": "#60ffd0", "alpha": [[0, 0], [0.5, 1], [1, 0]]}
+]}

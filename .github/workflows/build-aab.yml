@@ -67,8 +67,13 @@ jobs:
           
       # 🔥 Create google-services.json from secret
       - name: Create google-services.json from secret
+        env:
+          FCM_JSON: ${{ secrets.FCM_JSON }}
+          FIREBASE_SERVICES_JSON: ${{ secrets.FIREBASE_SERVICES_JSON }}
         run: |
-          echo "${{ secrets.FIREBASE_SERVICES_JSON }}" | base64 --decode > app/google-services.json
+          # FCM_JSON (base64 of google-services.json, also used for push) wins; the old secret stays as a fallback
+          SRC="${FCM_JSON:-$FIREBASE_SERVICES_JSON}"
+          echo "$SRC" | base64 --decode > app/google-services.json
           if [ -f app/google-services.json ]; then
             echo "google-services.json file created successfully."
           else

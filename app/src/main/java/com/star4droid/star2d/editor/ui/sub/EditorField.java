@@ -281,13 +281,11 @@ public class EditorField {
 						return;
 					}
 				}
-				if(getName().equals("name"))
-				for(char c:inputField.getValue().toCharArray()){
-					if(!allowedChars.contains(String.valueOf(c))){
-						editor.toast("use A-Z a-z or _ , Not Allowed Char : "+c);
-						inputField.setValue(getPropertySet().getString(getName()));
-						return;
-					}
+				if(getName().equals("name") && com.star4droid.star2d.Helpers.Names.message(inputField.getValue()) != null){
+					// English or Arabic letters, digits and _
+					editor.toast(com.star4droid.star2d.Helpers.Names.message(inputField.getValue()));
+					inputField.setValue(getPropertySet().getString(getName()));
+					return;
 				}
 				PropertySet<String,Object> ps = getPropertySet();
 				//change the script when name changed...

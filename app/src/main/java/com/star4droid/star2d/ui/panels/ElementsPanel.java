@@ -364,7 +364,7 @@ public class ElementsPanel implements PanelHost.Panel {
         m.add(R.drawable.ic_s2_properties, Ui.ACCENT, Tr.t("properties", "Properties"), () -> { select(info.name); shell.panels.show(shell.properties); });
         m.add(R.drawable.ic_s2_code, 0xFFAB47BC, Tr.t("events", "Events"), () -> { select(info.name); shell.panels.show(shell.events); });
         m.add(R.drawable.ic_s2_edit, 0xFFFFB74D, Tr.t("rename", "Rename"), () ->
-                Dialogs.input(c, Tr.t("rename", "Rename"), Tr.t("name", "Name"), info.name, Dialogs::checkName, v ->
+                Dialogs.input(c, Tr.t("rename", "Rename"), Tr.t("name", "Name"), info.name, Dialogs::checkIdentifier, v ->
                         Bridge.query(() -> {
                             Actor a = Bridge.actor(info.name);
                             return a == null ? "?" : ItemActions.rename(Bridge.app(), a, v);

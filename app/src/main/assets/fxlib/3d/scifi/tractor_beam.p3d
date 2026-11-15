@@ -1,0 +1,4 @@
+{"name": "Tractor Beam", "emitters": [
+  {"img": "glow", "rate": 30, "life": [1.5, 2], "shape": "disc", "shapeSize": [1, 0, 1], "speed": [1.5, 2], "spread": 2, "orbit": [60, 90], "size": [0.2, 0.35], "tint": "#80ff80", "alpha": [[0, 0], [0.3, 0.5], [1, 0]]},
+  {"img": "dot", "rate": 40, "life": [1.5, 2], "shape": "disc", "shapeSize": [1, 0, 1], "speed": [1.5, 2.5], "spread": 2, "orbit": [60, 90], "size": [0.04, 0.06], "tint": "#d0ffd0", "alpha": [[0, 0], [0.2, 1], [0.35, 0.3], [0.55, 1], [0.75, 0.4], [1, 0]]}
+]}

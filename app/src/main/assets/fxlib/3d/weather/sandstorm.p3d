@@ -1,0 +1,4 @@
+{"name": "Sandstorm", "emitters": [
+  {"img": "smoke", "blend": "alpha", "rate": 14, "shape": "box", "shapeSize": [8, 3, 8], "offset": [0, 1.5, 0], "spread": 10, "speed": [3, 5], "life": [2.5, 3.5], "size": [2, 4], "tint": "#c8a070", "alpha": [[0, 0], [0.3, 0.45], [1, 0]], "max": 400, "dir": [1, 0, 0], "rot": [0, 360], "spin": [-60, 60]},
+  {"img": "streak", "blend": "alpha", "rate": 200, "shape": "box", "shapeSize": [8, 3, 8], "offset": [0, 1.5, 0], "spread": 8, "speed": [6, 9], "life": [1, 1.4], "size": [0.04, 0.06], "tint": "#a07848", "alpha": [[0, 0], [0.12, 1], [0.6, 1], [1, 0]], "max": 400, "dir": [1, 0, 0], "stretch": 0.05}
+]}

@@ -93,6 +93,11 @@ public class SettingsPanel implements PanelHost.Panel {
         col.addView(sw(c, p, "AutoSave", Tr.t("autoSave", "Automatic scene saving"), v -> Bridge.gl(() -> Bridge.editor().enableAutoSave(v))));
         col.addView(sw(c, p, "SaveUndoRedo", Tr.t("saveUndoRedo", "Persist undo/redo history"), null));
         col.addView(sw(c, p, "Auto Completion", Tr.t("codeCompletion", "Script code completion"), null));
+        // «نجمة» (the Arabic language): off by default; while off, new scripts are Java without asking (existing .njm files still open)
+        col.addView(sw(c, p, com.star4droid.star2d.najma.NajmaEditorActivity.PREF_ENABLED, Tr.t("najma_enable", "Enable the Najma language (Arabic scripts)"), false, null));
+        TextView nh = Ui.text(c, Tr.t("najma_enable_hint", "When on, a new element or scene script asks: Najma or Java."), 12, Ui.TEXT_3);
+        nh.setPadding(0, 0, 0, Ui.dp(c, 6));
+        col.addView(nh);
 
         col.addView(Ui.text(c, Tr.t("ui_compiler", "Java compiler"), 13, Ui.TEXT_2));
         String[] compilers = {Tr.t("compiler_ecj", "ECJ (recommended, Java 8+)"), Tr.t("compiler_javac", "javac (old, Java 7)")};
@@ -195,12 +200,16 @@ public class SettingsPanel implements PanelHost.Panel {
     interface OnBool { void on(boolean v); }
 
     private View sw(Context c, SharedPreferences p, String key, String label, OnBool after) {
+        return sw(c, p, key, label, true, after);
+    }
+
+    private View sw(Context c, SharedPreferences p, String key, String label, boolean def, OnBool after) {
         SwitchCompat s = new SwitchCompat(c);
         s.setText(label);
         s.setTextColor(Ui.TEXT);
         s.setTextSize(14.5f);
         s.setMinHeight(Ui.dp(c, 48));
-        s.setChecked(p.getBoolean(key, true));
+        s.setChecked(p.getBoolean(key, def));
         s.setOnCheckedChangeListener((b, v) -> {
             p.edit().putBoolean(key, v).apply();
             if (after != null) after.on(v);

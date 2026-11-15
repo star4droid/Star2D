@@ -1,0 +1,3 @@
+{"name": "Steam Vent", "emitters": [
+  {"img": "smoke", "blend": "alpha", "rate": 16, "life": [1.4, 1.8], "shape": "disc", "shapeSize": [0.1, 0, 0.1], "speed": [2.5, 3.5], "spread": 6, "speedCurve": [[0, 1], [1, 0.3]], "size": [0.3, 1.6], "sizeCurve": [[0, 0.3], [1, 1]], "rot": [0, 360], "spin": [-90, 90], "tint": "#ffffff", "alpha": [[0, 0], [0.15, 0.5], [1, 0]]}
+]}

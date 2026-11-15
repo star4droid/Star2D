@@ -73,7 +73,26 @@ public class MarketDetailActivity extends Activity {
         name.setTextSize(20);
         hs.addView(name, Ui.matchWrap());
         hs.addView(Ui.text(this, (game ? Tr.t("mk_game_only", "Game only (play only)") : Tr.t("mk_full_project", "Full project")), 13, SudaUi.ORANGE), Ui.matchWrap());
+        String author = Suda3D.str(m, "author");
+        if (!author.isEmpty()) {
+            TextView au = Ui.text(this, Tr.t("sc_by", "by") + " " + author, 13.5f, 0xFF64B5F6);
+            au.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+            long aid = (long) Suda3D.num(m, "author_id", 0);
+            if (aid > 0) au.setOnClickListener(v -> Social.openProfile(this, aid));
+            au.setPadding(0, Ui.dp(this, 2), 0, Ui.dp(this, 2));
+            hs.addView(au, Ui.matchWrap());
+        }
         hs.addView(Ui.text(this, meta(), 12.5f, Ui.TEXT_3), Ui.matchWrap());
+        if (Suda3D.bool(m, "editor_choice")) {
+            LinearLayout ec = Ui.row(this);
+            ec.setBackground(Ui.rounded(0xFF332A14, Ui.dp(this, 12), 0xFF9A7418, Ui.dp(this, 1)));
+            ec.setPadding(Ui.dp(this, 6), Ui.dp(this, 3), Ui.dp(this, 10), Ui.dp(this, 3));
+            ec.addView(Social.plainIcon(this, R.drawable.ic_s2_star_badge, 16));
+            TextView et = Ui.text(this, Tr.t("sc_editor_choice", "Editor's Choice"), 12, 0xFFFFB300);
+            et.setPadding(Ui.dp(this, 5), 0, 0, 0);
+            ec.addView(et);
+            hs.addView(ec, Ui.margins(new LinearLayout.LayoutParams(-2, -2), this, 0, 6, 0, 0));
+        }
         head.addView(hs, Ui.weight(1));
         col.addView(head, Ui.matchWrap());
 
@@ -89,6 +108,22 @@ public class MarketDetailActivity extends Activity {
             TextView note = Ui.text(this, Tr.t("mk_game_note", "This is a game only: it opens and plays directly. Its code and scenes are not included, so it cannot be opened in the editor."), 12.5f, Ui.TEXT_3);
             col.addView(note, Ui.margins(Ui.matchWrap(), this, 0, 14, 0, 0));
         }
+        // star + comments
+        LinearLayout react = Ui.row(this);
+        react.addView(new StarButton(this, "project", id, Suda3D.bool(m, "starred"), (int) Suda3D.num(m, "stars", 0)));
+        TextView cm = Ui.text(this, String.valueOf((int) Suda3D.num(m, "comments", 0)), 13, Ui.TEXT_2);
+        cm.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        cm.setCompoundDrawablePadding(Ui.dp(this, 6));
+        android.graphics.drawable.Drawable cd = getDrawable(R.drawable.ic_s2_comment).mutate();
+        cd.setTint(Ui.TEXT_2);
+        cd.setBounds(0, 0, Ui.dp(this, 20), Ui.dp(this, 20));
+        cm.setCompoundDrawablesRelative(cd, null, null, null);
+        cm.setPadding(Ui.dp(this, 12), Ui.dp(this, 6), Ui.dp(this, 14), Ui.dp(this, 6));
+        cm.setBackground(Ui.rounded(Ui.SURFACE_2, Ui.dp(this, 18)));
+        cm.setOnClickListener(v -> CommentsSheet.show(this, "project", id, (int) Suda3D.num(m, "comments", 0), n -> { cm.setText(String.valueOf(n)); MarketActivity.dirty = true; }));
+        react.addView(cm, Ui.margins(new LinearLayout.LayoutParams(-2, -2), this, 8, 0, 0, 0));
+        col.addView(react, Ui.margins(Ui.matchWrap(), this, 0, 14, 0, 0));
+
         LinearLayout actions = Ui.column(this);
         actions.addView(Ui.button(this, game ? R.drawable.ic_s2_play : R.drawable.ic_s2_download,
                 game ? Tr.t("mk_play", "Play") : Tr.t("mk_download", "Download to my projects"), true, v -> start()), Ui.margins(fullW(), this, 0, 0, 0, 0));
@@ -99,6 +134,19 @@ public class MarketDetailActivity extends Activity {
                 startActivity(i);
             }), Ui.margins(fullW(), this, 0, 10, 0, 0));
         }
+        if (Suda3D.isMod(this)) {
+            boolean ed = Suda3D.bool(m, "editor_choice");
+            actions.addView(Ui.button(this, R.drawable.ic_s2_star_border, ed ? Tr.t("sc_remove_editor_choice", "Remove from Editor's Choice") : Tr.t("sc_make_editor_choice", "Make Editor's Choice"), false, v ->
+                    Suda3D.IO.execute(() -> {
+                        try {
+                            CommunityApi.setFeatured(this, id, !ed);
+                            MarketActivity.dirty = true;
+                            JsonObject fresh = MarketApi.get(this, id);
+                            runOnUiThread(() -> { m = fresh; getIntent().putExtra("json", fresh.toString()); recreate(); });
+                        } catch (Exception e) { runOnUiThread(() -> Ui.toast(this, Social.err(e))); }
+                    })), Ui.margins(fullW(), this, 0, 10, 0, 0));
+        }
+        if (!mine) actions.addView(Ui.button(this, R.drawable.ic_s2_flag, Tr.t("sc_report", "Report"), false, v -> PostView.reportDialog(this, "project", id)), Ui.margins(fullW(), this, 0, 10, 0, 0));
         col.addView(actions, Ui.margins(Ui.matchWrap(), this, 0, 20, 0, 0));
         sv.addView(col);
         root.addView(sv, new LinearLayout.LayoutParams(-1, 0, 1));

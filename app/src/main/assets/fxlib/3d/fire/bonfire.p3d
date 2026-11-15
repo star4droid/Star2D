@@ -1,0 +1,6 @@
+{"name": "Bonfire", "emitters": [
+  {"img": "flame", "rate": 110, "life": [0.78, 1.1700000000000002], "shape": "disc", "shapeSize": [0.9, 0, 0.9], "speed": [1.2, 2.0], "spread": 8, "size": [0.9, 1.3], "sizeCurve": [[0, 0.5], [0.25, 1], [1, 0.15]], "rot": [-12, 12], "tint": [[0, "#ffffd0"], [0.2, "#ffa000"], [0.6, "#d02000"], [1, "#200800"]], "alpha": [[0, 0], [0.12, 0.8], [0.6, 0.6], [1, 0]], "turbulence": 0.6, "max": 200},
+  {"img": "glow", "rate": 10, "life": [0.4, 0.6], "shape": "disc", "shapeSize": [0.54, 0, 0.54], "speed": [0.3, 0.5], "size": [2.08, 2.6], "tint": [[0, "#ffa000"], [1, "#d02000"]], "alpha": [[0, 0], [0.3, 0.25], [1, 0]]},
+  {"img": "dot", "rate": 8, "life": [1.2, 2], "shape": "disc", "shapeSize": [0.9, 0, 0.9], "speed": [1, 1.8], "spread": 20, "size": [0.04, 0.07], "sizeCurve": [[0, 1], [1, 0]], "tint": [[0, "#ffa030"], [1, "#ff3000"]], "alpha": [[0, 1], [0.6, 1], [1, 0]], "turbulence": 1.5},
+  {"img": "smoke", "blend": "alpha", "rate": 5, "life": [2, 2.6], "offset": [0, 2.1970000000000005, 0], "shape": "disc", "shapeSize": [0.54, 0, 0.54], "speed": [0.5, 0.8], "spread": 10, "size": [1.56, 2.8600000000000003], "sizeCurve": [[0, 0.3], [1, 1]], "rot": [0, 360], "spin": [-40, 40], "tint": "#303030", "alpha": [[0, 0], [0.25, 0.35], [1, 0]], "turbulence": 0.3}
+]}

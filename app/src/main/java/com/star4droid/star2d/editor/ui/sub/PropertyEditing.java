@@ -228,9 +228,9 @@ public final class PropertyEditing {
         if (field.equals("name")) {
             if (editor.getBodiesList().contains(value))
                 return "Name already used by another element!";
-            for (char c : value.toCharArray())
-                if (!EditorField.allowedChars.contains(String.valueOf(c)))
-                    return "Use A-Z a-z 0-9 or _ , not allowed: " + c;
+            // English or Arabic letters, digits and _ (the name is a Java identifier in the scene code)
+            String bad = com.star4droid.star2d.ui.Dialogs.checkIdentifier(value);
+            if (bad != null) return bad;
         }
         PropertySet<String, Object> ps = ps(editor);
         String scr = ps.getString("Script");

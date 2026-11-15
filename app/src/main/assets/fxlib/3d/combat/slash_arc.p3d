@@ -1,0 +1,3 @@
+{"name": "Slash Arc", "emitters": [
+  {"img": "spark", "rate": 200, "duration": 0.8, "rateCurve": [[0, 1], [0.25, 1], [0.26, 0]], "life": [0.25, 0.35], "offset": [1, 1.2, 0], "orbit": [540, 540], "size": [0.3, 0.4], "stretch": 0.0, "rot": [90, 90], "tint": [[0, "#ffffff"], [1, "#80c8ff"]], "alpha": [[0, 1], [1, 0]]}
+]}

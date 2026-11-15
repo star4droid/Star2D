@@ -1,0 +1,3 @@
+{"name": "Floating Embers", "emitters": [
+  {"img": "dot", "blend": "add", "rate": 30, "shape": "box", "shapeSize": [3, 2.5, 3], "offset": [0, 1.25, 0], "spread": 30, "speed": [0.3, 0.7], "life": [3, 5], "size": [0.04, 0.08], "tint": [[0, "#ffe080"], [0.5, "#ff7020"], [1, "#a01000"]], "alpha": [[0, 0], [0.2, 1], [0.35, 0.3], [0.55, 1], [0.75, 0.4], [1, 0]], "max": 400, "dir": [0, 1, 0], "turbulence": 1.2}
+]}

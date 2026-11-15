@@ -1,0 +1,5 @@
+{"name": "Shockwave", "emitters": [
+  {"img": "glow", "burst": 90, "rate": 0, "loop": true, "duration": 1.5, "shape": "ring", "shapeSize": [0.2, 0, 0.2], "offset": [0, 0.05, 0], "outward": true, "speed": [8, 8], "speedCurve": [[0, 1], [1, 0.3]], "life": [0.6, 0.6], "size": [0.6, 0.6], "tint": "#bfe8ff", "alpha": [[0, 1], [1, 0]]},
+  {"img": "glow", "burst": 60, "rate": 0, "loop": true, "duration": 1.5, "shape": "ring", "shapeSize": [0.2, 0, 0.2], "offset": [0, 0.05, 0], "outward": true, "speed": [6, 6], "speedCurve": [[0, 1], [1, 0.3]], "life": [0.4, 0.4], "size": [0.3, 0.3], "tint": "#ffffff", "alpha": [[0, 1], [1, 0]]},
+  {"img": "glow", "burst": 1, "rate": 0, "loop": true, "duration": 1.5, "life": [0.15, 0.15], "size": [3, 3], "sizeCurve": [[0, 0.6], [0.3, 1], [1, 0.8]], "tint": [[0, "#ffffff"], [0.4, "#a0d8ff"]], "alpha": [[0, 1], [1, 0]]}
+]}

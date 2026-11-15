@@ -185,7 +185,7 @@ public class VariablesPanel implements PanelHost.Panel {
         final AlertDialog[] dlg = new AlertDialog[1];
         LinearLayout drawPath = Ui.button(c, R.drawable.ic_s2_navgrid, Tr.t("path_draw", "Draw on the canvas"), false, v -> {
             String n = name.getText().toString().trim();
-            String err = Dialogs.checkName(n);
+            String err = Dialogs.checkIdentifier(n);
             if (err != null) { name.setError(err); return; }
             for (int i = 0; i < vars.size(); i++)
                 if (i != pos && vars.get(i).getName().equals(n)) { name.setError(Tr.t("ui_name_used", "Name already used")); return; }
@@ -232,7 +232,7 @@ public class VariablesPanel implements PanelHost.Panel {
             com.star4droid.star2d.ui.tutorial.Tut.tag(d.getButton(AlertDialog.BUTTON_POSITIVE), "vardlg:save");
             d.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
             String n = name.getText().toString().trim();
-            String err = Dialogs.checkName(n);
+            String err = Dialogs.checkIdentifier(n);
             if (err != null) { name.setError(err); return; }
             String t = customType.getText().toString().trim();
             if (t.isEmpty()) { customType.setError(Tr.t("ui_required", "Required")); return; }

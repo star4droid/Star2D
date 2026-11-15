@@ -1,0 +1,4 @@
+{"name": "Star Dome", "emitters": [
+  {"img": "sparkle", "rate": 40, "life": [2, 3], "shape": "sphere", "surface": true, "shapeSize": [30, 30, 30], "size": [0.3, 0.6], "tint": "#ffffff", "alpha": [[0, 0], [0.2, 1], [0.35, 0.3], [0.55, 1], [0.75, 0.4], [1, 0]], "max": 300},
+  {"img": "dot", "rate": 80, "life": [3, 4], "shape": "sphere", "surface": true, "shapeSize": [30, 30, 30], "size": [0.1, 0.2], "tint": "#d0e0ff", "alpha": [[0, 0], [0.5, 1], [1, 0]], "max": 400}
+]}

@@ -1,0 +1,5 @@
+{"name": "Plasma Burst", "emitters": [
+  {"img": "glow", "burst": 1, "rate": 0, "loop": true, "duration": 1.5, "life": [0.18, 0.18], "size": [4.5, 4.5], "sizeCurve": [[0, 0.6], [0.3, 1], [1, 0.8]], "tint": [[0, "#ffffff"], [0.4, "#ff60ff"]], "alpha": [[0, 1], [1, 0]]},
+  {"img": "glow", "burst": 60, "rate": 0, "loop": true, "duration": 1.5, "spread": 180, "speed": [2, 5], "speedCurve": [[0, 1], [1, 0.05]], "life": [0.5, 0.9], "size": [0.2, 0.4], "sizeCurve": [[0, 1], [1, 0]], "tint": [[0, "#ffffff"], [0.3, "#ff60f0"], [1, "#6020ff"]], "alpha": [[0, 1], [1, 0]]},
+  {"img": "glow", "burst": 80, "rate": 0, "loop": true, "duration": 1.5, "shape": "ring", "shapeSize": [0.2, 0, 0.2], "offset": [0, 0.6, 0], "outward": true, "speed": [7, 7], "speedCurve": [[0, 1], [1, 0.3]], "life": [0.45, 0.45], "size": [0.5, 0.5], "tint": "#d070ff", "alpha": [[0, 1], [1, 0]]}
+]}

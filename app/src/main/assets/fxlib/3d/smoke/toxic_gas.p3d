@@ -1,0 +1,4 @@
+{"name": "Toxic Gas", "emitters": [
+  {"img": "smoke", "blend": "alpha", "rate": 12, "life": [2.6, 3.4], "shape": "disc", "shapeSize": [0.8, 0, 0.8], "speed": [0.3, 0.6], "spread": 40, "size": [0.8, 1.8], "sizeCurve": [[0, 0.3], [1, 1]], "rot": [0, 360], "spin": [-30, 30], "tint": [[0, "#6aff3a"], [1, "#2a6018"]], "alpha": [[0, 0], [0.2, 0.55], [1, 0]]},
+  {"img": "bubble", "blend": "add", "rate": 6, "shape": "disc", "shapeSize": [0.7, 0, 0.7], "speed": [0.4, 0.7], "spread": 4, "life": [0.8, 1.2], "size": [0.08, 0.14], "tint": [[0, "#a0ff60"], [1, "#a0ff60"]], "alpha": [[0, 1], [0.6, 1], [1, 0]]}
+]}

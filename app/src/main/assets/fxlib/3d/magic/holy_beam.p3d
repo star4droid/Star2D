@@ -1,0 +1,5 @@
+{"name": "Holy Beam", "emitters": [
+  {"img": "glow", "blend": "add", "rate": 40, "shape": "disc", "shapeSize": [0.25, 0, 0.25], "speed": [5, 6], "spread": 4, "life": [0.8, 1], "size": [0.5, 0.7], "tint": [[0, "#fff6c0"], [1, "#fff6c0"]], "alpha": [[0, 0], [0.2, 0.4], [1, 0]]},
+  {"img": "sparkle", "blend": "add", "rate": 20, "shape": "disc", "shapeSize": [0.8, 0, 0.8], "speed": [0.6, 1.2], "spread": 4, "life": [1.2, 1.6], "size": [0.1, 0.16], "tint": [[0, "#fff8d0"], [1, "#fff8d0"]], "alpha": [[0, 0], [0.2, 1], [0.35, 0.3], [0.55, 1], [0.75, 0.4], [1, 0]]},
+  {"img": "glow", "rate": 40, "life": [0.8, 1], "shape": "ring", "shapeSize": [0.9, 0, 0.9], "offset": [0, 0.05, 0], "size": [0.2, 0.3], "tint": "#ffe080", "alpha": [[0, 0], [0.5, 1], [1, 0]]}
+]}

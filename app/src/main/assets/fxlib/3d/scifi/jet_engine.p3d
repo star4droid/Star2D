@@ -1,0 +1,4 @@
+{"name": "Jet Engine", "emitters": [
+  {"img": "glow", "rate": 100, "life": [0.3, 0.4], "offset": [0, 1, 0], "dir": [-1, 0, 0], "spread": 3, "speed": [6, 7], "size": [0.35, 0.45], "sizeCurve": [[0, 1], [1, 0]], "tint": [[0, "#ffffff"], [0.3, "#60e0ff"], [1, "#2040ff"]], "alpha": [[0, 1], [1, 0]]},
+  {"img": "glow", "rate": 6, "life": [0.15, 0.2], "offset": [0, 1, 0], "size": [0.8, 0.9], "tint": "#80c0ff", "alpha": [[0, 0], [0.5, 1], [1, 0]]}
+]}

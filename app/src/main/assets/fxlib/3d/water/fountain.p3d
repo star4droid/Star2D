@@ -1,0 +1,4 @@
+{"name": "Fountain", "emitters": [
+  {"img": "drop", "rate": 80, "life": [1.3, 1.5], "shape": "disc", "shapeSize": [0.05, 0, 0.05], "speed": [5.5, 6.2], "spread": 6, "gravity": [0, -9.8, 0], "size": [0.06, 0.09], "stretch": 0.03, "tint": [[0, "#d8f0ff"], [1, "#60a8ff"]], "alpha": [[0, 0], [0.12, 1], [0.6, 1], [1, 0]], "max": 300},
+  {"img": "glow", "rate": 40, "life": [1.3, 1.5], "speed": [5, 6], "spread": 8, "gravity": [0, -9.8, 0], "size": [0.15, 0.25], "tint": "#80c0ff", "alpha": [[0, 0], [0.2, 0.3], [1, 0]]}
+]}

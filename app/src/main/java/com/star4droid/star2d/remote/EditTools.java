@@ -506,7 +506,7 @@ final class EditTools {
                     String type = CoreTools.s(o, "type");
                     if (type.isEmpty()) return res(op, name, false, "type is required (BOX, CIRCLE, TEXT, JOYSTICK, PROGRESS, CUSTOM, PARTICLE, CAMERA, MAP, GROUP, UIHOLDER, LIGHT, CAMERAVIEW, NAVGRID (path finding grid), NETWORK (Wi-Fi multiplayer); 3D scenes: OBJ3D, LIGHT3D, CAMERA3D)");
                     if (!name.isEmpty() && ed.getBodiesList().contains(name)) return res(op, name, false, "an element named '" + name + "' already exists (use set)");
-                    if (!name.isEmpty() && !name.matches("[A-Za-z_][A-Za-z0-9_]*")) return res(op, name, false, "name must be letters, digits and _ (not starting with a digit)");
+                    if (!name.isEmpty() && !com.star4droid.star2d.Helpers.Names.valid(name)) return res(op, name, false, com.star4droid.star2d.Helpers.Names.message(name));
                     String t = type.toUpperCase(Locale.ROOT).replace(" ", "");
                     boolean scene3D = ed.is3DScene();
                     String[] k3 = kind3D(type, props, scene3D);
@@ -866,7 +866,7 @@ final class EditTools {
                             break;
                         }
                         case "add":
-                            if (!name.matches("[A-Za-z_][A-Za-z0-9_]*")) { results.add(res(op, name, false, "name must be a valid Java identifier")); break; }
+                            if (!com.star4droid.star2d.Helpers.Names.valid(name)) { results.add(res(op, name, false, com.star4droid.star2d.Helpers.Names.message(name))); break; }
                             if (found != null) { results.add(res(op, name, false, "variable already exists (use set)")); break; }
                             list.add(new VarModel().setType(CoreTools.s(o, "type").isEmpty() ? "int" : CoreTools.s(o, "type")).setName(name).setValue(str(o.get("value"))));
                             dirty.add(scene);

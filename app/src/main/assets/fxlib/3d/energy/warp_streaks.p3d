@@ -1,0 +1,4 @@
+{"name": "Warp Streaks", "emitters": [
+  {"img": "spark", "rate": 120, "shape": "sphere", "surface": true, "shapeSize": [2.5, 2.5, 2.5], "outward": true, "speed": [-5.25, -4.75], "life": [0.5, 0.6], "size": [0.06, 0.1], "sizeCurve": [[0, 1], [1, 0.3]], "stretch": 0.12, "tint": [[0, "#ffffff"], [1, "#ffffff"]], "alpha": [[0, 0], [0.3, 1], [1, 0.6]], "offset": [0, 1.2, 0]},
+  {"img": "glow", "rate": 4, "life": [0.7, 0.9], "offset": [0, 1.2, 0], "size": [1.2, 1.5], "tint": "#2050c0", "alpha": [[0, 0], [0.5, 1], [1, 0]]}
+]}

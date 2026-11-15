@@ -1,0 +1,4 @@
+{"name": "Orbiting Fireball", "emitters": [
+  {"img": "glow", "rate": 60, "life": [0.5, 0.7], "offset": [1.2, 1, 0], "orbit": [180, 180], "size": [0.4, 0.5], "sizeCurve": [[0, 1], [1, 0]], "tint": [[0, "#ffffd0"], [0.3, "#ffa020"], [1, "#801000"]], "alpha": [[0, 1], [1, 0]], "local": false},
+  {"img": "glow", "rate": 8, "life": [0.25, 0.3], "offset": [0, 1, 0], "size": [0.6, 0.6], "tint": "#ff8020", "alpha": [[0, 0], [0.5, 1], [1, 0]]}
+]}

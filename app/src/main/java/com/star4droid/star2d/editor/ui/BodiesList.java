@@ -301,11 +301,10 @@ public class BodiesList extends Group {
 				  @Override
 				  public void changed (ChangeEvent event, Actor actor) {
 					  new SingleInputDialog(getTrans("inputValue"),getTrans("name") + " : ",app.getEditor().getSelectedActor().getName(),(vl)->{
-						  for(char c: vl.toCharArray()){
-							  if(!EditorField.allowedChars.contains(String.valueOf(c))){
-								  app.toast("use A-Z a-z or _ , Not Allowed Char : "+c);
-								  return;
-							  }
+						  String bad = com.star4droid.star2d.Helpers.Names.message(vl);
+						  if(bad != null){
+							  app.toast(bad);
+							  return;
 						  }
 						  for(Actor act: app.getEditor().getActors())
 							if(act instanceof EditorItem){

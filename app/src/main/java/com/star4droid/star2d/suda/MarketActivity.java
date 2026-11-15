@@ -35,6 +35,8 @@ public class MarketActivity extends Activity {
     private static final String PREF_GRID = "market_grid";
 
     private final List<JsonObject> items = new ArrayList<>();
+    private final List<JsonObject> featured = new ArrayList<>();
+    private volatile boolean excl;
     private RecyclerView rv;
     private GridLayoutManager lm;
     private Adapter adapter;
@@ -112,11 +114,14 @@ public class MarketActivity extends Activity {
         rv.setPadding(Ui.dp(this, 8), Ui.dp(this, 4), Ui.dp(this, 8), Ui.dp(this, 20));
         adapter = new Adapter();
         lm = new GridLayoutManager(this, spans());
+        lm.setSpanSizeLookup(new GridLayoutManager.SpanSizeLookup() {
+            @Override public int getSpanSize(int position) { return stripOn() && position == 0 ? lm.getSpanCount() : 1; }
+        });
         rv.setLayoutManager(lm);
         rv.setAdapter(adapter);
         rv.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override public void onScrolled(RecyclerView r, int dx, int dy) {
-                if (dy > 0 && more && !loading && lm.findLastVisibleItemPosition() >= items.size() - 4) load(false);
+                if (dy > 0 && more && !loading && lm.findLastVisibleItemPosition() >= adapter.getItemCount() - 4) load(false);
             }
         });
         body.addView(rv, Ui.match());
@@ -185,16 +190,25 @@ public class MarketActivity extends Activity {
         final String q = search.getText().toString(), k = kind, so = sort;
         final int pg = page;
         final boolean mineReq = mineMode;
+        final boolean plain = k.isEmpty() && so.isEmpty() && !mineReq && q.trim().isEmpty();
         Suda3D.IO.execute(() -> {
             try {
-                JsonObject o = mineReq ? MarketApi.mine(this) : MarketApi.list(this, q, k, so, pg);
+                if (plain && pg == 1) {
+                    // Editor's Choice (own strip on top); the older server answers without it and the list then keeps them in place
+                    try {
+                        List<JsonObject> f = new ArrayList<>();
+                        for (JsonElement e : MarketApi.data(CommunityApi.featured(this))) f.add(e.getAsJsonObject());
+                        excl = !f.isEmpty();
+                        runOnUiThread(() -> { featured.clear(); featured.addAll(f); });
+                    } catch (Exception ignored) { excl = false; runOnUiThread(featured::clear); }
+                } else if (!plain) { excl = false; runOnUiThread(featured::clear); }
+                JsonObject o = mineReq ? MarketApi.mine(this) : MarketApi.list(this, q, k, so, pg, 0, plain && excl);
                 JsonArray arr = MarketApi.data(o);
                 int last = (int) Suda3D.num(o, "last_page", 1);
                 runOnUiThread(() -> {
                     if (my != gen || isFinishing()) return;
-                    int start = items.size();
                     for (JsonElement e : arr) items.add(e.getAsJsonObject());
-                    adapter.notifyItemRangeInserted(start, arr.size());
+                    adapter.notifyDataSetChanged();
                     page = pg + 1;
                     more = !mineReq && pg < last;
                     loading = false;
@@ -217,82 +231,138 @@ public class MarketActivity extends Activity {
 
     // ------------------------------------------------------------ adapter
 
+    /** The Editor's Choice strip shows only in the plain "All" view (no search, filter or sort). */
+    private boolean stripOn() { return !featured.isEmpty() && kind.isEmpty() && sort.isEmpty() && !mineMode && search.getText().toString().trim().isEmpty(); }
+
     private final class Adapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
-        @Override public int getItemCount() { return items.size(); }
+        private int off() { return stripOn() ? 1 : 0; }
+        @Override public int getItemCount() { return items.size() + off(); }
+        @Override public int getItemViewType(int pos) { return pos < off() ? 1 : 0; }
 
         @Override public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup p, int type) {
-            LinearLayout card = Ui.column(MarketActivity.this);
-            return new RecyclerView.ViewHolder(card) {};
+            FrameLayout f = new FrameLayout(MarketActivity.this);
+            f.setLayoutParams(new RecyclerView.LayoutParams(-1, -2));
+            return new RecyclerView.ViewHolder(f) {};
         }
 
         @Override public void onBindViewHolder(RecyclerView.ViewHolder h, int pos) {
-            JsonObject m = items.get(pos);
-            LinearLayout card = (LinearLayout) h.itemView;
-            card.removeAllViews();
-            int pad = Ui.dp(MarketActivity.this, 10);
-            card.setOrientation(grid ? LinearLayout.VERTICAL : LinearLayout.HORIZONTAL);
-            card.setGravity(grid ? Gravity.CENTER_HORIZONTAL : Gravity.CENTER_VERTICAL);
-            card.setPadding(pad, pad, pad, pad);
-            card.setBackground(Ui.ripple(0x22FFFFFF, Ui.dp(MarketActivity.this, 12)));
-            RecyclerView.LayoutParams lp = new RecyclerView.LayoutParams(-1, -2);
-            int mg = Ui.dp(MarketActivity.this, 5);
-            lp.setMargins(mg, mg, mg, mg);
-            card.setLayoutParams(lp);
-            LinearLayout inner = card;
-            inner.setBackground(new android.graphics.drawable.RippleDrawable(android.content.res.ColorStateList.valueOf(0x33FFFFFF),
-                    Ui.rounded(Ui.SURFACE_2, Ui.dp(MarketActivity.this, 12), Ui.BORDER, 1), null));
-
-            ImageView icon = new ImageView(MarketActivity.this);
-            icon.setScaleType(ImageView.ScaleType.CENTER_CROP);
-            icon.setBackground(Ui.rounded(Ui.SURFACE_3, Ui.dp(MarketActivity.this, 12)));
-            icon.setClipToOutline(true);
-            icon.setOutlineProvider(android.view.ViewOutlineProvider.BACKGROUND);
-            int isz = Ui.dp(MarketActivity.this, grid ? 88 : 60);
-            long id = (long) Suda3D.num(m, "id", 0);
-            if (m.has("has_icon") && m.get("has_icon").getAsBoolean())
-                Glide.with(MarketActivity.this).load(MarketApi.iconUrl(MarketActivity.this, id, Suda3D.str(m, "updated_at"))).centerCrop().into(icon);
-            else { icon.setImageResource(R.drawable.ic_s2_gamepad); icon.setScaleType(ImageView.ScaleType.CENTER_INSIDE); icon.setPadding(isz / 4, isz / 4, isz / 4, isz / 4); icon.setImageTintList(android.content.res.ColorStateList.valueOf(Ui.TEXT_3)); }
-            card.addView(icon, new LinearLayout.LayoutParams(isz, isz));
-
-            LinearLayout texts = Ui.column(MarketActivity.this);
-            texts.setGravity(grid ? Gravity.CENTER_HORIZONTAL : Gravity.START);
-            TextView name = Ui.text(MarketActivity.this, Suda3D.str(m, "name"), 14.5f, Ui.TEXT);
-            name.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-            name.setMaxLines(1);
-            name.setEllipsize(android.text.TextUtils.TruncateAt.END);
-            name.setGravity(grid ? Gravity.CENTER : Gravity.START);
-            texts.addView(name, Ui.matchWrap());
-            boolean game = "game".equals(Suda3D.str(m, "kind"));
-            String meta = (game ? Tr.t("mk_game", "Game") : Tr.t("mk_project", "Project")) + "  •  ↓ " + (int) Suda3D.num(m, "downloads", 0) + "  •  " + sizeText(Suda3D.num(m, "size_bytes", 0));
-            TextView mt = Ui.text(MarketActivity.this, meta, 11.5f, Ui.TEXT_3);
-            mt.setMaxLines(1);
-            mt.setEllipsize(android.text.TextUtils.TruncateAt.END);
-            mt.setGravity(grid ? Gravity.CENTER : Gravity.START);
-            texts.addView(mt, Ui.matchWrap());
-            if (!grid) {
-                String d = Suda3D.str(m, "description");
-                if (!d.isEmpty()) {
-                    TextView dt = Ui.text(MarketActivity.this, d, 12.5f, Ui.TEXT_2);
-                    dt.setMaxLines(2);
-                    dt.setEllipsize(android.text.TextUtils.TruncateAt.END);
-                    texts.addView(dt, Ui.matchWrap());
-                }
-            }
-            boolean mine = m.has("mine") && m.get("mine").getAsBoolean();
-            if (mine || "hidden".equals(Suda3D.str(m, "status"))) {
-                TextView tag = Ui.text(MarketActivity.this, "hidden".equals(Suda3D.str(m, "status")) ? Tr.t("mk_hidden", "Hidden by admin") : Tr.t("mk_yours", "Yours"), 11, SudaUi.ORANGE);
-                tag.setGravity(grid ? Gravity.CENTER : Gravity.START);
-                texts.addView(tag, Ui.matchWrap());
-            }
-            LinearLayout.LayoutParams tl = grid ? new LinearLayout.LayoutParams(-1, -2) : new LinearLayout.LayoutParams(0, -2, 1);
-            tl.topMargin = grid ? Ui.dp(MarketActivity.this, 8) : 0;
-            tl.setMarginStart(grid ? 0 : Ui.dp(MarketActivity.this, 12));
-            card.addView(texts, tl);
-            card.setOnClickListener(v -> {
-                Intent i = new Intent(MarketActivity.this, MarketDetailActivity.class);
-                i.putExtra("json", m.toString());
-                startActivity(i);
-            });
+            FrameLayout f = (FrameLayout) h.itemView;
+            f.removeAllViews();
+            if (getItemViewType(pos) == 1) { f.addView(strip()); return; }
+            f.addView(card(items.get(pos - off()), grid, false));
         }
+    }
+
+    /** "Editor's Choice": a horizontal strip, part of the same vertical scroll. */
+    private View strip() {
+        LinearLayout col = Ui.column(this);
+        col.setPadding(Ui.dp(this, 4), Ui.dp(this, 2), 0, Ui.dp(this, 6));
+        LinearLayout head = Ui.row(this);
+        head.addView(Social.plainIcon(this, R.drawable.ic_s2_star_badge, 20));
+        TextView t = Ui.text(this, Tr.t("sc_editor_choice", "Editor's Choice"), 14, 0xFFFFB300);
+        t.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        t.setPadding(Ui.dp(this, 6), 0, 0, 0);
+        head.addView(t);
+        col.addView(head);
+        android.widget.HorizontalScrollView hs = new android.widget.HorizontalScrollView(this);
+        hs.setHorizontalScrollBarEnabled(false);
+        LinearLayout row = Ui.row(this);
+        hs.addView(row);
+        for (JsonObject m : featured) {
+            View c = card(m, true, true);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(Ui.dp(this, 150), -2);
+            row.addView(c, lp);
+        }
+        col.addView(hs, Ui.margins(Ui.matchWrap(), this, 0, 6, 0, 0));
+        return col;
+    }
+
+    /** One store card. Editor's Choice cards have their own colour and a small outlined-star badge in the corner (never over the icon). */
+    private View card(JsonObject m, boolean gridMode, boolean inStrip) {
+        boolean ed = Suda3D.bool(m, "editor_choice");
+        FrameLayout wrap = new FrameLayout(this);
+        int mg = Ui.dp(this, 5);
+        wrap.setLayoutParams(new RecyclerView.LayoutParams(-1, -2));
+        LinearLayout card = Ui.column(this);
+        int pad = Ui.dp(this, 10);
+        card.setOrientation(gridMode ? LinearLayout.VERTICAL : LinearLayout.HORIZONTAL);
+        card.setGravity(gridMode ? Gravity.CENTER_HORIZONTAL : Gravity.CENTER_VERTICAL);
+        card.setPadding(pad, pad, pad, pad);
+        card.setBackground(new android.graphics.drawable.RippleDrawable(android.content.res.ColorStateList.valueOf(0x33FFFFFF),
+                ed ? Ui.rounded(0xFF332A14, Ui.dp(this, 12), 0xFF9A7418, Ui.dp(this, 1)) : Ui.rounded(Ui.SURFACE_2, Ui.dp(this, 12), Ui.BORDER, 1), null));
+        FrameLayout.LayoutParams clp = new FrameLayout.LayoutParams(-1, -2);
+        clp.setMargins(mg, mg + Ui.dp(this, ed ? 6 : 0), mg + Ui.dp(this, ed ? 4 : 0), mg);
+        wrap.addView(card, clp);
+
+        ImageView icon = new ImageView(this);
+        icon.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        icon.setBackground(Ui.rounded(Ui.SURFACE_3, Ui.dp(this, 12)));
+        icon.setClipToOutline(true);
+        icon.setOutlineProvider(android.view.ViewOutlineProvider.BACKGROUND);
+        int isz = Ui.dp(this, gridMode ? 88 : 60);
+        long id = (long) Suda3D.num(m, "id", 0);
+        if (m.has("has_icon") && m.get("has_icon").getAsBoolean())
+            Glide.with(this).load(MarketApi.iconUrl(this, id, Suda3D.str(m, "updated_at"))).centerCrop().into(icon);
+        else { icon.setImageResource(R.drawable.ic_s2_gamepad); icon.setScaleType(ImageView.ScaleType.CENTER_INSIDE); icon.setPadding(isz / 4, isz / 4, isz / 4, isz / 4); icon.setImageTintList(android.content.res.ColorStateList.valueOf(Ui.TEXT_3)); }
+        card.addView(icon, new LinearLayout.LayoutParams(isz, isz));
+
+        LinearLayout texts = Ui.column(this);
+        texts.setGravity(gridMode ? Gravity.CENTER_HORIZONTAL : Gravity.START);
+        TextView name = Ui.text(this, Suda3D.str(m, "name"), 14.5f, Ui.TEXT);
+        name.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        name.setMaxLines(1);
+        name.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        name.setGravity(gridMode ? Gravity.CENTER : Gravity.START);
+        texts.addView(name, Ui.matchWrap());
+        String author = Suda3D.str(m, "author");
+        if (!author.isEmpty()) {
+            TextView au = Ui.text(this, Tr.t("sc_by", "by") + " " + author, 11.5f, 0xFF64B5F6);
+            au.setMaxLines(1);
+            au.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            au.setGravity(gridMode ? Gravity.CENTER : Gravity.START);
+            long aid = (long) Suda3D.num(m, "author_id", 0);
+            if (aid > 0) au.setOnClickListener(v -> Social.openProfile(this, aid));
+            texts.addView(au, Ui.matchWrap());
+        }
+        boolean game = "game".equals(Suda3D.str(m, "kind"));
+        String meta = (game ? Tr.t("mk_game", "Game") : Tr.t("mk_project", "Project")) + "  •  ↓ " + (int) Suda3D.num(m, "downloads", 0) + "  •  " + sizeText(Suda3D.num(m, "size_bytes", 0));
+        TextView mt = Ui.text(this, meta, 11.5f, Ui.TEXT_3);
+        mt.setMaxLines(1);
+        mt.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        mt.setGravity(gridMode ? Gravity.CENTER : Gravity.START);
+        texts.addView(mt, Ui.matchWrap());
+        TextView sc = Ui.text(this, "★ " + (int) Suda3D.num(m, "stars", 0) + "   💬 " + (int) Suda3D.num(m, "comments", 0), 11.5f, 0xFFFFC107);
+        sc.setGravity(gridMode ? Gravity.CENTER : Gravity.START);
+        texts.addView(sc, Ui.matchWrap());
+        if (!gridMode) {
+            String d = Suda3D.str(m, "description");
+            if (!d.isEmpty()) {
+                TextView dt = Ui.text(this, d, 12.5f, Ui.TEXT_2);
+                dt.setMaxLines(2);
+                dt.setEllipsize(android.text.TextUtils.TruncateAt.END);
+                texts.addView(dt, Ui.matchWrap());
+            }
+        }
+        boolean mine = m.has("mine") && m.get("mine").getAsBoolean();
+        if (mine || "hidden".equals(Suda3D.str(m, "status"))) {
+            TextView tag = Ui.text(this, "hidden".equals(Suda3D.str(m, "status")) ? Tr.t("mk_hidden", "Hidden by admin") : Tr.t("mk_yours", "Yours"), 11, SudaUi.ORANGE);
+            tag.setGravity(gridMode ? Gravity.CENTER : Gravity.START);
+            texts.addView(tag, Ui.matchWrap());
+        }
+        LinearLayout.LayoutParams tl = gridMode ? new LinearLayout.LayoutParams(-1, -2) : new LinearLayout.LayoutParams(0, -2, 1);
+        tl.topMargin = gridMode ? Ui.dp(this, 8) : 0;
+        tl.setMarginStart(gridMode ? 0 : Ui.dp(this, 12));
+        card.addView(texts, tl);
+        card.setOnClickListener(v -> startActivity(new Intent(this, MarketDetailActivity.class).putExtra("json", m.toString())));
+        if (ed) {
+            // the badge sits on the card's corner, away from the icon
+            ImageView badge = new ImageView(this);
+            badge.setImageResource(R.drawable.ic_s2_star_badge);
+            badge.setBackgroundResource(R.drawable.editor_badge_bg);
+            int p2 = Ui.dp(this, 4);
+            badge.setPadding(p2, p2, p2, p2);
+            wrap.addView(badge, new FrameLayout.LayoutParams(Ui.dp(this, 26), Ui.dp(this, 26), Gravity.TOP | Gravity.END));
+        }
+        return wrap;
     }
 }

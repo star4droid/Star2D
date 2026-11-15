@@ -1,0 +1,5 @@
+{"name": "Ice Burst", "emitters": [
+  {"img": "glow", "burst": 1, "rate": 0, "loop": true, "duration": 2.4, "life": [0.15, 0.15], "size": [3, 3], "sizeCurve": [[0, 0.6], [0.3, 1], [1, 0.8]], "tint": [[0, "#ffffff"], [0.4, "#c0f0ff"]], "alpha": [[0, 1], [1, 0]]},
+  {"img": "shard", "burst": 40, "rate": 0, "loop": true, "duration": 2.4, "spread": 180, "speed": [3, 6], "speedCurve": [[0, 1], [1, 0.3]], "life": [0.9, 1.3], "size": [0.12, 0.24], "rot": [0, 360], "spin": [-540, 540], "gravity": [0, -6, 0], "tint": [[0, "#ffffff"], [0.3, "#a0e8ff"], [1, "#4090ff"]], "alpha": [[0, 1], [0.6, 1], [1, 0]]},
+  {"img": "flake", "burst": 20, "rate": 0, "loop": true, "duration": 2.4, "spread": 180, "speed": [1, 2.5], "life": [1.2, 1.8], "size": [0.12, 0.2], "rot": [0, 360], "spin": [-180, 180], "tint": "#e0f8ff", "alpha": [[0, 1], [1, 0]]}
+]}

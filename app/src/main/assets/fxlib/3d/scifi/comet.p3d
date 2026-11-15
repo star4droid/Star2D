@@ -1,0 +1,4 @@
+{"name": "Comet", "emitters": [
+  {"img": "glow", "rate": 80, "life": [1, 1.4], "offset": [0, 2, 0], "dir": [-1, 0.3, 0], "spread": 6, "speed": [2, 3], "size": [0.4, 0.5], "sizeCurve": [[0, 1], [1, 0]], "tint": [[0, "#e0f8ff"], [0.4, "#60c0ff"], [1, "#3040a0"]], "alpha": [[0, 1], [1, 0]]},
+  {"img": "glow", "rate": 10, "life": [0.25, 0.3], "offset": [0, 2, 0], "size": [0.7, 0.8], "tint": "#ffffff", "alpha": [[0, 0], [0.5, 1], [1, 0]]}
+]}

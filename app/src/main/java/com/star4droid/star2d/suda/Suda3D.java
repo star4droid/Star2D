@@ -35,6 +35,7 @@ public final class Suda3D {
     private static final String PREFS = "suda3d_account";
     private static final String K_KEY = "api_key", K_BASE = "base_url", K_EMAIL = "email", K_PLAN_AI = "ai_use_plan";
     private static final String K_PLAY = "play_account_id";
+    private static final String K_UID = "uid", K_UNAME = "uname", K_ROLE = "role", K_NLANG = "notif_lang";
     private static final String K_PAID = "paid", K_CREDITS = "credits", K_USD = "usd", K_PRICING = "pricing_cache";
     public static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
 
@@ -80,6 +81,21 @@ public final class Suda3D {
     public static String key(Context c) { return prefs(c).getString(K_KEY, ""); }
     public static boolean loggedIn(Context c) { return !key(c).isEmpty(); }
     public static String email(Context c) { return prefs(c).getString(K_EMAIL, ""); }
+    /** Community identity (from GET /me): id, public name, role and the language chosen for notifications ("" = not chosen yet). */
+    public static long userId(Context c) { return prefs(c).getLong(K_UID, 0); }
+    public static String userName(Context c) { return prefs(c).getString(K_UNAME, ""); }
+    public static boolean isMod(Context c) { return "moderator".equals(prefs(c).getString(K_ROLE, "")); }
+    public static String notifLang(Context c) { return prefs(c).getString(K_NLANG, ""); }
+    public static void setIdentity(Context c, JsonObject r) {
+        if (r == null) return;
+        SharedPreferences.Editor e = prefs(c).edit();
+        if (r.has("id")) e.putLong(K_UID, (long) num(r, "id", 0));
+        String n = str(r, "name");
+        if (!n.isEmpty()) e.putString(K_UNAME, n);
+        if (r.has("role")) e.putString(K_ROLE, str(r, "role"));
+        if (r.has("notif_lang")) e.putString(K_NLANG, str(r, "notif_lang"));
+        e.apply();
+    }
     public static boolean paid(Context c) { return prefs(c).getBoolean(K_PAID, false); }
     public static boolean aiUsesPlan(Context c) { return loggedIn(c) && prefs(c).getBoolean(K_PLAN_AI, false); }
     public static void setAiUsesPlan(Context c, boolean on) { prefs(c).edit().putBoolean(K_PLAN_AI, on).apply(); }
@@ -93,6 +109,8 @@ public final class Suda3D {
     }
 
     public static void logout(Context c) {
+        try { Push.unregister(c); Social.resetStartup(); } catch (Throwable ignored) {} // before the key is gone
+        prefs(c).edit().remove(K_UID).remove(K_UNAME).remove(K_ROLE).remove(K_NLANG).apply();
         prefs(c).edit().remove(K_KEY).remove(K_EMAIL).remove(K_PAID).remove(K_CREDITS).remove(K_USD).remove(K_PLAY).putBoolean(K_PLAN_AI, false).apply();
     }
 
@@ -124,6 +142,7 @@ public final class Suda3D {
         b.addProperty("email", email);
         b.addProperty("password", password);
         b.addProperty("device_name", "Star2D " + android.os.Build.MODEL);
+        b.addProperty("notif_lang", Social.deviceNotifLang()); // new accounts: notifications follow the phone's language
         call(c, "POST", "/auth/register", b, false);
     }
 
@@ -136,6 +155,7 @@ public final class Suda3D {
         String play = str(r, "play_account_id");
         if (!play.isEmpty()) e.putString(K_PLAY, play);
         e.apply();
+        setIdentity(c, r);
         storeBalance(c, obj(r, "balance"));
         return r;
     }
@@ -243,8 +263,10 @@ public final class Suda3D {
         return exec(b.build());
     }
 
-    static JsonObject exec(Request req) throws Exception {
-        try (Response r = http().newCall(req).execute()) {
+    static JsonObject exec(Request req) throws Exception { return exec(http(), req); }
+
+    static JsonObject exec(OkHttpClient client, Request req) throws Exception {
+        try (Response r = client.newCall(req).execute()) {
             String txt = r.body() == null ? "" : r.body().string();
             JsonObject o = null;
             try {

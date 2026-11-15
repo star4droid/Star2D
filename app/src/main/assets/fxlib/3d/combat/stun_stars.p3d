@@ -1,0 +1,4 @@
+{"name": "Stun Stars", "emitters": [
+  {"img": "star", "rate": 6, "life": [1, 1], "shape": "ring", "shapeSize": [0.45, 0, 0.45], "offset": [0, 2, 0], "orbit": [200, 200], "size": [0.16, 0.2], "rot": [0, 360], "spin": [-180, 180], "tint": "#fff060", "alpha": [[0, 0], [0.5, 1], [1, 0]]},
+  {"img": "sparkle", "rate": 10, "life": [0.5, 0.7], "shape": "ring", "shapeSize": [0.45, 0, 0.45], "offset": [0, 2, 0], "orbit": [200, 200], "size": [0.1, 0.14], "tint": "#ffffff", "alpha": [[0, 0], [0.5, 1], [1, 0]]}
+]}

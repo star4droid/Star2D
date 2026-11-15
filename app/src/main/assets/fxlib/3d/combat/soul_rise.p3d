@@ -1,0 +1,4 @@
+{"name": "Soul Release", "emitters": [
+  {"img": "glow", "blend": "add", "rate": 25, "shape": "disc", "shapeSize": [0.2, 0, 0.2], "speed": [1, 1.4], "spread": 4, "life": [1.6, 2], "size": [0.3, 0.5], "tint": [[0, "#e0f4ff"], [1, "#6080ff"]], "alpha": [[0, 0], [0.15, 0.5], [0.6, 0.5], [1, 0]], "turbulence": 0.6},
+  {"img": "sparkle", "blend": "add", "rate": 10, "shape": "disc", "shapeSize": [0.5, 0, 0.5], "speed": [0.8, 1.4], "spread": 4, "life": [1.2, 1.6], "size": [0.08, 0.12], "tint": [[0, "#ffffff"], [1, "#ffffff"]], "alpha": [[0, 0], [0.2, 1], [0.35, 0.3], [0.55, 1], [0.75, 0.4], [1, 0]]}
+]}

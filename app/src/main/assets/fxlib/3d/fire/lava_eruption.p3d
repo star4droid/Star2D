@@ -1,0 +1,4 @@
+{"name": "Lava Eruption", "emitters": [
+  {"img": "glow", "rate": 40, "life": [1.2, 1.6], "shape": "disc", "shapeSize": [0.3, 0, 0.3], "speed": [5, 7], "spread": 18, "gravity": [0, -9.8, 0], "size": [0.2, 0.35], "tint": [[0, "#ffffa0"], [0.3, "#ff8000"], [1, "#801000"]], "alpha": [[0, 1], [0.6, 1], [1, 0]]},
+  {"img": "smoke", "blend": "alpha", "rate": 8, "life": [2.5, 3.2], "shape": "disc", "shapeSize": [0.3, 0, 0.3], "speed": [2, 3], "spread": 12, "drag": 0.6, "size": [1, 2.2], "sizeCurve": [[0, 0.3], [1, 1]], "rot": [0, 360], "spin": [-30, 30], "tint": "#2a2020", "alpha": [[0, 0], [0.2, 0.6], [1, 0]]}
+]}

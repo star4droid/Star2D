@@ -1,0 +1,5 @@
+{"name": "Bullet Impact", "emitters": [
+  {"img": "spark", "burst": 16, "rate": 0, "loop": true, "duration": 1.6, "life": [0.2, 0.35], "speed": [2, 4], "speedCurve": [[0, 1], [1, 0.3]], "spread": 50, "dir": [0, 1, 0], "size": [0.05, 0.08], "stretch": 0.06, "gravity": [0, -6, 0], "tint": [[0, "#ffffff"], [0.3, "#ffb040"], [1, "#ffb040"]], "alpha": [[0, 1], [0.6, 1], [1, 0]]},
+  {"img": "smoke", "blend": "alpha", "burst": 8, "rate": 0, "duration": 1.6, "spread": 40, "speed": [0.4, 1], "speedCurve": [[0, 1], [1, 0.1]], "life": [0.7, 1], "size": [0.2, 0.5], "sizeCurve": [[0, 0.3], [1, 1]], "tint": "#a09080", "alpha": [[0, 0.6], [1, 0]], "loop": true},
+  {"img": "dot", "blend": "alpha", "burst": 10, "rate": 0, "duration": 1.6, "spread": 50, "speed": [1.5, 3], "gravity": [0, -9.8, 0], "life": [0.5, 0.7], "size": [0.02, 0.04], "tint": "#605040", "alpha": [[0, 1], [0.6, 1], [1, 0]], "loop": true}
+]}

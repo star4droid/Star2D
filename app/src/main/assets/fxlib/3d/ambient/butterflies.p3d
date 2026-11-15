@@ -1,0 +1,5 @@
+{"name": "Butterflies", "emitters": [
+  {"img": "heart", "blend": "alpha", "rate": 1.5, "shape": "box", "shapeSize": [5, 2, 5], "offset": [0, 1.0, 0], "spread": 180, "speed": [0.4, 0.8], "life": [5, 7], "size": [0.18, 0.24], "tint": "#ffb020", "alpha": [[0, 0], [0.12, 1], [0.6, 1], [1, 0]], "max": 400, "turbulence": 2},
+  {"img": "heart", "blend": "alpha", "rate": 1.5, "shape": "box", "shapeSize": [5, 2, 5], "offset": [0, 1.0, 0], "spread": 180, "speed": [0.4, 0.8], "life": [5, 7], "size": [0.18, 0.24], "tint": "#40b0ff", "alpha": [[0, 0], [0.12, 1], [0.6, 1], [1, 0]], "max": 400, "turbulence": 2},
+  {"img": "heart", "blend": "alpha", "rate": 1.5, "shape": "box", "shapeSize": [5, 2, 5], "offset": [0, 1.0, 0], "spread": 180, "speed": [0.4, 0.8], "life": [5, 7], "size": [0.18, 0.24], "tint": "#ff60a0", "alpha": [[0, 0], [0.12, 1], [0.6, 1], [1, 0]], "max": 400, "turbulence": 2}
+]}

@@ -1,0 +1,6 @@
+{"name": "Fire Pillar", "emitters": [
+  {"img": "flame", "rate": 120, "life": [0.6, 0.9], "shape": "disc", "shapeSize": [0.35, 0, 0.35], "speed": [4, 6], "spread": 8, "size": [0.6, 0.8], "sizeCurve": [[0, 0.5], [0.25, 1], [1, 0.15]], "rot": [-12, 12], "tint": [[0, "#ffffff"], [0.2, "#ffc030"], [0.6, "#ff3000"], [1, "#200800"]], "alpha": [[0, 0], [0.12, 0.8], [0.6, 0.6], [1, 0]], "turbulence": 0.6, "max": 200},
+  {"img": "glow", "rate": 10, "life": [0.4, 0.6], "shape": "disc", "shapeSize": [0.21, 0, 0.21], "speed": [0.3, 0.5], "size": [1.2800000000000002, 1.6], "tint": [[0, "#ffc030"], [1, "#ff3000"]], "alpha": [[0, 0], [0.3, 0.25], [1, 0]]},
+  {"img": "dot", "rate": 8, "life": [1.2, 2], "shape": "disc", "shapeSize": [0.35, 0, 0.35], "speed": [1, 1.8], "spread": 20, "size": [0.04, 0.07], "sizeCurve": [[0, 1], [1, 0]], "tint": [[0, "#ffa030"], [1, "#ff3000"]], "alpha": [[0, 1], [0.6, 1], [1, 0]], "turbulence": 1.5},
+  {"img": "smoke", "blend": "alpha", "rate": 5, "life": [2, 2.6], "offset": [0, 1.04, 0], "shape": "disc", "shapeSize": [0.21, 0, 0.21], "speed": [0.5, 0.8], "spread": 10, "size": [0.96, 1.7600000000000002], "sizeCurve": [[0, 0.3], [1, 1]], "rot": [0, 360], "spin": [-40, 40], "tint": "#202020", "alpha": [[0, 0], [0.25, 0.35], [1, 0]], "turbulence": 0.3}
+]}

@@ -1,0 +1,4 @@
+{"name": "Splash", "emitters": [
+  {"img": "drop", "burst": 40, "rate": 0, "duration": 1.6, "spread": 30, "speed": [2.5, 4.5], "gravity": [0, -9.8, 0], "life": [0.7, 1], "size": [0.06, 0.12], "stretch": 0.03, "tint": [[0, "#e0f4ff"], [1, "#70b0ff"]], "alpha": [[0, 1], [0.6, 1], [1, 0]], "loop": true},
+  {"img": "glow", "burst": 50, "rate": 0, "loop": true, "duration": 1.6, "shape": "ring", "shapeSize": [0.2, 0, 0.2], "offset": [0, 0.05, 0], "outward": true, "speed": [2.5, 2.5], "speedCurve": [[0, 1], [1, 0.3]], "life": [0.6, 0.6], "size": [0.25, 0.25], "tint": "#a8d4ff", "alpha": [[0, 1], [1, 0]]}
+]}

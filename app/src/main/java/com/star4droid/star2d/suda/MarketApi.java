@@ -46,6 +46,17 @@ public final class MarketApi {
         return Suda3D.exec(req(c, p.toString(), false).get().build());
     }
 
+    /** Store list with the extras of the community update: one author, and without the Editor's Choice items (they have their own strip). */
+    public static JsonObject list(Context c, String q, String kind, String sort, int page, long user, boolean excludeFeatured) throws Exception {
+        StringBuilder p = new StringBuilder("/projects?page=" + page + "&per_page=24");
+        if (q != null && !q.trim().isEmpty()) p.append("&q=").append(URLEncoder.encode(q.trim(), "UTF-8"));
+        if (kind != null && !kind.isEmpty()) p.append("&kind=").append(kind);
+        if (sort != null && !sort.isEmpty()) p.append("&sort=").append(sort);
+        if (user > 0) p.append("&user=").append(user);
+        if (excludeFeatured) p.append("&exclude_featured=1");
+        return Suda3D.exec(req(c, p.toString(), false).get().build());
+    }
+
     public static JsonObject mine(Context c) throws Exception { return Suda3D.exec(req(c, "/mine", true).get().build()); }
 
     public static JsonObject get(Context c, long id) throws Exception { return Suda3D.exec(req(c, "/projects/" + id, false).get().build()); }

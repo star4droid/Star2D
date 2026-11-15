@@ -1,0 +1,4 @@
+{"name": "Snow", "emitters": [
+  {"img": "flake", "blend": "add", "rate": 70, "shape": "box", "shapeSize": [8, 0.1, 8], "offset": [0, 7, 0], "dir": [0, -1, 0], "spread": 3, "speed": [0.6, 1], "life": [7, 9], "size": [0.08, 0.14], "stretch": 0.0, "tint": "#ffffff", "alpha": [[0, 0], [0.1, 1], [0.9, 1], [1, 0]], "max": 1500, "turbulence": 0.8, "rot": [0, 360], "spin": [-90, 90]},
+  {"img": "glow", "blend": "add", "rate": 80, "shape": "box", "shapeSize": [8, 0.1, 8], "offset": [0, 7, 0], "dir": [0, -1, 0], "spread": 3, "speed": [0.5, 0.9], "life": [7, 9], "size": [0.05, 0.09], "stretch": 0.0, "tint": "#ffffff", "alpha": [[0, 0], [0.1, 1], [0.9, 1], [1, 0]], "max": 1500, "turbulence": 0.6}
+]}

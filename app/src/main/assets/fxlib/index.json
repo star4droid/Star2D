@@ -1,0 +1,1414 @@
+{
+"version": 1,
+"2d": [
+{
+"cat": "fire",
+"en": "Fire",
+"ar": "نار",
+"items": [
+{
+"key": "campfire",
+"en": "Campfire",
+"ar": "نار مخيم"
+},
+{
+"key": "torch",
+"en": "Torch",
+"ar": "شعلة"
+},
+{
+"key": "blue_fire",
+"en": "Blue Fire",
+"ar": "نار زرقاء"
+},
+{
+"key": "green_fire",
+"en": "Green Fire",
+"ar": "نار خضراء"
+},
+{
+"key": "hellfire",
+"en": "Hellfire",
+"ar": "نار الجحيم"
+},
+{
+"key": "candle",
+"en": "Candle",
+"ar": "شمعة"
+},
+{
+"key": "inferno",
+"en": "Inferno",
+"ar": "جحيم"
+},
+{
+"key": "fireball",
+"en": "Fireball",
+"ar": "كرة نار"
+},
+{
+"key": "ground_fire",
+"en": "Burning Ground",
+"ar": "أرض مشتعلة"
+},
+{
+"key": "embers",
+"en": "Rising Embers",
+"ar": "جمرات متطايرة"
+},
+{
+"key": "fire_ring",
+"en": "Fire Ring",
+"ar": "حلقة نار"
+},
+{
+"key": "flamethrower",
+"en": "Flamethrower",
+"ar": "قاذف لهب"
+}
+]
+},
+{
+"cat": "explosions",
+"en": "Explosions",
+"ar": "انفجارات",
+"items": [
+{
+"key": "small_explosion",
+"en": "Small Blast",
+"ar": "انفجار صغير"
+},
+{
+"key": "big_explosion",
+"en": "Big Explosion",
+"ar": "انفجار كبير"
+},
+{
+"key": "mega_blast",
+"en": "Mega Blast",
+"ar": "انفجار هائل"
+},
+{
+"key": "shockwave",
+"en": "Shockwave",
+"ar": "موجة صدمة"
+},
+{
+"key": "firework",
+"en": "Firework",
+"ar": "ألعاب نارية"
+},
+{
+"key": "dust_explosion",
+"en": "Dust Blast",
+"ar": "انفجار غبار"
+},
+{
+"key": "electric_explosion",
+"en": "Electric Blast",
+"ar": "انفجار كهربائي"
+},
+{
+"key": "ice_shatter",
+"en": "Ice Shatter",
+"ar": "تحطم جليد"
+},
+{
+"key": "plasma_blast",
+"en": "Plasma Blast",
+"ar": "انفجار بلازما"
+},
+{
+"key": "smoke_bomb",
+"en": "Smoke Bomb",
+"ar": "قنبلة دخان"
+},
+{
+"key": "confetti_pop",
+"en": "Confetti Pop",
+"ar": "فرقعة قصاصات"
+},
+{
+"key": "meteor_impact",
+"en": "Meteor Impact",
+"ar": "ارتطام نيزك"
+}
+]
+},
+{
+"cat": "combat",
+"en": "Combat",
+"ar": "قتال",
+"items": [
+{
+"key": "hit_spark",
+"en": "Hit Spark",
+"ar": "شرارة ضربة"
+},
+{
+"key": "sword_slash",
+"en": "Sword Slash",
+"ar": "ضربة سيف"
+},
+{
+"key": "critical_hit",
+"en": "Critical Hit",
+"ar": "ضربة حرجة"
+},
+{
+"key": "blood_hit",
+"en": "Blood Hit",
+"ar": "إصابة دم"
+},
+{
+"key": "muzzle_flash",
+"en": "Muzzle Flash",
+"ar": "وميض فوهة"
+},
+{
+"key": "bullet_impact",
+"en": "Bullet Impact",
+"ar": "ارتطام رصاصة"
+},
+{
+"key": "shield_block",
+"en": "Shield Block",
+"ar": "صد بالدرع"
+},
+{
+"key": "punch_impact",
+"en": "Punch Impact",
+"ar": "ضربة لكمة"
+},
+{
+"key": "laser_hit",
+"en": "Laser Hit",
+"ar": "إصابة ليزر"
+},
+{
+"key": "poison_hit",
+"en": "Poison Hit",
+"ar": "إصابة سم"
+},
+{
+"key": "stun_stars",
+"en": "Stun Stars",
+"ar": "نجوم الدوخة"
+},
+{
+"key": "soul_release",
+"en": "Soul Release",
+"ar": "خروج روح"
+}
+]
+},
+{
+"cat": "magic",
+"en": "Magic",
+"ar": "سحر",
+"items": [
+{
+"key": "heal",
+"en": "Heal",
+"ar": "شفاء"
+},
+{
+"key": "buff_aura",
+"en": "Buff Aura",
+"ar": "هالة قوة"
+},
+{
+"key": "portal",
+"en": "Portal",
+"ar": "بوابة"
+},
+{
+"key": "arcane_orb",
+"en": "Arcane Orb",
+"ar": "كرة سحرية"
+},
+{
+"key": "holy_light",
+"en": "Holy Light",
+"ar": "نور مقدس"
+},
+{
+"key": "dark_curse",
+"en": "Dark Curse",
+"ar": "لعنة مظلمة"
+},
+{
+"key": "teleport",
+"en": "Teleport",
+"ar": "انتقال"
+},
+{
+"key": "summon_circle",
+"en": "Summon Circle",
+"ar": "دائرة استدعاء"
+},
+{
+"key": "frost_aura",
+"en": "Frost Aura",
+"ar": "هالة صقيع"
+},
+{
+"key": "charge_up",
+"en": "Charging",
+"ar": "شحن"
+},
+{
+"key": "level_up",
+"en": "Level Up",
+"ar": "ترقية مستوى"
+},
+{
+"key": "mana_fountain",
+"en": "Mana Fountain",
+"ar": "نافورة مانا"
+}
+]
+},
+{
+"cat": "weather",
+"en": "Weather",
+"ar": "طقس",
+"items": [
+{
+"key": "rain",
+"en": "Rain",
+"ar": "مطر"
+},
+{
+"key": "heavy_rain",
+"en": "Heavy Rain",
+"ar": "مطر غزير"
+},
+{
+"key": "storm",
+"en": "Thunderstorm",
+"ar": "عاصفة رعدية"
+},
+{
+"key": "snow",
+"en": "Snow",
+"ar": "ثلج"
+},
+{
+"key": "blizzard",
+"en": "Blizzard",
+"ar": "عاصفة ثلجية"
+},
+{
+"key": "fog",
+"en": "Fog",
+"ar": "ضباب"
+},
+{
+"key": "sandstorm",
+"en": "Sandstorm",
+"ar": "عاصفة رملية"
+},
+{
+"key": "hail",
+"en": "Hail",
+"ar": "برد"
+},
+{
+"key": "autumn_leaves",
+"en": "Autumn Leaves",
+"ar": "أوراق الخريف"
+},
+{
+"key": "sakura",
+"en": "Sakura Petals",
+"ar": "بتلات ساكورا"
+},
+{
+"key": "drizzle",
+"en": "Drizzle",
+"ar": "رذاذ مطر"
+},
+{
+"key": "rain_splash",
+"en": "Rain Splashes",
+"ar": "رذاذ المطر"
+}
+]
+},
+{
+"cat": "smoke",
+"en": "Smoke & Dust",
+"ar": "دخان وغبار",
+"items": [
+{
+"key": "chimney_smoke",
+"en": "Chimney Smoke",
+"ar": "دخان مدخنة"
+},
+{
+"key": "black_smoke",
+"en": "Black Smoke",
+"ar": "دخان أسود"
+},
+{
+"key": "steam",
+"en": "Steam",
+"ar": "بخار"
+},
+{
+"key": "dust_trail",
+"en": "Dust Trail",
+"ar": "أثر غبار"
+},
+{
+"key": "footstep_dust",
+"en": "Footstep Dust",
+"ar": "غبار الخطوات"
+},
+{
+"key": "car_exhaust",
+"en": "Car Exhaust",
+"ar": "عادم سيارة"
+},
+{
+"key": "ground_fog",
+"en": "Ground Fog",
+"ar": "ضباب أرضي"
+},
+{
+"key": "toxic_smoke",
+"en": "Toxic Smoke",
+"ar": "دخان سام"
+},
+{
+"key": "colored_smoke",
+"en": "Colored Smoke",
+"ar": "دخان ملون"
+},
+{
+"key": "wisp",
+"en": "Smoke Wisp",
+"ar": "خيط دخان"
+},
+{
+"key": "landing_dust",
+"en": "Landing Dust",
+"ar": "غبار الهبوط"
+},
+{
+"key": "cloud_puffs",
+"en": "Cloud Puffs",
+"ar": "نفثات سحاب"
+}
+]
+},
+{
+"cat": "water",
+"en": "Water & Liquid",
+"ar": "ماء وسوائل",
+"items": [
+{
+"key": "fountain",
+"en": "Fountain",
+"ar": "نافورة"
+},
+{
+"key": "splash",
+"en": "Splash",
+"ar": "رشة ماء"
+},
+{
+"key": "waterfall_mist",
+"en": "Waterfall Mist",
+"ar": "رذاذ شلال"
+},
+{
+"key": "bubbles",
+"en": "Bubbles",
+"ar": "فقاعات"
+},
+{
+"key": "geyser",
+"en": "Geyser",
+"ar": "ينبوع حار"
+},
+{
+"key": "drips",
+"en": "Dripping",
+"ar": "تقطير"
+},
+{
+"key": "acid_pool",
+"en": "Acid Pool",
+"ar": "بركة حمض"
+},
+{
+"key": "lava_bubbles",
+"en": "Lava Bubbles",
+"ar": "فقاعات حمم"
+},
+{
+"key": "ripples",
+"en": "Water Ripples",
+"ar": "تموجات ماء"
+},
+{
+"key": "underwater",
+"en": "Underwater",
+"ar": "فقاعات تحت الماء"
+},
+{
+"key": "spray_mist",
+"en": "Spray Mist",
+"ar": "رذاذ رش"
+},
+{
+"key": "wave_foam",
+"en": "Wave Foam",
+"ar": "زبد الموج"
+}
+]
+},
+{
+"cat": "electric",
+"en": "Electric & Energy",
+"ar": "كهرباء وطاقة",
+"items": [
+{
+"key": "sparks",
+"en": "Sparks",
+"ar": "شرارات"
+},
+{
+"key": "lightning_orb",
+"en": "Lightning Orb",
+"ar": "كرة برق"
+},
+{
+"key": "tesla_arc",
+"en": "Tesla Arc",
+"ar": "قوس تسلا"
+},
+{
+"key": "energy_charge",
+"en": "Energy Charge",
+"ar": "شحن طاقة"
+},
+{
+"key": "electric_field",
+"en": "Electric Field",
+"ar": "مجال كهربائي"
+},
+{
+"key": "short_circuit",
+"en": "Short Circuit",
+"ar": "تماس كهربائي"
+},
+{
+"key": "plasma_ball",
+"en": "Plasma Ball",
+"ar": "كرة بلازما"
+},
+{
+"key": "power_up",
+"en": "Power Up",
+"ar": "تقوية"
+},
+{
+"key": "warp_gate",
+"en": "Warp Gate",
+"ar": "بوابة عبور"
+},
+{
+"key": "force_field",
+"en": "Force Field",
+"ar": "حقل قوة"
+},
+{
+"key": "neon_swirl",
+"en": "Neon Swirl",
+"ar": "دوامة نيون"
+},
+{
+"key": "laser_beam",
+"en": "Laser Beam",
+"ar": "شعاع ليزر"
+}
+]
+},
+{
+"cat": "ambient",
+"en": "Nature & Ambient",
+"ar": "طبيعة وأجواء",
+"items": [
+{
+"key": "fireflies",
+"en": "Fireflies",
+"ar": "يراعات"
+},
+{
+"key": "pollen",
+"en": "Pollen",
+"ar": "حبوب لقاح"
+},
+{
+"key": "magic_dust",
+"en": "Magic Dust",
+"ar": "غبار سحري"
+},
+{
+"key": "twinkle_stars",
+"en": "Twinkling Stars",
+"ar": "نجوم متلألئة"
+},
+{
+"key": "bokeh",
+"en": "Bokeh Lights",
+"ar": "أضواء ضبابية"
+},
+{
+"key": "dust_motes",
+"en": "Dust Motes",
+"ar": "ذرات غبار"
+},
+{
+"key": "dandelion",
+"en": "Dandelion Seeds",
+"ar": "بذور الهندباء"
+},
+{
+"key": "plankton",
+"en": "Plankton",
+"ar": "عوالق"
+},
+{
+"key": "green_leaves",
+"en": "Falling Leaves",
+"ar": "أوراق متساقطة"
+},
+{
+"key": "butterflies",
+"en": "Butterflies",
+"ar": "فراشات"
+},
+{
+"key": "aurora",
+"en": "Aurora",
+"ar": "شفق قطبي"
+},
+{
+"key": "water_glints",
+"en": "Water Glints",
+"ar": "لمعان الماء"
+}
+]
+},
+{
+"cat": "rewards",
+"en": "UI & Rewards",
+"ar": "واجهة ومكافآت",
+"items": [
+{
+"key": "coin_burst",
+"en": "Coin Burst",
+"ar": "انفجار عملات"
+},
+{
+"key": "star_burst",
+"en": "Star Burst",
+"ar": "انفجار نجوم"
+},
+{
+"key": "confetti_rain",
+"en": "Confetti Rain",
+"ar": "مطر قصاصات"
+},
+{
+"key": "hearts",
+"en": "Hearts",
+"ar": "قلوب"
+},
+{
+"key": "gem_shine",
+"en": "Gem Shine",
+"ar": "لمعان جوهرة"
+},
+{
+"key": "reward_burst",
+"en": "Reward Burst",
+"ar": "انفجار مكافأة"
+},
+{
+"key": "glitter_trail",
+"en": "Glitter Trail",
+"ar": "أثر لامع"
+},
+{
+"key": "combo_pop",
+"en": "Combo Pop",
+"ar": "فرقعة كومبو"
+},
+{
+"key": "rainbow_sparkles",
+"en": "Rainbow Sparkles",
+"ar": "بريق قوس قزح"
+},
+{
+"key": "click_ripple",
+"en": "Tap Ripple",
+"ar": "تموج اللمس"
+},
+{
+"key": "unlock_rays",
+"en": "Unlock Rays",
+"ar": "أشعة الفتح"
+},
+{
+"key": "victory_fireworks",
+"en": "Victory Fireworks",
+"ar": "ألعاب نارية للفوز"
+}
+]
+},
+{
+"cat": "scifi",
+"en": "Sci-Fi & Space",
+"ar": "خيال علمي وفضاء",
+"items": [
+{
+"key": "starfield",
+"en": "Starfield",
+"ar": "حقل نجوم"
+},
+{
+"key": "warp_speed",
+"en": "Warp Speed",
+"ar": "سرعة فائقة"
+},
+{
+"key": "rocket_thruster",
+"en": "Rocket Thruster",
+"ar": "محرك صاروخ"
+},
+{
+"key": "jetpack",
+"en": "Jetpack",
+"ar": "حقيبة طيران"
+},
+{
+"key": "engine_trail",
+"en": "Engine Trail",
+"ar": "أثر محرك"
+},
+{
+"key": "comet",
+"en": "Comet",
+"ar": "مذنب"
+},
+{
+"key": "black_hole",
+"en": "Black Hole",
+"ar": "ثقب أسود"
+},
+{
+"key": "nebula",
+"en": "Nebula",
+"ar": "سديم"
+},
+{
+"key": "meteor_shower",
+"en": "Meteor Shower",
+"ar": "زخة شهب"
+},
+{
+"key": "teleport_beam",
+"en": "Teleport Beam",
+"ar": "شعاع انتقال"
+},
+{
+"key": "hologram",
+"en": "Hologram",
+"ar": "هولوغرام"
+},
+{
+"key": "ion_cannon",
+"en": "Ion Cannon",
+"ar": "مدفع أيوني"
+}
+]
+}
+],
+"3d": [
+{
+"cat": "fire",
+"en": "Fire",
+"ar": "نار",
+"items": [
+{
+"key": "campfire",
+"en": "Campfire",
+"ar": "نار مخيم"
+},
+{
+"key": "torch",
+"en": "Torch",
+"ar": "شعلة"
+},
+{
+"key": "bonfire",
+"en": "Bonfire",
+"ar": "نار كبيرة"
+},
+{
+"key": "blue_flame",
+"en": "Blue Flame",
+"ar": "لهب أزرق"
+},
+{
+"key": "green_fire",
+"en": "Green Fire",
+"ar": "نار خضراء"
+},
+{
+"key": "candle",
+"en": "Candle",
+"ar": "شمعة"
+},
+{
+"key": "fire_pillar",
+"en": "Fire Pillar",
+"ar": "عمود نار"
+},
+{
+"key": "fire_tornado",
+"en": "Fire Tornado",
+"ar": "إعصار نار"
+},
+{
+"key": "embers",
+"en": "Floating Embers",
+"ar": "جمرات متطايرة"
+},
+{
+"key": "lava_eruption",
+"en": "Lava Eruption",
+"ar": "ثوران حمم"
+},
+{
+"key": "burning_ground",
+"en": "Burning Ground",
+"ar": "أرض مشتعلة"
+},
+{
+"key": "fireball_orbit",
+"en": "Orbiting Fireball",
+"ar": "كرة نار دوارة"
+}
+]
+},
+{
+"cat": "explosions",
+"en": "Explosions",
+"ar": "انفجارات",
+"items": [
+{
+"key": "explosion",
+"en": "Explosion",
+"ar": "انفجار"
+},
+{
+"key": "big_explosion",
+"en": "Big Explosion",
+"ar": "انفجار كبير"
+},
+{
+"key": "ground_blast",
+"en": "Ground Blast",
+"ar": "انفجار أرضي"
+},
+{
+"key": "shockwave",
+"en": "Shockwave",
+"ar": "موجة صدمة"
+},
+{
+"key": "firework",
+"en": "Firework",
+"ar": "ألعاب نارية"
+},
+{
+"key": "mushroom_cloud",
+"en": "Mushroom Cloud",
+"ar": "سحابة فطر"
+},
+{
+"key": "smoke_grenade",
+"en": "Smoke Grenade",
+"ar": "قنبلة دخانية"
+},
+{
+"key": "electric_blast",
+"en": "Electric Blast",
+"ar": "انفجار كهربائي"
+},
+{
+"key": "ice_burst",
+"en": "Ice Burst",
+"ar": "انفجار جليد"
+},
+{
+"key": "debris",
+"en": "Debris Burst",
+"ar": "تطاير حطام"
+},
+{
+"key": "plasma_burst",
+"en": "Plasma Burst",
+"ar": "دفقة بلازما"
+},
+{
+"key": "confetti_burst",
+"en": "Confetti Burst",
+"ar": "انفجار قصاصات"
+}
+]
+},
+{
+"cat": "magic",
+"en": "Magic",
+"ar": "سحر",
+"items": [
+{
+"key": "heal",
+"en": "Heal",
+"ar": "شفاء"
+},
+{
+"key": "portal",
+"en": "Portal",
+"ar": "بوابة"
+},
+{
+"key": "aura_spiral",
+"en": "Aura Spiral",
+"ar": "هالة حلزونية"
+},
+{
+"key": "summon_circle",
+"en": "Summon Circle",
+"ar": "دائرة استدعاء"
+},
+{
+"key": "arcane_orb",
+"en": "Arcane Orb",
+"ar": "كرة سحرية"
+},
+{
+"key": "levitate",
+"en": "Levitation",
+"ar": "طفو"
+},
+{
+"key": "holy_beam",
+"en": "Holy Beam",
+"ar": "شعاع مقدس"
+},
+{
+"key": "dark_vortex",
+"en": "Dark Vortex",
+"ar": "دوامة مظلمة"
+},
+{
+"key": "frost_nova",
+"en": "Frost Nova",
+"ar": "انفجار صقيع"
+},
+{
+"key": "teleport",
+"en": "Teleport",
+"ar": "انتقال"
+},
+{
+"key": "power_up",
+"en": "Power Up",
+"ar": "تقوية"
+},
+{
+"key": "rune_ring",
+"en": "Rune Ring",
+"ar": "حلقة رموز"
+}
+]
+},
+{
+"cat": "weather",
+"en": "Weather",
+"ar": "طقس",
+"items": [
+{
+"key": "rain",
+"en": "Rain",
+"ar": "مطر"
+},
+{
+"key": "heavy_rain",
+"en": "Heavy Rain",
+"ar": "مطر غزير"
+},
+{
+"key": "storm",
+"en": "Thunderstorm",
+"ar": "عاصفة رعدية"
+},
+{
+"key": "snow",
+"en": "Snow",
+"ar": "ثلج"
+},
+{
+"key": "blizzard",
+"en": "Blizzard",
+"ar": "عاصفة ثلجية"
+},
+{
+"key": "fog_bank",
+"en": "Fog Bank",
+"ar": "ضباب كثيف"
+},
+{
+"key": "sandstorm",
+"en": "Sandstorm",
+"ar": "عاصفة رملية"
+},
+{
+"key": "hail",
+"en": "Hail",
+"ar": "برد"
+},
+{
+"key": "autumn_leaves",
+"en": "Autumn Leaves",
+"ar": "أوراق الخريف"
+},
+{
+"key": "sakura",
+"en": "Sakura Petals",
+"ar": "بتلات ساكورا"
+},
+{
+"key": "fireflies",
+"en": "Fireflies",
+"ar": "يراعات"
+},
+{
+"key": "lightning_strike",
+"en": "Lightning Strike",
+"ar": "صاعقة"
+}
+]
+},
+{
+"cat": "smoke",
+"en": "Smoke & Dust",
+"ar": "دخان وغبار",
+"items": [
+{
+"key": "chimney",
+"en": "Chimney Smoke",
+"ar": "دخان مدخنة"
+},
+{
+"key": "black_smoke",
+"en": "Black Smoke",
+"ar": "دخان أسود"
+},
+{
+"key": "steam_vent",
+"en": "Steam Vent",
+"ar": "فتحة بخار"
+},
+{
+"key": "exhaust",
+"en": "Car Exhaust",
+"ar": "عادم سيارة"
+},
+{
+"key": "dust_cloud",
+"en": "Dust Cloud",
+"ar": "سحابة غبار"
+},
+{
+"key": "ground_fog",
+"en": "Ground Fog",
+"ar": "ضباب أرضي"
+},
+{
+"key": "toxic_gas",
+"en": "Toxic Gas",
+"ar": "غاز سام"
+},
+{
+"key": "signal_smoke",
+"en": "Signal Smoke",
+"ar": "دخان إشارة"
+},
+{
+"key": "volcano_ash",
+"en": "Volcano Ash",
+"ar": "رماد بركاني"
+},
+{
+"key": "steam_burst",
+"en": "Steam Burst",
+"ar": "دفقة بخار"
+},
+{
+"key": "campfire_smoke",
+"en": "Campfire Smoke",
+"ar": "دخان نار المخيم"
+},
+{
+"key": "footstep_dust",
+"en": "Footstep Dust",
+"ar": "غبار الخطوات"
+}
+]
+},
+{
+"cat": "water",
+"en": "Water",
+"ar": "ماء وسوائل",
+"items": [
+{
+"key": "fountain",
+"en": "Fountain",
+"ar": "نافورة"
+},
+{
+"key": "sprinkler",
+"en": "Sprinkler",
+"ar": "رشاش ماء"
+},
+{
+"key": "splash",
+"en": "Splash",
+"ar": "رشة ماء"
+},
+{
+"key": "waterfall_splash",
+"en": "Waterfall Splash",
+"ar": "رشاش شلال"
+},
+{
+"key": "geyser",
+"en": "Geyser",
+"ar": "ينبوع حار"
+},
+{
+"key": "bubbles",
+"en": "Bubbles",
+"ar": "فقاعات"
+},
+{
+"key": "drips",
+"en": "Dripping",
+"ar": "تقطير"
+},
+{
+"key": "mist",
+"en": "Mist",
+"ar": "رذاذ"
+},
+{
+"key": "wave_spray",
+"en": "Wave Spray",
+"ar": "رذاذ الموج"
+},
+{
+"key": "underwater",
+"en": "Underwater Bubbles",
+"ar": "فقاعات تحت الماء"
+},
+{
+"key": "rain_puddle",
+"en": "Rain Splashes",
+"ar": "رذاذ المطر"
+},
+{
+"key": "oil_spray",
+"en": "Oil Spray",
+"ar": "رش زيت"
+}
+]
+},
+{
+"cat": "energy",
+"en": "Energy",
+"ar": "طاقة",
+"items": [
+{
+"key": "sparks_fountain",
+"en": "Sparks Fountain",
+"ar": "نافورة شرر"
+},
+{
+"key": "welding",
+"en": "Welding Sparks",
+"ar": "شرر لحام"
+},
+{
+"key": "electric_orb",
+"en": "Electric Orb",
+"ar": "كرة كهربائية"
+},
+{
+"key": "tesla_coil",
+"en": "Tesla Coil",
+"ar": "ملف تسلا"
+},
+{
+"key": "energy_charge",
+"en": "Energy Charge",
+"ar": "شحن طاقة"
+},
+{
+"key": "force_field",
+"en": "Force Field",
+"ar": "حقل قوة"
+},
+{
+"key": "plasma_ball",
+"en": "Plasma Ball",
+"ar": "كرة بلازما"
+},
+{
+"key": "laser_impact",
+"en": "Laser Impact",
+"ar": "ارتطام ليزر"
+},
+{
+"key": "power_core",
+"en": "Power Core",
+"ar": "نواة طاقة"
+},
+{
+"key": "short_circuit",
+"en": "Short Circuit",
+"ar": "تماس كهربائي"
+},
+{
+"key": "energy_beam",
+"en": "Energy Beam",
+"ar": "شعاع طاقة"
+},
+{
+"key": "warp_streaks",
+"en": "Warp Streaks",
+"ar": "خطوط السرعة"
+}
+]
+},
+{
+"cat": "ambient",
+"en": "Ambient",
+"ar": "طبيعة وأجواء",
+"items": [
+{
+"key": "fireflies_field",
+"en": "Fireflies Field",
+"ar": "حقل يراعات"
+},
+{
+"key": "pollen",
+"en": "Pollen",
+"ar": "حبوب لقاح"
+},
+{
+"key": "magic_dust",
+"en": "Magic Dust",
+"ar": "غبار سحري"
+},
+{
+"key": "star_dome",
+"en": "Star Dome",
+"ar": "قبة نجوم"
+},
+{
+"key": "floating_embers",
+"en": "Floating Embers",
+"ar": "جمرات طافية"
+},
+{
+"key": "light_snow",
+"en": "Light Snow",
+"ar": "ثلج خفيف"
+},
+{
+"key": "bokeh",
+"en": "Bokeh Lights",
+"ar": "أضواء ضبابية"
+},
+{
+"key": "butterflies",
+"en": "Butterflies",
+"ar": "فراشات"
+},
+{
+"key": "dandelion",
+"en": "Dandelion Seeds",
+"ar": "بذور الهندباء"
+},
+{
+"key": "plankton",
+"en": "Plankton",
+"ar": "عوالق"
+},
+{
+"key": "sakura_tree",
+"en": "Petals From Tree",
+"ar": "بتلات من شجرة"
+},
+{
+"key": "glow_halo",
+"en": "Lamp Halo",
+"ar": "هالة مصباح"
+}
+]
+},
+{
+"cat": "combat",
+"en": "Combat",
+"ar": "قتال",
+"items": [
+{
+"key": "hit_spark",
+"en": "Hit Spark",
+"ar": "شرارة ضربة"
+},
+{
+"key": "blood_hit",
+"en": "Blood Hit",
+"ar": "إصابة دم"
+},
+{
+"key": "muzzle_flash",
+"en": "Muzzle Flash",
+"ar": "وميض فوهة"
+},
+{
+"key": "bullet_impact",
+"en": "Bullet Impact",
+"ar": "ارتطام رصاصة"
+},
+{
+"key": "slash_arc",
+"en": "Slash Arc",
+"ar": "قوس ضربة"
+},
+{
+"key": "shield_hit",
+"en": "Shield Hit",
+"ar": "ضربة درع"
+},
+{
+"key": "critical",
+"en": "Critical Hit",
+"ar": "ضربة حرجة"
+},
+{
+"key": "poison_cloud",
+"en": "Poison Cloud",
+"ar": "سحابة سم"
+},
+{
+"key": "stun_stars",
+"en": "Stun Stars",
+"ar": "نجوم الدوخة"
+},
+{
+"key": "pickup_glow",
+"en": "Pickup Glow",
+"ar": "توهج التقاط"
+},
+{
+"key": "soul_rise",
+"en": "Soul Release",
+"ar": "خروج روح"
+},
+{
+"key": "level_up",
+"en": "Level Up",
+"ar": "ترقية مستوى"
+}
+]
+},
+{
+"cat": "scifi",
+"en": "Sci-Fi",
+"ar": "خيال علمي وفضاء",
+"items": [
+{
+"key": "rocket_thruster",
+"en": "Rocket Thruster",
+"ar": "محرك صاروخ"
+},
+{
+"key": "jet_engine",
+"en": "Jet Engine",
+"ar": "محرك نفاث"
+},
+{
+"key": "drone_thrusters",
+"en": "Drone Thrusters",
+"ar": "محركات درون"
+},
+{
+"key": "black_hole",
+"en": "Black Hole",
+"ar": "ثقب أسود"
+},
+{
+"key": "nebula",
+"en": "Nebula",
+"ar": "سديم"
+},
+{
+"key": "comet",
+"en": "Comet",
+"ar": "مذنب"
+},
+{
+"key": "hologram",
+"en": "Hologram",
+"ar": "هولوغرام"
+},
+{
+"key": "teleport_beam",
+"en": "Teleport Beam",
+"ar": "شعاع انتقال"
+},
+{
+"key": "shield_dome",
+"en": "Shield Dome",
+"ar": "قبة درع"
+},
+{
+"key": "tractor_beam",
+"en": "Tractor Beam",
+"ar": "شعاع جاذب"
+},
+{
+"key": "warp_tunnel",
+"en": "Warp Tunnel",
+"ar": "نفق عبور"
+},
+{
+"key": "ion_storm",
+"en": "Ion Storm",
+"ar": "عاصفة أيونية"
+}
+]
+}
+]
+}

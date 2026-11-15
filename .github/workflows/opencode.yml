@@ -93,8 +93,13 @@ jobs:
 
       # 🔥 Restore Firebase Config
       - name: Create google-services.json from secret
+        env:
+          FCM_JSON: ${{ secrets.FCM_JSON }}
+          FIREBASE_SERVICES_JSON: ${{ secrets.FIREBASE_SERVICES_JSON }}
         run: |
-          echo "${{ secrets.FIREBASE_SERVICES_JSON }}" | base64 --decode > app/google-services.json
+          # FCM_JSON (base64 of google-services.json, also used for push) wins; the old secret stays as a fallback
+          SRC="${FCM_JSON:-$FIREBASE_SERVICES_JSON}"
+          echo "$SRC" | base64 --decode > app/google-services.json
 
       # 🛠 Setup Android NDK
       - name: Setup Android NDK

@@ -1,0 +1,4 @@
+{"name": "Waterfall Splash", "emitters": [
+  {"img": "smoke", "blend": "alpha", "rate": 16, "life": [2, 2.6], "shape": "box", "shapeSize": [2.5, 0, 0.5], "spread": 50, "speed": [0.5, 1.2], "size": [0.8, 1.8], "sizeCurve": [[0, 0.3], [1, 1]], "rot": [0, 360], "tint": "#ffffff", "alpha": [[0, 0], [0.3, 0.45], [1, 0]]},
+  {"img": "dot", "rate": 60, "life": [0.6, 0.9], "shape": "box", "shapeSize": [2.5, 0, 0.5], "spread": 40, "speed": [1.5, 3], "gravity": [0, -9.8, 0], "size": [0.03, 0.05], "tint": "#e0f4ff", "alpha": [[0, 1], [0.6, 1], [1, 0]]}
+]}

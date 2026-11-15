@@ -1,0 +1,5 @@
+{"name": "Critical Hit", "emitters": [
+  {"img": "glow", "burst": 1, "rate": 0, "loop": true, "duration": 1.5, "life": [0.18, 0.18], "size": [1.4, 1.4], "sizeCurve": [[0, 0.6], [0.3, 1], [1, 0.8]], "tint": [[0, "#ffffff"], [0.4, "#ffe060"]], "alpha": [[0, 1], [1, 0]]},
+  {"img": "star", "burst": 12, "rate": 0, "duration": 1.5, "offset": [0, 1.2, 0], "spread": 180, "speed": [1.5, 2.5], "speedCurve": [[0, 1], [1, 0.1]], "life": [0.5, 0.7], "size": [0.18, 0.26], "rot": [0, 360], "spin": [-360, 360], "tint": [[0, "#fff8c0"], [1, "#ffb000"]], "alpha": [[0, 1], [0.6, 1], [1, 0]], "loop": true},
+  {"img": "spark", "burst": 24, "rate": 0, "loop": true, "duration": 1.5, "life": [0.3, 0.6], "speed": [3, 6], "speedCurve": [[0, 1], [1, 0.3]], "spread": 180, "dir": [0, 1, 0], "size": [0.05, 0.08], "stretch": 0.06, "gravity": [0, -6, 0], "tint": [[0, "#ffffff"], [0.3, "#ff9020"], [1, "#ff9020"]], "alpha": [[0, 1], [0.6, 1], [1, 0]], "offset": [0, 1.2, 0]}
+]}

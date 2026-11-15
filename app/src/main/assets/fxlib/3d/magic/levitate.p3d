@@ -1,0 +1,4 @@
+{"name": "Levitation", "emitters": [
+  {"img": "sparkle", "blend": "add", "rate": 20, "shape": "disc", "shapeSize": [0.7, 0, 0.7], "speed": [0.4, 0.8], "spread": 4, "life": [1.5, 2], "size": [0.1, 0.16], "tint": [[0, "#c0e0ff"], [1, "#c0e0ff"]], "alpha": [[0, 0], [0.2, 1], [0.35, 0.3], [0.55, 1], [0.75, 0.4], [1, 0]], "orbit": [40, 80]},
+  {"img": "glow", "rate": 3, "life": [1.2, 1.2], "offset": [0, 0.05, 0], "size": [1.8, 1.8], "tint": "#4080ff", "alpha": [[0, 0], [0.5, 1], [1, 0]]}
+]}

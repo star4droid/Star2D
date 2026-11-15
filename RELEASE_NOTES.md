@@ -1,3 +1,43 @@
+## Star3D 0.5.8 Beta
+
+### What's new
+
+**Community**
+- A new Community section: post text and pictures, comment, and give stars. Comments work on posts and on Market games, with replies, editing ("edited" is shown) and deleting.
+- Profiles with your picture, your name (unique, you can change it), the number of projects you shared and achievement badges (first upload, first post, first comment, Editor's Choice and more, some given by moderators).
+- Tap a name anywhere (post, comment, Market) to open that person's profile, projects and posts.
+- Mention one of your own Market projects with @ in a post; links in posts are highlighted and ask before opening.
+- Pinned posts and "Editor's Choice" games appear in a strip at the top. Posts and the Market load more pages as you scroll.
+- Notifications: comments on your posts and games (merged into one), replies, stars on your games, Editor's Choice. Read state is kept on your phone. Push notifications are ready, in your notification language (set from the app language; change it in Settings).
+- Moderators (set by the site admin) can edit, delete and pin, give badges, and upload without limits. Report posts, comments, projects and people from the app.
+- Market cards and pages show the author and the star and comment counts.
+
+**Home screen**
+- Redesigned Home tab with big buttons (AI Workspace, Market, Community, Notifications, Profile); the tabs and the top buttons are back, with the engine logo.
+- The Learn page layout is fixed (badge and tag no longer squeezed).
+- The engine is now called **Star3D**.
+
+**3D**
+- New particle effects element for 3D scenes (.p3d effects: billboards, motion stretch, orbit, gravity, curves), with editor preview, properties and blocks; a library of ready effects to pick from.
+
+**Editor**
+- Code editor "Format" button (one undo step).
+- Zombie Cubes example, a Najma on/off switch in Settings, and Arabic names for elements and variables.
+
+**Stability**
+- Build: one lock for all builds, a separate build folder per project, D8 through its API, a "dx" option, safe loading of game code, newer ECJ (Java up to 16) as the default compiler.
+- Logs are organized (editor, build, game, crash) and the app records why it was closed. Games save in their own storage; new block "clear saves".
+- Export compiles first and shows the first error. Fixed native crashes when removing Box2D bodies inside callbacks.
+
+### العربية
+- **المجتمع:** منشورات بنصوص وصور، تعليقات وردود، نجوم على المنشورات وألعاب المتجر، تعديل وحذف التعليقات، ملفات شخصية بالصورة والاسم الفريد وعدد المشاريع والشارات (أول رفع، أول منشور، أول تعليق، اختيار المحررين وغيرها، وبعضها يمنحه المشرفون)، النقر على أي اسم لعرض ملفه، الإشارة إلى مشاريعك في المتجر بـ @، روابط مظللة تسأل قبل الفتح.
+- **التثبيت واختيار المحررين:** منشورات وألعاب مميزة في شريط أعلى الصفحة، وتحميل المزيد عند التمرير.
+- **الإشعارات:** تعليقات وردود ونجوم واختيار المحررين، مدمجة عند التكرار، والقراءة محفوظة على جهازك. الإشعارات الفورية جاهزة بلغة تُعيَّن من لغة التطبيق وتتغير من الإعدادات. إبلاغ عن المنشورات والتعليقات والمشاريع والأشخاص.
+- **الصفحة الرئيسية:** تبويب رئيسي بأزرار كبيرة، عودة التبويبات والأزرار العلوية مع شعار المحرك، وإصلاح صفحة التعلّم. والمحرك الآن باسم **Star3D**.
+- **3D:** عنصر جديد لمؤثرات الجسيمات ثلاثية الأبعاد مع معاينة وخصائص وبلوكات ومكتبة مؤثرات جاهزة.
+- **المحرر:** زر تنسيق الكود، ومثال Zombie Cubes، ومفتاح تفعيل نجمة في الإعدادات، وأسماء عربية للعناصر والمتغيرات.
+- **الثبات:** بناء أكثر استقرارًا، سجلات منظمة، حفظ منفصل للألعاب، تصدير يفحص الأخطاء أولًا، وإصلاح انهيارات Box2D.
+
 ## Star2D 0.5.7 Beta
 
 ### What's new

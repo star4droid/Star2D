@@ -297,7 +297,12 @@ public class Object3D extends Actor implements PlayerItem {
 		look.emissiveIntensity = def.Emissive_Intensity;
 		look.shininess = def.Shininess;
 		String shape = def.Mesh == null ? "" : def.Mesh.toUpperCase();
-		look.doubleSided = def.Double_Sided || Shapes3D.TORUS.equals(shape) || Shapes3D.QUAD.equals(shape) || Shapes3D.DISC.equals(shape) || Shapes3D.PLANE.equals(shape);
+		// A PLANE is a box 0.1 mm thick: it already has a top and a bottom face, so it is never drawn double sided. Drawn
+		// without culling, its lit top face and its dark bottom face were both rasterized 0.1 mm apart, closer than the depth
+		// buffer can tell apart a few meters away: they z-fought in stripes along the screen rows (dark lines over the ground,
+		// one triangle at a time, flickering while the camera moved). With culling only the face turned to the camera exists.
+		boolean plane = Shapes3D.PLANE.equals(shape);
+		look.doubleSided = !plane && (def.Double_Sided || Shapes3D.TORUS.equals(shape) || Shapes3D.QUAD.equals(shape) || Shapes3D.DISC.equals(shape));
 		boolean model = "MODEL".equals(shape);
 		look.tintModel = model && !"#FFFFFF".equalsIgnoreCase(def.Color) && !"#FFFFFFFF".equalsIgnoreCase(def.Color);
 		Materials3D.apply(instance, look, !model || !def.Keep_Model_Material);

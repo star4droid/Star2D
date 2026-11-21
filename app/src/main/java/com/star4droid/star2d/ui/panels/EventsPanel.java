@@ -107,7 +107,8 @@ public class EventsPanel implements PanelHost.Panel {
             if (hasCode(p.getEventPath(scene, "", e.name))) withCode.add(e.name);
         if (sel != null) for (String[] e : BODY_EVENTS) if (hasCode(p.getEventPath(bodyScene, body, e[0]))) withCode.add("body:" + e[0]);
         if (sel != null && Gdx.files.absolute(p.getBodyScriptPath(selName, scene)).exists()) withCode.add("Body Script");
-        if (Gdx.files.absolute(p.getSceneScript(scene)).exists()) withCode.add("Scene Script");
+        String sceneScript = p.getSceneScript(scene);
+        if (Gdx.files.absolute(sceneScript).exists() || Gdx.files.absolute(sceneScript.substring(0, sceneScript.length() - 5) + ".njm").exists()) withCode.add("Scene Script");
         ArrayList<String> scripts = new ArrayList<>();
         FileHandle dir = Gdx.files.absolute(p.get("scripts"));
         if (dir.exists())
@@ -195,6 +196,17 @@ public class EventsPanel implements PanelHost.Panel {
         }
     }
 
+    /** Deletes a script whatever its language: X.java, and X.njm (Najma source, whose X.java is generated) when it exists. */
+    private static void deleteScript(String javaPath) {
+        if (javaPath == null || javaPath.isEmpty()) return;
+        FileHandle j = Gdx.files.absolute(javaPath);
+        if (j.exists()) j.delete();
+        if (javaPath.endsWith(".java")) {
+            FileHandle n = Gdx.files.absolute(javaPath.substring(0, javaPath.length() - 5) + ".njm");
+            if (n.exists()) n.delete();
+        }
+    }
+
     private static boolean hasCode(String path) {
         FileHandle j = Gdx.files.absolute(path + ".java"), v = Gdx.files.absolute(path + ".visual");
         return (j.exists() && j.length() > 0) || (v.exists() && v.length() > 2);
@@ -218,13 +230,23 @@ public class EventsPanel implements PanelHost.Panel {
 
         // scene
         list.addView(Ui.sectionLabel(c, Tr.t("ui_scene_events", "Scene events") + " · " + scene));
-        list.addView(row(c, R.drawable.ic_s2_code, 0xFF26A69A, Tr.t("sceneScript", "Scene Script"),
+        View ss = row(c, R.drawable.ic_s2_code, 0xFF26A69A, Tr.t("sceneScript", "Scene Script"),
                 ar ? "كود جافا للمشهد كاملاً (للمحترفين)." : "Java code for the whole scene (advanced).", withCode.contains("Scene Script"),
                 v -> Bridge.gl(() -> {
                     String sc = Bridge.editor().getScene();
                     String path = Bridge.editor().getProject().getSceneScript(sc);
                     VisualScriptingDialog.openSceneScript(sc, path);
-                })));
+                }));
+        // long press: delete the scene script (asks first). A Najma script is X.njm with its generated X.java: both go.
+        if (withCode.contains("Scene Script")) ss.setOnLongClickListener(v -> {
+            Dialogs.confirm(c, Tr.t("delete", "Delete"), Tr.t("sceneScript", "Scene Script") + " · " + scene + "\n" + Tr.t("areYouSure", "Are you sure?"),
+                    Tr.t("delete", "Delete"), () -> Bridge.gl(() -> {
+                        deleteScript(Bridge.editor().getProject().getSceneScript(Bridge.editor().getScene()));
+                        com.star4droid.star2d.ui.Ui.ui(this::refresh);
+                    }));
+            return true;
+        });
+        list.addView(ss);
         for (String[] e : SCENE_EVENTS) {
             View r = row(c, R.drawable.ic_s2_events, 0xFFFFB300, Tr.t(e[0]), Tr.t("ui_ev_desc_" + e[0], ar ? e[2] : e[1]), withCode.contains(e[0]),
                     v -> VisualScriptingDialog.showFor(e[0], false, false));
@@ -268,8 +290,7 @@ public class EventsPanel implements PanelHost.Panel {
             bs.setOnLongClickListener(v -> {
                 Dialogs.confirm(c, Tr.t("delete", "Delete"), Tr.t("bodyScript", "Body Script") + " · " + sel + "\n" + Tr.t("areYouSure", "Are you sure?"),
                         Tr.t("delete", "Delete"), () -> Bridge.gl(() -> {
-                            FileHandle fh = Gdx.files.absolute(Bridge.editor().getProject().getBodyScriptPath(sel, Bridge.editor().getScene()));
-                            if (fh.exists()) fh.delete();
+                            deleteScript(Bridge.editor().getProject().getBodyScriptPath(sel, Bridge.editor().getScene()));
                             com.star4droid.star2d.ui.Ui.ui(this::refresh);
                         }));
                 return true;

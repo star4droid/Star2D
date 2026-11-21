@@ -62,7 +62,7 @@ public final class BehaviorPickerDialog {
 
 	private static final class VH extends RecyclerView.ViewHolder {
 		TextView title, desc, note;
-		ImageView icon, info;
+		ImageView icon, info, code;
 
 		VH(View v) {
 			super(v);
@@ -76,6 +76,8 @@ public final class BehaviorPickerDialog {
 		final Set<String> already;
 		final Pick pick;
 		AlertDialog dialog;
+		/** Reads the behaviors again (after a copy was added to the project). */
+		Runnable reload;
 		List<BehaviorMeta> all = new ArrayList<>();
 		boolean loading = true;
 		final List<Row> rows = new ArrayList<>();
@@ -227,6 +229,7 @@ public final class BehaviorPickerDialog {
 				adapter.notifyDataSetChanged();
 			}
 		};
+		st.reload = loaded;
 		if (BehaviorCatalog.isWarm()) loaded.run();
 		else {
 			fill(st, filters[st.filter]);
@@ -328,8 +331,15 @@ public final class BehaviorPickerDialog {
 		card.addView(h.note);
 		h.info = BehaviorInfoDialog.button(c, 30, null);
 		FrameLayout.LayoutParams ilp = new FrameLayout.LayoutParams(Ui.dp(c, 30), Ui.dp(c, 30), Gravity.TOP | Gravity.END);
-		ilp.setMargins(0, Ui.dp(c, 2), Ui.dp(c, 2), 0);
+		ilp.topMargin = Ui.dp(c, 2);
+		ilp.setMarginEnd(Ui.dp(c, 2));
 		root.addView(h.info, ilp);
+		// the code button sits beside the (i) button
+		h.code = BehaviorCodeDialog.button(c, 30);
+		FrameLayout.LayoutParams clp = new FrameLayout.LayoutParams(Ui.dp(c, 30), Ui.dp(c, 30), Gravity.TOP | Gravity.END);
+		clp.topMargin = Ui.dp(c, 2);
+		clp.setMarginEnd(Ui.dp(c, 32));
+		root.addView(h.code, clp);
 		return h;
 	}
 
@@ -356,6 +366,8 @@ public final class BehaviorPickerDialog {
 		h.note = Ui.text(c, "", 11, Ui.TEXT_3);
 		txt.addView(h.note);
 		row.addView(txt, Ui.weight(1));
+		h.code = BehaviorCodeDialog.button(c, 36);
+		row.addView(h.code);
 		h.info = BehaviorInfoDialog.button(c, 36, null);
 		row.addView(h.info);
 		return h;
@@ -382,6 +394,7 @@ public final class BehaviorPickerDialog {
 			h.note.setVisibility(View.VISIBLE);
 		} else h.note.setVisibility(View.GONE);
 		h.info.setOnClickListener(v -> BehaviorInfoDialog.show(st.c, st.env, m, null));
+		if (h.code != null) h.code.setOnClickListener(v -> BehaviorCodeDialog.show(st.c, st.env == null ? "" : st.env.projectPath, m, st.reload));
 		h.itemView.setOnClickListener(v -> {
 			st.dialog.dismiss();
 			st.pick.on(m);

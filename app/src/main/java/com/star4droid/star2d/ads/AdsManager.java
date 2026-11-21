@@ -282,6 +282,34 @@ public final class AdsManager {
         ad.show(a);
     }
 
+    // ---- export gate: one full screen (video) ad before an APK export, see ExportAdGate ----
+    public static boolean interstitialReady() { return interstitial != null; }
+
+    /** Starts the SDK if it is not running yet and asks for the full screen ad (no-op when one is ready or loading). */
+    public static void requestInterstitial(Activity a) {
+        try {
+            if (!sdkStarted) init(a);
+            loadInterstitial(a.getApplicationContext());
+        } catch (Throwable ignored) {
+        }
+    }
+
+    /** Shows the loaded full screen ad; {@code onClosed} runs once when it is closed or could not be shown. False = no ad ready. */
+    public static boolean showInterstitialNow(Activity a, Runnable onClosed) {
+        InterstitialAd ad = interstitial;
+        if (ad == null) return false;
+        interstitial = null;
+        lastInterstitial = System.currentTimeMillis();
+        final boolean[] done = {false};
+        final Runnable once = () -> { if (done[0]) return; done[0] = true; loadInterstitial(a.getApplicationContext()); if (onClosed != null) onClosed.run(); };
+        ad.setFullScreenContentCallback(new FullScreenContentCallback() {
+            @Override public void onAdDismissedFullScreenContent() { once.run(); }
+            @Override public void onAdFailedToShowFullScreenContent(AdError e) { lastError = "export ad: " + e.getMessage(); once.run(); }
+        });
+        try { ad.show(a); } catch (Throwable t) { once.run(); }
+        return true;
+    }
+
     // ---- rewarded (optional, Support page) ----
     public static boolean rewardedReady() { return rewarded != null; }
 

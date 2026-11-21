@@ -224,6 +224,10 @@ public class ProjectsHomeView extends FrameLayout {
         grid.addView(ws, wl);
 
         java.util.List<View> tiles = new ArrayList<>();
+        // the pages of the top tabs are home options too (the tabs are icons only and easy to miss)
+        tiles.add(tile(R.drawable.ic_s2_folder, T("home_tab_projects", "Projects"), 0xFF26A69A, 0xFF00695C, false, () -> selectTab(P_PROJECTS)));
+        tiles.add(tile(R.drawable.ic_s2_school, T("home_tab_learn", "Learn"), 0xFF42A5F5, 0xFF1565C0, false, () -> selectTab(P_LEARN)));
+        tiles.add(tile(R.drawable.ic_s2_widgets, T("home_tab_templates", "Templates"), 0xFF66BB6A, 0xFF2E7D32, false, () -> selectTab(P_TEMPLATES)));
         tiles.add(tile(R.drawable.ic_s2_market, T("mk_title", "Market"), 0xFF7C4DFF, 0xFF3F51B5, false, () -> a.startActivity(new Intent(a, com.star4droid.star2d.suda.MarketActivity.class))));
         tiles.add(tile(R.drawable.ic_s2_group, T("sc_community", "Community"), 0xFFEC407A, 0xFFAD1457, false, () -> a.startActivity(new Intent(a, com.star4droid.star2d.suda.CommunityActivity.class))));
         View bell = tile(R.drawable.ic_s2_bell, T("sc_notifications", "Notifications"), 0xFFEF5350, 0xFFB71C1C, false, () -> a.startActivity(new Intent(a, com.star4droid.star2d.suda.NotificationsActivity.class)));

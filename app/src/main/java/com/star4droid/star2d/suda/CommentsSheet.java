@@ -133,6 +133,27 @@ public final class CommentsSheet {
             }
         });
         dlg.getWindow().setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+        // keyboard: on full screen / edge-to-edge windows the sheet is not resized, and the keyboard covered the input. The
+        // part of the sheet under the keyboard becomes bottom padding, so the input bar always sits on top of the keyboard.
+        final View decor = dlg.getWindow().getDecorView();
+        decor.getViewTreeObserver().addOnGlobalLayoutListener(() -> {
+            if (root.getHeight() <= 0) return;
+            android.graphics.Rect vis = new android.graphics.Rect();
+            decor.getWindowVisibleDisplayFrame(vis);
+            int[] loc = new int[2];
+            root.getLocationOnScreen(loc);
+            int bottom = loc[1] + root.getHeight();
+            int over = bottom - vis.bottom;
+            androidx.core.view.WindowInsetsCompat wi = androidx.core.view.ViewCompat.getRootWindowInsets(decor);
+            if (wi != null && wi.isVisible(androidx.core.view.WindowInsetsCompat.Type.ime())) {
+                int[] dl = new int[2];
+                decor.getLocationOnScreen(dl);
+                int imeTop = dl[1] + decor.getHeight() - wi.getInsets(androidx.core.view.WindowInsetsCompat.Type.ime()).bottom;
+                over = Math.max(over, bottom - imeTop);
+            }
+            int pad = over > Ui.dp(a, 80) ? over : 0; // (smaller = navigation bar, not a keyboard)
+            if (pad != root.getPaddingBottom()) root.setPadding(0, 0, 0, pad);
+        });
         paintTitle();
         dlg.show();
         loadTop(true);

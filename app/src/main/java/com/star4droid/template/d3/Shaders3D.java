@@ -108,9 +108,30 @@ public final class Shaders3D {
 				+ "varying SHP vec3 v_shadowMapUv;\n#define separateAmbientFlag\n"
 				+ "float getShadowness(vec2 offset)\n{\n"
 				+ "\tconst SHP vec4 bitShifts = vec4(1.0, 1.0 / 255.0, 1.0 / 65025.0, 1.0 / 16581375.0);\n"
-				+ "\tSHP float stored = dot(texture2D(u_shadowTexture, v_shadowMapUv.xy + offset), bitShifts);\n"
-				+ "\treturn step(v_shadowMapUv.z, stored);\n}\n\n";
+				+ "\tSHP vec2 suv = v_shadowMapUv.xy + offset;\n"
+				+ "\tSHP float stored = dot(texture2D(u_shadowTexture, suv), bitShifts);\n"
+				+ SHADOW_EDGE
+				+ "\treturn max(step(v_shadowMapUv.z, stored), sfade);\n}\n\n";
 		return f.substring(0, a) + body + f.substring(b);
+	}
+
+	/**
+	 * Outside the shadow map there is no shadow. Without this the lookup was clamped to the border texels of the map: every
+	 * point beyond the shadow area compared its depth with a texel of the border, which lit and shadowed the ground in
+	 * stripes one texel wide (and in big dark blocks farther away) that crawled while the camera moved. The shadow fades out
+	 * over the last 8% of the map so its end is not a hard line.
+	 */
+	static final String SHADOW_EDGE = "\tSHP vec2 sedge = abs(suv - 0.5) * 2.0;\n"
+			+ "\tfloat sfade = smoothstep(0.90, 0.98, max(sedge.x, sedge.y));\n";
+
+	/** The same border rule for the PBR shader of gdx-gltf (its lookup is one line). */
+	static String shadowEdgePbr(String f) {
+		String orig = "return step(v_shadowMapUv.z, dot(texture2D(u_shadowTexture, v_shadowMapUv.xy + offset), bitShifts) + u_shadowBias);";
+		if (f == null || !f.contains(orig)) return f;
+		return f.replace(orig, "vec2 suv = v_shadowMapUv.xy + offset;\n"
+				+ "    vec2 sedge = abs(suv - 0.5) * 2.0;\n"
+				+ "    float sfade = smoothstep(0.90, 0.98, max(sedge.x, sedge.y));\n"
+				+ "    return max(step(v_shadowMapUv.z, dot(texture2D(u_shadowTexture, suv), bitShifts) + u_shadowBias), sfade);");
 	}
 
 	/** Number of spot lights of the SIMPLE / SOFT / TOON shaders (= DefaultShader.Config.numSpotLights). */
@@ -265,6 +286,10 @@ public final class Shaders3D {
 		c.numPointLights = 4;
 		c.numSpotLights = 2;
 		c.numBones = NUM_BONES;
+		try {
+			c.fragmentShader = shadowEdgePbr(c.fragmentShader != null ? c.fragmentShader : PBRShaderProvider.getDefaultFragmentShader());
+		} catch (Throwable ignored) {
+		}
 		return new PbrProvider(c);
 	}
 

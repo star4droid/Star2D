@@ -82,9 +82,16 @@ public final class PostView {
                 mo.setPadding(0, Ui.dp(a, 2), 0, Ui.dp(a, 4));
                 mo.setVisibility(View.GONE);
                 card.addView(mo);
-                t.post(() -> {
-                    android.text.Layout l = t.getLayout();
-                    if (l != null && l.getLineCount() >= 3 && l.getEllipsisCount(l.getLineCount() - 1) > 0) mo.setVisibility(View.VISIBLE);
+                // "See more" appears when the whole text needs more than 3 lines at the card's width. It is measured from the
+                // full text every time the width is known (a card in the list has no layout yet when it is bound, and a
+                // 3-line ellipsized layout does not always report its ellipsis).
+                t.addOnLayoutChangeListener((v, l1, t1, r1, b1, l2, t2, r2, b2) -> {
+                    int w = t.getWidth() - t.getPaddingLeft() - t.getPaddingRight();
+                    if (w <= 0 || t.getMaxLines() > 3) return;
+                    CharSequence cs = t.getText();
+                    int lines = new android.text.StaticLayout(cs, t.getPaint(), w, android.text.Layout.Alignment.ALIGN_NORMAL, 1.12f, 0f, true).getLineCount();
+                    int want = lines > 3 ? View.VISIBLE : View.GONE;
+                    if (mo.getVisibility() != want) mo.post(() -> mo.setVisibility(want));
                 });
                 mo.setOnClickListener(v -> {
                     boolean open = t.getMaxLines() > 3;
@@ -143,13 +150,41 @@ public final class PostView {
         return card;
     }
 
+    /** Full screen picture: a real full-size window (an AlertDialog wrapped its content, so the picture had no height and the
+     *  screen stayed black), a spinner while it loads, a message if it fails, tap or back to close. */
     static void showImage(Activity a, String url) {
+        android.app.Dialog d = new android.app.Dialog(a, android.R.style.Theme_Black_NoTitleBar_Fullscreen);
+        android.widget.FrameLayout f = new android.widget.FrameLayout(a);
+        f.setBackgroundColor(0xFF000000);
         ImageView iv = new ImageView(a);
-        iv.setBackgroundColor(0xFF000000);
         iv.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        Glide.with(a).load(url).into(iv);
-        AlertDialog d = new AlertDialog.Builder(a, android.R.style.Theme_Black_NoTitleBar_Fullscreen).setView(iv).create();
-        iv.setOnClickListener(v -> d.dismiss());
+        f.addView(iv, new android.widget.FrameLayout.LayoutParams(-1, -1));
+        android.widget.ProgressBar pb = new android.widget.ProgressBar(a);
+        f.addView(pb, new android.widget.FrameLayout.LayoutParams(Ui.dp(a, 44), Ui.dp(a, 44), Gravity.CENTER));
+        TextView err = Ui.text(a, Tr.t("sc_image_failed", "Could not load the picture."), 14, 0xFFCCCCCC);
+        err.setGravity(Gravity.CENTER);
+        err.setVisibility(View.GONE);
+        f.addView(err, new android.widget.FrameLayout.LayoutParams(-2, -2, Gravity.CENTER));
+        ImageView close = Ui.iconButton(a, R.drawable.ic_s2_close, Tr.t("close", "Close"), v -> d.dismiss());
+        android.widget.FrameLayout.LayoutParams clp = new android.widget.FrameLayout.LayoutParams(Ui.dp(a, 44), Ui.dp(a, 44), Gravity.TOP | Gravity.END);
+        clp.topMargin = Ui.dp(a, 28);
+        clp.setMarginEnd(Ui.dp(a, 8));
+        f.addView(close, clp);
+        f.setOnClickListener(v -> d.dismiss());
+        d.setContentView(f, new android.view.ViewGroup.LayoutParams(-1, -1));
+        if (d.getWindow() != null) d.getWindow().setLayout(-1, -1);
+        Glide.with(a.getApplicationContext()).load(url).listener(new com.bumptech.glide.request.RequestListener<android.graphics.drawable.Drawable>() {
+            @Override public boolean onLoadFailed(com.bumptech.glide.load.engine.GlideException e, Object model, com.bumptech.glide.request.target.Target<android.graphics.drawable.Drawable> target, boolean first) {
+                pb.setVisibility(View.GONE);
+                err.setVisibility(View.VISIBLE);
+                return false;
+            }
+
+            @Override public boolean onResourceReady(android.graphics.drawable.Drawable res, Object model, com.bumptech.glide.request.target.Target<android.graphics.drawable.Drawable> target, com.bumptech.glide.load.DataSource src, boolean first) {
+                pb.setVisibility(View.GONE);
+                return false;
+            }
+        }).into(iv);
         d.show();
     }
 

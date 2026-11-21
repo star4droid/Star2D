@@ -82,6 +82,8 @@ android {
     sourceSets {
         main {
             jniLibs.srcDirs = ['libs']
+            // sources of the built-in behaviors (the "<>" button of the behavior list shows them): see copyBehaviorSources
+            assets.srcDirs += [layout.buildDirectory.dir('generated/behaviorSrc').get().asFile]
         }
     }
     compileOptions {
@@ -188,6 +190,15 @@ dependencies {
 // Called every time gradle gets executed, takes the native dependencies of
 // the natives configuration, and extracts them to the proper libs/ folders
 // so they get packed with the APK.
+// The Java sources of the built-in behaviors go into the assets (behavior_src/Name.java) so the editor can show the code of
+// a behavior and copy it into the project as a new one. Copied at build time: one source of truth, nothing duplicated in git.
+tasks.register('copyBehaviorSources', Copy) {
+    from 'src/main/java/com/star4droid/template/behaviors/lib'
+    include '*.java'
+    into layout.buildDirectory.dir('generated/behaviorSrc/behavior_src')
+}
+tasks.named('preBuild') { dependsOn 'copyBehaviorSources' }
+
 tasks.register('copyAndroidNatives') {
     doFirst {
         file("libs/armeabi-v7a/").mkdirs()

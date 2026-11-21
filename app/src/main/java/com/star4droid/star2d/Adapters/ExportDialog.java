@@ -183,8 +183,12 @@ public class ExportDialog {
 			sh.edit().putBoolean(project+"-arm",arm.isChecked()).putBoolean(project+"-merge",merge.isChecked()).apply();
 			ExportThread.mergeTilesets = merge.isChecked();
 			ExportThread.armOnly = arm.isChecked();
-			new ExportThread(context,project,savePath,imgPath,data).start();
+			final String iconPath = imgPath;
+			final Runnable export = () -> new ExportThread(context,project,savePath,iconPath,data).start();
 			dialog.dismiss();
+			// a short ad first (5 s countdown, never blocking: see ExportAdGate)
+			if(context instanceof android.app.Activity) com.star4droid.star2d.ads.ExportAdGate.run((android.app.Activity)context,export);
+			else export.run();
 		});
 		LinearLayout.LayoutParams gp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,Ui.dp(context,42));
 		gp.setMarginStart(Ui.dp(context,10));

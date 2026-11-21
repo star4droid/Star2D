@@ -1475,6 +1475,8 @@ public class LibgdxEditor extends Stage {
 				selectedActor.setDebug(false);
 				Gdx.gl.glLineWidth(1f);
 			}
+			// camera preview window (scene tools): on top of everything
+			try { com.star4droid.star2d.editor.three.CameraPreview3D.render(e3d); } catch(Throwable t){ Gdx.app.error("Star2D-3D", "camera preview: "+t); }
 			return;
 		}
 		shapeRenderer.setProjectionMatrix(rendererMatrix);
@@ -1552,6 +1554,8 @@ public class LibgdxEditor extends Stage {
 		// path finding grids on top of everything (outline + badge, cells of the selected one)
 		if(e3d==null) try { EditorNavGridItem.drawAll(this,shapeRenderer,getBatch()); } catch(Throwable t){ Gdx.app.error("Star2D","navgrid draw: "+t); }
 		if(e3d==null) try { pathDraw.draw2D(shapeRenderer,camera); } catch(Throwable t){ Gdx.app.error("Star2D","path draw: "+t); }
+		// 3D scene while its 2D layer is edited on the plain canvas: the camera preview window still shows the 3D world
+		if(e3d!=null) try { com.star4droid.star2d.editor.three.CameraPreview3D.render(e3d); } catch(Throwable t){ Gdx.app.error("Star2D-3D", "camera preview: "+t); }
 	}
 	
 	// ---- scene frame (dashed orange + light grey stroke), constant on screen: widths and dash length are in screen pixels ----

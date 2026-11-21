@@ -234,6 +234,7 @@ public class EditorShell extends FrameLayout implements ControlLayer.NativeUi, T
         // middle: canvas is visible through here; rails float on the sides
         FrameLayout middle = new FrameLayout(c);
         root.addView(middle, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
+        cameraPreview().attach(middle); // under the bars, so they never cover it
 
         LinearLayout rail = buildRail(c);
         FrameLayout.LayoutParams rlp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -401,6 +402,16 @@ public class EditorShell extends FrameLayout implements ControlLayer.NativeUi, T
         color.setImageTintList(ColorStateList.valueOf(0xFFFFB74D));
         Tut.tag(color, "tool:color");
         into.addView(color);
+        // 3D scenes: a small window that shows what a scene camera sees (tap again to close it)
+        cameraBtn = Ui.iconButton(c, R.drawable.ic_s2_videocam, Tr.t("cprev_title", "Camera preview"), v -> {
+            cameraPreview().toggle();
+            paintCameraBtn();
+        });
+        Tut.tag(cameraBtn, "tool:camera_preview");
+        into.addView(cameraBtn);
+        paintCameraBtn();
+        cameraBtn.setVisibility(GONE); // shown by refresh3DButtons in a 3D scene
+        if (Bridge.ready()) post(this::refresh3DButtons);
         ImageView light = Ui.iconButton(c, R.drawable.ic_s2_light, Tr.t("lightSettings", "Light settings"), v -> Bridge.query(() -> Bridge.editor().is3DScene(), is3d -> {
             if (is3d) Scene3DSettings.show(activity);
             else LightSettings.show(activity);
@@ -555,14 +566,33 @@ public class EditorShell extends FrameLayout implements ControlLayer.NativeUi, T
     private ImageView layerBtn, view3dBtn;
 
     /** Shows the 3D buttons only in 3D scenes; the layer button's icon says what is being edited. */
+    private ImageView cameraBtn;
+    private CameraPreviewWindow cameraPreview;
+
+    private CameraPreviewWindow cameraPreview() {
+        if (cameraPreview == null) cameraPreview = new CameraPreviewWindow(activity);
+        return cameraPreview;
+    }
+
+    private void paintCameraBtn() {
+        if (cameraBtn == null) return;
+        boolean on = cameraPreview != null && cameraPreview.isOpen();
+        cameraBtn.setSelected(on);
+        cameraBtn.setImageTintList(ColorStateList.valueOf(on ? 0xFFFFB74D : 0xFFB0BEC5));
+        cameraBtn.setBackground(on ? Ui.ripple(0x33FFB74D, Ui.dp(activity, 10)) : Ui.ripple(0, Ui.dp(activity, 10)));
+    }
+
     public void refresh3DButtons() {
         if (!Bridge.ready()) return;
         Bridge.query(() -> {
             com.star4droid.star2d.editor.three.Editor3D e = Bridge.editor() == null ? null : Bridge.editor().get3D();
             return e == null ? 0 : (e.edit2D ? 2 : 1);
         }, st -> {
-            if (layerBtn == null || view3dBtn == null) return;
             int vis = st == null || st == 0 ? GONE : VISIBLE;
+            // the camera preview is for 3D scenes only (a 2D scene closes it)
+            if (cameraBtn != null) cameraBtn.setVisibility(vis);
+            if (vis == GONE && cameraPreview != null && cameraPreview.isOpen()) { cameraPreview.setOpen(false); paintCameraBtn(); }
+            if (layerBtn == null || view3dBtn == null) return;
             layerBtn.setVisibility(vis);
             view3dBtn.setVisibility(vis);
             if (st != null && st == 2) {

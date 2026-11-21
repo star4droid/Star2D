@@ -600,8 +600,13 @@ public class Editor3D {
 	private float gizmoLen;
 
 	private boolean gizmoFrame() {
+		return gizmoFrame(false);
+	}
+
+	/** @param marker true = also in select mode (the plain axis lines that show what is selected) */
+	private boolean gizmoFrame(boolean marker) {
 		Editor3DItem it = selected3D();
-		if (it == null || "GRID".equals(mode())) return false;
+		if (it == null || (!marker && "GRID".equals(mode()))) return false;
 		origin.set(it.px(), it.py(), it.pz());
 		if (it.obj != null && it.obj.instance != null) it.obj.center(origin);
 		gizmoLen = cam.position.dst(origin) * 0.18f;
@@ -613,7 +618,25 @@ public class Editor3D {
 		return true;
 	}
 
+	/**
+	 * Select mode: the three axes of the move gizmo as plain lines (no arrow heads, no center box, nothing to grab), so a
+	 * selected element shows even without a collider or an outline (an empty, a particle effect, a light, a camera...).
+	 */
+	private void drawSelectionMarker() {
+		if (!gizmoFrame(true)) return;
+		Gdx.gl.glLineWidth(3f);
+		shapes.begin(ShapeRenderer.ShapeType.Line);
+		for (int i = 0; i < 3; i++) {
+			shapes.setColor(AXIS_COLORS[i]);
+			tmp.set(axes[i]).scl(gizmoLen).add(origin);
+			shapes.line(origin, tmp);
+		}
+		shapes.end();
+		Gdx.gl.glLineWidth(1f);
+	}
+
 	private void drawGizmo() {
+		if ("GRID".equals(mode())) { drawSelectionMarker(); return; }
 		if (!gizmoFrame()) return;
 		String m = mode();
 		Gdx.gl.glLineWidth(4f);
@@ -1023,6 +1046,7 @@ public class Editor3D {
 	}
 
 	public void dispose() {
+		CameraPreview3D.dispose();
 		world.dispose();
 		shapes.dispose();
 		screen.dispose();

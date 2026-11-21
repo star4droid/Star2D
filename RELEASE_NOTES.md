@@ -1,3 +1,40 @@
+## Star3D 0.5.9 Beta
+
+### What's new
+
+**3D editor**
+- Camera preview: a camera button in the scene tools opens a small window that shows what a scene camera sees, updated live while you move the camera or change its properties. Tap its name to choose another camera, drag it anywhere, and drag an edge or a corner to resize it. It remembers its place, size and camera.
+- A selected 3D element now always shows its three axes in select mode, even without a collider.
+- Fixed the flickering stripes on 3D floors (Plane elements) and the shadow stripes far from the camera.
+- Fixed a crash when adding a Camera View.
+
+**Behaviors**
+- A code button beside (i) in the behavior list shows the code of the behavior, with "Add as a new behavior" to copy it into your project and edit it.
+
+**Events**
+- Long press on Scene Script to delete it (Java or Najma), after a confirmation.
+
+**Community**
+- Pictures open full screen (they showed a black screen).
+- "See more" appears on long posts.
+- The keyboard no longer covers the comment box.
+
+**Home screen**
+- Projects, Learn and Templates are also buttons on the home screen.
+
+**Export**
+- A short ad before an APK export, with a 5 second countdown. If no ad loads you can wait again or export without an ad (no internet needed).
+
+### العربية
+- **محرر 3D:** معاينة الكاميرا، نافذة صغيرة تعرض ما تراه كاميرا المشهد وتتحدث مباشرة عند تحريكها أو تغيير خصائصها، مع قائمة لاختيار الكاميرا، وسحب لتحريكها وتغيير حجمها، وتحفظ مكانها وحجمها.
+- العنصر 3D المحدد يُظهر محاوره الثلاثة في وضع التحديد حتى بلا كولايدر.
+- إصلاح الخطوط المتقطعة على الأرضيات وخطوط الظلال البعيدة، وإصلاح انهيار إضافة Camera View.
+- **السلوكيات:** زر الكود بجانب (i) يعرض كود السلوك، مع «إضافة كسلوك جديد» لنسخه إلى مشروعك وتعديله.
+- **الأحداث:** الضغط المطوّل على Scene Script يحذفه بعد التأكيد (جافا أو نجمة).
+- **المجتمع:** الصور تفتح بملء الشاشة، «عرض المزيد» للمنشورات الطويلة، والكيبورد لم يعد يغطي حقل التعليق.
+- **الصفحة الرئيسية:** المشاريع والتعلّم والقوالب صارت أزرارًا في الصفحة الرئيسية.
+- **التصدير:** إعلان قصير قبل تصدير APK بعدّ تنازلي 5 ثوانٍ، وإن لم يُحمَّل يمكنك الانتظار مجددًا أو التصدير بدون إعلان.
+
 ## Star3D 0.5.8 Beta
 
 ### What's new

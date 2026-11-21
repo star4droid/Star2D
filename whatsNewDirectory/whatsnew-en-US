@@ -1,6 +1,7 @@
-New: Community, post, comment and give stars to games. Profiles and badges, notifications, and Editor's Choice.
-New: Market to share and download projects and games.
-New: Najma, write game code in Arabic.
-New: smart path finding, Timeline animation, Wi-Fi multiplayer.
-New: 3D particle effects and a code Format button.
-Redesigned home screen. The engine is now Star3D. More stable builds.
+New: Camera preview in 3D scenes: see what any camera sees, live, in a window you can move and resize.
+New: View the code of any behavior and add it to your project as a new one.
+Selected 3D elements now always show their axes.
+Fixed flickering stripes on 3D floors and shadows.
+Fixed a crash when adding a Camera View.
+Community: pictures open full screen, "See more" for long posts, the keyboard no longer hides the comment box.
+Projects, Learn and Templates on the home screen.

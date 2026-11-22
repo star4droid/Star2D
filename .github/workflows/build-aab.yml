@@ -24,6 +24,16 @@ on:
         type: boolean
         required: true
         default: false
+      upload_to_itch:
+        description: 'Upload APK to itch.io?'
+        type: boolean
+        required: true
+        default: false
+      itch_channel:
+        description: 'itch.io channel (a name containing "android" marks the file as Android on the game page)'
+        type: string
+        required: false
+        default: 'android'
       patch_base_artifact:
         description: 'Patch base (optional): link of an older build APK artifact (https://github.com/<owner>/<repo>/actions/runs/<run>/artifacts/<id>). Empty = the latest release APK. The patch is always uploaded to this run artifacts'
         type: string
@@ -159,6 +169,33 @@ jobs:
           body_path: release-body.md
           generate_release_notes: false
           files: Star2D-${{ env.VERSION_NAME }}.apk
+
+      # 🎮 Upload APK to itch.io if requested (secrets: BUTLER_API_KEY, ITCH_USERNAME, ITCH_GAME_ID)
+      - name: Prepare itch.io upload
+        if: ${{ github.event.inputs.upload_to_itch == 'true' }}
+        env:
+          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+          ITCH_USERNAME: ${{ secrets.ITCH_USERNAME }}
+          ITCH_GAME_ID: ${{ secrets.ITCH_GAME_ID }}
+        run: |
+          MISSING=""
+          [ -z "$BUTLER_API_KEY" ] && MISSING="$MISSING BUTLER_API_KEY"
+          [ -z "$ITCH_USERNAME" ] && MISSING="$MISSING ITCH_USERNAME"
+          [ -z "$ITCH_GAME_ID" ] && MISSING="$MISSING ITCH_GAME_ID"
+          if [ -n "$MISSING" ]; then echo "::error::Missing repository secrets for itch.io:$MISSING"; exit 1; fi
+          mkdir -p itch-upload
+          cp "Star2D-$VERSION_NAME.apk" itch-upload/
+
+      - name: Upload APK to itch.io
+        if: ${{ github.event.inputs.upload_to_itch == 'true' }}
+        uses: KikimoraGames/itch-publish@v0.0.3
+        with:
+          butlerApiKey: ${{ secrets.BUTLER_API_KEY }}
+          gameData: ./itch-upload
+          itchUsername: ${{ secrets.ITCH_USERNAME }}
+          itchGameId: ${{ secrets.ITCH_GAME_ID }}
+          buildChannel: ${{ github.event.inputs.itch_channel || 'android' }}
+          buildNumber: ${{ env.VERSION_NAME }}
 
       # 📥 Optional patch base: the APK inside an artifact of an older run (the link typed in "patch_base_artifact")
       - name: Download the patch base APK from an artifact

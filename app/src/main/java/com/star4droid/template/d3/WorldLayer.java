@@ -59,9 +59,11 @@ public final class WorldLayer {
 		return v;
 	}
 
-	/** Position, rotation and scale of the element as one matrix. */
+	/** Position, rotation and scale of the element as one matrix (with its anchor). */
 	private static Matrix4 placement(Object3D o) {
-		return m.set(o.position, o.rotation, o.scale);
+		m.set(o.position, o.rotation, o.scale);
+		if (o.hasAnchor()) m.translate(-o.d().Anchor_X, -o.d().Anchor_Y, -o.d().Anchor_Z);
+		return m;
 	}
 
 	/** Draws every visible WORLD element (call after the sky, before the scene's models). */

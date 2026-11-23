@@ -1,0 +1,57 @@
+shatter_cells|Cellules|Des éclats aux bords lumineux partent un par un
+shatter_fall|Chute|Se brise du haut vers le bas
+shatter_burst|Explosion|Des morceaux projetés vers l'extérieur (déplace les sommets)
+shatter_tri|Triangles|Éclats triangulaires aux contours brillants
+shatter_voxel|Voxels|Se brise en petits cubes qui disparaissent
+shatter_crack_glow|Fissures lumineuses|Des fissures qui s'ouvrent et brillent (amount = dégâts)
+shatter_glass_break|Verre brisé|Verre teinté qui se fissure et tombe en morceaux
+evaporate_up|Montée|S'élève en traînées de vapeur
+evaporate_dissolve_burn|Dissolution brûlante|Se dissout avec un bord en feu et des contours carbonisés
+evaporate_dissolve_stars|Dissolution étoilée|Se dissout en poussière scintillante
+evaporate_dust_away|Poussière|Emporté comme de la poussière par le vent (déplace les sommets)
+evaporate_melt|Fonte|Fond et coule vers le bas (déplace les sommets)
+evaporate_teleport_scan|Téléportation|Découpé en bandes de lumière mobiles
+evaporate_ash_fade|Cendres|Devient cendre grise puis s'effrite avec de petites braises
+evaporate_wipe_noise|Balayage|Disparition dans une direction avec un front lumineux irrégulier
+evaporate_screen_door|Trame|Transparence en points (très rapide)
+evaporate_materialize_grid|Grille|D'abord une grille de fils, puis la surface se remplit
+evaporate_soul_absorb|Absorption|Aspiré vers son centre en s'effaçant (déplace les sommets)
+glass_tint|Teinte|Clair au milieu, brillant sur les bords
+glass_rainbow_s|Arc-en-ciel|Les couleurs changent avec l'angle de vue
+glass_bubble_s|Bulle|Fin film irisé en mouvement
+glass_crystal|Cristal|Cristal à facettes aux reflets nets
+glass_holo_scan|Hologramme|Lignes de balayage, scintillement et bord lumineux
+glass_holo_glitch|Hologramme brouillé|Hologramme avec des sauts de brouillage (déplace les sommets)
+glass_ghost_spirit|Esprit|Lueur douce et transparente qui pulse
+glass_ghost_cloak|Cape d'invisibilité|Presque invisible, contour scintillant
+glass_forcefield|Champ de force|Hexagones, bord lumineux et anneaux mobiles
+glass_jelly|Gelée|Transparent et rebondissant (déplace les sommets)
+glass_xray_rim|Rayons X|Silhouette aux rayons X, de n'importe quelle couleur
+fantasy_fire_body|Corps de feu|Un corps fait de flammes montantes
+fantasy_magma|Magma|Roche sombre aux fissures lumineuses qui coulent
+fantasy_ice_frost|Givre|Éclat froid, veines de givre et paillettes
+fantasy_freeze_sweep|Gel|Le givre s'étend sur la surface
+fantasy_petrify|Pétrification|Se change en pierre à partir d'un front qui avance
+fantasy_shine_sweep|Reflet|Une bande brillante glisse sur la surface
+fantasy_electric|Électricité|Des arcs électriques rampent sur la surface
+fantasy_plasma|Plasma|Couleurs de plasma en mouvement
+fantasy_galaxy|Galaxie|Corps spatial étoilé avec une nébuleuse mouvante
+fantasy_aura_shell|Aura|Une coque d'énergie lumineuse autour de la forme (déplace les sommets)
+fantasy_rune_glow|Runes|Des runes anciennes pulsent sur une pierre sombre
+fantasy_portal_swirl|Portail|Tourbillon en rotation (idéal sur QUAD, DISC ou PLANE)
+fantasy_toxic_bubbles|Bulles toxiques|Surface liquide qui bouillonne
+fantasy_hit_flash|Flash d'impact|Clignote d'une couleur vive (amount = force, 0 = clignote sans arrêt)
+fantasy_rainbow_flow|Flux arc-en-ciel|Des bandes arc-en-ciel coulent sur la forme
+fantasy_toon_neon|Toon néon|Ombrage cartoon avec un bord néon
+fantasy_void_neon|Néant néon|Corps noir avec un bord néon bicolore et des points de trame
+fantasy_energy_veins|Veines d'énergie|Des veines d'énergie lumineuses pulsent dans le corps
+fantasy_energy_bands|Bandes d'énergie|Des bandes de lumière montent le long de la forme
+fantasy_matrix_rain|Pluie numérique|Pluie numérique de symboles lumineux
+fantasy_glitch|Glitch|Des bandes sautent sur le côté et séparent les couleurs (déplace les sommets)
+fantasy_wind_sway|Balancement|Se balance au vent, plus fort en haut (plantes, drapeaux, cheveux) (déplace les sommets)
+fantasy_heartbeat|Battement|Pulsation avec un bord lumineux (déplace les sommets)
+fantasy_water_caustics|Caustiques|Reflets de lumière comme sous l'eau
+fantasy_halftone_toon|Bande dessinée|Ombrage de bande dessinée avec des points imprimés
+fantasy_selection_glow|Halo de sélection|Halo doux qui pulse autour d'un objet choisi ou important
+fantasy_lightning_rim|Bord d'éclairs|Des éclairs crépitent autour des bords
+fantasy_curse_smoke|Fumée maudite|Fumée sombre qui rampe sur le corps avec une lueur colorée

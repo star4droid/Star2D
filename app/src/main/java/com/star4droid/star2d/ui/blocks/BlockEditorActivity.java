@@ -1617,6 +1617,13 @@ public class BlockEditorActivity extends AppCompatActivity implements BlockCanva
             // ids of the inner elements of the .ui files of the project
             ArrayList<String> s = uiNodeIds();
             if (!s.isEmpty()) out.put(Tr.t("blk_ui_nodes", "UI elements"), s);
+        } else if (t.equals("prefab")) {
+            // prefabs of the project (prefabs folder, paths without .prefab)
+            ArrayList<String> s = new ArrayList<>();
+            try {
+                s.addAll(com.star4droid.star2d.prefab.PrefabStore.list(new com.star4droid.star2d.Helpers.editor.Project(projectKey)));
+            } catch (Throwable ignored) {}
+            out.put(Tr.t("prefabs", "Prefabs"), s);
         } else if (t.equals("behavior")) {
             ArrayList<String> s = new ArrayList<>();
             try {

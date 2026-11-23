@@ -179,6 +179,28 @@ public class Editor3D {
 		updateCamera();
 	}
 
+	// ------------------------------------------------------------------ camera glide (pivot editing)
+
+	private final Vector3 flyFrom = new Vector3(), flyGoal = new Vector3();
+	private float flyFromDist, flyGoalDist, flyT = 1f;
+
+	/** Glides the orbit camera to look at {@code at} from {@code dist} meters (keeps the viewing angle). */
+	public void flyTo(Vector3 at, float dist) {
+		flyFrom.set(target);
+		flyFromDist = distance;
+		flyGoal.set(at);
+		flyGoalDist = MathUtils.clamp(dist, 1f, 400f);
+		flyT = 0f;
+	}
+
+	private void stepFly(float dt) {
+		if (flyT >= 1f) return;
+		flyT = Math.min(1f, flyT + dt / 0.5f);
+		float k = com.badlogic.gdx.math.Interpolation.smooth.apply(flyT);
+		target.set(flyFrom).lerp(flyGoal, k);
+		distance = MathUtils.lerp(flyFromDist, flyGoalDist, k);
+	}
+
 	public Editor3DItem selected3D() {
 		Actor a = editor.getSelectedActor();
 		return a instanceof Editor3DItem ? (Editor3DItem) a : null;
@@ -211,6 +233,7 @@ public class Editor3D {
 
 	public void render() {
 		float dt = Math.min(0.05f, Gdx.graphics.getDeltaTime());
+		stepFly(dt);
 		updateCamera();
 		Object[] gameQuality = Quality3D.snapshot();
 		Quality3D.setLevel(editorQuality, false);
@@ -254,7 +277,8 @@ public class Editor3D {
 			shapes.setProjectionMatrix(cam.combined);
 			terrain.drawCursor(shapes);
 			Gdx.gl.glDisable(GL20.GL_DEPTH_TEST);
-		} else if (colliderEdit) drawColliderHandles(sel);
+		} else if (pivotEditing()) drawPivot();
+		else if (colliderEdit) drawColliderHandles(sel);
 		else drawGizmo();
 		Gdx.gl.glEnable(GL20.GL_BLEND);
 	}
@@ -461,7 +485,9 @@ public class Editor3D {
 			cen[axis] += sign * (nh - half[axis]);
 			cs[axis] = Math.max(0.001f, 2f * nh / Math.max(1e-4f, size[axis] * sc[axis]));
 		}
-		if (!mesh) for (int a = 0; a < 3; a++) off[a] = cen[a] - bc[a] * sc[a] * cs[a];
+		// cen is around the anchor (colliderBox subtracts anchor * scale): the offset is stored around the model's origin
+		float[] anc = {def.Anchor_X * sc[0], def.Anchor_Y * sc[1], def.Anchor_Z * sc[2]};
+		if (!mesh) for (int a = 0; a < 3; a++) off[a] = cen[a] + anc[a] - bc[a] * sc[a] * cs[a];
 		for (int a = 0; a < 3; a++) {
 			ps.put(COLLIDER_KEYS[a], String.valueOf(MathUtils.round(cs[a] * 1000f) / 1000f));
 			ps.put(COLLIDER_KEYS[a + 3], String.valueOf(MathUtils.round(off[a] * 1000f) / 1000f));
@@ -608,7 +634,8 @@ public class Editor3D {
 		Editor3DItem it = selected3D();
 		if (it == null || (!marker && "GRID".equals(mode()))) return false;
 		origin.set(it.px(), it.py(), it.pz());
-		if (it.obj != null && it.obj.instance != null) it.obj.center(origin);
+		// the gizmo sits on the anchor when the element has one (it turns around it), else on the model's center
+		if (it.obj != null && it.obj.instance != null && !it.obj.hasAnchor()) it.obj.center(origin);
 		gizmoLen = cam.position.dst(origin) * 0.18f;
 		boolean local = (localAxes || "SCALE".equals(mode())) && it.obj != null;
 		axes[0].set(1, 0, 0);
@@ -681,6 +708,103 @@ public class Editor3D {
 		}
 	}
 
+	// ------------------------------------------------------------------ pivot (anchor) editing
+
+	private int pivotAxis = -1;
+	private final Vector3 pv = new Vector3(), pa = new Vector3();
+	private float pivotLen;
+
+	private boolean pivotEditing() {
+		return editor.pivotEdit.active() && editor.pivotEdit.is3D();
+	}
+
+	/** The element's box (its own bounds, turned and scaled like it) and the anchor with its three arrows. */
+	private void drawPivot() {
+		com.star4droid.star2d.editor.PivotEdit pe = editor.pivotEdit;
+		com.star4droid.template.d3.Object3D o = pe.object3D();
+		com.badlogic.gdx.math.collision.BoundingBox b = pe.bounds3D();
+		if (o == null || b == null) return;
+		pe.anchorWorld(pv);
+		pivotLen = cam.position.dst(pv) * 0.16f;
+		Gdx.gl.glLineWidth(2f);
+		shapes.begin(ShapeRenderer.ShapeType.Line);
+		shapes.setColor(pe.bounds ? new Color(0.35f, 0.85f, 1f, 0.9f) : new Color(0.7f, 0.7f, 0.7f, 0.6f));
+		Vector3[] c = new Vector3[8];
+		for (int i = 0; i < 8; i++)
+			c[i] = new Vector3((i & 1) == 0 ? b.min.x : b.max.x, (i & 2) == 0 ? b.min.y : b.max.y, (i & 4) == 0 ? b.min.z : b.max.z).mul(o.transform);
+		int[][] e = {{0, 1}, {2, 3}, {4, 5}, {6, 7}, {0, 2}, {1, 3}, {4, 6}, {5, 7}, {0, 4}, {1, 5}, {2, 6}, {3, 7}};
+		for (int[] ed : e) shapes.line(c[ed[0]], c[ed[1]]);
+		shapes.end();
+		Gdx.gl.glLineWidth(4f);
+		shapes.begin(ShapeRenderer.ShapeType.Line);
+		for (int i = 0; i < 3; i++) {
+			pe.axis(i, pa);
+			shapes.setColor(pivotAxis == i ? Color.YELLOW : AXIS_COLORS[i]);
+			// both directions: the anchor moves either way along the axis
+			Vector3 a0 = new Vector3(pa).scl(-pivotLen).add(pv), a1 = new Vector3(pa).scl(pivotLen).add(pv);
+			shapes.line(a0, a1);
+			float h = pivotLen * 0.09f;
+			for (int sgn = -1; sgn <= 1; sgn += 2) {
+				Vector3 tip = sgn > 0 ? a1 : a0;
+				Vector3 dir = new Vector3(pa).scl(sgn);
+				Vector3 side = new Vector3(dir).crs(Math.abs(dir.y) > 0.9f ? Vector3.X : Vector3.Y).nor().scl(h);
+				Vector3 back = new Vector3(dir).scl(-h * 2.2f).add(tip);
+				shapes.line(tip, new Vector3(back).add(side));
+				shapes.line(tip, new Vector3(back).sub(side));
+			}
+		}
+		shapes.end();
+		Gdx.gl.glLineWidth(1f);
+		// the anchor point: a dot that stays the same size on screen
+		Vector3 sp = cam.project(new Vector3(pv));
+		if (sp.z >= 0 && sp.z <= 1) {
+			screen.getProjectionMatrix().setToOrtho2D(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+			float r = handleRadius();
+			screen.begin(ShapeRenderer.ShapeType.Filled);
+			screen.setColor(Color.WHITE);
+			screen.circle(sp.x, sp.y, r + 4f, 24);
+			screen.setColor(HANDLE_FILL);
+			screen.circle(sp.x, sp.y, r, 24);
+			screen.setColor(Color.WHITE);
+			screen.circle(sp.x, sp.y, r * 0.35f, 16);
+			screen.end();
+		}
+	}
+
+	/** The arrow under a screen point (0 x, 1 y, 2 z) or -1. */
+	private int hitPivot(float x, float y) {
+		com.star4droid.star2d.editor.PivotEdit pe = editor.pivotEdit;
+		if (pe.object3D() == null) return -1;
+		pe.anchorWorld(pv);
+		Vector2 p = new Vector2(x, y);
+		float tol = Math.max(30f, Gdx.graphics.getWidth() * 0.028f);
+		int best = -1;
+		float bestD = tol;
+		for (int i = 0; i < 3; i++) {
+			pe.axis(i, pa);
+			Vector2 a = toScreen(new Vector3(pa).scl(-pivotLen).add(pv), new Vector2()), e = toScreen(new Vector3(pa).scl(pivotLen).add(pv), new Vector2());
+			float d = segDist(p, a, e);
+			if (d < bestD) {
+				bestD = d;
+				best = i;
+			}
+		}
+		return best;
+	}
+
+	/** Drag along arrow {@code pivotAxis}: the finger's movement projected on the arrow, in meters. */
+	private void dragPivot(float dx, float dy) {
+		com.star4droid.star2d.editor.PivotEdit pe = editor.pivotEdit;
+		pe.anchorWorld(pv);
+		pe.axis(pivotAxis, pa);
+		Vector2 o = toScreen(pv, new Vector2()), e = toScreen(new Vector3(pa).scl(pivotLen).add(pv), new Vector2());
+		Vector2 sdir = new Vector2(e).sub(o);
+		float slen = Math.max(1f, sdir.len());
+		sdir.scl(1f / slen);
+		float along = dx * sdir.x + dy * sdir.y;
+		pe.moveAlong(pivotAxis, along / slen * pivotLen);
+	}
+
 	// ------------------------------------------------------------------ touch
 
 	private int dragAxis = -1; // 0..2 axis, 3 = center (free), -1 none
@@ -747,6 +871,7 @@ public class Editor3D {
 			if (terrainMode()) terrain.cancelStroke();
 			navGrids.cancel();
 			cancelDrag();
+			pivotAxis = -1;
 			if (dragHandle >= 0) endHandleDrag();
 			orbiting = false;
 			panning = true;
@@ -762,6 +887,14 @@ public class Editor3D {
 		if (pointer > 1) return true;
 		lastX = downX = x;
 		lastY = downY = y;
+		if (pivotEditing()) {
+			// pivot editing: an arrow moves the anchor, anything else turns the view (nothing gets selected)
+			dragAxis = -1;
+			dragHandle = -1;
+			pivotAxis = hitPivot(x, y);
+			orbiting = pivotAxis < 0;
+			return true;
+		}
 		if (!terrainMode() && navGrids.touchDown(x, y)) {
 			dragAxis = -1;
 			dragHandle = -1;
@@ -828,6 +961,10 @@ public class Editor3D {
 		if (Math.abs(x - downX) > 8 || Math.abs(y - downY) > 8) moved = true;
 		lastX = x;
 		lastY = y;
+		if (pivotAxis >= 0 && pivotEditing()) {
+			dragPivot(dx, dy);
+			return true;
+		}
 		if (terrainMode() && !terrain.navigate) {
 			terrain.touchDragged(x, y);
 			return true;
@@ -854,6 +991,11 @@ public class Editor3D {
 			panning = false;
 			pinchDist = -1;
 			pinchStartDist = -1;
+			orbiting = false;
+			return true;
+		}
+		if (pivotEditing()) {
+			pivotAxis = -1;
 			orbiting = false;
 			return true;
 		}

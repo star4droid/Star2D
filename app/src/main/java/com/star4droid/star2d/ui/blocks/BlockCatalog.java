@@ -381,6 +381,9 @@ public final class BlockCatalog {
                 "Timer.schedule(new Timer.Task(){\n    public void run(){\n        %1$s.destroy();\n    }\n},(float)(%2$s));\n%3$s");
         def("Physics", phys, "spawnCopy", "body(Body) var newName x y", "|bullet|\"bullet\"|0|0", false,
                 "PlayerItem %2$s = %1$s.getClone(%3$s);\n%2$s.getBody().setTransform((float)(%4$s)*" + ws + ",(float)(%5$s)*" + ws + ",0);\n%6$s");
+        // a copy of a prefab of the project (prefabs folder) while the game runs; the scene gets its elements, events and behaviors
+        def("Physics", phys, "spawnPrefab", "prefab(prefab) var newName x y", "|enemy|\"enemy\"|0|0", false,
+                "PlayerItem %2$s = com.star4droid.template.Utils.Prefabs.spawn(\"%1$s\", String.valueOf(%3$s), (float)(%4$s), (float)(%5$s));\n%6$s");
         def("Physics", phys, "setWorldGravity", "strength", "600", false,
                 "setSteps(1);\nsetGravity(0f,-(float)(%1$s)*" + ws + ");\n%2$s");
 

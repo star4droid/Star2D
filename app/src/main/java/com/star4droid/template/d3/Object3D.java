@@ -200,7 +200,8 @@ public class Object3D extends Actor implements PlayerItem {
 				if (def.Model_Node != null && def.Model_Node.length() > 0 && m.getNode(def.Model_Node, true) != null)
 					instance = new ModelInstance(m, def.Model_Node, true, true, true);
 				else instance = new ModelInstance(m);
-				if (m.animations.size > 0) {
+				mergeExternalAnimations(); // Animation_Model: borrow the clips of another model (same skeleton, e.g. Mixamo)
+				if (instance.animations.size > 0) {
 					anim = new AnimationController(instance);
 					anim.allowSameAnimation = true;
 				}
@@ -384,6 +385,8 @@ public class Object3D extends Actor implements PlayerItem {
 		bb.getCenter(center);
 		center.scl(sx, sy, sz);
 		center.add(def.Collider_Offset_X, def.Collider_Offset_Y, def.Collider_Offset_Z);
+		// the body sits at the anchor: the model (and its collider) is shifted by -anchor * scale
+		center.sub(def.Anchor_X * Math.abs(scale.x), def.Anchor_Y * Math.abs(scale.y), def.Anchor_Z * Math.abs(scale.z));
 	}
 
 	private final Vector3 tmp = new Vector3();
@@ -420,6 +423,8 @@ public class Object3D extends Actor implements PlayerItem {
 			// inv() throw "Can't invert a singular matrix" / "non-invertible matrix"
 			transform.set(position, rotation, safeScale(scale, tmpScale));
 		}
+		// anchor: the model point that sits at the position and that rotation / scale turn around
+		if (hasAnchor()) transform.translate(-def.Anchor_X, -def.Anchor_Y, -def.Anchor_Z);
 		if (instance != null) instance.transform.set(transform);
 		if (lowInstance != null) lowInstance.transform.set(transform);
 		BoundingBox b = localBounds();
@@ -457,6 +462,46 @@ public class Object3D extends Actor implements PlayerItem {
 
 	public void detach3D() {
 		parent3d = null;
+	}
+
+	/**
+	 * Adds the clips of {@link Object3DDef#Animation_Model} onto this element's instance, retargeting each node track to
+	 * the local node of the same name. Works when the two models share a skeleton (bone names), e.g. Mixamo rigs. Clips
+	 * whose target nodes are missing here are skipped.
+	 */
+	private void mergeExternalAnimations() {
+		String mp = def.Animation_Model;
+		if (mp == null || mp.length() == 0 || mp.equals(def.Model) || instance == null) return;
+		com.badlogic.gdx.utils.Array<Animation> clips;
+		try {
+			if (AnimFile.is(mp)) clips = AnimFile.clips(mp);         // clips saved without their model (.animf)
+			else {
+				SceneAsset a = Assets3D.model(mp);
+				clips = a == null ? null : a.scene.model.animations;
+			}
+		} catch (Throwable t) {
+			com.badlogic.gdx.Gdx.app.error("Star2D-3D", "animation model " + mp + ": " + t);
+			return;
+		}
+		if (clips == null) return;
+		for (Animation src : clips) {
+			// the chosen file wins over a clip of the same name in the element's own model (Mixamo names every clip "mixamo.com")
+			for (int i = instance.animations.size - 1; i >= 0; i--) if (instance.animations.get(i).id.equals(src.id)) instance.animations.removeIndex(i);
+			Animation na = new Animation();
+			na.id = src.id;
+			na.duration = src.duration;
+			for (com.badlogic.gdx.graphics.g3d.model.NodeAnimation sn : src.nodeAnimations) {
+				Node local = instance.getNode(sn.node.id, true);
+				if (local == null) continue;
+				com.badlogic.gdx.graphics.g3d.model.NodeAnimation dn = new com.badlogic.gdx.graphics.g3d.model.NodeAnimation();
+				dn.node = local;
+				dn.translation = sn.translation;
+				dn.rotation = sn.rotation;
+				dn.scaling = sn.scaling;
+				na.nodeAnimations.add(dn);
+			}
+			if (na.nodeAnimations.size > 0) instance.animations.add(na);
+		}
 	}
 
 	void updateAnimation(float dt) {
@@ -1127,6 +1172,45 @@ public class Object3D extends Actor implements PlayerItem {
 		if (terrain != null) return terrain.heightAt(this, x, z);
 		if (water != null) return position.y + Water3D.heightAt(water, transform, x, z, World3D.time);
 		return position.y + getSizeY() * 0.5f;
+	}
+
+	/** Editor: brings the matrices up to date now. */
+	public void sync3D() {
+		sync();
+	}
+
+	/** The matrices are computed again on the next frame (an anchor typed in the editor, static scenery included). */
+	public void markMoved() {
+		transformDirty = true;
+	}
+
+	/** True when the anchor (pivot) is not the model's origin. */
+	public boolean hasAnchor() {
+		return def.Anchor_X != 0 || def.Anchor_Y != 0 || def.Anchor_Z != 0;
+	}
+
+	/** The anchor in the element's own units (see {@link Object3DDef#Anchor_X}). */
+	public Vector3 getAnchor(Vector3 out) {
+		return out.set(def.Anchor_X, def.Anchor_Y, def.Anchor_Z);
+	}
+
+	/**
+	 * Moves the anchor (pivot) to a point of the model (its own units) without moving the element on screen: the
+	 * position follows, so the next rotations and scales turn around the new point.
+	 */
+	public void setAnchor(float ax, float ay, float az) {
+		sync();
+		Vector3 w = new Vector3(ax, ay, az).mul(transform);   // where that model point is now
+		def.Anchor_X = ax;
+		def.Anchor_Y = ay;
+		def.Anchor_Z = az;
+		if (parent3d != null) {
+			position.set(w);
+			transform.set(position, rotation, safeScale(scale, tmpScale));
+			offsetFromParent.set(parent3d.transform).inv().mul(transform);
+		} else position.set(w);
+		pushTransform();
+		if (rigid != null) createBody();             // the collider sits around the new anchor
 	}
 
 	/** Mesh WORLD: a world of World Builder drawn inside the scene. */

@@ -346,7 +346,7 @@ public class World3D implements Disposable {
 		}
 		for (int i = 0; i < objects.size; i++) {
 			Object3D o = objects.get(i);
-			if (playing || editorAnimate) o.updateAnimation(dt);
+			if (playing || editorAnimate || o == animPreview) o.updateAnimation(dt);
 		}
 		int w = Math.max(1, Gdx.graphics.getWidth()), h = Math.max(1, Gdx.graphics.getHeight());
 		if (activeCamera != null && !editor) {
@@ -368,6 +368,26 @@ public class World3D implements Disposable {
 
 	/** Editor: animations preview. */
 	public boolean editorAnimate;
+	/** Editor: the one element whose animation is being previewed by the Play button (null = none). */
+	public Object3D animPreview;
+
+	/** Editor: starts previewing an element's animation (plays its clip and ticks only it). */
+	public void playAnimPreview(Object3D o) {
+		if (o == null) return;
+		if (animPreview != null && animPreview != o) stopAnimPreview();
+		animPreview = o;
+		o.playAnimation(o.getDef().Animation, o.getDef().Animation_Loop, o.getDef().Animation_Speed);
+	}
+
+	/** Editor: stops the preview and rebuilds the element so it returns to its rest pose. */
+	public void stopAnimPreview() {
+		Object3D o = animPreview;
+		animPreview = null;
+		if (o != null) try {
+			o.buildModel();
+		} catch (Throwable ignored) {
+		}
+	}
 	/** Editor: camera set by the editor. */
 	public boolean editorCameraLocked;
 

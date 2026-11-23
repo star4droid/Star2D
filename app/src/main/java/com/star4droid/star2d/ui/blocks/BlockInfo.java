@@ -40,6 +40,7 @@ public final class BlockInfo {
         c("Behaviors", "Behaviors", "السلوكيات");
 
         f("behavior", "behavior", "السلوك");
+        f("prefab", "prefab", "الـ prefab");
         f("setting", "setting", "الإعداد");
         // behaviors (always visible): add / remove / turn on-off / settings
         b("addBehavior", "Add behavior", "أضف سلوكاً", "Attaches a behavior to an element while the game runs (it starts with its default settings). Nothing happens if the element already has it.", "يضيف سلوكاً إلى عنصر أثناء تشغيل اللعبة (بإعداداته الافتراضية). لا يحدث شيء إن كان العنصر يملكه.");
@@ -267,6 +268,7 @@ public final class BlockInfo {
         b("setBodyType", "Set body type", "اضبط نوع الجسم", "DynamicBody, StaticBody or KinematicBody.", "DynamicBody أو StaticBody أو KinematicBody.");
         b("setGravityScaleOf", "Gravity scale", "مقياس الجاذبية", "0 = floats, 1 = normal, 2 = heavy.", "0 = يطفو، 1 = طبيعي، 2 = ثقيل.");
         b("destroyAfter", "Destroy after", "احذف بعد", "Removes the element after some seconds (bullets).", "يحذف العنصر بعد عدة ثوانٍ (الرصاص).");
+        b("spawnPrefab", "Create from prefab at", "أنشئ من prefab عند", "Creates a copy of a prefab of the project (prefabs folder) at x, y while the game runs, with its children, events and behaviors (not its body script). Its root is named newName (needs quotes), the others newName_child; a used name gets a number. Use the variable name after it.", "ينشئ نسخة من prefab في المشروع (مجلد prefabs) عند x و y أثناء اللعب، مع عناصره الفرعية وأحداثه وسلوكياته (بدون سكربت الجسم). العنصر الرئيسي اسمه الاسم الجديد (يحتاج علامات تنصيص) والبقية الاسم_الفرعي، والاسم المستعمل يأخذ رقماً. استخدم اسم المتغير بعده.");
         b("spawnCopy", "Spawn copy at", "أنشئ نسخة عند", "Clones an element at x, y. newName needs quotes.", "ينسخ العنصر عند x و y. الاسم الجديد يحتاج علامات تنصيص.");
         b("setWorldGravity", "Set gravity", "اضبط الجاذبية", "How fast things fall, in pixels per second² (800 = normal, 0 = space). Also makes the physics run in real time, so the speeds in blocks match pixels per second.", "سرعة سقوط الأشياء بالبكسل/ثانية² (800 = عادي، 0 = فضاء). وتجعل الفيزياء تعمل بالوقت الحقيقي لتطابق السرعات في البلوكات بكسل/ثانية.");
         b("setLanguage", "Set language", "اضبط اللغة", "Switches the game to another language (the codes you added in Game translations, like \"en\" or \"ar\"). The choice is remembered. TEXT elements written as @key update by themselves.", "يبدّل اللعبة إلى لغة أخرى (الرموز التي أضفتها في ترجمة اللعبة مثل \"en\" أو \"ar\"). يتم تذكر الاختيار، وتتحدّث النصوص المكتوبة بالشكل @key تلقائياً.");

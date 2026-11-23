@@ -1,11 +1,11 @@
 {
 "Editor": ",name,lock,Script,parent,",
 "Shape 3D": ",Mesh,Model,Model Node,Particle File,World File,Particle Scale,Particle Speed,Emitting,Detail,Steps,Light Kind,",
-"Transform 3D": ",x,y,z,Rotation X,Rotation Y,Rotation Z,Scale X,Scale Y,Scale Z,",
+"Transform 3D": ",x,y,z,Rotation X,Rotation Y,Rotation Z,Scale X,Scale Y,Scale Z,Anchor X,Anchor Y,Anchor Z,",
 "Material": ",Color,Texture,Texture Repeat X,Texture Repeat Y,Normal Map,Opacity,Metallic,Roughness,Shininess,Emissive,Emissive Intensity,Keep Model Material,Unlit,Double Sided,",
 "Rendering": ",Visible,Active,Cast Shadows,Receive Shadows,Outline,Outline Color,Outline Width,Draw Distance,LOD Distance,Static Object,Billboard,Render Order,Shader,Shader Params,",
 "Physics 3D": ",Body,Collider,Mass,Friction,Restitution,Linear Damping,Angular Damping,Gravity Scale,Collider Scale X,Collider Scale Y,Collider Scale Z,Collider Offset X,Collider Offset Y,Collider Offset Z,Lock Move X,Lock Move Y,Lock Move Z,Lock Rotation X,Lock Rotation Y,Lock Rotation Z,Continuous Collision,Sleep,Layer,Ignore Layers,",
-"Animation": ",Animation,Animation Loop,Animation Speed,",
+"Animation": ",Animation,Animation Model,Animation Loop,Animation Speed,",
 "Terrain": ",Terrain Data,Heightmap,Terrain Height,Terrain Resolution,Terrain Noise,Terrain Seed,Layer 1 Texture,Layer 1 Color,Layer 1 Tiling,Layer 2 Texture,Layer 2 Color,Layer 2 Tiling,Layer 3 Texture,Layer 3 Color,Layer 3 Tiling,Layer 4 Texture,Layer 4 Color,Layer 4 Tiling,Grass Density,Grass Height,Grass Color,Grass Layer,Grass Distance,Foliage Distance,",
 "Water": ",Water Color,Water Deep Color,Foam Color,Wave Height,Wave Speed,Wave Length,Wave Direction,Water Clarity,Water Resolution,Foam,Water Quality,Buoyancy,",
 "Light 3D": ",Color,Intensity,Range,Cone Angle,Cone Softness,Cast Shadows,Flicker,Flicker Speed,Attach To,",

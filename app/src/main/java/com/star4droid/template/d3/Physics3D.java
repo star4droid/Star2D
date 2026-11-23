@@ -174,6 +174,18 @@ public class Physics3D implements Disposable {
 
 	/** The shape and its parts go to {@code own}: freed when the body is removed (bodies are rebuilt on scale / mass changes). */
 	private btCollisionShape shapeFor(Object3D o, Array<Disposable> own) {
+		btCollisionShape sh = shapeAtOrigin(o, own);
+		if (!o.hasAnchor()) return sh;
+		// the body sits at the anchor (the element's position): the model, and so its collider, is shifted by -anchor * scale
+		Object3DDef d = o.d();
+		btCompoundShape comp = new btCompoundShape();
+		comp.addChildShape(new Matrix4().setToTranslation(-d.Anchor_X * Math.abs(o.scale.x), -d.Anchor_Y * Math.abs(o.scale.y), -d.Anchor_Z * Math.abs(o.scale.z)), sh);
+		own.add(comp);
+		return comp;
+	}
+
+	/** The collider around the model's own origin (as if the anchor were 0,0,0). */
+	private btCollisionShape shapeAtOrigin(Object3D o, Array<Disposable> own) {
 		if (o.isWorld()) return WorldLayer.shape(o, own);
 		Object3DDef d = o.d();
 		String c = d.Collider;

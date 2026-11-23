@@ -33,6 +33,11 @@ public class Object3DDef extends ItemDef {
 
 	// ---- transform
 	public float x = 0, y = 0, z = 0, Rotation_X = 0, Rotation_Y = 0, Rotation_Z = 0, Scale_X = 1, Scale_Y = 1, Scale_Z = 1;
+	/**
+	 * Anchor (pivot): the point of the model, in its own units (before Scale), that sits at x / y / z and that the
+	 * element rotates and scales around. 0,0,0 = the model's origin. A door turns on its side with the anchor on its edge.
+	 */
+	public float Anchor_X = 0, Anchor_Y = 0, Anchor_Z = 0;
 	public boolean Visible = true, Active = true;
 
 	// ---- material
@@ -70,6 +75,8 @@ public class Object3DDef extends ItemDef {
 	// ---- animation (models)
 	/** Clip played at start ("" = none, "*" = the first clip). */
 	public String Animation = "";
+	/** Model file to take the clip from ("" = this element's own model). Lets one model play another model's animation. */
+	public String Animation_Model = "";
 	public boolean Animation_Loop = true;
 	public float Animation_Speed = 1;
 

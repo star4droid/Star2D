@@ -12,6 +12,11 @@
 **Editor**
 - The block list draws each block with its real shape, and dragging a block shows it under your finger.
 - UI holder: Edit, New and the chosen UI are at the top of its properties.
+- 3D animations: a Play / Stop button above the Animation property previews the clip in the editor (it stops and returns to the rest pose when you select another element). The button beside Animation opens a folder browser that shows only .glb, .gltf and .animf files; pick one, then one of its clips, to play it on this element (same skeleton, for example Mixamo). It is saved in the new Animation Model property and works in games too.
+- Anchor (pivot) for 3D elements: new Anchor X / Y / Z properties, the point the element turns and scales around (a door turns on its edge), in the editor, in games and in physics. The pencil above them opens the anchor editor: the camera glides to the element, three arrows move the anchor along the element's own axes, "Sides and center" sets left / center / right on each axis, "Bounds" keeps it inside the element (off by itself when the anchor was already outside), Done applies with one undo step and the element stays where it is. In 2D the same editor opens from the pencil beside Pivot (drag with one finger). The other bars are hidden while editing; it works in portrait and landscape.
+- Create from prefab: new blocks (2D in Physics, 3D in 3D Objects) make a copy of a prefab of the project while the game runs, at x, y (2D) or x, y, z (3D), with its children, events and behaviors. The prefab is picked from a list of the project's prefabs; the root gets the name you give, the others NAME_child. The body script of a prefab element is not attached to these copies, and lights inside a prefab are skipped.
+- Animation files (.animf): long press a .glb / .gltf in the Files panel, "Extract animations", tick one, several or all of its clips and save them next to the model (one file per clip, or all in one file). An .animf keeps working after the model it came from is deleted.
+- 3D animations: a Play / Stop button above the Animation property previews the clip in the editor (it stops and returns to the rest pose when you select another element). The button beside Animation lists every .glb / .gltf model of the project; pick one, then one of its clips, to play it on this element (same skeleton, for example Mixamo). It is saved in the new Animation Model property and works in games too.
 
 **Home screen**
 - The World Builder tile is replaced by "Support": community links (now including Telegram) and ways to support the engine.
@@ -23,6 +28,11 @@
 - **مكتبة شيدرات:** زر بجانب خاصية Shader يفتح 57 شيدر جاهز من World Builder (تحطّم، تبخّر، زجاج وهولوغرام، خيال وسحر) بصورة ووصف لكل واحد وبحث. الاختيار ينسخ الشيدر إلى مجلد shaders بالمشروع فيعمل في الألعاب المصدّرة ويمكن تعديله.
 - قائمة البلوكات تعرض كل بلوك بشكله الحقيقي، والسحب يُظهره تحت إصبعك.
 - UI Holder: أزرار تعديل وجديد والواجهة المختارة أعلى الخصائص.
+- حركات 3D: زر تشغيل/إيقاف فوق خاصية Animation يعرض الحركة في المحرر (يتوقف ويرجع للوضع الأصلي عند اختيار عنصر آخر). الزر الجانبي يفتح متصفح مجلدات يعرض ملفات glb وgltf وanimf فقط، تختار ملفاً ثم حركة منه فتعمل على العنصر (بنفس الهيكل العظمي، مثل Mixamo)، وتعمل في الألعاب أيضاً.
+- **نقطة الارتكاز (Anchor) لعناصر 3D:** خصائص Anchor X / Y / Z تحدد النقطة التي يدور ويتكبّر حولها العنصر (الباب يدور من جانبه)، في المحرر والألعاب والفيزياء. أيقونة القلم تفتح محرر الارتكاز: الكاميرا تنتقل بسلاسة للعنصر، وثلاثة أسهم تحرّك النقطة على محاور العنصر، و"الجوانب والمنتصف" لاختيار يسار/وسط/يمين لكل محور، و"داخل حدود العنصر" (يُطفأ وحده إذا كانت النقطة خارجها من قبل)، و"تم" يطبّق بخطوة تراجع واحدة والعنصر يبقى في مكانه. وفي 2D نفس المحرر من القلم بجانب Pivot. بقية الأشرطة تختفي أثناء التعديل، ويعمل بالوضعين الأفقي والعمودي.
+- **إنشاء من prefab:** بلوكات جديدة (2D في Physics و3D في 3D Objects) تنشئ نسخة من prefab في المشروع أثناء اللعب عند x و y (أو x و y و z)، مع عناصره الفرعية وأحداثه وسلوكياته. تختار الـ prefab من قائمة، والعنصر الرئيسي يأخذ الاسم الذي تكتبه والبقية الاسم_الفرعي. سكربت الجسم لا يُرفق بهذه النسخ، والأضواء داخل الـ prefab لا تُنشأ.
+- ملفات الحركة (‎.animf): ضغطة مطولة على ملف glb أو gltf في لوحة الملفات ثم "استخراج الحركات"، تختار حركة أو عدة حركات أو الكل وتُحفظ بجانب النموذج (ملف لكل حركة أو كلها في ملف واحد). ملف الحركة يبقى يعمل حتى لو حُذف النموذج.
+- حركات 3D: زر تشغيل/إيقاف فوق خاصية Animation يعرض الحركة في المحرر (يتوقف ويرجع للوضع الأصلي عند اختيار عنصر آخر). الزر الجانبي يعرض كل نماذج glb وgltf في المشروع، تختار واحداً ثم حركة منه فتعمل على العنصر (بنفس الهيكل العظمي، مثل Mixamo)، وتعمل في الألعاب أيضاً.
 - في الرئيسية صار "الدعم" بدل World Builder: روابط المجتمع (ومعها تلجرام) وطرق دعم المحرك، بأيقونات المنصات.
 
 ## Star3D 0.5.9 Beta

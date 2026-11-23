@@ -1,0 +1,57 @@
+shatter_cells|Celdas|Fragmentos con bordes brillantes que se van uno a uno
+shatter_fall|Caída|Se rompe de arriba hacia abajo
+shatter_burst|Estallido|Trozos lanzados hacia fuera al romperse (mueve los vértices)
+shatter_tri|Triángulos|Fragmentos triangulares con contornos brillantes
+shatter_voxel|Vóxeles|Se rompe en cubos pequeños que desaparecen
+shatter_crack_glow|Grietas brillantes|Grietas que se abren y brillan (amount = daño)
+shatter_glass_break|Vidrio roto|Vidrio tintado que se agrieta y se cae a pedazos
+evaporate_up|Ascenso|Se eleva en estelas de vapor
+evaporate_dissolve_burn|Disolución ardiente|Se disuelve con un borde en llamas y contorno quemado
+evaporate_dissolve_stars|Disolución estelar|Se disuelve en polvo brillante
+evaporate_dust_away|Polvo|Se lo lleva el viento como polvo (mueve los vértices)
+evaporate_melt|Derretir|Se derrite y gotea hacia abajo (mueve los vértices)
+evaporate_teleport_scan|Teletransporte|Cortado en bandas de luz que se mueven
+evaporate_ash_fade|Ceniza|Se vuelve ceniza gris y se desmorona con pequeñas brasas
+evaporate_wipe_noise|Barrido|Desaparece en una dirección con un frente brillante irregular
+evaporate_screen_door|Trama|Transparencia punteada (muy rápido)
+evaporate_materialize_grid|Rejilla|Primero una rejilla de alambre y luego se llena la superficie
+evaporate_soul_absorb|Absorción|Absorbido hacia su centro mientras se desvanece (mueve los vértices)
+glass_tint|Tinte|Claro en el centro, brillante en los bordes
+glass_rainbow_s|Arcoíris|Los colores cambian con el ángulo de visión
+glass_bubble_s|Burbuja|Fina película irisada en movimiento
+glass_crystal|Cristal|Cristal facetado con brillos nítidos
+glass_holo_scan|Holograma|Líneas de escaneo, parpadeo y borde brillante
+glass_holo_glitch|Holograma con fallos|Holograma con saltos de interferencia (mueve los vértices)
+glass_ghost_spirit|Espíritu|Brillo suave y transparente que late
+glass_ghost_cloak|Capa invisible|Casi invisible, con un contorno que destella
+glass_forcefield|Campo de fuerza|Hexágonos, borde brillante y anillos en movimiento
+glass_jelly|Gelatina|Transparente y elástico (mueve los vértices)
+glass_xray_rim|Rayos X|Silueta de rayos X en cualquier color
+fantasy_fire_body|Cuerpo de fuego|Un cuerpo hecho de llamas que suben
+fantasy_magma|Magma|Roca oscura con grietas brillantes que fluyen
+fantasy_ice_frost|Escarcha|Brillo frío, vetas de escarcha y destellos
+fantasy_freeze_sweep|Congelación|La escarcha se extiende por la superficie
+fantasy_petrify|Petrificar|Se convierte en piedra desde un frente que avanza
+fantasy_shine_sweep|Destello|Una banda brillante se desliza por la superficie
+fantasy_electric|Eléctrico|Arcos eléctricos que recorren la superficie
+fantasy_plasma|Plasma|Colores de plasma en movimiento
+fantasy_galaxy|Galaxia|Cuerpo espacial estrellado con una nebulosa que se mueve
+fantasy_aura_shell|Aura|Una capa de energía brillante alrededor de la forma (mueve los vértices)
+fantasy_rune_glow|Runas|Runas antiguas que laten sobre piedra oscura
+fantasy_portal_swirl|Portal|Remolino que gira (mejor en QUAD, DISC o PLANE)
+fantasy_toxic_bubbles|Burbujas tóxicas|Superficie líquida que burbujea
+fantasy_hit_flash|Destello de golpe|Parpadea con un color vivo (amount = fuerza, 0 = parpadea sin parar)
+fantasy_rainbow_flow|Flujo arcoíris|Bandas de arcoíris que fluyen por la forma
+fantasy_toon_neon|Toon neón|Sombreado de dibujo animado con borde de neón
+fantasy_void_neon|Vacío neón|Cuerpo negro con borde de neón de dos colores y puntos de trama
+fantasy_energy_veins|Venas de energía|Venas de energía brillantes que laten por el cuerpo
+fantasy_energy_bands|Bandas de energía|Bandas de luz que suben por la forma
+fantasy_matrix_rain|Lluvia digital|Lluvia digital de símbolos brillantes
+fantasy_glitch|Glitch|Bandas que saltan de lado y separan los colores (mueve los vértices)
+fantasy_wind_sway|Vaivén|Se mece con el viento, más fuerte arriba (plantas, banderas, pelo) (mueve los vértices)
+fantasy_heartbeat|Latido|Pulso con un borde brillante (mueve los vértices)
+fantasy_water_caustics|Cáusticas|Ondas de luz como bajo el agua
+fantasy_halftone_toon|Cómic|Sombreado de cómic con puntos impresos
+fantasy_selection_glow|Brillo de selección|Brillo suave que late alrededor de un objeto elegido o importante
+fantasy_lightning_rim|Borde de rayos|Rayos que chisporrotean por los bordes
+fantasy_curse_smoke|Humo maldito|Humo oscuro que recorre el cuerpo con un brillo de color

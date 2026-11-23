@@ -68,6 +68,8 @@ public class PropertiesPanel implements PanelHost.Panel {
     private final ArrayList<Sec> searchSecs = new ArrayList<>();
     private int behaviorFirstChild = -1;
     private String selectedName = null;
+    /** Whether the 3D animation preview (Play/Stop button) is currently running for the selected element. */
+    private boolean anim3dPlaying = false;
     private LinkedHashMap<String, String> values = new LinkedHashMap<>();
     private final HashMap<String, View> editors = new HashMap<>();
     private final HashSet<String> collapsed = new HashSet<>();
@@ -286,6 +288,7 @@ public class PropertiesPanel implements PanelHost.Panel {
         fieldsSignature = sig;
         selectedName = name;
         values = v;
+        if (anim3dPlaying) stopAnim3dPreview(); // selection changed: stop the animation preview and reset the pose
         editors.clear();
         content.removeAllViews();
         searchSecs.clear();
@@ -618,6 +621,7 @@ public class PropertiesPanel implements PanelHost.Panel {
                 case "Particle File": case "Particle Scale": case "Particle Speed": case "Emitting": return particles;
                 case "Model": case "Model Node": case "Keep Model Material":
                 case "Animation": case "Animation Loop": case "Animation Speed": return model;
+                case "Animation Model": return false; // chosen from inside the Animation editor, not shown as its own row
                 case "Detail": return in(mesh, "SPHERE", "CYLINDER", "CAPSULE", "CONE", "TORUS", "HEMISPHERE", "TUBE", "DISC");
                 case "Steps": return mesh.equals("STAIRS");
                 case "Terrain Height": case "Terrain Data": return mesh.equals("TERRAIN");
@@ -689,7 +693,33 @@ public class PropertiesPanel implements PanelHost.Panel {
         com.star4droid.star2d.ui.tutorial.Tut.tag(v, "prop:" + f);
         View ed = editors.get(f);
         if (ed != null && ed != v) com.star4droid.star2d.ui.tutorial.Tut.tag(ed, "propedit:" + f);
+        if ("Pivot".equals(f)) return withPivotPencil(c, v, false);
+        if ("Anchor X".equals(f)) return withPivotPencil(c, v, true);
         return v;
+    }
+
+    /**
+     * The pencil that edits the pivot on the canvas (2D: beside Pivot) or the anchor in the 3D view (3D: a button above
+     * Anchor X / Y / Z): arrows, a camera glide to the element, side presets, Done / Cancel.
+     */
+    private View withPivotPencil(Context c, View field, boolean d3) {
+        // the properties come back when editing ends (the overlay hides every panel meanwhile)
+        View.OnClickListener go = x -> com.star4droid.star2d.ui.PivotEditPanel.open(shell, () -> shell.togglePanel(this));
+        if (!d3) {
+            LinearLayout r = Ui.row(c);
+            r.setGravity(Gravity.BOTTOM);
+            r.addView(field, Ui.weight(1));
+            ImageView pen = Ui.iconButton(c, R.drawable.ic_s2_edit, Tr.t("pv_edit_2d", "Edit the pivot on the canvas"), go);
+            r.addView(pen);
+            com.star4droid.star2d.ui.tutorial.Tut.tag(pen, "prop:pivot_edit");
+            return r;
+        }
+        LinearLayout col = Ui.column(c);
+        LinearLayout b = Ui.button(c, R.drawable.ic_s2_edit, Tr.t("pv_edit_3d", "Edit the anchor (pivot)"), false, go);
+        com.star4droid.star2d.ui.tutorial.Tut.tag(b, "prop:anchor_edit");
+        col.addView(b, Ui.margins(Ui.matchWrap(), c, 0, 8, 0, 2));
+        col.addView(field, Ui.matchWrap());
+        return col;
     }
 
     private View fieldIn(Context c, String f, String type) {
@@ -697,6 +727,7 @@ public class PropertiesPanel implements PanelHost.Panel {
         if (type == null) type = "string";
         String val = values.get(f);
         if (val == null) val = "";
+        if (f.equals("Animation")) return animationField(c, val);
         switch (type) {
             case "boolean": {
                 SwitchCompat s = new SwitchCompat(c);
@@ -996,8 +1027,6 @@ public class PropertiesPanel implements PanelHost.Panel {
                             java.io.File file = worldFile(path, cur);
                             com.star4droid.star2d.WorldBuilderActivity.open(shell.activity(), file, 1);
                         })), new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-                r.addView(Ui.button(c, R.drawable.ic_s2_folder, Tr.t("choose", "Choose"), false, v -> choose.run()),
-                        new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
                 r.addView(Ui.button(c, R.drawable.ic_s2_add, Tr.t("ui_new", "New"), false, v ->
                         Bridge.query(() -> Bridge.editor().getProject().getPath(), path ->
                                 Dialogs.input(c, Tr.t("world_new", "New world"), Tr.t("ui_shader_name", "Name (letters, digits, _)"), "World", nm -> Dialogs.checkName(nm), nm -> {
@@ -1010,7 +1039,10 @@ public class PropertiesPanel implements PanelHost.Panel {
                                     });
                                 }))), new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
                 box.addView(r, Ui.matchWrap());
-                box.addView(t, Ui.matchWrap());
+                // Choose under Edit / New: the three do not fit one row of a narrow properties panel
+                LinearLayout chooseBtn = Ui.button(c, R.drawable.ic_s2_folder, Tr.t("world_choose", "Choose a world"), false, v -> choose.run());
+                box.addView(chooseBtn, Ui.margins(Ui.matchWrap(), c, 0, 6, 0, 0));
+                box.addView(t, Ui.margins(Ui.matchWrap(), c, 0, 4, 0, 0));
                 TextView hint = Ui.text(c, Tr.t("world_hint", "The world is shown as it is. Edit opens World Builder; changes appear when you come back."), 12, Ui.TEXT_3);
                 hint.setPadding(0, Ui.dp(c, 4), 0, 0);
                 box.addView(hint, Ui.matchWrap());
@@ -1242,6 +1274,136 @@ public class PropertiesPanel implements PanelHost.Panel {
                 return box;
             }
         }
+    }
+
+    private com.star4droid.template.d3.Object3D selectedObj3d() {
+        Object sel = Bridge.editor() == null ? null : Bridge.editor().getSelectedActor();
+        if (sel instanceof com.star4droid.star2d.editor.items.Editor3DItem)
+            return ((com.star4droid.star2d.editor.items.Editor3DItem) sel).obj;
+        return null;
+    }
+
+    private com.star4droid.template.d3.World3D world3d() {
+        com.star4droid.star2d.editor.three.Editor3D e = Bridge.editor() == null ? null : Bridge.editor().get3D();
+        return e == null ? null : e.world;
+    }
+
+    /** Stops any running 3D animation preview and returns the element to its rest pose (on element change / Stop). */
+    void stopAnim3dPreview() {
+        anim3dPlaying = false;
+        Bridge.gl(() -> {
+            com.star4droid.template.d3.World3D w = world3d();
+            if (w != null) w.stopAnimPreview();
+        });
+    }
+
+    private String animLabel(Context c, String val) {
+        if (val == null || val.isEmpty()) return "[" + Tr.t("choose", "choose") + "]";
+        if (val.equals("*")) return Tr.t("anim_first_clip", "First clip");
+        return val;
+    }
+
+    /**
+     * The Animation property: a Play/Stop preview button above the field, the field itself (tap = the element's own
+     * model clips), and an icon to borrow a clip from another .glb/.gltf model (played on this element).
+     */
+    private View animationField(Context c, String val) {
+        LinearLayout box = Ui.column(c);
+        box.addView(label(c, "Animation"));
+
+        final TextView playBtn = Ui.text(c, "", 14, Ui.TEXT);
+        playBtn.setGravity(Gravity.CENTER);
+        playBtn.setPadding(Ui.dp(c, 12), Ui.dp(c, 10), Ui.dp(c, 12), Ui.dp(c, 10));
+        playBtn.setCompoundDrawablePadding(Ui.dp(c, 6));
+        final Runnable paintPlay = () -> {
+            int ink = anim3dPlaying ? 0xFFFFFFFF : Ui.ACCENT;
+            playBtn.setText(anim3dPlaying ? Tr.t("anim_stop", "Stop") : Tr.t("anim_play", "Play"));
+            playBtn.setTextColor(ink);
+            playBtn.setBackground(Ui.rounded(anim3dPlaying ? Ui.ACCENT : Ui.SURFACE_2, Ui.dp(c, 10), Ui.ACCENT, 1));
+            int ic = anim3dPlaying ? R.drawable.ic_s2_stop : R.drawable.ic_s2_play;
+            android.graphics.drawable.Drawable d = androidx.appcompat.content.res.AppCompatResources.getDrawable(c, ic);
+            if (d != null) {
+                d = d.mutate();
+                d.setBounds(0, 0, Ui.dp(c, 20), Ui.dp(c, 20));
+                d.setColorFilter(ink, android.graphics.PorterDuff.Mode.SRC_IN);
+            }
+            playBtn.setCompoundDrawablesRelative(d, null, null, null);
+        };
+        paintPlay.run();
+        playBtn.setOnClickListener(v -> {
+            anim3dPlaying = !anim3dPlaying;
+            final boolean play = anim3dPlaying;
+            Bridge.gl(() -> {
+                com.star4droid.template.d3.World3D w = world3d();
+                if (w == null) return;
+                if (play) {
+                    com.star4droid.template.d3.Object3D o = selectedObj3d();
+                    if (o != null) w.playAnimPreview(o);
+                } else w.stopAnimPreview();
+            });
+            paintPlay.run();
+        });
+        box.addView(playBtn, Ui.margins(Ui.matchWrap(), c, 0, 0, 0, 6));
+
+        final TextView t = chooser(c, animLabel(c, val));
+
+        java.util.function.BiConsumer<String, String> setAnim = (name, model) -> {
+            values.put("Animation", name);
+            values.put("Animation Model", model == null ? "" : model);
+            t.setText(animLabel(c, name));
+            final String nm = name, md = model == null ? "" : model;
+            commit(() -> {
+                PropertyEditing.applyString(Bridge.app(), "Animation Model", md);
+                PropertyEditing.applyString(Bridge.app(), "Animation", nm);
+            });
+        };
+
+        // tap the field: clips of the element's OWN model
+        t.setOnClickListener(v -> {
+            final String model = values.get("Model") == null ? "" : values.get("Model");
+            if (model.isEmpty()) { Ui.toast(c, Tr.t("anim_need_model", "Choose a model first")); return; }
+            Bridge.query(() -> com.star4droid.template.d3.Assets3D.animations(model), names -> {
+                java.util.ArrayList<String> opts = new java.util.ArrayList<>();
+                opts.add("— " + Tr.t("ui_none", "None"));
+                opts.add("* " + Tr.t("anim_first_clip", "First clip"));
+                if (names != null) for (String n : names) opts.add(n);
+                if (opts.size() == 2 && (names == null || names.size == 0)) { Ui.toast(c, Tr.t("anim_none_in_model", "This model has no animations")); return; }
+                Dialogs.choose(c, Tr.t("Animation"), opts.toArray(new String[0]), i -> {
+                    if (i == 0) setAnim.accept("", "");
+                    else if (i == 1) setAnim.accept("*", "");
+                    else setAnim.accept(opts.get(i), "");
+                });
+            });
+        });
+
+        LinearLayout row = Ui.row(c);
+        row.addView(t, Ui.weight(1));
+        // borrow a clip from another model (same skeleton, e.g. Mixamo) or from an animation file (.animf, clips saved
+        // without their model): browse the models folder, then pick one of the file's clips
+        row.addView(Ui.iconButton(c, R.drawable.ic_s2_nodes, Tr.t("anim_from_model", "Animation from another model"), v ->
+                Bridge.query(() -> {
+                    String root = Bridge.editor().getProject().getPath() + "/models";
+                    new java.io.File(root).mkdirs();
+                    return root;
+                }, rootPath -> FilePickerDialog.show(c, Tr.t("anim_pick_model", "Model or animation file"), rootPath,
+                        new String[]{"glb", "gltf", "animf"}, false, (file, rel) -> {
+                            final String mp = rel.startsWith("/") ? rel : "/" + rel;
+                            Bridge.query(() -> {
+                                com.star4droid.template.d3.Assets3D.reload(mp);
+                                return com.star4droid.template.d3.Assets3D.animations(mp);
+                            }, clips -> {
+                                if (clips == null || clips.size == 0) { Ui.toast(c, Tr.t("anim_none_in_model", "This model has no animations")); return; }
+                                String[] opts = clips.toArray(String.class);
+                                Dialogs.choose(c, Tr.t("Animation") + " · " + file.getName(), opts, i -> setAnim.accept(opts[i], mp));
+                            });
+                        }))));
+        box.addView(row, Ui.matchWrap());
+
+        TextView hint = Ui.text(c, Tr.t("anim_hint", "Play previews the clip here; it stops and resets when you switch element. The icon borrows a clip from another model with the same skeleton."), 12, Ui.TEXT_3);
+        hint.setPadding(0, Ui.dp(c, 4), 0, 0);
+        box.addView(hint, Ui.matchWrap());
+        editors.put("Animation", t);
+        return box;
     }
 
     private TextView chooser(Context c, String text) {

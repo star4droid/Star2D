@@ -131,6 +131,25 @@ public final class ShaderBrowser {
                 it.descAr = p[5];
                 all.add(it);
             }
+            // French, Spanish, Portuguese, Russian: shaderlib/i18n_LANG.txt (id|name|description); shown in place of English
+            String lang = Tr.lang();
+            if (!ar && !"en".equals(lang)) {
+                try (InputStream in = a.getAssets().open("shaderlib/i18n_" + lang + ".txt")) {
+                    java.util.HashMap<String, String[]> tr = new java.util.HashMap<>();
+                    for (String line : readAll(in).split("\n")) {
+                        String[] p = line.trim().split("\\|");
+                        if (p.length >= 3) tr.put(p[0], p);
+                    }
+                    for (Item it : all) {
+                        String[] t = tr.get(it.id);
+                        if (t == null) continue;
+                        it.en = t[1];
+                        it.desc = t[2];
+                    }
+                } catch (Exception ignored) {
+                    // no file for this language: English
+                }
+            }
         }
 
         String value(Item it) {

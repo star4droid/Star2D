@@ -80,9 +80,12 @@ public class LibgdxEditor extends Stage {
 	public final NavPaint navPaint = new NavPaint(this);
 	/** Drawing the points of a path (path variables), off while not active. */
 	public final PathDraw pathDraw = new PathDraw(this);
+	/** Editing the pivot (2D) / anchor (3D) of the selected element (pencil in the properties). */
+	public final PivotEdit pivotEdit = new PivotEdit(this);
 
 	/** The canvas tool that takes the touches now (NavGrid painter, path drawing), or null. */
 	public CanvasTool activeTool(){
+		if(pivotEdit.active() && !pivotEdit.is3D()) return pivotEdit;
 		if(pathDraw.active()) return pathDraw;
 		if(navPaint.active()) return navPaint;
 		return null;
@@ -1475,6 +1478,7 @@ public class LibgdxEditor extends Stage {
 				selectedActor.setDebug(false);
 				Gdx.gl.glLineWidth(1f);
 			}
+			if(e3d.edit2D) try { pivotEdit.draw2D(shapeRenderer,camera); } catch(Throwable t){ Gdx.app.error("Star2D","pivot draw: "+t); }
 			// camera preview window (scene tools): on top of everything
 			try { com.star4droid.star2d.editor.three.CameraPreview3D.render(e3d); } catch(Throwable t){ Gdx.app.error("Star2D-3D", "camera preview: "+t); }
 			return;
@@ -1551,6 +1555,7 @@ public class LibgdxEditor extends Stage {
 			rayHandler.setCombinedMatrix(camera.combined,0,0,1,1);
 			rayHandler.updateAndRender();
 		} catch(Exception e){}
+		try { pivotEdit.draw2D(shapeRenderer,camera); } catch(Throwable t){ Gdx.app.error("Star2D","pivot draw: "+t); }
 		// path finding grids on top of everything (outline + badge, cells of the selected one)
 		if(e3d==null) try { EditorNavGridItem.drawAll(this,shapeRenderer,getBatch()); } catch(Throwable t){ Gdx.app.error("Star2D","navgrid draw: "+t); }
 		if(e3d==null) try { pathDraw.draw2D(shapeRenderer,camera); } catch(Throwable t){ Gdx.app.error("Star2D","path draw: "+t); }

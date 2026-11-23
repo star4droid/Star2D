@@ -1,0 +1,57 @@
+shatter_cells|Células|Fragmentos com bordas brilhantes saem um a um
+shatter_fall|Queda|Quebra de cima para baixo
+shatter_burst|Explosão|Pedaços lançados para fora ao quebrar (move os vértices)
+shatter_tri|Triângulos|Fragmentos triangulares com contornos brilhantes
+shatter_voxel|Voxels|Quebra em pequenos cubos que somem
+shatter_crack_glow|Rachaduras brilhantes|Rachaduras que se abrem e brilham (amount = dano)
+shatter_glass_break|Vidro quebrado|Vidro colorido que racha e se desfaz
+evaporate_up|Subida|Sobe em rastros de vapor
+evaporate_dissolve_burn|Dissolver em chamas|Dissolve com borda em chamas e contorno queimado
+evaporate_dissolve_stars|Dissolver em estrelas|Dissolve em poeira cintilante
+evaporate_dust_away|Poeira|Levado pelo vento como poeira (move os vértices)
+evaporate_melt|Derreter|Derrete e escorre para baixo (move os vértices)
+evaporate_teleport_scan|Teletransporte|Fatiado em faixas de luz em movimento
+evaporate_ash_fade|Cinzas|Vira cinza e se desfaz com pequenas brasas
+evaporate_wipe_noise|Varredura|Some em uma direção com uma frente brilhante irregular
+evaporate_screen_door|Trama|Transparência pontilhada (muito rápido)
+evaporate_materialize_grid|Grade|Primeiro uma grade de arame, depois a superfície se preenche
+evaporate_soul_absorb|Absorção|Puxado para o centro enquanto some (move os vértices)
+glass_tint|Tom|Claro no meio, brilhante nas bordas
+glass_rainbow_s|Arco-íris|As cores mudam com o ângulo de visão
+glass_bubble_s|Bolha|Película fina e furta-cor em movimento
+glass_crystal|Cristal|Cristal lapidado com brilhos nítidos
+glass_holo_scan|Holograma|Linhas de varredura, cintilação e borda brilhante
+glass_holo_glitch|Holograma com falhas|Holograma com saltos de interferência (move os vértices)
+glass_ghost_spirit|Espírito|Brilho suave e transparente que pulsa
+glass_ghost_cloak|Manto invisível|Quase invisível, com contorno que cintila
+glass_forcefield|Campo de força|Hexágonos, borda brilhante e anéis em movimento
+glass_jelly|Gelatina|Transparente e elástico (move os vértices)
+glass_xray_rim|Raio X|Silhueta de raio X em qualquer cor
+fantasy_fire_body|Corpo de fogo|Um corpo feito de chamas que sobem
+fantasy_magma|Magma|Rocha escura com rachaduras brilhantes que escorrem
+fantasy_ice_frost|Geada|Brilho frio, veios de geada e cintilações
+fantasy_freeze_sweep|Congelar|A geada se espalha pela superfície
+fantasy_petrify|Petrificar|Vira pedra a partir de uma frente que avança
+fantasy_shine_sweep|Reflexo|Uma faixa brilhante desliza pela superfície
+fantasy_electric|Elétrico|Arcos elétricos percorrem a superfície
+fantasy_plasma|Plasma|Cores de plasma em movimento
+fantasy_galaxy|Galáxia|Corpo espacial estrelado com nebulosa em movimento
+fantasy_aura_shell|Aura|Uma casca de energia brilhante em volta da forma (move os vértices)
+fantasy_rune_glow|Runas|Runas antigas pulsando em pedra escura
+fantasy_portal_swirl|Portal|Redemoinho girando (melhor em QUAD, DISC ou PLANE)
+fantasy_toxic_bubbles|Bolhas tóxicas|Superfície líquida borbulhando
+fantasy_hit_flash|Flash de impacto|Pisca com uma cor forte (amount = força, 0 = pisca sem parar)
+fantasy_rainbow_flow|Fluxo arco-íris|Faixas de arco-íris correndo pela forma
+fantasy_toon_neon|Toon neon|Sombreamento de desenho com borda neon
+fantasy_void_neon|Vazio neon|Corpo preto com borda neon de duas cores e pontos de retícula
+fantasy_energy_veins|Veias de energia|Veias de energia brilhantes pulsando no corpo
+fantasy_energy_bands|Faixas de energia|Faixas de luz subindo pela forma
+fantasy_matrix_rain|Chuva digital|Chuva digital de símbolos brilhantes
+fantasy_glitch|Glitch|Faixas pulam para o lado e separam as cores (move os vértices)
+fantasy_wind_sway|Balanço|Balança com o vento, mais forte no alto (plantas, bandeiras, cabelo) (move os vértices)
+fantasy_heartbeat|Batimento|Pulsação com borda brilhante (move os vértices)
+fantasy_water_caustics|Cáusticas|Ondas de luz como debaixo d'água
+fantasy_halftone_toon|Quadrinhos|Sombreamento de quadrinhos com pontos impressos
+fantasy_selection_glow|Brilho de seleção|Brilho suave pulsando em volta de um objeto escolhido ou importante
+fantasy_lightning_rim|Borda de raios|Raios estalando em volta das bordas
+fantasy_curse_smoke|Fumaça amaldiçoada|Fumaça escura rastejando pelo corpo com brilho colorido

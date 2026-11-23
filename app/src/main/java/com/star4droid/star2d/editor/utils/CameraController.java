@@ -24,6 +24,16 @@ public class CameraController {
         this.startPosition = camera.position.cpy();
         this.targetPosition = new Vector3(targetX, targetY, 0);
         this.isMoving = true;
+        this.targetZoom = -1;
+    }
+
+    private float startZoom = -1, targetZoom = -1;
+
+    /** Glides to a point and a zoom (smooth start and end). */
+    public void moveTo(float targetX, float targetY, float zoom, float duration) {
+        moveTo(targetX, targetY, duration);
+        startZoom = camera.zoom;
+        targetZoom = zoom;
     }
 
     public void update(float delta) {
@@ -33,9 +43,11 @@ public class CameraController {
         float progress = Math.min(1, elapsedTime / moveDuration);
 
         // Calculate interpolated position
-        float x = interpolation.apply(startPosition.x, targetPosition.x, progress);
-        float y = interpolation.apply(startPosition.y, targetPosition.y, progress);
-        float zoom = interpolation.apply(camera.zoom, 2f, progress);
+        boolean glide = targetZoom > 0;
+        Interpolation in = glide ? Interpolation.smooth : interpolation;
+        float x = in.apply(startPosition.x, targetPosition.x, progress);
+        float y = in.apply(startPosition.y, targetPosition.y, progress);
+        float zoom = glide ? in.apply(startZoom, targetZoom, progress) : interpolation.apply(camera.zoom, 2f, progress);
 		
         camera.position.set(x, y, 0);
 		camera.zoom = zoom;
@@ -43,6 +55,7 @@ public class CameraController {
 
         if (progress >= 1) {
             isMoving = false;
+            targetZoom = -1;
         }
     }
 

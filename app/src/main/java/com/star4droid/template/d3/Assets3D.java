@@ -270,9 +270,14 @@ public final class Assets3D {
 		return a == null ? null : a.scene.model;
 	}
 
-	/** Names of the animations of a model. */
+	/** Names of the animations of a model, or of the clips of an animation file (.animf). */
 	public static Array<String> animations(String path) {
 		Array<String> out = new Array<String>();
+		if (AnimFile.is(path)) {
+			Array<com.badlogic.gdx.graphics.g3d.model.Animation> clips = AnimFile.clips(path);
+			if (clips != null) for (int i = 0; i < clips.size; i++) out.add(clips.get(i).id);
+			return out;
+		}
 		Model m = modelOf(path);
 		if (m == null) return out;
 		for (int i = 0; i < m.animations.size; i++) out.add(m.animations.get(i).id);
@@ -385,6 +390,10 @@ public final class Assets3D {
 	 * old copy is NOT freed here, elements still draw it (freeing it made the viewport flicker and crash).
 	 */
 	public static void reload(String path) {
+		if (AnimFile.is(path)) {
+			AnimFile.forget(path);
+			return;
+		}
 		String k = cacheKey(path);
 		ERRORS.remove(k);
 		SceneAsset a = MODELS.get(k);

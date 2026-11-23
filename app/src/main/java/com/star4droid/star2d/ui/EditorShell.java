@@ -1320,6 +1320,10 @@ public class EditorShell extends FrameLayout implements ControlLayer.NativeUi, T
             TerrainPanel.current.close();
             return true;
         }
+        if (PivotEditPanel.current != null) {
+            PivotEditPanel.current.finish(false);
+            return true;
+        }
         if (toolOpen && toolCloser != null) {
             Runnable closer = toolCloser;
             Bridge.gl(closer);

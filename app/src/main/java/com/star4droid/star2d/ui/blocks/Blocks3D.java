@@ -494,6 +494,9 @@ public final class Blocks3D {
 		st("spawnAt3D", "body(Body) var newName place(Body)", "current|copy|\"copy\"|current",
 				"com.star4droid.template.Utils.PlayerItem %2$s = " + X + "spawnAt(%1$s, " + str(3) + ", %4$s);",
 				"Make a copy at element", "أنشئ نسخة عند عنصر", "Copies an element to where another element is (a bullet at the gun).", "ينسخ عنصراً إلى مكان عنصر آخر (رصاصة عند السلاح).");
+		st("spawnPrefab3D", "prefab(prefab) var newName x y z", "|enemy|\"enemy\"|0|0|0",
+				"com.star4droid.template.Utils.PlayerItem %2$s = com.star4droid.template.Utils.Prefabs.spawn3D(\"%1$s\", " + str(3) + ", " + fl(4, 6) + ");",
+				"Create from prefab at", "أنشئ من prefab عند", "Creates a copy of a prefab of the project (prefabs folder) at x, y, z (meters) while the game runs, with its children, events and behaviors (not its body script). Use the variable name after it.", "ينشئ نسخة من prefab في المشروع (مجلد prefabs) عند x و y و z (بالأمتار) أثناء اللعب، مع عناصره الفرعية وأحداثه وسلوكياته (بدون سكربت الجسم). استخدم اسم المتغير بعده.");
 		st("destroy3D", "body(Body)", "current", B + "destroy(%1$s);", "Destroy", "احذف", "Removes the element from the game.", "يزيل العنصر من اللعبة.");
 		st("destroyAfter3D", "body(Body) seconds", "current|2", X + "destroyAfter(%1$s, " + f(2) + ");", "Destroy after", "احذف بعد", "Removes the element after some seconds.", "يزيل العنصر بعد عدد من الثواني.");
 		rp("3D size x of ___", B + "sizeX(%1$s)", 'n', "e", "العرض x لـ ___", "Width of the element (meters).", "عرض العنصر (بالأمتار).");

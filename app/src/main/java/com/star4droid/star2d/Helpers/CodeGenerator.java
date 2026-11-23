@@ -61,7 +61,7 @@ public class CodeGenerator {
         "\t\t%2$s = (PlayerItem)(%2$s_def.build(this));\n";
     
     /** Signature of each event method, in the order of the event files (onClick, onTouchStart, onTouchEnd, OnBodyCreated, OnBodyUpdate, onBodyCollided, onBodyCollideEnd). */
-    private static final String[] EVENT_SIGNATURES = {
+    static final String[] EVENT_SIGNATURES = {
         "onClick(PlayerItem current)",
         "onTouchStart(PlayerItem current, InputEvent event)",
         "onTouchEnd(PlayerItem current, InputEvent event)",
@@ -538,6 +538,17 @@ public class CodeGenerator {
                     lightsVar += ";";
                 }
                 String sceneScript = hasSceneScript ? ("\nsetScript(new com.star4droid.game.SceneScript."+scene.toLowerCase()+"Script().setStage(this));\nbindScriptRefs();" + sceneScriptVarsCode(project, scene, behaviorEnv)) : "";
+                // "Create from prefab" blocks: a method per prefab used, registered when the scene starts
+                String prefabMembers = "";
+                if (!com.star4droid.star2d.prefab.PrefabStore.isTempScene(scene)) {
+                    try {
+                        PrefabSpawnGen.Out pg = PrefabSpawnGen.generate(project, scene, behaviorEnv);
+                        prefabMembers = pg.members;
+                        itemsCode += pg.register;
+                    } catch (Throwable prefabEx) {
+                        itemsCode += "\n// Create from prefab: " + String.valueOf(prefabEx).replace("\n", " ") + "\n";
+                    }
+                }
                 // Prepare final code and variables
                 final String code = itemsCode + sceneScript;
                 final String userVarsJsonPath = project.getVariables(scene);
@@ -577,7 +588,7 @@ public class CodeGenerator {
                         onStep,
                         onCollStart,
                         onCollEnd,
-                        scriptBuilder.toString() + extraEvents);
+                        scriptBuilder.toString() + extraEvents + prefabMembers);
                 // Format the code using Palantir Java Format (returns the input when it fails)
                 String finalCode = format ? formatWithPalantir(codeResult) : codeResult;
                 trace.finish(finalCode);

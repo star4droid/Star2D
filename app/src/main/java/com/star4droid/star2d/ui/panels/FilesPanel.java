@@ -599,7 +599,12 @@ public class FilesPanel implements PanelHost.Panel {
         if (!f.isDirectory() && isButtonImage(f)) m.getMenu().add(0, 8, 6, Tr.t("bm_edit", "Edit in Button Maker"));
         if (!f.isDirectory() && FilePickerDialog.isImage(f.getName())) m.getMenu().add(0, 31, 7, Tr.t("s3d_make_3d", "Make 3D (SUDA3D)"));
         if (!f.isDirectory() && com.star4droid.star2d.suda.M2MActivity.accepts(f.getName())) m.getMenu().add(0, 32, 8, Tr.t("m2m_animate_file", "Animate with M2M Motion"));
+        if (com.star4droid.star2d.ui.AnimExtractDialog.accepts(f)) m.getMenu().add(0, 33, 9, Tr.t("anim_x_title", "Extract animations"));
         m.setOnMenuItemClickListener(it -> {
+            if (it.getItemId() == 33) {
+                com.star4droid.star2d.ui.AnimExtractDialog.show(c, projectPath, f, this::reload);
+                return true;
+            }
             if (it.getItemId() == 32) {
                 com.star4droid.star2d.suda.M2MActivity.open(shell.activity(), f, projectPath);
                 return true;

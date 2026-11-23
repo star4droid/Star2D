@@ -609,6 +609,68 @@ public class BlockCanvas extends View {
         return p;
     }
 
+    // ================================================================ previews (palette and drag ghost)
+
+    /** A block laid out on its own, at the same size and with the same shapes and colors as on the canvas. */
+    public static final class Prepared {
+        final ArrayList<Box> boxes = new ArrayList<>();
+        Slot slot;
+        public final RectF bounds = new RectF();
+    }
+
+    private boolean previewMode;
+
+    /** A canvas that is never shown: it only lays out and draws blocks for the palette. */
+    public static BlockCanvas previewer(Context c, boolean rtl, boolean mirror) {
+        BlockCanvas b = new BlockCanvas(c, null, rtl);
+        b.previewMode = true;
+        b.mirror = mirror;
+        return b;
+    }
+
+    /** A statement block (with its C mouth for if blocks). */
+    public Prepared prepare(BlockModel.Node n) {
+        Prepared p = new Prepared();
+        layoutChain(n, 0, 0, null, -1, p.boxes, false);
+        if (mirror) mirrorRange(p.boxes, 0, null, 0, 0);
+        boolean first = true;
+        for (Box b : p.boxes) {
+            finalizeBox(b);
+            if (first) p.bounds.set(b.all); else p.bounds.union(b.all);
+            first = false;
+        }
+        p.bounds.bottom += 2.4f * d;      // room for the shadow
+        return p;
+    }
+
+    /** A value block (reporter) with its empty inner slots. */
+    public Prepared prepare(BlockModel.Param param) {
+        Prepared p = new Prepared();
+        BlockModel.Field f = new BlockModel.Field("___", "");
+        f.block = param;
+        Slot sl = makeSlot(null, f, true);
+        placeSlot(sl, 0, sl.h / 2);
+        if (mirror) mirrorSlot(sl, 0);
+        finalizeSlot(sl);
+        p.slot = sl;
+        p.bounds.set(sl.r);
+        return p;
+    }
+
+    /** Draws a prepared block with its top-left corner at (0, 0). */
+    public void draw(Canvas c, Prepared p, boolean pressed) {
+        c.save();
+        c.translate(-p.bounds.left, -p.bounds.top);
+        if (p.slot != null) drawSlot(c, p.slot, false);
+        for (Box b : p.boxes) drawBox(c, b, false);
+        if (pressed) {
+            fill.setColor(0x33000000);
+            if (p.slot != null) c.drawPath(p.slot.path, fill);
+            for (Box b : p.boxes) c.drawPath(b.shape, fill);
+        }
+        c.restore();
+    }
+
     // ================================================================ draw
 
     @Override
@@ -710,7 +772,7 @@ public class BlockCanvas extends View {
             c.drawText(BlockInfo.reporter(b.paramNames.get(i)), pr.left + 11 * d, pr.centerY() + 4.3f * d, paramText);
         }
         for (Slot s : b.slots) drawSlot(c, s, ghost);
-        if (!ghost) {
+        if (!ghost && !previewMode) {
             fill.setColor(bad ? 0xFFFFFFFF : 0x40000000);
             c.drawCircle(b.info.centerX(), b.info.centerY(), INFO_R, fill);
             if (bad) text.setColor(0xFFD32F2F);

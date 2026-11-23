@@ -23,5 +23,9 @@ include(
    ":app",
    ":template",
    ":desktop",
-   ":najma"
+   ":najma",
+   // World Builder: its own app (com.star4droid.worldbuilder) and also opened from the Star2D home screen
+   ":worldbuilder:core",
+   ":worldbuilder:android",
+   ":worldbuilder:desktop"
 )

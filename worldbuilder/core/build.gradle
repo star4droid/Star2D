@@ -1,0 +1,10 @@
+// World Builder: the editor itself (engine, editor, UI). Used by the standalone app (worldbuilder:android),
+// the desktop test build (worldbuilder:desktop) and the Star2D app (opened from the home screen).
+plugins { id 'java-library' }
+def gdxVersion = '1.14.2'
+java { sourceCompatibility = JavaVersion.VERSION_11; targetCompatibility = JavaVersion.VERSION_11 }
+tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
+dependencies {
+    api "com.badlogicgames.gdx:gdx:$gdxVersion"
+    api "com.badlogicgames.gdx:gdx-freetype:$gdxVersion"
+}

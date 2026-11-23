@@ -1,0 +1,61 @@
+// The standalone World Builder app (package com.star4droid.worldbuilder).
+// Build it alone with: ./gradlew :worldbuilder:android:assembleDebug
+plugins { id 'com.android.application' }
+def gdxVersion = '1.14.2'
+android {
+    namespace 'com.star4droid.worldbuilder'
+    compileSdk 36
+    buildToolsVersion '37.0.0'
+    defaultConfig {
+        applicationId 'com.star4droid.worldbuilder'
+        minSdk 24
+        targetSdk 36
+        versionCode 4
+        versionName '0.4'
+    }
+    sourceSets { main { assets.srcDirs = [file('../assets')]; jniLibs.srcDirs = ['libs'] } }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_11; targetCompatibility JavaVersion.VERSION_11 }
+    signingConfigs {
+        debug { enableV1Signing true; enableV2Signing true }
+        // same keystore as the Star2D app (the "Build World Builder" workflow puts it in KEYSTORE_FILE)
+        release {
+            def ks = file(System.getenv("KEYSTORE_FILE") ?: "none.jks")
+            if (ks.exists()) {
+                storeFile ks
+                storePassword System.getenv("KEYSTORE_PASSWORD")
+                keyAlias System.getenv("KEY_ALIAS")
+                keyPassword System.getenv("KEY_PASSWORD") ?: System.getenv("KEYSTORE_PASSWORD")
+            } else initWith signingConfigs.debug
+            enableV1Signing true; enableV2Signing true; enableV3Signing true
+        }
+    }
+    buildTypes {
+        debug { signingConfig signingConfigs.debug }
+        release { signingConfig signingConfigs.release; minifyEnabled false }
+    }
+    packagingOptions { resources { excludes += ['META-INF/**'] } }
+    lint { checkReleaseBuilds false; abortOnError false }
+}
+configurations { natives }
+dependencies {
+    implementation project(':worldbuilder:core')
+    implementation "com.badlogicgames.gdx:gdx-backend-android:$gdxVersion"
+    natives "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-arm64-v8a"
+    natives "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-armeabi-v7a"
+    natives "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-x86_64"
+    natives "com.badlogicgames.gdx:gdx-freetype-platform:$gdxVersion:natives-arm64-v8a"
+    natives "com.badlogicgames.gdx:gdx-freetype-platform:$gdxVersion:natives-armeabi-v7a"
+    natives "com.badlogicgames.gdx:gdx-freetype-platform:$gdxVersion:natives-x86_64"
+}
+tasks.register('copyAndroidNatives') {
+    doFirst {
+        ['arm64-v8a', 'armeabi-v7a', 'x86_64'].each { abi ->
+            def out = file("libs/$abi"); out.mkdirs()
+            configurations.natives.copy().files.each { jar ->
+                if (jar.name.endsWith("natives-${abi}.jar")) copy { from zipTree(jar); into out; include '*.so' }
+            }
+        }
+    }
+}
+tasks.matching { it.name.contains('merge') && it.name.contains('JniLibFolders') }.configureEach { dependsOn 'copyAndroidNatives' }
+tasks.named('preBuild') { dependsOn 'copyAndroidNatives' }

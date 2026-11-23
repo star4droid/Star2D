@@ -1,0 +1,20 @@
+// Star2D shader library: glass_holo_glitch_aqua
+// Hologram with glitch jumps (moves vertices)
+// Shader Params (all optional): amount=0..1 (0 = plays by itself), speed=1, tint=#rrggbb
+uniform float u_amount;
+uniform float u_speed;
+uniform vec4 u_tint;
+float s2_t(){ return u_time * (u_speed > 0.0 ? u_speed : 1.0); }
+float s2_prog(){ return u_amount > 0.0 ? clamp(u_amount, 0.0, 1.0) : smoothstep(0.08, 0.92, abs(fract(s2_t() * 0.18) * 2.0 - 1.0)); }
+vec3 s2_tint(vec3 d){ return u_tint.a > 0.0 ? u_tint.rgb : d; }
+float h21(vec2 p){ p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
+float h31(vec3 p){ p = fract(p * 0.3183099 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
+float fres(vec3 n, vec3 wp, float pw){ return pow(1.0 - abs(dot(normalize(u_cameraPos - wp), n)), pw); }
+vec3 displace(vec3 pos, vec3 normal){ float t = u_time * (u_speed > 0.0 ? u_speed : 1.0); float b = floor(pos.y * 14.0); float k = step(0.93, fract(sin(b * 12.9898 + floor(t * 9.0) * 78.233) * 43758.5453)); return pos + vec3(k * 0.12 * sin(t * 50.0 + b), 0.0, 0.0); }
+vec4 effect(vec4 color, vec2 uv, vec3 normal, vec3 worldPos){
+ float t = s2_t(); float fr = fres(normal, worldPos, 1.5);
+ float l = step(0.5, fract(worldPos.y * 22.0 - t * 2.0));
+ float band = step(0.9, fract(sin(floor(worldPos.y * 9.0) * 12.9898 + floor(t * 9.0) * 78.233) * 43758.5453));
+ vec3 c = mix(s2_tint(vec3(0.125, 0.878, 0.753)), vec3(0.816, 1.000, 0.957), band);
+ return vec4(c * (0.4 + 0.4 * l) + c * fr, clamp(0.25 + 0.3 * l + fr * 0.5 + band * 0.4, 0.0, 1.0));
+}

@@ -248,6 +248,8 @@ public class ProjectsHomeView extends FrameLayout {
         bp.setMargins(0, dp(8), dp(8), 0);
         ((FrameLayout) bell).addView(notifBadge, bp);
         tiles.add(bell);
+        tiles.add(tile(R.drawable.ic_s2_build, T("home_world_builder", "World Builder"), 0xFF8D6E63, 0xFF4E342E, false,
+                () -> a.startActivity(new Intent(a, com.star4droid.star2d.WorldBuilderActivity.class))));
         tiles.add(tile(R.drawable.ic_s2_person, T("sc_profile", "Profile"), 0xFF5C6BC0, 0xFF283593, false, () -> {
             if (com.star4droid.star2d.suda.Suda3D.loggedIn(a)) com.star4droid.star2d.suda.Social.openProfile(a, 0);
             else com.star4droid.star2d.suda.Paywall.login(a, () -> { if (com.star4droid.star2d.suda.Suda3D.loggedIn(a)) com.star4droid.star2d.suda.Social.openProfile(a, 0); });

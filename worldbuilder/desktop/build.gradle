@@ -1,0 +1,22 @@
+// Desktop build of World Builder, used to test it on a computer (window size, screenshots, test scripts).
+plugins { id 'application' }
+def gdxVersion = '1.14.2'
+java { sourceCompatibility = JavaVersion.VERSION_11; targetCompatibility = JavaVersion.VERSION_11 }
+sourceSets.main.resources.srcDirs += [file('../assets')]
+application { mainClass = 'com.star4droid.worldbuilder.lwjgl3.Lwjgl3Launcher' }
+dependencies {
+    implementation project(':worldbuilder:core')
+    implementation "com.badlogicgames.gdx:gdx-backend-lwjgl3:$gdxVersion"
+    implementation "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop"
+    implementation "com.badlogicgames.gdx:gdx-freetype-platform:$gdxVersion:natives-desktop"
+}
+run { workingDir = file('../assets'); standardInput = System.in }
+tasks.register('dist', Jar) {
+    dependsOn configurations.runtimeClasspath
+    archiveFileName = 'WorldBuilder-desktop.jar'
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    manifest { attributes 'Main-Class': application.mainClass.get() }
+    from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+    exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA'
+    with jar
+}

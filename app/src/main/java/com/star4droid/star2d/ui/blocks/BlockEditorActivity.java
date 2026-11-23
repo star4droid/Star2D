@@ -129,7 +129,31 @@ public class BlockEditorActivity extends AppCompatActivity implements BlockCanva
     private EditText search;
     private boolean paletteOpen = true;
     private FrameLayout rootFrame;
-    private TextView ghost;
+    private BlockPreviewView ghost;
+    // palette rows draw each block as it looks on the canvas
+    private BlockCanvas painter;
+    private boolean painterMirror;
+    private final java.util.IdentityHashMap<Object, BlockCanvas.Prepared> previews = new java.util.IdentityHashMap<>();
+
+    private BlockCanvas painter() {
+        if (painter == null || painterMirror != mirror) {
+            painter = BlockCanvas.previewer(this, rtl, mirror);
+            painterMirror = mirror;
+            previews.clear();
+        }
+        return painter;
+    }
+
+    private BlockCanvas.Prepared preview(Object o) {
+        BlockCanvas p = painter();
+        BlockCanvas.Prepared r = previews.get(o);
+        if (r == null) {
+            if (o instanceof BlockCatalog.Def) r = p.prepare(((BlockCatalog.Def) o).create());
+            else { BlockCatalog.Reporter rp = (BlockCatalog.Reporter) o; r = p.prepare(new BlockModel.Param(rp.template, rp.display)); }
+            previews.put(o, r);
+        }
+        return r;
+    }
     private View handle;
 
     // value editing (field tapped)
@@ -447,9 +471,8 @@ public class BlockEditorActivity extends AppCompatActivity implements BlockCanva
         handle.setVisibility(paletteOpen ? View.VISIBLE : View.GONE);
         root.addView(body, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
 
-        ghost = Ui.text(c, "", 13, 0xFFFFFFFF);
-        ghost.setTypeface(Typeface.DEFAULT_BOLD);
-        ghost.setPadding(Ui.dp(c, 12), Ui.dp(c, 8), Ui.dp(c, 12), Ui.dp(c, 8));
+        ghost = new BlockPreviewView(c, painter());
+        ghost.setAlpha(0.92f);
         ghost.setVisibility(View.GONE);
         ghost.setElevation(Ui.dp(c, 12));
         rootFrame.addView(ghost, new FrameLayout.LayoutParams(-2, -2));
@@ -701,12 +724,10 @@ public class BlockEditorActivity extends AppCompatActivity implements BlockCanva
                 return new RecyclerView.ViewHolder(h) {};
             }
             LinearLayout row = Ui.row(c);
-            row.setPadding(Ui.dp(c, 2), Ui.dp(c, 3), Ui.dp(c, 2), Ui.dp(c, 3));
-            TextView block = Ui.text(c, "", 13, 0xFFFFFFFF);
-            block.setTypeface(Typeface.DEFAULT_BOLD);
-            block.setPadding(Ui.dp(c, viewType == 1 ? 16 : 12), Ui.dp(c, 9), Ui.dp(c, viewType == 1 ? 16 : 12), Ui.dp(c, 9));
-            block.setMaxLines(2);
-            if (viewType == 1) row.addView(block, new LinearLayout.LayoutParams(-2, -2));
+            row.setPadding(Ui.dp(c, 2), Ui.dp(c, 4), Ui.dp(c, 2), Ui.dp(c, 4));
+            BlockPreviewView block = new BlockPreviewView(c, painter());
+            block.setClickable(true);
+            if (viewType == 1) row.addView(block, new LinearLayout.LayoutParams(-2, -2, 0));
             else row.addView(block, Ui.weight(1));
             if (viewType == 1) row.addView(new View(c), new LinearLayout.LayoutParams(0, 1, 1));
             TextView info = Ui.text(c, "!", 15, Ui.TEXT);
@@ -730,12 +751,12 @@ public class BlockEditorActivity extends AppCompatActivity implements BlockCanva
                 return;
             }
             LinearLayout row = (LinearLayout) h.itemView;
-            TextView block = (TextView) row.getChildAt(0);
+            BlockPreviewView block = (BlockPreviewView) row.getChildAt(0);
             TextView info = (TextView) row.getChildAt(row.getChildCount() - 1);
             if (o instanceof BlockCatalog.Reporter) {
                 BlockCatalog.Reporter r = (BlockCatalog.Reporter) o;
-                block.setText(reporterText(r));
-                block.setBackground(new ShapeBg(BlockCatalog.groupColor(r.group), shapeOf(r), Ui.dp(c, 6)));
+                block.setBlock(preview(r), false);
+                block.setContentDescription(reporterText(r));
                 info.setOnClickListener(v -> showReporterInfo(r));
                 block.setOnClickListener(v -> putReporter(r));
                 block.setOnTouchListener(new PaletteDrag(null, r));
@@ -743,12 +764,8 @@ public class BlockEditorActivity extends AppCompatActivity implements BlockCanva
                 return;
             }
             BlockCatalog.Def d = (BlockCatalog.Def) o;
-            StringBuilder sb = new StringBuilder(BlockInfo.label(d.title, rtl));
-            for (String f : d.fields) sb.append("  [").append(BlockInfo.field(BlockModel.Field.labelOf(f), rtl)).append("]");
-            if (d.isIf) sb.append("  ⤵");
-            block.setText(sb.toString());
-            int col = BlockCatalog.colorOf(d.category);
-            block.setBackground(Ui.rounded(col, Ui.dp(c, 8)));
+            block.setBlock(preview(d), mirror);
+            block.setContentDescription(BlockInfo.label(d.title, rtl));
             info.setOnClickListener(v -> showInfo(d.title, d));
             block.setOnClickListener(v -> addBlock(d));
             block.setOnTouchListener(new PaletteDrag(d, null));
@@ -798,9 +815,7 @@ public class BlockEditorActivity extends AppCompatActivity implements BlockCanva
             float[] cp = toCanvas(lastX, lastY);
             if (def != null) canvas.beginExternalDrag(def.create(), cp[0], cp[1]);
             else canvas.beginExternalParamDrag(new BlockModel.Param(rep.template, rep.display), cp[0], cp[1]);
-            ghost.setText(((TextView) v).getText());
-            ghost.setBackground(def != null ? Ui.rounded(BlockCatalog.colorOf(def.category), Ui.dp(v.getContext(), 8))
-                    : new ShapeBg(BlockCatalog.groupColor(rep.group), shapeOf(rep), Ui.dp(v.getContext(), 6)));
+            ghost.setBlock(preview(def != null ? def : rep), false);
             moveGhost();
         }
 

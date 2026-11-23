@@ -1,0 +1,21 @@
+// Star2D shader library: fantasy_petrify_stone
+// Turns to stone from a spreading front
+// Shader Params (all optional): amount=0..1 (0 = plays by itself), speed=1, tint=#rrggbb
+uniform float u_amount;
+uniform float u_speed;
+uniform vec4 u_tint;
+float s2_t(){ return u_time * (u_speed > 0.0 ? u_speed : 1.0); }
+float s2_prog(){ return u_amount > 0.0 ? clamp(u_amount, 0.0, 1.0) : smoothstep(0.08, 0.92, abs(fract(s2_t() * 0.18) * 2.0 - 1.0)); }
+vec3 s2_tint(vec3 d){ return u_tint.a > 0.0 ? u_tint.rgb : d; }
+float h21(vec2 p){ p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
+float h31(vec3 p){ p = fract(p * 0.3183099 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
+float n3(vec3 p){ vec3 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+ return mix(mix(mix(h31(i), h31(i + vec3(1.0, 0.0, 0.0)), f.x), mix(h31(i + vec3(0.0, 1.0, 0.0)), h31(i + vec3(1.0, 1.0, 0.0)), f.x), f.y),
+            mix(mix(h31(i + vec3(0.0, 0.0, 1.0)), h31(i + vec3(1.0, 0.0, 1.0)), f.x), mix(h31(i + vec3(0.0, 1.0, 1.0)), h31(i + vec3(1.0, 1.0, 1.0)), f.x), f.y), f.z); }
+vec4 effect(vec4 color, vec2 uv, vec3 normal, vec3 worldPos){
+ float p = s2_prog() * 1.2; float n = n3(worldPos * 2.5);
+ float st = smoothstep(n, n + 0.05, p); float e = st * (1.0 - smoothstep(n + 0.05, n + 0.15, p));
+ float grain = 0.75 + 0.5 * h31(floor(worldPos * 40.0)) * 0.5 + n3(worldPos * 9.0) * 0.25;
+ vec3 stone = vec3(0.039, 0.047, 0.165) * grain * lambert(normal) * 2.2;
+ return vec4(mix(color.rgb * lambert(normal), stone, st) + s2_tint(vec3(0.478, 0.549, 1.000)) * e * 1.3, color.a);
+}

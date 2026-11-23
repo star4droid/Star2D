@@ -124,6 +124,11 @@
 			android:windowSoftInputMode="adjustResize|stateVisible"
 			android:exported="true"/>
 			
+		<!-- World Builder (module worldbuilder:core), opened from the home screen -->
+		<activity android:name="com.star4droid.star2d.WorldBuilderActivity" android:theme="@style/AppTheme.FullScreen"
+			android:screenOrientation="fullUser" android:exported="false"
+			android:configChanges="keyboard|keyboardHidden|navigation|orientation|screenSize|screenLayout|smallestScreenSize|density|uiMode"/>
+
 		<!-- SUDA3D: credits, history, 3D viewer, AI workspace (node editor) -->
 		<activity android:name="com.star4droid.star2d.suda.BuyCreditsActivity" android:theme="@style/AppTheme.FullScreen"
 			android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout" android:windowSoftInputMode="adjustResize" android:exported="false"/>

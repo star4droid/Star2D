@@ -1,0 +1,51 @@
+name: Build World Builder
+
+# The standalone World Builder app (package com.star4droid.worldbuilder, module worldbuilder:android).
+# Manual only; the APK is uploaded as an artifact of the run. Signed with the same keystore secrets as the Star2D app
+# (KEYSTORE_BASE64, KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD); without them it is signed with a debug key.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Keystore from secrets
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/release.jks"
+            echo "KEYSTORE_FILE=$RUNNER_TEMP/release.jks" >> $GITHUB_ENV
+            echo "KEYSTORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> $GITHUB_ENV
+            echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> $GITHUB_ENV
+            echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> $GITHUB_ENV
+          else
+            echo "::warning::No keystore secret: the APK is signed with a debug key"
+          fi
+
+      - name: Build
+        run: |
+          chmod +x gradlew
+          ./gradlew :worldbuilder:android:assembleRelease
+          V=$(grep -m1 versionName worldbuilder/android/build.gradle | sed -E "s/.*'([^']+)'.*/\1/")
+          cp worldbuilder/android/build/outputs/apk/release/android-release.apk "WorldBuilder-$V.apk"
+          echo "APK=WorldBuilder-$V.apk" >> $GITHUB_ENV
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: worldbuilder-apk
+          path: ${{ env.APK }}
+          retention-days: 90
+          if-no-files-found: error

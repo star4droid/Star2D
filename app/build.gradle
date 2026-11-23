@@ -84,6 +84,8 @@ android {
             jniLibs.srcDirs = ['libs']
             // sources of the built-in behaviors (the "<>" button of the behavior list shows them): see copyBehaviorSources
             assets.srcDirs += [layout.buildDirectory.dir('generated/behaviorSrc').get().asFile]
+            // World Builder (opened from the home screen): its files are all in assets/wb/
+            assets.srcDirs += [file('../worldbuilder/assets')]
         }
     }
     compileOptions {
@@ -110,6 +112,7 @@ ext {
 configurations { natives }
 
 dependencies {
+    implementation project(':worldbuilder:core')
 
     implementation("com.google.android.material:material:1.14.0")
     implementation(projects.najma) // Najma, the Arabic scripting language (.njm to .java, editor only)

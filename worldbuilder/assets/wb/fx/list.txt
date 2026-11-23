@@ -1,0 +1,57 @@
+shatter_cells|Cells|Shatter|shards with glowing edges leave one by one
+shatter_fall|Fall|Shatter|breaks from the top down
+shatter_burst|Burst|Shatter|chunks pushed outward while breaking (moves vertices)
+shatter_tri|Tri|Shatter|triangle shards with bright outlines
+shatter_voxel|Voxel|Shatter|Break into small cubes that vanish
+shatter_crack_glow|Crack Glow|Shatter|Cracks that open and glow (amount = damage)
+shatter_glass_break|Glass Break|Shatter|Tinted glass that cracks and falls apart
+evaporate_up|Up|Evaporate|rises away as streaks of vapor
+evaporate_dissolve_burn|Dissolve Burn|Evaporate|Dissolve with a burning edge and charred border
+evaporate_dissolve_stars|Dissolve Stars|Evaporate|Dissolve into sparkling dust
+evaporate_dust_away|Dust Away|Evaporate|Blown away as dust in the wind (moves vertices)
+evaporate_melt|Melt|Evaporate|Melts and drips down (moves vertices)
+evaporate_teleport_scan|Teleport Scan|Evaporate|sliced into moving light bands
+evaporate_ash_fade|Ash Fade|Evaporate|Turns to grey ash, then crumbles with tiny embers
+evaporate_wipe_noise|Wipe Noise|Evaporate|Directional wipe with a noisy glowing front
+evaporate_screen_door|Screen Door|Evaporate|dithered see-through (very fast)
+evaporate_materialize_grid|Materialize Grid|Evaporate|wire grid first, then the surface fills in
+evaporate_soul_absorb|Soul Absorb|Evaporate|Pulled into its center while fading (moves vertices)
+glass_tint|Tint|Glass|clear in the middle, bright at the rim
+glass_rainbow_s|Rainbow S|Glass|colors shift with the viewing angle
+glass_bubble_s|Bubble S|Glass|thin moving rainbow film
+glass_crystal|Crystal|Glass|Faceted crystal with sharp highlights
+glass_holo_scan|Holo Scan|Glass|scan lines, flicker and a bright rim
+glass_holo_glitch|Holo Glitch|Glass|Hologram with glitch jumps (moves vertices)
+glass_ghost_spirit|Ghost Spirit|Glass|soft pulsing see-through glow
+glass_ghost_cloak|Ghost Cloak|Glass|almost invisible, shimmering outline
+glass_forcefield|Forcefield|Glass|hexagons, rim light and moving rings
+glass_jelly|Jelly|Glass|see-through and bouncy (moves vertices)
+glass_xray_rim|Xray Rim|Glass|X-ray silhouette in any color
+fantasy_fire_body|Fire Body|Fantasy|Body made of rising flames
+fantasy_magma|Magma|Fantasy|Dark rock with glowing flowing cracks
+fantasy_ice_frost|Ice Frost|Fantasy|cold sheen, frost veins and sparkles
+fantasy_freeze_sweep|Freeze Sweep|Fantasy|frost spreads across the surface
+fantasy_petrify|Petrify|Fantasy|Turns to stone from a spreading front
+fantasy_shine_sweep|Shine Sweep|Fantasy|a bright band glides across
+fantasy_electric|Electric|Fantasy|Electric arcs crawling over the surface
+fantasy_plasma|Plasma|Fantasy|Flowing plasma colors
+fantasy_galaxy|Galaxy|Fantasy|Starry space body with drifting nebula
+fantasy_aura_shell|Aura Shell|Fantasy|a glowing shell of energy around the shape (moves vertices)
+fantasy_rune_glow|Rune Glow|Fantasy|Ancient runes pulsing on dark stone
+fantasy_portal_swirl|Portal Swirl|Fantasy|spinning swirl (best on QUAD, DISC or PLANE)
+fantasy_toxic_bubbles|Toxic Bubbles|Fantasy|Bubbling liquid surface
+fantasy_hit_flash|Hit Flash|Fantasy|blinks to a bright color (amount = strength, 0 = keeps blinking)
+fantasy_rainbow_flow|Rainbow Flow|Fantasy|Rainbow bands flowing over the shape
+fantasy_toon_neon|Toon Neon|Fantasy|Cartoon shading with a neon rim
+fantasy_void_neon|Void Neon|Fantasy|Black void body with a two-color neon edge and halftone dots
+fantasy_energy_veins|Energy Veins|Fantasy|Glowing veins of energy pulsing through the body
+fantasy_energy_bands|Energy Bands|Fantasy|Light bands rising along the shape
+fantasy_matrix_rain|Matrix Rain|Fantasy|Digital rain of glowing symbols
+fantasy_glitch|Glitch|Fantasy|bands jump sideways and split colors (moves vertices)
+fantasy_wind_sway|Wind Sway|Fantasy|Sways in the wind, stronger at the top (plants, flags, hair) (moves vertices)
+fantasy_heartbeat|Heartbeat|Fantasy|Beating pulse with a glowing rim (moves vertices)
+fantasy_water_caustics|Water Caustics|Fantasy|Underwater light ripples over the surface
+fantasy_halftone_toon|Halftone Toon|Fantasy|Comic book shading with printed dots
+fantasy_selection_glow|Selection Glow|Fantasy|Soft pulsing outline glow for a selected or important object
+fantasy_lightning_rim|Lightning Rim|Fantasy|Crackling lightning around the edges
+fantasy_curse_smoke|Curse Smoke|Fantasy|Dark smoke crawling over the body with a colored glow

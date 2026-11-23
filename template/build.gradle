@@ -58,6 +58,8 @@ dependencies {
     implementation("com.badlogicgames.gdx:gdx-backend-android:$gdxVersion")
     implementation("com.badlogicgames.gdx:gdx-box2d:$gdxVersion")
     implementation("com.badlogicgames.gdx:gdx-bullet:$gdxVersion")
+    // Mesh WORLD: worlds made in World Builder (drawn by template/d3/WorldLayer)
+    implementation project(':worldbuilder:core')
     implementation("com.github.mgsx-dev.gdx-gltf:gltf:2.2.1")
     implementation("com.kotcrab.vis:vis-ui:1.5.9")
     implementation("com.google.code.gson:gson:2.10.1")

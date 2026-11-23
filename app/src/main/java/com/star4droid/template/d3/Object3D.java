@@ -186,6 +186,7 @@ public class Object3D extends Actor implements PlayerItem {
 		boundsDone = false;
 		String shape = def.Mesh == null ? Shapes3D.CUBE : def.Mesh.toUpperCase();
 		if (!"PARTICLES".equals(shape)) particles = null;
+		if (!"WORLD".equals(shape)) WorldLayer.dispose(this);
 		int detail = (int) def.Detail;
 		if ("MODEL".equals(shape)) {
 			SceneAsset a = null;
@@ -228,7 +229,7 @@ public class Object3D extends Actor implements PlayerItem {
 				m.set(water);
 				m.set(new com.badlogic.gdx.graphics.g3d.attributes.BlendingAttribute(true, 0.9f)); // drawn after the solid elements
 			}
-		} else if ("EMPTY".equals(shape)) {
+		} else if ("EMPTY".equals(shape) || "WORLD".equals(shape)) {
 			instance = null;
 		} else if ("PARTICLES".equals(shape)) {
 			instance = null;
@@ -268,6 +269,7 @@ public class Object3D extends Actor implements PlayerItem {
 
 	/** Frees what this element owns alone (the terrain mesh). Its body must be gone already. */
 	void disposeOwned() {
+		WorldLayer.dispose(this);
 		if (terrain != null) {
 			try {
 				terrain.dispose();
@@ -1125,6 +1127,11 @@ public class Object3D extends Actor implements PlayerItem {
 		if (terrain != null) return terrain.heightAt(this, x, z);
 		if (water != null) return position.y + Water3D.heightAt(water, transform, x, z, World3D.time);
 		return position.y + getSizeY() * 0.5f;
+	}
+
+	/** Mesh WORLD: a world of World Builder drawn inside the scene. */
+	public boolean isWorld() {
+		return "WORLD".equals(def.Mesh);
 	}
 
 	public boolean isWater() {

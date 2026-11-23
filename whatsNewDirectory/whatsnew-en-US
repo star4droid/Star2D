@@ -1,7 +1,6 @@
-New: Camera preview in 3D scenes: see what any camera sees, live, in a window you can move and resize.
-New: View the code of any behavior and add it to your project as a new one.
-Selected 3D elements now always show their axes.
-Fixed flickering stripes on 3D floors and shadows.
-Fixed a crash when adding a Camera View.
-Community: pictures open full screen, "See more" for long posts, the keyboard no longer hides the comment box.
-Projects, Learn and Templates on the home screen.
+New: World Builder in the editor (build icon in the top bar): land, trees, houses, water and colliders.
+New 3D element "World": shows a world in your scene with its ground and colliders.
+New: Shader library beside the Shader property: 57 ready shaders with pictures.
+Blocks in the list look like the real blocks.
+UI holder and World: Edit, Choose and New at the top of the properties.
+Home: "Support" with community links, Telegram and platform icons.

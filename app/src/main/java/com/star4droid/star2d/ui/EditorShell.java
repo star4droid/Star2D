@@ -432,6 +432,11 @@ public class EditorShell extends FrameLayout implements ControlLayer.NativeUi, T
         coll.setImageTintList(ColorStateList.valueOf(0xFF81C784));
         Tut.tag(coll, "tool:collections");
         into.addView(coll);
+        // World Builder: the 3D world editor (its worlds can be shown in a scene with the World element)
+        ImageView wb = Ui.iconButton(c, R.drawable.ic_s2_build, Tr.t("home_world_builder", "World Builder"), v -> com.star4droid.star2d.WorldBuilderActivity.open(activity, null, -1));
+        wb.setImageTintList(ColorStateList.valueOf(0xFFBCAAA4));
+        Tut.tag(wb, "tool:world_builder");
+        into.addView(wb);
         ImageView trs = Ui.iconButton(c, R.drawable.ic_s2_text, Tr.t("strings_title", "Game translations"), v ->
                 Bridge.query(() -> Bridge.editor().getProject().getPath(), p -> StringsDialog.show(activity, new java.io.File(p))));
         trs.setImageTintList(ColorStateList.valueOf(0xFF4DD0E1));

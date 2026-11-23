@@ -300,7 +300,7 @@ final class EditTools {
     private static final String[] KINDS = {"BOX", "CIRCLE", "TEXT", "JOYSTICK", "PROGRESS", "CUSTOM", "PARTICLE", "CAMERA", "MAP", "GROUP", "UIHOLDER"};
 
     private static final String[] MESHES = {"CUBE", "SPHERE", "CYLINDER", "CAPSULE", "CONE", "PLANE", "TORUS", "RAMP", "STAIRS", "PYRAMID", "HEMISPHERE",
-            "TUBE", "WEDGE", "QUAD", "DISC", "MODEL", "TERRAIN", "WATER", "EMPTY", "PARTICLES"};
+            "TUBE", "WEDGE", "QUAD", "DISC", "MODEL", "TERRAIN", "WATER", "EMPTY", "PARTICLES", "WORLD"};
 
     private static String upper(String s) {
         return s == null ? "" : s.trim().toUpperCase(Locale.ROOT);

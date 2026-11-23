@@ -1,3 +1,30 @@
+## Star3D 0.6.0 Beta
+
+### What's new
+
+**World Builder**
+- World Builder is part of the engine: open it from the build icon in the editor's top bar. Build a world with land, trees, houses, water and effects, and give its elements colliders (box, sphere, capsule or mesh).
+- New 3D element "World": choose a world and it is shown in your scene as it is, with its ground and colliders for physics. Edit, Choose and New sit at the top of its properties; Edit opens World Builder and the scene shows the changes when you come back. Worlds are saved in the project's worlds folder and go into exported games.
+
+**Shaders**
+- Shader library: a button beside the Shader property of 3D elements opens 57 ready shaders from World Builder (Shatter, Evaporate, Glass and hologram, Fantasy), each with a picture and a description, with search. Choosing one copies it into the project's shaders folder, so it works in exported games and you can edit it. Tune it with Shader Params: amount, speed, tint.
+
+**Editor**
+- The block list draws each block with its real shape, and dragging a block shows it under your finger.
+- UI holder: Edit, New and the chosen UI are at the top of its properties.
+
+**Home screen**
+- The World Builder tile is replaced by "Support": community links (now including Telegram) and ways to support the engine.
+- Community links use the icons of each platform.
+
+### العربية
+- **World Builder داخل المحرر:** أيقونة البناء في الشريط العلوي تفتحه. ابنِ عالماً بأرض وأشجار وبيوت وماء ومؤثرات، وأضف للعناصر كولايدر (صندوق، كرة، كبسولة، شبكة).
+- **عنصر 3D جديد "عالم":** اختر عالماً فيظهر في المشهد كما هو، مع أرضه وكولايدراته للفيزياء. أزرار تعديل واختيار وجديد أعلى الخصائص، وتظهر التعديلات عند رجوعك من World Builder. العوالم تُحفظ في مجلد worlds بالمشروع وتدخل في الألعاب المصدّرة.
+- **مكتبة شيدرات:** زر بجانب خاصية Shader يفتح 57 شيدر جاهز من World Builder (تحطّم، تبخّر، زجاج وهولوغرام، خيال وسحر) بصورة ووصف لكل واحد وبحث. الاختيار ينسخ الشيدر إلى مجلد shaders بالمشروع فيعمل في الألعاب المصدّرة ويمكن تعديله.
+- قائمة البلوكات تعرض كل بلوك بشكله الحقيقي، والسحب يُظهره تحت إصبعك.
+- UI Holder: أزرار تعديل وجديد والواجهة المختارة أعلى الخصائص.
+- في الرئيسية صار "الدعم" بدل World Builder: روابط المجتمع (ومعها تلجرام) وطرق دعم المحرك، بأيقونات المنصات.
+
 ## Star3D 0.5.9 Beta
 
 ### What's new

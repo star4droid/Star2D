@@ -153,7 +153,7 @@ public class DonateActivity extends AppCompatActivity implements PurchasesUpdate
 
         // USDT card
         LinearLayout usdt = card();
-        usdt.addView(sectionTitle("\uD83D\uDCB0  " + T("support_usdt_title", "Donate with USDT")));
+        usdt.addView(sectionTitle(T("support_usdt_title", "Donate with USDT")));
         TextView chip = text("\u25CF  " + T("support_network", "Network: Optimism (OP Mainnet)"), 12, 0xFFFF9AA2, true);
         chip.setBackground(rounded(0x33FF5C5C, 20, 0));
         chip.setPadding(dp(12), dp(5), dp(12), dp(5));
@@ -192,7 +192,7 @@ public class DonateActivity extends AppCompatActivity implements PurchasesUpdate
         LinearLayout play = card();
         playCard = play;
         play.setVisibility(View.GONE);
-        play.addView(sectionTitle("\uD83C\uDF81  " + T("support_play_title", "Donate via Google Play")));
+        play.addView(sectionTitle(T("support_play_title", "Donate via Google Play")));
         LinearLayout amounts = new LinearLayout(this);
         amounts.setOrientation(LinearLayout.HORIZONTAL);
         String[] ids = {ID_1, ID_3, ID_5};
@@ -220,7 +220,7 @@ public class DonateActivity extends AppCompatActivity implements PurchasesUpdate
         // optional rewarded video: 1 hour without ads
         if (com.star4droid.star2d.evo.BuildConfig.ADS_ENABLED && !com.star4droid.star2d.ads.AdsManager.adFreeByPurchase(this)) {
             LinearLayout ad = card();
-            ad.addView(sectionTitle("\uD83C\uDFAC  " + T("ads_reward_title", "Watch a video to support me")));
+            ad.addView(sectionTitle(T("ads_reward_title", "Watch a video to support me")));
             TextView adSub = text(T("ads_reward_sub", "Optional. Watch one short video ad, it helps fund Star3D, and you get 1 hour without ads."), 13, 0xFFC9C9E6, false);
             adSub.setPadding(0, dp(4), 0, dp(10));
             ad.addView(adSub);
@@ -245,7 +245,7 @@ public class DonateActivity extends AppCompatActivity implements PurchasesUpdate
         }
 
         LinearLayout other = card();
-        other.addView(sectionTitle("\uD83E\uDD1D  " + T("support_other_title", "Other ways to support")));
+        other.addView(sectionTitle(T("support_other_title", "Other ways to support")));
         TextView otherSub = text(T("support_other_sub", "Contact the developer for other support methods"), 13, 0xFFC9C9E6, false);
         otherSub.setPadding(0, dp(4), 0, dp(10));
         other.addView(otherSub);
@@ -254,6 +254,8 @@ public class DonateActivity extends AppCompatActivity implements PurchasesUpdate
         wa.setOnClickListener(v -> openUrl(CommunityLinks.DEV_WHATSAPP));
         TextView tg = button("Telegram", 0xFF2AABEE, 0xFF229ED9);
         tg.setOnClickListener(v -> openUrl(CommunityLinks.DEV_TELEGRAM));
+        brandIcon(wa, com.star4droid.star2d.evo.R.drawable.ic_brand_whatsapp, Color.WHITE);
+        brandIcon(tg, com.star4droid.star2d.evo.R.drawable.ic_brand_telegram, Color.WHITE);
         LinearLayout.LayoutParams c1 = new LinearLayout.LayoutParams(0, dp(48), 1f);
         c1.setMarginEnd(dp(8));
         contacts.addView(wa, c1);
@@ -264,10 +266,12 @@ public class DonateActivity extends AppCompatActivity implements PurchasesUpdate
 
         // community
         LinearLayout comm = card();
-        comm.addView(sectionTitle("\uD83C\uDF0D  " + T("home_tab_community", "Community")));
+        comm.addView(sectionTitle(T("home_tab_community", "Community")));
         for (String[] link : CommunityLinks.all()) {
-            TextView row = text(link[4] + "   " + T("home_c_" + link[0], link[1]), 15, Color.WHITE, true);
+            TextView row = text(T("home_c_" + link[0], link[1]), 15, Color.WHITE, true);
             row.setGravity(Gravity.CENTER_VERTICAL);
+            int[] ic = CommunityLinks.icon(link[0]);
+            brandIcon(row, ic[0], ic[1]);
             row.setBackground(ripple(0x22FFFFFF, 12));
             row.setPadding(dp(12), 0, dp(12), 0);
             row.setOnClickListener(v -> openUrl(link[3]));
@@ -333,6 +337,17 @@ public class DonateActivity extends AppCompatActivity implements PurchasesUpdate
     }
 
     private TextView sectionTitle(String s) { return text(s, 17, Color.WHITE, true); }
+
+    /** The brand mark of a link at the start of its row or button. */
+    private void brandIcon(TextView t, int res, int color) {
+        android.graphics.drawable.Drawable dr = getDrawable(res);
+        if (dr == null) return;
+        dr = dr.mutate();
+        dr.setTint(color);
+        dr.setBounds(0, 0, dp(22), dp(22));
+        t.setCompoundDrawablesRelative(dr, null, null, null);
+        t.setCompoundDrawablePadding(dp(12));
+    }
 
     private GradientDrawable rounded(int color, float radius, int stroke) {
         GradientDrawable g = new GradientDrawable();

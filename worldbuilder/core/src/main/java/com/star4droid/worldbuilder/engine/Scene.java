@@ -7,6 +7,8 @@ import com.badlogic.gdx.utils.Array;
 /** A world: terrain, water, environment and elements. */
 public final class Scene {
     public String name = "My World";
+    /** When set, the world is saved to this file (a world of a Star2D project) instead of the worlds folder. */
+    public com.badlogic.gdx.files.FileHandle file;
     public final Terrain terrain = new Terrain();
     public final Water water = new Water();
     public final Env env = new Env();

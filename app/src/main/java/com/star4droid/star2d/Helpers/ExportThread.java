@@ -128,6 +128,10 @@ public class ExportThread extends Thread {
             FileUtil.copyFile(img, destinationPath);
         }
 
+			// worlds made in World Builder (Mesh WORLD) need its pictures, models and effects in the game
+			if(usesWorlds(project)){
+				for(String d : new String[]{"tex","models","fx"}) copyAssetDir("wb/"+d, export_temp+"/assets/wb/"+d);
+			}
 			FileUtil.writeFile(export_temp+"/assets/version",""+new Random().nextInt(9999999));
 			addScenesDex();
 			onProgress(com.star4droid.star2d.ui.Tr.t("export_p_manifest","Writing the manifest..."));
@@ -266,5 +270,31 @@ public class ExportThread extends Thread {
 	
 	public void post(Runnable runnable){
 		new Handler(Looper.getMainLooper()).post(runnable);
+	}
+
+	/** The project has worlds of World Builder (folder worlds/ with .wbw files). */
+	static boolean usesWorlds(String project){
+		java.io.File[] w = new java.io.File(project, "worlds").listFiles((d, n) -> n.endsWith(".wbw"));
+		return w != null && w.length > 0;
+	}
+
+	/** Copies a folder of the editor's assets into the game. */
+	private void copyAssetDir(String from, String to){
+		try {
+			String[] list = context.getAssets().list(from);
+			if(list == null || list.length == 0){
+				new java.io.File(to).getParentFile().mkdirs();
+				try (java.io.InputStream in = context.getAssets().open(from); java.io.OutputStream out = new java.io.FileOutputStream(to)) {
+					byte[] b = new byte[16384];
+					int n;
+					while((n = in.read(b)) > 0) out.write(b, 0, n);
+				}
+				return;
+			}
+			new java.io.File(to).mkdirs();
+			for(String n : list) copyAssetDir(from+"/"+n, to+"/"+n);
+		} catch(Exception e){
+			android.util.Log.e("Star2D", "export wb assets: "+e);
+		}
 	}
 }

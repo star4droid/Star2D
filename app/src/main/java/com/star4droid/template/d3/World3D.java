@@ -674,6 +674,12 @@ public class World3D implements Disposable {
 		Gdx.gl.glDisable(GL20.GL_DEPTH_TEST); // the gradient sky is a 2D picture behind everything
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
 		drawSky(cam, fw, fh);
+		// worlds of World Builder (Mesh WORLD): ground, water, trees and houses, before the elements of the scene
+		try {
+			WorldLayer.renderAll(cam, objects);
+		} catch (Throwable t) {
+			Gdx.app.error("Star2D-3D", "worlds: " + t);
+		}
 		boolean unlitScene = Shaders3D.UNLIT.equals(renderMode);
 		// a model the shaders can't draw must not break the whole picture (a batch left open = only the sky, every frame)
 		drawSafely(batch, cam, false, unlitScene);

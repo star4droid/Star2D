@@ -14,7 +14,7 @@ public class Object3DDef extends ItemDef {
 	public String name = "", parentName = "", Script = "", type = "STATIC";
 
 	// ---- what it is
-	/** CUBE SPHERE CYLINDER CAPSULE CONE PLANE TORUS RAMP STAIRS PYRAMID HEMISPHERE TUBE WEDGE QUAD DISC, MODEL, TERRAIN, WATER, EMPTY, PARTICLES */
+	/** CUBE SPHERE CYLINDER CAPSULE CONE PLANE TORUS RAMP STAIRS PYRAMID HEMISPHERE TUBE WEDGE QUAD DISC, MODEL, TERRAIN, WATER, EMPTY, PARTICLES, WORLD */
 	public String Mesh = "CUBE";
 	/** MODEL: project path of the .glb / .gltf (e.g. "models/car.glb"). */
 	public String Model = "";
@@ -26,6 +26,8 @@ public class Object3DDef extends ItemDef {
 	public float Particle_Scale = 1, Particle_Speed = 1;
 	/** PARTICLES: new particles are made (false: stopped until setEmitting(true) / restartParticles()). */
 	public boolean Emitting = true;
+	/** WORLD: a world made in World Builder, in the project's worlds folder ("/worlds/Island.wbw"). Shown as it is (edit it in World Builder). */
+	public String World_File = "";
 	/** Round shapes: 0 low, 1 normal, 2 high. STAIRS: number of steps. */
 	public float Detail = 1, Steps = 6;
 

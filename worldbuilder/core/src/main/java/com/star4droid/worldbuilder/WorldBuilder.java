@@ -28,6 +28,10 @@ import com.star4droid.worldbuilder.ui.Ui;
 public class WorldBuilder extends ApplicationAdapter {
     /** Desktop test options: folder for screenshots and a script of actions (see {@link TestScript}). */
     public static String shotsDir, shotScript;
+    /** Star2D: edit this world file of a project (created from {@link #newTemplate} when it does not exist yet). */
+    public static String openFile;
+    /** Template for a new world file: 0 island village, 1 empty meadow. */
+    public static int newTemplate = 1;
 
     public Renderer renderer;
     public Editor editor;
@@ -59,9 +63,19 @@ public class WorldBuilder extends ApplicationAdapter {
         job("Loading textures", () -> { Assets.loadTextures(); Assets.loadFxShaders(); Assets.beginModels(); return 1; });
         job("Loading models", () -> Assets.loadSomeModels(4));
         job("Preparing the library", () -> renderer.thumbStep(5));
+        Assets.forget();          // anything loaded by another app of the process belongs to its own graphics context
         String last = Settings.lastWorld;
         if (shotScript != null) script = new TestScript(this, shotScript, shotsDir);
-        if (script != null && script.fresh || last.isEmpty() || !WorldIO.exists(last)) { saveWhenReady = script == null; buildWorld(() -> Starter.island(freeName("Island Village"))); }
+        if (openFile != null) {
+            com.badlogic.gdx.files.FileHandle f = Gdx.files.absolute(openFile);
+            String name = f.nameWithoutExtension();
+            if (f.exists()) buildWorld(() -> { Scene s = WorldIO.load(f); s.name = name; s.file = f; return s; });
+            else {
+                saveWhenReady = true;
+                int t = newTemplate;
+                buildWorld(() -> { Scene s = t == 0 ? Starter.island(name) : Starter.empty(name); s.file = f; return s; });
+            }
+        } else if (script != null && script.fresh || last.isEmpty() || !WorldIO.exists(last)) { saveWhenReady = script == null; buildWorld(() -> Starter.island(freeName("Island Village"))); }
         else loadWorld(last);
     }
 
@@ -118,7 +132,7 @@ public class WorldBuilder extends ApplicationAdapter {
             Scene old = editor.scene;
             editor.setScene(made[0]);
             if (old != null) old.dispose();
-            Settings.lastWorld = made[0].name; Settings.save();
+            if (made[0].file == null) { Settings.lastWorld = made[0].name; Settings.save(); }
             ui.worldChanged();
             autosaveTimer = 0;
             return 1;
@@ -171,7 +185,7 @@ public class WorldBuilder extends ApplicationAdapter {
             editor.rig.store(editor.scene.camera);
             WorldIO.save(editor.scene);
             editor.dirty = false; autosaveTimer = 0;
-            Settings.lastWorld = editor.scene.name; Settings.save();
+            if (editor.scene.file == null) { Settings.lastWorld = editor.scene.name; Settings.save(); }
             wantPicture = true;
             if (tell) ui.toast(L.t("Saved \"{0}\"", editor.scene.name));
         } catch (Exception e) {
@@ -205,7 +219,7 @@ public class WorldBuilder extends ApplicationAdapter {
             Pixmap small = new Pixmap(w, h, Pixmap.Format.RGB888);
             small.setFilter(Pixmap.Filter.BiLinear);
             small.drawPixmap(full, (bw - sw) / 2, (bh - sh) / 2, sw, sh, 0, 0, w, h);
-            PixmapIO.writePNG(WorldIO.picture(editor.scene.name), small, 6, true);
+            PixmapIO.writePNG(WorldIO.picture(editor.scene), small, 6, true);
             full.dispose(); small.dispose();
         } catch (Exception e) { Gdx.app.error("WB", "picture", e); }
     }
@@ -224,6 +238,14 @@ public class WorldBuilder extends ApplicationAdapter {
         else if (!renderer.thumbsDone() && renderer.thumbStep(6) >= 1) ui.build();
         GL20 gl = Gdx.gl;
         int w = Gdx.graphics.getWidth(), h = Gdx.graphics.getHeight();
+        if (embedTest != null) {           // desktop test of WorldView (a world drawn inside another picture)
+            editor.update(dt);
+            gl.glViewport(0, 0, Gdx.graphics.getBackBufferWidth(), Gdx.graphics.getBackBufferHeight());
+            gl.glClearColor(0.55f, 0.75f, 0.95f, 1); gl.glDepthMask(true); gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
+            embedTest.render(renderer.cam, embedTransform, dt);
+            if (script != null) script.frame();
+            return;
+        }
         if (editor.scene != null) {
             editor.update(dt);
             renderer.render(editor.scene, w, h, dt);
@@ -244,6 +266,10 @@ public class WorldBuilder extends ApplicationAdapter {
     }
 
     public InputMultiplexer input() { return input; }
+
+    /** Desktop tests only. */
+    public com.star4droid.worldbuilder.engine.WorldView embedTest;
+    public final com.badlogic.gdx.math.Matrix4 embedTransform = new com.badlogic.gdx.math.Matrix4();
 
     @Override public void resume() {
         if (Assets.generatedLost()) {          // the graphics context was dropped while the app was in the background

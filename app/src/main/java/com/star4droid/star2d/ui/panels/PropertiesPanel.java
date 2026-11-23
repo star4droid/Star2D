@@ -295,9 +295,12 @@ public class PropertiesPanel implements PanelHost.Panel {
         header.setText(Tr.t("ui_type_" + (type == null ? "" : type.toLowerCase()), type) + " · " + name);
 
         LinkedHashMap<String, String[]> secs = is3dType(type) && sections3d != null && !sections3d.isEmpty() ? sections3d : sections;
+        // the file an element shows (World File of a world, UI of a UI holder): choose / edit / new first, above the sections
+        final String top = topField(type, v);
+        if (top != null) addTopCard(c, top);
         for (Map.Entry<String, String[]> sec : secs.entrySet()) {
             ArrayList<String> present = new ArrayList<>();
-            for (String f : sec.getValue()) if (v.containsKey(f) && (secs != sections3d || shows3d(type, f, v))) present.add(f);
+            for (String f : sec.getValue()) if (v.containsKey(f) && !f.equals(top) && (secs != sections3d || shows3d(type, f, v))) present.add(f);
             if (present.isEmpty()) continue;
             addSection(c, sec.getKey(), present);
         }
@@ -305,6 +308,7 @@ public class PropertiesPanel implements PanelHost.Panel {
         ArrayList<String> extra = new ArrayList<>();
         HashSet<String> known = new HashSet<>();
         for (String[] fs : secs.values()) for (String f : fs) known.add(f);
+        if (top != null) known.add(top);
         if (secs == sections3d) known.addAll(java.util.Arrays.asList("type", "Pivot", "Pivot X", "Pivot Y", "Version", "TYPE"));
         for (String k : v.keySet())
             if (!known.contains(k) && typeOf.containsKey(k) && !"static".equals(typeOf.get(k))) extra.add(k);
@@ -323,6 +327,21 @@ public class PropertiesPanel implements PanelHost.Panel {
             behaviorSection = new com.star4droid.star2d.ui.behaviors.BehaviorSection(shell, content, name, v.get("behaviors"), v.get("scriptVars"));
         }
         applySearch();
+    }
+
+    /** The property shown in its own card at the top: World File of a WORLD, ui of a UI holder; else null. */
+    private String topField(String type, Map<String, String> v) {
+        if ("OBJ3D".equals(type) && v.containsKey("World File") && "WORLD".equalsIgnoreCase(String.valueOf(v.get("Mesh")))) return "World File";
+        if (v.containsKey("ui") && "ui".equals(typeOf.get("ui"))) return "ui";
+        return null;
+    }
+
+    private void addTopCard(Context c, String f) {
+        LinearLayout card = Ui.column(c);
+        card.setBackground(Ui.rounded(Ui.SURFACE_2, Ui.dp(c, 10), Ui.ACCENT, 1));
+        card.setPadding(Ui.dp(c, 12), Ui.dp(c, 6), Ui.dp(c, 12), Ui.dp(c, 10));
+        content.addView(card, Ui.margins(Ui.matchWrap(), c, 0, 6, 0, 4));
+        card.addView(field(c, f, typeOf.get(f)), Ui.matchWrap());
     }
 
     private void addSection(Context c, String title, ArrayList<String> fields) {
@@ -539,13 +558,63 @@ public class PropertiesPanel implements PanelHost.Panel {
         return false;
     }
 
+    /** File of a World File value ("/worlds/Name.wbw") in the project. */
+    static java.io.File worldFile(String project, String value) {
+        String rel = value.startsWith("/") ? value.substring(1) : value;
+        if (!rel.startsWith("worlds/")) rel = "worlds/" + rel;
+        return new java.io.File(project, rel);
+    }
+
+    /**
+     * Picks a world: the project's worlds, then the ones saved by World Builder from the home screen (copied into the
+     * project when chosen, so the game carries them).
+     */
+    private void chooseWorld(Context c, String project, java.util.function.Consumer<String> onPick) {
+        java.util.ArrayList<String> names = new java.util.ArrayList<>();
+        java.util.ArrayList<java.io.File> from = new java.util.ArrayList<>();
+        names.add("— " + Tr.t("ui_none", "None"));
+        from.add(null);
+        java.io.File dir = new java.io.File(project, "worlds");
+        java.io.File[] own = dir.listFiles((d, n) -> n.endsWith(".wbw"));
+        if (own != null) {
+            java.util.Arrays.sort(own);
+            for (java.io.File fl : own) { names.add(fl.getName().substring(0, fl.getName().length() - 4)); from.add(fl); }
+        }
+        java.io.File lib = new java.io.File(c.getFilesDir(), "worldbuilder/worlds");
+        java.io.File[] other = lib.listFiles((d, n) -> n.endsWith(".wbw"));
+        if (other != null) {
+            java.util.Arrays.sort(other);
+            for (java.io.File fl : other) {
+                names.add(fl.getName().substring(0, fl.getName().length() - 4) + "  (" + Tr.t("world_builder_saved", "World Builder") + ")");
+                from.add(fl);
+            }
+        }
+        if (names.size() == 1) {
+            Ui.toast(c, Tr.t("world_none_yet", "No worlds yet - press New"));
+            return;
+        }
+        Dialogs.choose(c, Tr.t("world_choose", "Choose a world"), names.toArray(new String[0]), i -> {
+            java.io.File fl = from.get(i);
+            if (fl == null) { onPick.accept(""); return; }
+            if (!fl.getParentFile().equals(dir)) {
+                java.io.File dst = new java.io.File(dir, fl.getName());
+                dir.mkdirs();
+                com.star4droid.star2d.Helpers.FileUtil.copyFile(fl.getAbsolutePath(), dst.getAbsolutePath());
+                if (!dst.exists()) { Ui.toast(c, Tr.t("world_copy_failed", "Could not copy the world")); return; }
+                fl = dst;
+            }
+            onPick.accept("/worlds/" + fl.getName());
+        });
+    }
+
     /** Only the properties that mean something for this element (its Mesh, Light Kind, camera kind, body...). */
     static boolean shows3d(String type, String f, Map<String, String> v) {
         if ("OBJ3D".equals(type)) {
             String mesh = v.get("Mesh") == null ? "CUBE" : v.get("Mesh").toUpperCase();
-            boolean model = mesh.equals("MODEL"), particles = mesh.equals("PARTICLES"), empty = mesh.equals("EMPTY") || particles;
+            boolean model = mesh.equals("MODEL"), particles = mesh.equals("PARTICLES"), world = mesh.equals("WORLD"), empty = mesh.equals("EMPTY") || particles || world;
             switch (f) {
                 case "Light Kind": return false;
+                case "World File": return world;
                 case "Particle File": case "Particle Scale": case "Particle Speed": case "Emitting": return particles;
                 case "Model": case "Model Node": case "Keep Model Material":
                 case "Animation": case "Animation Loop": case "Animation Speed": return model;
@@ -908,6 +977,46 @@ public class PropertiesPanel implements PanelHost.Panel {
                 editors.put(f, t);
                 return box;
             }
+            case "world": {
+                // a world made in World Builder (project folder worlds/, file NAME.wbw), drawn as it is
+                box.addView(label(c, f));
+                TextView t = chooser(c, val.isEmpty() ? "[" + Tr.t("choose", "choose") + "]" : val);
+                java.util.function.Consumer<String> setWorld = nv -> {
+                    values.put(f, nv);
+                    t.setText(nv.isEmpty() ? "[" + Tr.t("choose", "choose") + "]" : nv);
+                    commit(() -> PropertyEditing.applyString(Bridge.app(), f, nv));
+                };
+                Runnable choose = () -> Bridge.query(() -> Bridge.editor().getProject().getPath(), path -> chooseWorld(c, path, setWorld));
+                t.setOnClickListener(v -> choose.run());
+                LinearLayout r = Ui.row(c);
+                r.addView(Ui.button(c, R.drawable.ic_s2_edit, Tr.t("ui_edit", "Edit"), true, v ->
+                        Bridge.query(() -> Bridge.editor().getProject().getPath(), path -> {
+                            String cur = values.get(f) == null ? "" : values.get(f);
+                            if (cur.isEmpty()) { choose.run(); return; }
+                            java.io.File file = worldFile(path, cur);
+                            com.star4droid.star2d.WorldBuilderActivity.open(shell.activity(), file, 1);
+                        })), new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+                r.addView(Ui.button(c, R.drawable.ic_s2_folder, Tr.t("choose", "Choose"), false, v -> choose.run()),
+                        new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+                r.addView(Ui.button(c, R.drawable.ic_s2_add, Tr.t("ui_new", "New"), false, v ->
+                        Bridge.query(() -> Bridge.editor().getProject().getPath(), path ->
+                                Dialogs.input(c, Tr.t("world_new", "New world"), Tr.t("ui_shader_name", "Name (letters, digits, _)"), "World", nm -> Dialogs.checkName(nm), nm -> {
+                                    String[] kinds = {Tr.t("world_empty", "Empty land"), Tr.t("world_island", "Island (example)")};
+                                    Dialogs.choose(c, Tr.t("world_start", "Start from"), kinds, k -> {
+                                        java.io.File file = new java.io.File(path + "/worlds/" + nm + ".wbw");
+                                        file.getParentFile().mkdirs();
+                                        setWorld.accept("/worlds/" + nm + ".wbw");
+                                        com.star4droid.star2d.WorldBuilderActivity.open(shell.activity(), file, k == 1 ? 0 : 1);
+                                    });
+                                }))), new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+                box.addView(r, Ui.matchWrap());
+                box.addView(t, Ui.matchWrap());
+                TextView hint = Ui.text(c, Tr.t("world_hint", "The world is shown as it is. Edit opens World Builder; changes appear when you come back."), 12, Ui.TEXT_3);
+                hint.setPadding(0, Ui.dp(c, 4), 0, 0);
+                box.addView(hint, Ui.matchWrap());
+                editors.put(f, t);
+                return box;
+            }
             case "particle3d": {
                 // a .p3d effect of the project's files folder ("" = the built in fire)
                 box.addView(label(c, f));
@@ -985,7 +1094,20 @@ public class PropertiesPanel implements PanelHost.Panel {
                         t.setText(nv.isEmpty() ? "—" : nv);
                     });
                 })));
-                box.addView(t, Ui.matchWrap());
+                // the shader library (World Builder's element shaders, with pictures) next to the chooser
+                LinearLayout shr = Ui.row(c);
+                shr.addView(t, Ui.weight(1));
+                shr.addView(Ui.iconButton(c, R.drawable.ic_s3d_auto_awesome, Tr.t("sl_title", "Shader library"), v -> Bridge.query(
+                        () -> Bridge.editor().getProject().getPath(),
+                        path -> com.star4droid.star2d.ui.ShaderBrowser.show(shell.activity(), path, values.get(f), nv -> Bridge.query(() -> {
+                            com.star4droid.template.d3.UserShader.forget(nv);
+                            return PropertyEditing.applyString(Bridge.app(), f, nv);
+                        }, err -> {
+                            if (err != null) { Ui.toast(c, err); return; }
+                            values.put(f, nv);
+                            t.setText(nv);
+                        })))));
+                box.addView(shr, Ui.matchWrap());
                 editors.put(f, t);
                 return box;
             }
@@ -1062,8 +1184,8 @@ public class PropertiesPanel implements PanelHost.Panel {
                                         openMaker.accept(full);
                                     });
                         })), new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-                box.addView(t, Ui.matchWrap());
                 box.addView(r, Ui.matchWrap());
+                box.addView(t, Ui.matchWrap());
                 editors.put(f, t);
                 return box;
             }

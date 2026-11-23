@@ -22,6 +22,7 @@ on:
       - "app/src/main/java/com/star4droid/star2d/Helpers/Pair.java"
       - "app/src/main/java/com/badlogic/**"
       - "template/**"
+      - "worldbuilder/core/**"
       - "tools/make_template.py"
       - "tools/verify_template.py"
       - "gradle.properties"

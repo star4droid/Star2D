@@ -830,6 +830,7 @@ public class ControlLayer extends Table {
 				else if("MODEL".equals(preset)){ y = 0; if(model != null){ ps.put("Model",model); com.star4droid.template.d3.Assets3D.reload(model); } }
 				else if("QUAD".equals(preset) || "DISC".equals(preset)) y = 0.5f;
 				else if("PARTICLES".equals(preset)){ y = 0; ps.put("Cast Shadows","false"); }
+				else if("WORLD".equals(preset)){ y = 0; ps.put("Body","STATIC"); ps.put("Cast Shadows","false"); }
 			} else if("LIGHT3D".equals(kind)){
 				ps.put("Light Kind",preset == null ? "POINT" : preset);
 				y = "DIRECTIONAL".equals(preset) ? 6 : 3;

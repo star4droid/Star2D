@@ -16,6 +16,7 @@ on:
       - "app/src/main/assets/files/template.zip"
       - "app/src/main/assets/java/**"
       - "template/**"
+      - "worldbuilder/core/**"
       - "tools/**"
   workflow_dispatch:
 

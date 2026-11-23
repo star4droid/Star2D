@@ -13,6 +13,7 @@
 "ui":"ui",
 "model":"Model",
 "particle3d":",Particle File,",
+"world":",World File,",
 "shader":"Shader",
 "scene":"Game Scene"
 }

@@ -121,6 +121,12 @@ def source_hash():
         for fn in sorted(files):
             full = os.path.join(dp, fn)
             add("tpl:" + os.path.relpath(full, TEMPLATE).replace(os.sep, "/"), full)
+    wb = os.path.join(ROOT, "worldbuilder", "core")
+    for dp, dn, files in os.walk(wb):
+        dn[:] = sorted(d for d in dn if d not in ("build",))
+        for fn in sorted(files):
+            full = os.path.join(dp, fn)
+            add("wb:" + os.path.relpath(full, wb).replace(os.sep, "/"), full)
     for extra in ("tools/make_template.py", "gradle.properties", "build.gradle"):
         p = os.path.join(ROOT, extra)
         if os.path.exists(p):

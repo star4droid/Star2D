@@ -877,7 +877,10 @@ public class TestApp implements ApplicationListener {
 	}
 
 	@Override
-	public void pause() {}
+	public void pause() {
+		// worlds (Mesh WORLD) share textures with World Builder, which opens with its own graphics: free them, they load again when drawn
+		com.star4droid.template.d3.WorldLayer.releaseShared();
+	}
 
 	@Override
 	public void resume() {}

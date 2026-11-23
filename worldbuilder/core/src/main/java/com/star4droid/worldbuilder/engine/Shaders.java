@@ -141,6 +141,9 @@ public final class Shaders {
     public static boolean has(String key) { return cache.containsKey(key); }
     public static void put(String key, ShaderProgram p) { cache.put(key, p); }
 
+    /** Drops the compiled programs without freeing them (they belong to another graphics context). */
+    public static void forget() { cache.clear(); }
+
     public static void dispose() {
         for (ShaderProgram p : cache.values()) if (p != null) p.dispose();
         cache.clear();

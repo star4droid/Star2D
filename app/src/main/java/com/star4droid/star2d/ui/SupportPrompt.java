@@ -69,7 +69,7 @@ public final class SupportPrompt {
         box.setBackground(bgd);
 
         TextView title = new TextView(a);
-        title.setText(T("support_dlg_title", "Support Star3D development ❤️"));
+        title.setText(T("support_dlg_title", "Support Star3D development"));
         title.setTextColor(Color.WHITE);
         title.setTextSize(19);
         title.setTypeface(null, android.graphics.Typeface.BOLD);
@@ -89,7 +89,7 @@ public final class SupportPrompt {
         TextView msg = new TextView(a);
         msg.setText(T("support_dlg_p1", "The Star3D engine aims to provide an easy, suitable environment for mobile game development, and keeps improving its tools and adding more features and capabilities that help developers turn their ideas into real games.")
                 + "\n\n" + T("support_dlg_p2", "If you believe in the idea of the engine and want to see it grow and continue, your donation, whatever its size, helps fund development and gives the time and resources needed to add new features and improve performance and the user experience.")
-                + "\n\n" + T("support_dlg_p3", "With your support, you help Star3D keep going, grow and reach better capabilities. Thank you to everyone who supports the engine and becomes part of its journey! ❤️"));
+                + "\n\n" + T("support_dlg_p3", "With your support, you help Star3D keep going, grow and reach better capabilities. Thank you to everyone who supports the engine and becomes part of its journey!"));
         msg.setTextColor(0xFFE6E6F5);
         msg.setTextSize(14);
         msg.setLineSpacing(0, 1.2f);

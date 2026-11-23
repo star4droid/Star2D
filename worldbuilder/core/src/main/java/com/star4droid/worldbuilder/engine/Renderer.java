@@ -279,6 +279,61 @@ public final class Renderer {
         gl.glActiveTexture(GL20.GL_TEXTURE0);
     }
 
+    private final Matrix4 embedInv = new Matrix4();
+
+    /**
+     * Draws the world inside another 3D picture (a Star2D scene): with that picture's camera, placed by {@code transform}
+     * (position, rotation, uniform scale), into whatever frame buffer is bound, with no sky and no clearing.
+     * Leaves depth test on, blending and culling off, texture unit 0 active.
+     */
+    public void renderEmbedded(Scene scene, com.badlogic.gdx.graphics.Camera outer, Matrix4 transform, float delta) {
+        this.scene = scene; env = scene.env;
+        time += delta;
+        env.update();
+        scene.terrain.rebuild(4);
+        if (env.water) scene.water.update(scene.terrain, env.waterLevel, null, scene.terrain.version);
+        for (SceneObject o : scene.objects) o.update(scene);
+        // the outer camera seen from inside the world: view-projection of the outer camera times the placement
+        cam.combined.set(outer.combined).mul(transform);
+        cam.invProjectionView.set(cam.combined).inv();
+        cam.frustum.update(cam.invProjectionView);
+        embedInv.set(transform).inv();
+        cam.position.set(outer.position).mul(embedInv);
+        cam.direction.set(outer.direction).rot(embedInv).nor();
+        cam.up.set(outer.up).rot(embedInv).nor();
+        cam.near = outer.near; cam.far = outer.far;
+        cam.viewportWidth = outer.viewportWidth; cam.viewportHeight = outer.viewportHeight;
+        float rd = Math.max(60, Math.min(outer.far, 400));
+        fogStart = rd * (0.35f + (1 - env.fog) * 0.5f); fogInv = 1f / Math.max(1, rd - fogStart); fogCap = 0.35f + 0.5f * env.fog;
+        shadowOn = false;
+        current = null; primed.clear();
+        viewProj = cam.combined;
+        GL20 gl = Gdx.gl;
+        gl.glDisable(GL20.GL_BLEND);
+        gl.glEnable(GL20.GL_DEPTH_TEST); gl.glDepthFunc(GL20.GL_LEQUAL); gl.glDepthMask(true);
+        gl.glEnable(GL20.GL_CULL_FACE); gl.glCullFace(GL20.GL_BACK);
+        drawTerrain();
+        drawnObjects = 0; drawnTris = 0;
+        Frustum fr = cam.frustum;
+        for (SceneObject o : scene.objects) {
+            if (o.def.kind != ModelDef.MESH || !visible(o, fr, rd)) continue;
+            drawMeshObject(o, false, false); drawnObjects++;
+        }
+        gl.glEnable(GL20.GL_BLEND); gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+        for (SceneObject o : scene.objects) {
+            if (o.def.kind != ModelDef.MESH || o.fx.isEmpty() || !visible(o, fr, rd)) continue;
+            drawMeshObject(o, true, false);
+        }
+        gl.glDisable(GL20.GL_CULL_FACE);
+        gl.glDepthMask(false);
+        drawWater(fr, rd);
+        drawEffects(fr, rd);
+        gl.glDepthMask(true);
+        gl.glDisable(GL20.GL_BLEND);
+        gl.glActiveTexture(GL20.GL_TEXTURE0);
+        current = null;
+    }
+
     private void drawSky() {
         GL20 gl = Gdx.gl;
         gl.glDisable(GL20.GL_DEPTH_TEST); gl.glDepthMask(false); gl.glDisable(GL20.GL_CULL_FACE);

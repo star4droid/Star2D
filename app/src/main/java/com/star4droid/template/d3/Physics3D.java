@@ -174,6 +174,7 @@ public class Physics3D implements Disposable {
 
 	/** The shape and its parts go to {@code own}: freed when the body is removed (bodies are rebuilt on scale / mass changes). */
 	private btCollisionShape shapeFor(Object3D o, Array<Disposable> own) {
+		if (o.isWorld()) return WorldLayer.shape(o, own);
 		Object3DDef d = o.d();
 		String c = d.Collider;
 		Vector3 s = new Vector3(Math.abs(o.scale.x) * d.Collider_Scale_X, Math.abs(o.scale.y) * d.Collider_Scale_Y, Math.abs(o.scale.z) * d.Collider_Scale_Z);

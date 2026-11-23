@@ -32,6 +32,9 @@ public final class WorldIO {
 
     public static FileHandle file(String worldName) { return dir().child(fileName(worldName) + ".wbw"); }
     public static FileHandle picture(String worldName) { return dir().child(fileName(worldName) + ".png"); }
+
+    /** The picture of a world: beside its file when it has one. */
+    public static FileHandle picture(Scene s) { return s.file != null ? s.file.sibling(s.file.nameWithoutExtension() + ".png") : picture(s.name); }
     public static boolean exists(String worldName) { return file(worldName).exists(); }
 
     /** Names of the saved worlds, newest first. */
@@ -52,7 +55,9 @@ public final class WorldIO {
     public static void delete(String worldName) { file(worldName).delete(); picture(worldName).delete(); }
 
     public static void save(Scene s) throws IOException {
-        FileHandle tmp = dir().child(fileName(s.name) + ".tmp");
+        FileHandle target = s.file != null ? s.file : file(s.name);
+        if (target.parent() != null && !target.parent().exists()) target.parent().mkdirs();
+        FileHandle tmp = target.sibling(target.nameWithoutExtension() + ".tmp");
         try (DataOutputStream o = new DataOutputStream(new BufferedOutputStream(new GZIPOutputStream(tmp.write(false))))) {
             o.writeInt(MAGIC); o.writeInt(VERSION);
             o.writeUTF(s.name);
@@ -68,15 +73,17 @@ public final class WorldIO {
             o.writeInt(s.objects.size);
             for (SceneObject ob : s.objects) SceneObject.write(o, ob.state());
         }
-        FileHandle dst = file(s.name);
-        if (dst.exists()) dst.delete();
-        tmp.moveTo(dst);
+        if (target.exists()) target.delete();
+        tmp.moveTo(target);
     }
 
     /** Reads a world (no GPU work: meshes are built afterwards, a few per frame). */
-    public static Scene load(String worldName) throws IOException {
+    public static Scene load(String worldName) throws IOException { return load(file(worldName)); }
+
+    /** Reads a world file anywhere (no GPU work). */
+    public static Scene load(FileHandle f) throws IOException {
         Scene s = new Scene();
-        try (DataInputStream in = new DataInputStream(new BufferedInputStream(new GZIPInputStream(file(worldName).read())))) {
+        try (DataInputStream in = new DataInputStream(new BufferedInputStream(new GZIPInputStream(f.read())))) {
             if (in.readInt() != MAGIC) throw new IOException("Not a world file");
             int version = in.readInt();
             if (version > VERSION) throw new IOException("This world was saved by a newer World Builder");

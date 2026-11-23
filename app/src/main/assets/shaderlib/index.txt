@@ -1,0 +1,59 @@
+# Shader library of the 3D Shader property: id|name|section|description|arabic name|arabic description
+# code: assets/wb/fx/<id>.glsl (World Builder's element shaders), picture: shaderlib/<id>.webp
+shatter_cells|Cells|Shatter|Shards with glowing edges leave one by one|خلايا|شظايا بحواف متوهجة تتساقط واحدة تلو الأخرى
+shatter_fall|Fall|Shatter|Breaks from the top down|سقوط|يتكسّر من الأعلى إلى الأسفل
+shatter_burst|Burst|Shatter|Chunks pushed outward while breaking (moves vertices)|انفجار|قطع تندفع للخارج أثناء التكسّر (يحرّك الرؤوس)
+shatter_tri|Tri|Shatter|Triangle shards with bright outlines|مثلثات|شظايا مثلثة بحواف مضيئة
+shatter_voxel|Voxel|Shatter|Break into small cubes that vanish|مكعبات|يتفكك إلى مكعبات صغيرة تختفي
+shatter_crack_glow|Crack Glow|Shatter|Cracks that open and glow (amount = damage)|شقوق متوهجة|شقوق تنفتح وتتوهج (amount = مقدار الضرر)
+shatter_glass_break|Glass Break|Shatter|Tinted glass that cracks and falls apart|كسر زجاج|زجاج ملوّن يتشقق ثم يتساقط
+evaporate_up|Up|Evaporate|Rises away as streaks of vapor|صعود|يتصاعد بعيداً كخطوط من البخار
+evaporate_dissolve_burn|Dissolve Burn|Evaporate|Dissolve with a burning edge and charred border|ذوبان محترق|يذوب بحافة مشتعلة وأطراف متفحمة
+evaporate_dissolve_stars|Dissolve Stars|Evaporate|Dissolve into sparkling dust|ذوبان نجوم|يذوب إلى غبار لامع
+evaporate_dust_away|Dust Away|Evaporate|Blown away as dust in the wind (moves vertices)|غبار|تذروه الريح كالغبار (يحرّك الرؤوس)
+evaporate_melt|Melt|Evaporate|Melts and drips down (moves vertices)|انصهار|ينصهر ويسيل للأسفل (يحرّك الرؤوس)
+evaporate_teleport_scan|Teleport Scan|Evaporate|Sliced into moving light bands|انتقال|يتقطّع إلى شرائط ضوئية متحركة
+evaporate_ash_fade|Ash Fade|Evaporate|Turns to grey ash, then crumbles with tiny embers|رماد|يتحول إلى رماد رمادي ثم يتفتت مع جمرات صغيرة
+evaporate_wipe_noise|Wipe Noise|Evaporate|Directional wipe with a noisy glowing front|مسح|اختفاء باتجاه واحد بحافة متوهجة غير منتظمة
+evaporate_screen_door|Screen Door|Evaporate|Dithered see-through (very fast)|شبكة نقاط|شفافية منقّطة (سريع جداً)
+evaporate_materialize_grid|Materialize Grid|Evaporate|Wire grid first, then the surface fills in|ظهور شبكي|شبكة أسلاك أولاً ثم يمتلئ السطح
+evaporate_soul_absorb|Soul Absorb|Evaporate|Pulled into its center while fading (moves vertices)|امتصاص الروح|يُسحب إلى مركزه وهو يتلاشى (يحرّك الرؤوس)
+glass_tint|Tint|Glass|Clear in the middle, bright at the rim|زجاج ملوّن|شفاف في الوسط ولامع عند الأطراف
+glass_rainbow_s|Rainbow S|Glass|Colors shift with the viewing angle|قوس قزح|الألوان تتغير مع زاوية النظر
+glass_bubble_s|Bubble S|Glass|Thin moving rainbow film|فقاعة|غشاء رقيق متحرك بألوان قوس قزح
+glass_crystal|Crystal|Glass|Faceted crystal with sharp highlights|كريستال|كريستال بأوجه ولمعات حادة
+glass_holo_scan|Holo Scan|Glass|Scan lines, flicker and a bright rim|هولوغرام|خطوط مسح ووميض وحافة مضيئة
+glass_holo_glitch|Holo Glitch|Glass|Hologram with glitch jumps (moves vertices)|هولوغرام متقطع|هولوغرام بقفزات تشويش (يحرّك الرؤوس)
+glass_ghost_spirit|Ghost Spirit|Glass|Soft pulsing see-through glow|روح شبح|توهج شفاف ناعم ينبض
+glass_ghost_cloak|Ghost Cloak|Glass|Almost invisible, shimmering outline|عباءة الاختفاء|شبه مخفي مع حواف تتلألأ
+glass_forcefield|Forcefield|Glass|Hexagons, rim light and moving rings|درع طاقة|سداسيات وحافة مضيئة وحلقات متحركة
+glass_jelly|Jelly|Glass|See-through and bouncy (moves vertices)|هلام|شفاف ويرتدّ (يحرّك الرؤوس)
+glass_xray_rim|Xray Rim|Glass|X-ray silhouette in any color|أشعة سينية|ظل بالأشعة السينية بأي لون
+fantasy_fire_body|Fire Body|Fantasy|Body made of rising flames|جسد ناري|جسد مصنوع من لهب متصاعد
+fantasy_magma|Magma|Fantasy|Dark rock with glowing flowing cracks|حمم|صخر داكن بشقوق متوهجة تتدفق
+fantasy_ice_frost|Ice Frost|Fantasy|Cold sheen, frost veins and sparkles|صقيع|لمعان بارد وعروق صقيع وبريق
+fantasy_freeze_sweep|Freeze Sweep|Fantasy|Frost spreads across the surface|تجمّد|الصقيع ينتشر على السطح
+fantasy_petrify|Petrify|Fantasy|Turns to stone from a spreading front|تحجّر|يتحول إلى حجر من جبهة تنتشر
+fantasy_shine_sweep|Shine Sweep|Fantasy|A bright band glides across|لمعة|شريط لامع ينزلق على السطح
+fantasy_electric|Electric|Fantasy|Electric arcs crawling over the surface|كهرباء|أقواس كهربائية تزحف على السطح
+fantasy_plasma|Plasma|Fantasy|Flowing plasma colors|بلازما|ألوان بلازما متدفقة
+fantasy_galaxy|Galaxy|Fantasy|Starry space body with drifting nebula|مجرّة|جسد فضائي بالنجوم وسديم يتحرك
+fantasy_aura_shell|Aura Shell|Fantasy|A glowing shell of energy around the shape (moves vertices)|هالة|غلاف متوهج من الطاقة حول الشكل (يحرّك الرؤوس)
+fantasy_rune_glow|Rune Glow|Fantasy|Ancient runes pulsing on dark stone|رموز سحرية|رموز قديمة تنبض على حجر داكن
+fantasy_portal_swirl|Portal Swirl|Fantasy|Spinning swirl (best on QUAD, DISC or PLANE)|بوابة|دوامة تدور (الأفضل على QUAD أو DISC أو PLANE)
+fantasy_toxic_bubbles|Toxic Bubbles|Fantasy|Bubbling liquid surface|فقاعات سامة|سطح سائل يغلي بالفقاعات
+fantasy_hit_flash|Hit Flash|Fantasy|Blinks to a bright color (amount = strength, 0 = keeps blinking)|وميض الضربة|يومض بلون ساطع (amount = القوة، 0 = يستمر بالوميض)
+fantasy_rainbow_flow|Rainbow Flow|Fantasy|Rainbow bands flowing over the shape|تدفق قوس قزح|شرائط قوس قزح تتدفق على الشكل
+fantasy_toon_neon|Toon Neon|Fantasy|Cartoon shading with a neon rim|كرتون نيون|تظليل كرتوني بحافة نيون
+fantasy_void_neon|Void Neon|Fantasy|Black void body with a two-color neon edge and halftone dots|فراغ نيون|جسد أسود بحافة نيون بلونين ونقاط طباعة
+fantasy_energy_veins|Energy Veins|Fantasy|Glowing veins of energy pulsing through the body|عروق طاقة|عروق طاقة متوهجة تنبض في الجسد
+fantasy_energy_bands|Energy Bands|Fantasy|Light bands rising along the shape|شرائط طاقة|شرائط ضوء تصعد على الشكل
+fantasy_matrix_rain|Matrix Rain|Fantasy|Digital rain of glowing symbols|مطر رقمي|مطر رقمي من رموز متوهجة
+fantasy_glitch|Glitch|Fantasy|Bands jump sideways and split colors (moves vertices)|تشويش|شرائط تقفز جانبياً وتنفصل ألوانها (يحرّك الرؤوس)
+fantasy_wind_sway|Wind Sway|Fantasy|Sways in the wind, stronger at the top (plants, flags, hair) (moves vertices)|تمايل مع الريح|يتمايل مع الريح، أقوى في الأعلى (نباتات، أعلام، شعر) (يحرّك الرؤوس)
+fantasy_heartbeat|Heartbeat|Fantasy|Beating pulse with a glowing rim (moves vertices)|نبض القلب|نبض مع حافة متوهجة (يحرّك الرؤوس)
+fantasy_water_caustics|Water Caustics|Fantasy|Underwater light ripples over the surface|انعكاسات الماء|تموجات ضوء كأنه تحت الماء
+fantasy_halftone_toon|Halftone Toon|Fantasy|Comic book shading with printed dots|قصص مصورة|تظليل كالقصص المصورة بنقاط مطبوعة
+fantasy_selection_glow|Selection Glow|Fantasy|Soft pulsing outline glow for a selected or important object|توهج التحديد|توهج ناعم حول عنصر محدد أو مهم
+fantasy_lightning_rim|Lightning Rim|Fantasy|Crackling lightning around the edges|حافة برق|برق يطقطق حول الحواف
+fantasy_curse_smoke|Curse Smoke|Fantasy|Dark smoke crawling over the body with a colored glow|دخان اللعنة|دخان داكن يزحف على الجسد مع توهج ملوّن

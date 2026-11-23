@@ -262,6 +262,12 @@ public final class EditorUI {
     }
 
     private void menu() {
+        if (ed.scene.file != null) {        // a world of a Star2D project: it is saved to its own file
+            dialogs.menu(ed.scene.name, new String[]{"save", "settings", "help_outline"},
+                    new String[]{L.t("Save"), L.t("Settings"), L.t("How to use")},
+                    new Runnable[]{() -> app.save(true), dialogs::settings, dialogs::help});
+            return;
+        }
         dialogs.menu(ed.scene.name,
                 new String[]{"add_circle", "folder_open", "save", "file_download", "edit", "settings", "help_outline"},
                 new String[]{L.t("New world"), L.t("My worlds"), L.t("Save"), L.t("Save as a copy"), L.t("Rename world"), L.t("Settings"), L.t("How to use")},
@@ -274,7 +280,7 @@ public final class EditorUI {
         else dialogs.newWorld();
     }
 
-    private void rename() { dialogs.prompt(L.t("World name"), ed.scene.name, false, s -> app.rename(s)); }
+    private void rename() { if (ed.scene.file != null) return; dialogs.prompt(L.t("World name"), ed.scene.name, false, s -> app.rename(s)); }
 
     public void worldChanged() { build(); }
 

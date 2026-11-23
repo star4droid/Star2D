@@ -13,19 +13,8 @@ import com.star4droid.star2d.ui.CommunityLinks;
 import com.star4droid.star2d.ui.Tr;
 import com.star4droid.star2d.ui.Ui;
 
-/** The old community & support links page (groups, channels, donation), now behind the Support button of Community. */
+/** Community & support page (groups, channels, donation): the Support tile of the home screen and the Support button of Community. */
 public class SupportActivity extends Activity {
-    private static int[] icon(String id) {
-        switch (id) {
-            case "facebook": return new int[]{com.star4droid.star2d.evo.R.drawable.ic_s2_group, 0xFF1E88E5};
-            case "whatsapp": return new int[]{com.star4droid.star2d.evo.R.drawable.ic_s2_comment, 0xFF43A047};
-            case "telegram": return new int[]{com.star4droid.star2d.evo.R.drawable.ic_s2_send, 0xFF29B6F6};
-            case "discord": return new int[]{com.star4droid.star2d.evo.R.drawable.ic_s2_gamepad, 0xFF7E57C2};
-            case "github": return new int[]{com.star4droid.star2d.evo.R.drawable.ic_s2_git, 0xFFB0BEC5};
-            default: return new int[]{com.star4droid.star2d.evo.R.drawable.ic_s2_play, 0xFFE53935};
-        }
-    }
-
     /** Titles from the translations may start with a symbol: show letters only at the start. */
     private static String plain(String s) { return s.replaceFirst("^[^\\p{L}\\p{N}]+", ""); }
 
@@ -62,9 +51,9 @@ public class SupportActivity extends Activity {
             LinearLayout row = Ui.row(this);
             row.setBackground(Ui.rounded(Ui.SURFACE, Ui.dp(this, 14), Ui.BORDER, Ui.dp(this, 1)));
             row.setPadding(Ui.dp(this, 12), Ui.dp(this, 12), Ui.dp(this, 12), Ui.dp(this, 12));
-            int[] ic = icon(link[0]);
+            int[] ic = CommunityLinks.icon(link[0]);
             android.widget.FrameLayout disc = new android.widget.FrameLayout(this);
-            disc.setBackground(Ui.rounded((ic[1] & 0x00FFFFFF) | 0x33000000, Ui.dp(this, 22)));
+            disc.setBackground(Ui.rounded((ic[1] & 0x00FFFFFF) | 0x2E000000, Ui.dp(this, 22)));
             android.widget.ImageView iv = new android.widget.ImageView(this);
             iv.setImageResource(ic[0]);
             iv.setImageTintList(android.content.res.ColorStateList.valueOf(ic[1]));

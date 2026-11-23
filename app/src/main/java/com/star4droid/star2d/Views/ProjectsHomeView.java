@@ -129,7 +129,7 @@ public class ProjectsHomeView extends FrameLayout {
             {"Templates & Examples", "home_templates_title"}, {"Jumpstart your game with ready-to-run starter projects and engine features", "home_templates_sub"},
             {"Learn by making games", "home_learn_title"}, {"(Experimental)", "home_experimental"}, {"Interactive tutorials guide every tap, step by step", "home_learn_sub"},
             {"Community & Support", "home_community_title"}, {"Connect with the Star3D developer community across the globe", "home_community_sub"},
-            {"💖 Support Engine Development", "home_support"}, {"Star3D is developed with passion. Help keep updates and features coming!", "home_support_sub"},
+            {"Support Engine Development", "home_support"}, {"Star3D is developed with passion. Help keep updates and features coming!", "home_support_sub"},
             {"Donate", "home_donate"}, {"Engine Settings", "home_settings_title"}, {"Configure editor behaviors, code generation, and preferences", "home_settings_sub"},
             {"EDITOR & COMPILER", "home_editor_compiler"}, {"Interface Language", "home_language"}, {"Java Compiler Backend", "home_compiler"},
             {"Script Code Completion", "codeCompletion"}, {"Automatic Scene Saving", "autoSave"}, {"Persist Undo/Redo History", "saveUndoRedo"},
@@ -248,8 +248,8 @@ public class ProjectsHomeView extends FrameLayout {
         bp.setMargins(0, dp(8), dp(8), 0);
         ((FrameLayout) bell).addView(notifBadge, bp);
         tiles.add(bell);
-        tiles.add(tile(R.drawable.ic_s2_build, T("home_world_builder", "World Builder"), 0xFF8D6E63, 0xFF4E342E, false,
-                () -> a.startActivity(new Intent(a, com.star4droid.star2d.WorldBuilderActivity.class))));
+        tiles.add(tile(R.drawable.ic_s2_heart, T("sc_support", "Support"), 0xFFFFB300, 0xFFE65100, false,
+                () -> a.startActivity(new Intent(a, com.star4droid.star2d.suda.SupportActivity.class))));
         tiles.add(tile(R.drawable.ic_s2_person, T("sc_profile", "Profile"), 0xFF5C6BC0, 0xFF283593, false, () -> {
             if (com.star4droid.star2d.suda.Suda3D.loggedIn(a)) com.star4droid.star2d.suda.Social.openProfile(a, 0);
             else com.star4droid.star2d.suda.Paywall.login(a, () -> { if (com.star4droid.star2d.suda.Suda3D.loggedIn(a)) com.star4droid.star2d.suda.Social.openProfile(a, 0); });

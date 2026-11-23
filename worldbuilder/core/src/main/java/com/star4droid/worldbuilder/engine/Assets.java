@@ -43,6 +43,7 @@ public final class Assets {
     }
 
     public static void loadTextures() {
+        owner = Gdx.app;
         grass = tex("t_grass.png", true); dirt = tex("t_dirt.png", true); sand = tex("t_sand.png", true); rock = tex("t_rock.png", true); snow = tex("t_snow.png", true);
         noise = tex("noise.png", true); foliage = tex("foliage.png", false);
         detail[1] = tex("d_rock.png", true); detail[2] = tex("d_bark.png", true); detail[3] = tex("d_planks.png", true); detail[4] = tex("d_bricks.png", true);
@@ -82,6 +83,7 @@ public final class Assets {
         modelBytes = Assets.file("models/models.bin").readBytes();
         mb = ByteBuffer.wrap(modelBytes).order(ByteOrder.LITTLE_ENDIAN);
         mb.position(4);
+        modelsDone = false;
         modelsLeft = mb.getShort() & 0xffff;
         total = modelsLeft;
     }
@@ -123,7 +125,7 @@ public final class Assets {
             d.finish();
             add(d);
         }
-        if (modelsLeft == 0) { modelBytes = null; mb = null; modelsLeft = -1; addBuiltIns(); return 1f; }
+        if (modelsLeft == 0) { modelBytes = null; mb = null; modelsLeft = -1; addBuiltIns(); modelsDone = true; return 1f; }
         return 1f - modelsLeft / (float) Math.max(1, total);
     }
 
@@ -183,6 +185,37 @@ public final class Assets {
         }
     }
 
+    /** The app whose graphics context holds the loaded textures and meshes (a context cannot use another one's). */
+    private static Object owner;
+
+    /** True when everything is loaded for the current app. */
+    public static boolean ready() { return owner == Gdx.app && white != null && modelsDone; }
+    private static boolean modelsDone;
+
+    /**
+     * Loads everything at once for the current app (used when a world is shown inside a game or the Star2D editor).
+     * What another app (another graphics context) loaded is dropped without freeing it: it is not usable here.
+     */
+    public static void ensureLoaded() {
+        if (ready()) return;
+        if (owner != Gdx.app) forget();
+        if (white == null) { loadTextures(); loadFxShaders(); }
+        if (!modelsDone) {
+            if (mb == null) beginModels();
+            while (loadSomeModels(64) < 1) { }
+        }
+    }
+
+    /** Drops every reference without freeing (the objects belong to another graphics context). */
+    public static void forget() {
+        defs.clear(); byId.clear();
+        grass = dirt = sand = rock = snow = noise = foliage = white = sprites = null;
+        java.util.Arrays.fill(detail, null);
+        fxShaders.clear(); fxNames.clear(); fxInfo.clear();
+        modelBytes = null; mb = null; modelsLeft = -1; owner = null; modelsDone = false;
+        Shaders.forget();
+    }
+
     /** Frees everything, so World Builder can be opened again in the same process (inside Star2D). */
     public static void dispose() {
         for (ModelDef d : defs) d.dispose();
@@ -193,6 +226,6 @@ public final class Assets {
         grass = dirt = sand = rock = snow = noise = foliage = white = sprites = null;
         java.util.Arrays.fill(detail, null);
         fxShaders.clear(); fxNames.clear(); fxInfo.clear();
-        modelBytes = null; mb = null; modelsLeft = -1;
+        modelBytes = null; mb = null; modelsLeft = -1; owner = null; modelsDone = false;
     }
 }
